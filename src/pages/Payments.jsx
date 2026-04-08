@@ -627,6 +627,18 @@ const QuickPayModal = ({ payments: allPayments, boutique, onClose, onSuccess }) 
   );
 };
 
+// ─── INVOICE DOWNLOAD ─────────────────────────────────────────────────────
+const downloadInvoice = (eventId, clientName) => {
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdf?type=receipt&event_id=${eventId}`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `invoice-${clientName?.replace(/\s+/g, '-') || eventId}.pdf`;
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+
 // ─── PAYMENTS ──────────────────────────────────────────────────────────────
 const Payments = ({payments: livePayments, markPaid, logReminder, deleteMilestone, createMilestone, setScreen, setSelectedEvent, events}) => {
   const toast = useToast();
@@ -640,6 +652,10 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
   const [showQuickPay, setShowQuickPay] = useState(false);
   const [bulkSelected, setBulkSelected] = useState(new Set());
   const [bulkSending, setBulkSending] = useState(false);
+  const [showTipModal, setShowTipModal] = useState(false);
+  const [tipEventId, setTipEventId] = useState(null);
+  const [tipAmount, setTipAmount] = useState('');
+  const [tipSaving, setTipSaving] = useState(false);
 
   const filtered = tab === 'all' ? allPayments : allPayments.filter(p => p.status === tab);
   const totalOverdue = allPayments.filter(p => p.status === 'overdue').reduce((s, p) => s + p.amount, 0);
@@ -962,8 +978,12 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
                 <th key={i} style={{padding:'10px 14px',textAlign:'left',fontSize:11,fontWeight:500,color:C.gray,borderBottom:`1px solid ${C.border}`}}>{h}</th>
               ))}
             </tr></thead>
-            <tbody>{filtered.map((p, i) => {
+            <tbody>{(() => {
+              const seenEventIds = new Set();
+              return filtered.map((p, i) => {
               const isPlan = planEventIds.has(p.event_id);
+              const isFirstForEvent = p.event_id && !seenEventIds.has(p.event_id);
+              if (p.event_id) seenEventIds.add(p.event_id);
               return (
               <tr key={i}
                 style={{borderBottom:i<filtered.length-1?`1px solid ${C.border}`:'none',background:selected.has(p.id)?'#EFF6FF':p.status==='overdue'?'#FEF2F2':undefined,cursor:'pointer',height:'var(--row-min-height)'}}
@@ -992,7 +1012,17 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
                       </span>
                     )}
                   </div>
-                  <div style={{fontSize:11,color:C.gray,marginTop:2}}>{p.event}</div>
+                  <div style={{display:'flex',alignItems:'center',gap:6,marginTop:2}}>
+                    <span style={{fontSize:11,color:C.gray}}>{p.event}</span>
+                    {isFirstForEvent && p.event_id && (
+                      <button
+                        onClick={e=>{e.stopPropagation();downloadInvoice(p.event_id, p.clientFull||p.client);}}
+                        title="Download invoice PDF"
+                        style={{padding:'2px 7px',borderRadius:5,border:`1px solid ${C.border}`,background:C.ivory,color:C.gray,fontSize:10,cursor:'pointer',whiteSpace:'nowrap',lineHeight:1.4,flexShrink:0}}>
+                        ⬇ Invoice
+                      </button>
+                    )}
+                  </div>
                   {isPlan && (
                     <div style={{marginTop:4,width:80,height:3,background:C.border,borderRadius:2,overflow:'hidden'}}>
                       <div style={{height:'100%',width:`${Math.min(100,Math.round((1/(1+(planProgress[p.event_id]?.unpaid||1)))*100))}%`,background:C.rosa,borderRadius:2}}/>
@@ -1021,6 +1051,14 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
                       </button>
                     )}
                     {p.status === 'paid' && <span style={{fontSize:11,color:'var(--color-success)',fontWeight:500}}>✓ Paid</span>}
+                    {isFirstForEvent && p.event_id && (
+                      <button className="btn-sm"
+                        onClick={e=>{e.stopPropagation();setTipEventId(p.event_id);setTipAmount('');setShowTipModal(true);}}
+                        title="Add gratuity / tip"
+                        style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${C.border}`,background:C.ivory,color:C.gray,fontSize:11,cursor:'pointer',whiteSpace:'nowrap'}}>
+                        + Tip
+                      </button>
+                    )}
                     {myRole === 'owner' && deleteMilestone && (
                       <button className="btn-sm" onClick={()=>{
                         if(window.confirm(`Delete "${p.label}" (${fmt(p.amount)})? This cannot be undone.`))
@@ -1033,7 +1071,8 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
                 </td>
               </tr>
               );
-            })}</tbody>
+              });
+            })()}</tbody>
           </table>
         </Card>
       </div>}
@@ -1061,6 +1100,48 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
           onClose={() => setShowQuickPay(false)}
           onSuccess={() => {/* realtime subscription auto-refreshes via usePayments hook */}}
         />
+      )}
+      {showTipModal && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1100,padding:16}}>
+          <div style={{background:C.white,borderRadius:16,width:340,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
+            <div style={{padding:'16px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Add gratuity / tip</span>
+              <button onClick={()=>setShowTipModal(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray}}>×</button>
+            </div>
+            <div style={{padding:20,display:'flex',flexDirection:'column',gap:12}}>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                {[10,15,20,25,50,100].map(amt=>(
+                  <button key={amt} onClick={()=>setTipAmount(String(amt))}
+                    style={{padding:'6px 14px',borderRadius:8,border:`1px solid ${tipAmount===String(amt)?C.rosa:C.border}`,background:tipAmount===String(amt)?C.rosaPale:C.white,color:tipAmount===String(amt)?C.rosa:C.ink,cursor:'pointer',fontSize:13,fontWeight:tipAmount===String(amt)?600:400}}>
+                    ${amt}
+                  </button>
+                ))}
+              </div>
+              <input type="number" value={tipAmount} onChange={e=>setTipAmount(e.target.value)}
+                placeholder="Custom amount…" style={{...inputSt}}/>
+            </div>
+            <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
+              <GhostBtn label="Cancel" onClick={()=>setShowTipModal(false)}/>
+              <PrimaryBtn label={tipSaving?'Saving…':'Add tip 🎁'} onClick={async()=>{
+                if(!tipAmount||Number(tipAmount)<=0) return;
+                setTipSaving(true);
+                await supabase.from('payment_milestones').insert({
+                  boutique_id: boutique.id,
+                  event_id: tipEventId,
+                  label: 'Gratuity / Tip',
+                  amount: Number(tipAmount),
+                  due_date: new Date().toISOString().slice(0,10),
+                  status: 'paid',
+                  paid_date: new Date().toISOString().slice(0,10),
+                });
+                setTipSaving(false);
+                setShowTipModal(false);
+                setTipAmount('');
+                toast('Tip added ✓');
+              }}/>
+            </div>
+          </div>
+        </div>
       )}
       {/* Floating bulk action bar */}
       {selected.size > 0 && (

@@ -126,7 +126,7 @@ export function usePayments() {
     return { data, error }
   }
 
-  async function logRefund({ event_id, milestone_id, amount, reason, refunded_at }) {
+  async function logRefund({ event_id, milestone_id, amount, reason, refunded_at, void_milestone = false }) {
     const { error } = await supabase.from('payment_refunds').insert({
       boutique_id: boutique.id,
       event_id,
@@ -136,6 +136,32 @@ export function usePayments() {
       refunded_at: refunded_at || new Date().toISOString().slice(0, 10),
     })
     if (!error) {
+      // Optionally void (un-pay) the milestone and recalculate event.paid
+      if (void_milestone && milestone_id) {
+        await supabase
+          .from('payment_milestones')
+          .update({ status: 'pending', paid_date: null, last_reminded_at: null })
+          .eq('id', milestone_id)
+          .eq('boutique_id', boutique.id)
+
+        // Recalculate event.paid from remaining paid milestones
+        const { data: allMs } = await supabase
+          .from('payment_milestones')
+          .select('amount, status')
+          .eq('event_id', event_id)
+          .eq('boutique_id', boutique.id)
+
+        if (allMs) {
+          const newPaid = allMs
+            .filter(m => m.status === 'paid')
+            .reduce((s, m) => s + Number(m.amount || 0), 0)
+          await supabase
+            .from('events')
+            .update({ paid: newPaid })
+            .eq('id', event_id)
+            .eq('boutique_id', boutique.id)
+        }
+      }
       await fetchPayments()
       await fetchRefunds()
     }

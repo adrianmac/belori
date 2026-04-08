@@ -290,6 +290,7 @@ const RefundModal = ({ milestone, eventId, logRefund, onClose }) => {
   const [amount, setAmount] = useState(milestone ? String(milestone.amount) : '');
   const [reason, setReason] = useState('');
   const [refundedAt, setRefundedAt] = useState(today);
+  const [voidMilestone, setVoidMilestone] = useState(!!milestone);
   const [saving, setSaving] = useState(false);
 
   const overlayStyle = {
@@ -324,10 +325,11 @@ const RefundModal = ({ milestone, eventId, logRefund, onClose }) => {
       amount: amt,
       reason: reason.trim() || null,
       refunded_at: refundedAt,
+      void_milestone: voidMilestone,
     });
     setSaving(false);
     if (error) { toast('Failed to log refund', 'error'); return; }
-    toast('Refund logged');
+    toast(voidMilestone ? 'Refund logged & milestone voided ✓' : 'Refund logged ✓');
     onClose();
   };
 
@@ -335,7 +337,7 @@ const RefundModal = ({ milestone, eventId, logRefund, onClose }) => {
     <div style={overlayStyle} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={panelStyle}>
         <div style={headerStyle}>
-          <span style={{ fontWeight: 600, fontSize: 14, color: C.ink }}>Log Refund</span>
+          <span style={{ fontWeight: 600, fontSize: 14, color: C.ink }}>{milestone ? 'Void / Refund' : 'Log Refund'}</span>
           <span onClick={onClose} style={{ cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1 }}>×</span>
         </div>
         <div style={bodyStyle}>
@@ -373,6 +375,19 @@ const RefundModal = ({ milestone, eventId, logRefund, onClose }) => {
               style={inputStyle}
             />
           </div>
+          {milestone && (
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: 12, color: C.ink, lineHeight: 1.4 }}>
+              <input
+                type="checkbox"
+                checked={voidMilestone}
+                onChange={(e) => setVoidMilestone(e.target.checked)}
+                style={{ marginTop: 2, accentColor: 'var(--color-danger, #DC2626)', flexShrink: 0 }}
+              />
+              <span>
+                <strong>Void this milestone</strong> — mark it as unpaid and deduct from the collected total
+              </span>
+            </label>
+          )}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 4 }}>
             <button
               onClick={onClose}
@@ -385,7 +400,7 @@ const RefundModal = ({ milestone, eventId, logRefund, onClose }) => {
               disabled={saving}
               style={{ padding: '7px 16px', background: 'var(--color-danger, #DC2626)', color: '#fff', border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}
             >
-              {saving ? 'Saving…' : 'Log refund'}
+              {saving ? 'Saving…' : (voidMilestone ? '↩ Void & refund' : 'Log refund')}
             </button>
           </div>
         </div>

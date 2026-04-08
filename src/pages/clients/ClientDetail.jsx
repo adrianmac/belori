@@ -9,6 +9,67 @@ import { useMeasurements } from '../../hooks/useMeasurements';
 import { TIER_CFG, TIER_THRESHOLDS, HOW_FOUND_LABELS, INTERACTION_CFG, PIPELINE_STAGES, TAG_CAT_COLORS } from './clientConfigs';
 import { getTier, getNextTier, tierMedal, DEFAULT_LOYALTY_TIERS } from '../../lib/loyalty';
 
+// ── Direct SMS Modal ─────────────────────────────────────────────────────────
+function DirectSMSModal({ client, boutique, onClose, toast }) {
+  const [text, setText] = React.useState('');
+  const [sending, setSending] = React.useState(false);
+  const phone = client?.phone;
+
+  const send = async () => {
+    if (!text.trim() || !phone) return;
+    setSending(true);
+    const { error } = await supabase.from('client_interactions').insert({
+      boutique_id: boutique.id,
+      client_id: client.id,
+      type: 'sms',
+      title: 'SMS sent',
+      body: text.trim(),
+      occurred_at: new Date().toISOString(),
+      is_editable: false,
+      author_name: 'Staff',
+    });
+    try { await navigator.clipboard.writeText(text.trim()); } catch {}
+    setSending(false);
+    if (!error) {
+      toast('SMS logged & copied to clipboard ✓');
+      onClose();
+    } else {
+      toast('Failed to log SMS', 'error');
+    }
+  };
+
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1200,padding:16}}>
+      <div style={{background:C.white,borderRadius:16,width:420,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
+        <div style={{padding:'16px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <div style={{fontWeight:600,fontSize:15,color:C.ink}}>Send SMS</div>
+            <div style={{fontSize:12,color:C.gray,marginTop:1}}>To: {client?.name} · {phone}</div>
+          </div>
+          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray}}>×</button>
+        </div>
+        <div style={{padding:20,display:'flex',flexDirection:'column',gap:12}}>
+          <textarea
+            value={text}
+            onChange={e=>setText(e.target.value)}
+            placeholder={`Hi ${client?.name?.split(' ')[0]||'there'}! …`}
+            rows={4}
+            autoFocus
+            style={{...inputSt,resize:'vertical',fontFamily:'inherit',lineHeight:1.5}}
+          />
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <span style={{fontSize:11,color:text.length>160?'#DC2626':C.gray}}>{text.length}/160 chars</span>
+            <div style={{display:'flex',gap:8}}>
+              <GhostBtn label="Cancel" onClick={onClose}/>
+              <PrimaryBtn label={sending?'Sending…':'📨 Send & log'} onClick={send}/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Dress recommendation engine ──────────────────────────────────────────────
 function getDressRecommendations(cl, inventory) {
   const gowns = (inventory || []).filter(d =>
@@ -140,6 +201,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
     setOptOutSaving(false);
     toast(newVal?'Client marked as opted out of SMS':'Client marked as SMS subscribed');
   };
+  const [showDirectSMS,setShowDirectSMS]=useState(false);
   const [editContact,setEditContact]=useState(false);
   const [contactDraft,setContactDraft]=useState({phone:cl.phone||'',email:cl.email||'',language_preference:cl.language_preference||'en',partner_name:cl.partner_name||'',emergency_contact:cl.emergency_contact||'',birthday:cl.birthday||'',anniversary:cl.anniversary||'',birth_date:cl.birth_date||'',anniversary_date:cl.anniversary_date||''});
   const [showAdjustPts,setShowAdjustPts]=useState(false);
@@ -447,8 +509,14 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                 ):(
                   <div style={{padding:'10px 14px'}}>
                     {[['Phone',cl.phone||'—'],['Email',cl.email||'—'],['Language',cl.language_preference==='es'?'Spanish':cl.language_preference==='both'?'EN / ES':'English'],cl.partner_name&&['Partner',cl.partner_name],cl.emergency_contact&&['Emergency',cl.emergency_contact],(cl.birth_date||cl.birthday)&&['Birth Date',new Date((cl.birth_date||cl.birthday)+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})],(cl.anniversary_date||cl.anniversary)&&['Anniversary',new Date((cl.anniversary_date||cl.anniversary)+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})]].filter(Boolean).map(([k,v],i,arr)=>(
-                      <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'4px 0',borderBottom:i<arr.length-1?`1px solid ${C.border}`:'none',fontSize:12}}>
-                        <span style={{color:C.gray}}>{k}</span><span style={{fontWeight:500,color:C.ink}}>{v}</span>
+                      <div key={k} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 0',borderBottom:i<arr.length-1?`1px solid ${C.border}`:'none',fontSize:12}}>
+                        <span style={{color:C.gray}}>{k}</span>
+                        <div style={{display:'flex',alignItems:'center',gap:6}}>
+                          <span style={{fontWeight:500,color:C.ink}}>{v}</span>
+                          {k==='Phone'&&cl.phone&&(
+                            <button onClick={()=>setShowDirectSMS(true)} title="Send SMS" style={{fontSize:11,padding:'2px 8px',borderRadius:8,border:`1px solid ${C.border}`,background:C.rosaPale,color:C.rosa,cursor:'pointer',fontWeight:500,flexShrink:0}}>💬 SMS</button>
+                          )}
+                        </div>
                       </div>
                     ))}
                     {(cl.no_show_count>0)&&(
@@ -460,6 +528,41 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                     )}
                   </div>
                 )}
+              </Card>
+              {/* ── COMMUNICATION PREFERENCES CARD ── */}
+              <Card>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:`1px solid ${C.border}`}}>
+                  <span style={{fontSize:12,fontWeight:500,color:C.ink}}>Communication</span>
+                </div>
+                <div style={{padding:'12px 14px',display:'flex',flexDirection:'column',gap:8}}>
+                  {[
+                    {key:'sms_opt_out',label:'SMS messages',icon:'💬'},
+                    {key:'email_opt_out',label:'Email messages',icon:'✉️'},
+                  ].map(pref=>{
+                    const optedOut=cl.comm_prefs?.[pref.key];
+                    return(
+                      <div key={pref.key} style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                        <span style={{fontSize:12,color:C.ink}}>{pref.icon} {pref.label}</span>
+                        <button onClick={()=>updateClient(cl.id,{comm_prefs:{...(cl.comm_prefs||{}),[pref.key]:!optedOut}})}
+                          style={{fontSize:11,padding:'3px 10px',borderRadius:12,border:`1px solid ${optedOut?'#EF4444':C.border}`,background:optedOut?'#FEE2E2':C.rosaPale,color:optedOut?'#991B1B':C.rosa,cursor:'pointer',fontWeight:500}}>
+                          {optedOut?'Opted out':'Active'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {cl.language_preference&&(
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:4,borderTop:`1px solid ${C.border}`}}>
+                      <span style={{fontSize:12,color:C.gray}}>Language</span>
+                      <span style={{fontSize:12,fontWeight:500,color:C.ink}}>{cl.language_preference==='es'?'Spanish':cl.language_preference==='both'?'EN / ES':'English'}</span>
+                    </div>
+                  )}
+                  {(cl.birth_date||cl.birthday)&&(
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                      <span style={{fontSize:12,color:C.gray}}>🎂 Birthday</span>
+                      <span style={{fontSize:12,fontWeight:500,color:C.ink}}>{new Date((cl.birth_date||cl.birthday)+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>
+                    </div>
+                  )}
+                </div>
               </Card>
               {/* ── LOYALTY TIER CARD ── */}
               <Card>
@@ -1407,6 +1510,9 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
           </div>
         </div>
       </div>)}
+      {showDirectSMS&&(
+        <DirectSMSModal client={cl} boutique={boutique} onClose={()=>setShowDirectSMS(false)} toast={toast}/>
+      )}
     </div>
   );
 };

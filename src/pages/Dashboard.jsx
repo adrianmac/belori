@@ -603,8 +603,54 @@ function StaffUtilizationCard({ events, staff }) {
   );
 }
 
+// ─── END OF DAY SUMMARY ──────────────────────────────────────────────────────
+function EndOfDaySummary({ payments, events, appointments }) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const doneAppts = (appointments || []).filter(a => a.date === today && a.status === 'completed').length;
+  const totalAppts = (appointments || []).filter(a => a.date === today).length;
+
+  const paidToday = (payments || []).filter(p => p.paid_date === today && p.status === 'paid');
+  const revenueToday = paidToday.reduce((s, p) => s + Number(p.amount || 0), 0);
+
+  const eventsToday = (events || []).filter(e => e.event_date === today).length;
+
+  const allClear = doneAppts === 0 && paidToday.length === 0 && eventsToday === 0;
+
+  if (allClear && totalAppts === 0) return null;
+
+  return (
+    <Card>
+      <CardHead title="Today's recap" sub={new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })} />
+      <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {totalAppts > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: doneAppts === totalAppts ? '#D1FAE5' : '#F9FAFB', borderRadius: 8 }}>
+            <span style={{ fontSize: 13, color: C.ink }}>Appointments</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: doneAppts === totalAppts ? '#065F46' : C.ink }}>{doneAppts}/{totalAppts} done</span>
+          </div>
+        )}
+        {paidToday.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: '#D1FAE5', borderRadius: 8 }}>
+            <span style={{ fontSize: 13, color: C.ink }}>Payments collected</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#065F46' }}>{fmt(revenueToday)}</span>
+          </div>
+        )}
+        {eventsToday > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: C.rosaPale, borderRadius: 8 }}>
+            <span style={{ fontSize: 13, color: C.ink }}>Events today</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.rosa }}>{eventsToday}</span>
+          </div>
+        )}
+        {doneAppts === 0 && paidToday.length === 0 && eventsToday === 0 && totalAppts > 0 && (
+          <div style={{ fontSize: 12, color: C.gray, textAlign: 'center', padding: '8px 0' }}>No completed items yet today</div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 // ─── FOCUS DASHBOARD ─────────────────────────────────────────────────────────
-const FocusDashboard = ({ setScreen, setSelectedEvent, events, staff, onToggleFocus }) => {
+const FocusDashboard = ({ setScreen, setSelectedEvent, events, payments, staff, onToggleFocus }) => {
   const { boutique } = useAuth();
   const { appointments: todayAppts, reload: reloadAppts } = useAppointmentsToday();
 
@@ -691,30 +737,53 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, staff, onToggleFo
               No appointments today — enjoy the calm 🌸
             </div>
           ) : (
-            todayAppts.map((a, i) => {
-              const timeStr = a.time ? a.time.slice(0, 5) : '';
-              const cfg = APPT_TYPE_CFG[a.type] || APPT_TYPE_CFG.other;
-              // Find client name from event
-              const ev = events?.find(e => e.id === a.event_id);
-              return (
-                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < todayAppts.length - 1 ? `1px solid ${C.border}` : 'none', cursor: ev ? 'pointer' : 'default' }}
-                  onClick={() => ev && (setSelectedEvent(ev.id), setScreen('event_detail'))}
-                  onMouseEnter={e => e.currentTarget.style.background = C.ivory}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ minWidth: 48, textAlign: 'center' }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{timeStr}</div>
-                    <div style={{ fontSize: 10, color: C.gray }}>{timeStr ? 'AM' : '' }</div>
+            <>
+              {todayAppts.map((a, i) => {
+                const timeStr = a.time ? a.time.slice(0, 5) : '';
+                const cfg = APPT_TYPE_CFG[a.type] || APPT_TYPE_CFG.other;
+                const ev = events?.find(e => e.id === a.event_id);
+                const isDone = a.status === 'completed';
+                return (
+                  <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderBottom: i < todayAppts.length - 1 ? `1px solid ${C.border}` : 'none', cursor: ev ? 'pointer' : 'default', opacity: isDone ? 0.6 : 1 }}
+                    onClick={() => ev && (setSelectedEvent(ev.id), setScreen('event_detail'))}
+                    onMouseEnter={e => e.currentTarget.style.background = C.ivory}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <div style={{ minWidth: 48, textAlign: 'center' }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{timeStr}</div>
+                      <div style={{ fontSize: 10, color: C.gray }}>{timeStr ? 'AM' : '' }</div>
+                    </div>
+                    <Avatar initials={ev?.client?.slice(0, 2)?.toUpperCase() || '?'} size={32} bg={cfg.col} color={cfg.textCol} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: C.ink, textDecoration: isDone ? 'line-through' : 'none' }}>{ev?.client || 'Client'}</div>
+                      <div style={{ fontSize: 11, color: C.gray }}>{APPT_TYPE_LABELS[a.type] || 'Appointment'}{a.note ? ` · ${a.note}` : ''}</div>
+                    </div>
+                    {isDone
+                      ? <span style={{ fontSize: 11, fontWeight: 600, color: '#059669', background: '#D1FAE5', padding: '3px 8px', borderRadius: 6 }}>Done</span>
+                      : <Badge text={cfg.tag} bg={cfg.tagBg} color={cfg.tagCol} />
+                    }
                   </div>
-                  <Avatar initials={ev?.client?.slice(0, 2)?.toUpperCase() || '?'} size={32} bg={cfg.col} color={cfg.textCol} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: C.ink }}>{ev?.client || 'Client'}</div>
-                    <div style={{ fontSize: 11, color: C.gray }}>{APPT_TYPE_LABELS[a.type] || 'Appointment'}{a.note ? ` · ${a.note}` : ''}</div>
-                  </div>
-                  <Badge text={cfg.tag} bg={cfg.tagBg} color={cfg.tagCol} />
+                );
+              })}
+              {todayAppts.some(a => a.status !== 'completed') && (
+                <div style={{ padding: '10px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={async () => {
+                      const pending = todayAppts.filter(a => a.status !== 'completed');
+                      if (!pending.length) return;
+                      if (!window.confirm(`Mark all ${pending.length} appointment${pending.length !== 1 ? 's' : ''} as completed?`)) return;
+                      await Promise.all(pending.map(a =>
+                        supabase.from('appointments').update({ status: 'completed' }).eq('id', a.id)
+                      ));
+                      reloadAppts();
+                    }}
+                    style={{ fontSize: 12, fontWeight: 500, color: '#059669', background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 7, padding: '6px 12px', cursor: 'pointer', minHeight: 'unset', minWidth: 'unset' }}
+                  >
+                    Mark all complete
+                  </button>
                 </div>
-              );
-            })
+              )}
+            </>
           )}
         </Card>
 
@@ -784,6 +853,9 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, staff, onToggleFo
             <div style={{ fontSize: 13, color: C.gray }}>No appointments, returns, or urgent alterations. Use the quick actions above to get started.</div>
           </div>
         )}
+
+        {/* End of day recap */}
+        <EndOfDaySummary payments={payments} events={events} appointments={todayAppts} />
       </div>
 
       {showAppt && <StandaloneAppointmentModal events={events || []} staff={staff || []} onClose={() => setShowAppt(false)} onSaved={() => { reloadAppts(); setShowAppt(false); }} />}

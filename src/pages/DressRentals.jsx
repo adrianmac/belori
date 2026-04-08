@@ -51,6 +51,9 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
   const [historyDress,setHistoryDress]=useState(null); // dress to show audit history for
   const [catalogPage,setCatalogPage]=useState(1);
   const CATALOG_PAGE_SIZE=40;
+  const [similarDresses,setSimilarDresses]=useState([]);
+  const [showSimilar,setShowSimilar]=useState(false);
+  const [similarForDress,setSimilarForDress]=useState(null);
 
   // Auto-open new rental modal via FAB custom event
   useEffect(()=>{
@@ -119,6 +122,46 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     if(!due)return 999;
     return Math.ceil((new Date(due)-new Date())/(1000*60*60*24));
   }
+
+  // Similar dress finder
+  const findSimilarDresses=(dress,allDresses)=>{
+    if(!dress)return[];
+    const sizes=['0','2','4','6','8','10','12','14','16','18','20','22','24'];
+    return allDresses
+      .filter(d=>{
+        if(d.id===dress.id)return false;
+        if(d.status!=='available')return false;
+        const sameCategory=d.category===dress.category||(d.cat||'')===(dress.cat||'');
+        const dressIdx=sizes.indexOf(String(dress.size||''));
+        const candidateIdx=sizes.indexOf(String(d.size||''));
+        const similarSize=dress.size===d.size||(dressIdx>=0&&candidateIdx>=0&&Math.abs(dressIdx-candidateIdx)<=2);
+        let score=0;
+        if(sameCategory)score+=3;
+        if(d.size===dress.size)score+=2;
+        else if(similarSize)score+=1;
+        if(d.color===dress.color)score+=2;
+        return sameCategory&&score>=3;
+      })
+      .sort((a,b)=>{
+        const scoreOf=d=>{let s=0;if(d.color===dress.color)s+=2;if(d.size===dress.size)s+=2;return s;};
+        return scoreOf(b)-scoreOf(a);
+      })
+      .slice(0,4);
+  };
+
+  const handleDressSelect=(dress)=>{
+    setDetailDress(dress);
+    if(!['available'].includes(dress.status)){
+      const similar=findSimilarDresses(dress,allGowns);
+      setSimilarDresses(similar);
+      setShowSimilar(similar.length>0);
+      setSimilarForDress(dress.id);
+    } else {
+      setShowSimilar(false);
+      setSimilarDresses([]);
+      setSimilarForDress(null);
+    }
+  };
 
   // Active rentals sections
   const rented=allGowns.filter(d=>d.status==='rented'||d.status==='picked_up');
@@ -356,7 +399,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     else if(d.status==='cleaning')actionBtn=<button onClick={e=>{e.stopPropagation();handleMarkCleaned(d);}} style={{width:'100%',padding:'8px',borderRadius:7,border:`1px solid var(--color-primary)`,background:'transparent',color:'var(--color-primary)',fontSize:11,fontWeight:500,cursor:'pointer'}}>Mark cleaned</button>;
 
     return(
-      <div onClick={()=>setDetailDress(d)} style={{background:C.white,border:`1px solid ${over?'#FCA5A5':C.border}`,borderRadius:12,overflow:'hidden',cursor:'pointer',transition:'border-color 0.15s'}} onMouseEnter={e=>{if(!over)e.currentTarget.style.borderColor=C.rosa;}} onMouseLeave={e=>e.currentTarget.style.borderColor=over?'#FCA5A5':C.border}>
+      <div onClick={()=>handleDressSelect(d)} style={{background:C.white,border:`1px solid ${over?'#FCA5A5':C.border}`,borderRadius:12,overflow:'hidden',cursor:'pointer',transition:'border-color 0.15s'}} onMouseEnter={e=>{if(!over)e.currentTarget.style.borderColor=C.rosa;}} onMouseLeave={e=>e.currentTarget.style.borderColor=over?'#FCA5A5':C.border}>
         <div style={{height:110,background:C.ivory,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',overflow:'hidden'}}>
           {d.image_url
             ?<img src={d.image_url} alt={d.name} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
@@ -402,7 +445,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     else if(d.status==='cleaning')actionBtn=<button onClick={e=>{e.stopPropagation();handleMarkCleaned(d);}} style={{padding:'5px 12px',borderRadius:7,border:`1px solid var(--color-primary)`,background:'transparent',color:'var(--color-primary)',fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>Mark cleaned</button>;
 
     return(
-      <div onClick={()=>setDetailDress(d)}
+      <div onClick={()=>handleDressSelect(d)}
         style={{display:'grid',gridTemplateColumns:'52px 1fr 1fr 100px 80px 100px auto',gap:12,alignItems:'center',padding:'10px 16px',background:C.white,borderBottom:`1px solid ${over?'#FCA5A5':C.border}`,cursor:'pointer',transition:'background 0.1s'}}
         onMouseEnter={e=>e.currentTarget.style.background=C.ivory}
         onMouseLeave={e=>e.currentTarget.style.background=C.white}>
@@ -1330,6 +1373,31 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
             {(dress.status==='rented'||dress.status==='picked_up')&&<GhostBtn label="Send reminder" onClick={()=>toast('Reminder sent')}/>}
           </div>
 
+          {/* Similar dresses — shown when this dress is unavailable */}
+          {showSimilar&&similarForDress===dress.id&&similarDresses.length>0&&(
+            <div style={{padding:'0 24px 16px'}}>
+              <div style={{background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:12,padding:'14px 16px'}}>
+                <div style={{fontSize:12,fontWeight:600,color:'#1E40AF',marginBottom:10}}>
+                  This dress is not available — here are similar options:
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8}}>
+                  {similarDresses.map(d=>(
+                    <div key={d.id} onClick={()=>{setShowSimilar(false);setSimilarDresses([]);setSimilarForDress(null);setDetailDress(d);}}
+                      style={{background:C.white,borderRadius:8,padding:'10px 12px',cursor:'pointer',border:`1px solid ${C.border}`,transition:'border-color 0.15s'}}
+                      onMouseEnter={e=>e.currentTarget.style.borderColor=C.rosa}
+                      onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
+                      <div style={{fontSize:13,fontWeight:500,color:C.ink,marginBottom:2}}>{d.name}</div>
+                      <div style={{fontSize:11,color:C.gray}}>Size {d.size} · {d.color}</div>
+                      <div style={{fontSize:11,color:'#10B981',marginTop:4,fontWeight:500}}>Available</div>
+                      {d.price>0&&<div style={{fontSize:11,color:C.gray}}>{fmt(d.price)}/rental</div>}
+                    </div>
+                  ))}
+                </div>
+                <button onClick={()=>{setShowSimilar(false);setSimilarDresses([]);setSimilarForDress(null);}} style={{marginTop:10,fontSize:11,color:C.gray,background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Dismiss</button>
+              </div>
+            </div>
+          )}
+
           {/* Divider */}
           <div style={{borderTop:`1px solid ${C.border}`,margin:'0 24px 0'}}/>
 
@@ -1950,7 +2018,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
         />
       )}
       {qrOpen&&<QRScanModal onClose={()=>setQrOpen(false)}/>}
-      {detailDress&&<DetailPanel dress={detailDress} onClose={()=>setDetailDress(null)}/>}
+      {detailDress&&<DetailPanel dress={detailDress} onClose={()=>{setDetailDress(null);setShowSimilar(false);setSimilarDresses([]);setSimilarForDress(null);}}/>}
       {historyDress&&<ItemHistoryModal dress={historyDress} onClose={()=>setHistoryDress(null)}/>}
       {showAddDress&&<AddDressModal onClose={()=>setShowAddDress(false)} onCreate={async(data)=>{const res=await createDress(data);if(!res?.error){setShowAddDress(false);toast('Dress added ✓');}return res;}}/>}
       {damageAssessDress&&(

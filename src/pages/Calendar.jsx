@@ -1,9 +1,56 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { C, EVT_TYPES } from '../lib/colors';
-import { Topbar, GhostBtn } from '../lib/ui.jsx';
+import { Topbar, GhostBtn, useToast } from '../lib/ui.jsx';
 import StandaloneAppointmentModal from '../components/StandaloneAppointmentModal';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+
+// ─── DnD HELPERS (week view only) ──────────────────────────────────────────
+
+function DraggableAppointment({ appt, children }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: appt.id,
+    data: { appt },
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      style={{
+        transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
+        opacity: isDragging ? 0.5 : 1,
+        cursor: isDragging ? 'grabbing' : 'grab',
+        touchAction: 'none',
+        zIndex: isDragging ? 999 : 'auto',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DroppableTimeSlot({ id, date, time, children, style }) {
+  const { setNodeRef, isOver } = useDroppable({ id, data: { date, time } });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        ...style,
+        background: isOver ? 'rgba(201,105,122,0.10)' : style?.background,
+        transition: 'background 0.1s',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 const APPT_TYPE_COLOR = {
   fitting: '#0EA5E9',
@@ -123,12 +170,37 @@ function formatDayHeading(dateStr) {
 
 export default function Calendar({ events = [], setScreen, setSelectedEvent, staff = [], clients = [] }) {
   const { boutique } = useAuth();
+  const toast = useToast();
   const [view, setView] = useState('month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
   const [showStandaloneAppt, setShowStandaloneAppt] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const today = toDateStr(new Date()); // computed per render so it's always fresh
+
+  // DnD sensors — require 8px pointer movement before drag starts (prevents accidental drags on click)
+  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  const handleWeekDragEnd = useCallback(async ({ active, over }) => {
+    if (!over || !active.data.current?.appt) return;
+    const appt = active.data.current.appt;
+    const { date: newDate, time: newTime } = over.data.current || {};
+    if (!newDate || !newTime) return;
+    if (newDate === appt.date && newTime === appt.time) return;
+
+    const { error } = await supabase
+      .from('appointments')
+      .update({ date: newDate, time: newTime })
+      .eq('id', appt.id)
+      .eq('boutique_id', boutique.id);
+
+    if (!error) {
+      toast(`Moved to ${newDate} at ${formatTime(newTime)}`);
+      // Real-time subscription will refresh appointments automatically
+    } else {
+      toast('Failed to reschedule appointment', 'error');
+    }
+  }, [boutique?.id, toast]);
 
   const fetchAppointments = useCallback(async () => {
     if (!boutique?.id) return;
@@ -558,98 +630,124 @@ export default function Calendar({ events = [], setScreen, setSelectedEvent, sta
           })}
         </div>
 
-        {/* Scrollable time grid */}
+        {/* Scrollable time grid — wrapped in DndContext for drag-to-reschedule */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '50px repeat(7, 1fr)',
-            position: 'relative',
-          }}>
-            {/* Hour rows */}
-            {HOURS.map((hour) => (
-              <React.Fragment key={hour}>
-                <div style={{
-                  borderRight: `1px solid ${C.border}`,
-                  borderBottom: `1px solid ${C.border}`,
-                  height: SLOT_H,
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'flex-end',
-                  paddingRight: 6,
-                  paddingTop: 4,
-                  fontSize: 10,
-                  color: C.gray,
-                  background: C.white,
-                  flexShrink: 0,
-                }}>
-                  {hour === 12 ? '12pm' : hour > 12 ? `${hour - 12}pm` : `${hour}am`}
-                </div>
-                {days.map((_, ci) => (
-                  <div
-                    key={ci}
-                    style={{
-                      height: SLOT_H,
-                      borderRight: ci < 6 ? `1px solid ${C.border}` : 'none',
-                      borderBottom: `1px solid ${C.border}`,
-                      background: C.white,
-                      position: 'relative',
-                    }}
-                  />
-                ))}
-              </React.Fragment>
-            ))}
-
-            {/* Appointment blocks — absolutely positioned within day columns */}
-            {days.map((day, ci) => {
-              const dateStr = toDateStr(day);
-              const dayAppts = apptsByDate[dateStr] || [];
-              if (!dayAppts.length) return null;
-
-              // col offset: 50px + ci * (1fr)
-              return dayAppts.map((a) => {
-                if (!a.time) return null;
-                const [h, m] = a.time.split(':').map(Number);
-                const topPx = (h - 8) * SLOT_H + (m / 60) * SLOT_H + HOURS.indexOf(8) * 0;
-                const color = getApptColor(a.type);
-                const displayName = getApptDisplayName(a, clientByEventId);
-                const standalone = isStandalone(a);
-
+          <DndContext sensors={dndSensors} onDragEnd={handleWeekDragEnd}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '50px repeat(7, 1fr)',
+              position: 'relative',
+            }}>
+              {/* Hour rows — each day cell is a droppable target */}
+              {HOURS.map((hour) => {
+                const timeStr = `${String(hour).padStart(2, '0')}:00`;
                 return (
-                  <div
-                    key={a.id}
-                    onClick={() => !standalone && a.event && navigateToEvent(a.event)}
-                    title={`${formatTime(a.time)} — ${APPT_TYPE_LABEL[a.type] || a.type}${displayName ? ` · ${displayName}` : ''}${standalone ? ' (walk-in)' : ''}`}
-                    style={{
-                      position: 'absolute',
-                      top: topPx + HOURS.length * 0,
-                      left: `calc(50px + ${ci} * ((100% - 50px) / 7) + 3px)`,
-                      width: `calc((100% - 50px) / 7 - 6px)`,
-                      minHeight: 40,
-                      background: standalone ? '#FEF3C720' : color + '20',
-                      borderLeft: `3px solid ${color}`,
-                      border: standalone ? `1.5px dashed ${color}` : undefined,
-                      borderLeft: standalone ? `3px solid ${color}` : `3px solid ${color}`,
-                      borderRadius: 4,
-                      padding: '3px 5px',
-                      cursor: standalone ? 'default' : (a.event ? 'pointer' : 'default'),
-                      overflow: 'hidden',
-                      zIndex: 1,
-                    }}
-                  >
-                    <div style={{ fontSize: 10, fontWeight: 600, color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {standalone ? '🚶 ' : ''}{displayName || APPT_TYPE_LABEL[a.type] || a.type}
+                  <React.Fragment key={hour}>
+                    <div style={{
+                      borderRight: `1px solid ${C.border}`,
+                      borderBottom: `1px solid ${C.border}`,
+                      height: SLOT_H,
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'flex-end',
+                      paddingRight: 6,
+                      paddingTop: 4,
+                      fontSize: 10,
+                      color: C.gray,
+                      background: C.white,
+                      flexShrink: 0,
+                    }}>
+                      {hour === 12 ? '12pm' : hour > 12 ? `${hour - 12}pm` : `${hour}am`}
                     </div>
-                    <div style={{ fontSize: 9, color: C.gray, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {formatTime(a.time)}{` · ${APPT_TYPE_LABEL[a.type] || a.type}`}
-                    </div>
-                    {a.status === 'confirmed' && (
-                      <div style={{ fontSize: 8, color: '#16A34A', fontWeight: 700, marginTop: 1 }}>✓ confirmed</div>
-                    )}
-                  </div>
+                    {days.map((day, ci) => {
+                      const dateStr = toDateStr(day);
+                      const slotId = `${dateStr}-${timeStr}`;
+                      return (
+                        <DroppableTimeSlot
+                          key={ci}
+                          id={slotId}
+                          date={dateStr}
+                          time={timeStr}
+                          style={{
+                            height: SLOT_H,
+                            borderRight: ci < 6 ? `1px solid ${C.border}` : 'none',
+                            borderBottom: `1px solid ${C.border}`,
+                            background: C.white,
+                            position: 'relative',
+                          }}
+                        />
+                      );
+                    })}
+                  </React.Fragment>
                 );
-              });
-            })}
-          </div>
+              })}
+
+              {/* Appointment blocks — absolutely positioned, wrapped in DraggableAppointment */}
+              {days.map((day, ci) => {
+                const dateStr = toDateStr(day);
+                const dayAppts = apptsByDate[dateStr] || [];
+                if (!dayAppts.length) return null;
+
+                // col offset: 50px + ci * (1fr)
+                return dayAppts.map((a) => {
+                  if (!a.time) return null;
+                  const [h, m] = a.time.split(':').map(Number);
+                  const topPx = (h - 8) * SLOT_H + (m / 60) * SLOT_H;
+                  const color = getApptColor(a.type);
+                  const displayName = getApptDisplayName(a, clientByEventId);
+                  const standalone = isStandalone(a);
+
+                  const apptContent = (
+                    <div
+                      onClick={() => !standalone && a.event && navigateToEvent(a.event)}
+                      title={`${formatTime(a.time)} — ${APPT_TYPE_LABEL[a.type] || a.type}${displayName ? ` · ${displayName}` : ''}${standalone ? ' (walk-in)' : ''} · Drag to reschedule`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        minHeight: 40,
+                        background: standalone ? '#FEF3C720' : color + '20',
+                        borderLeft: standalone ? `3px solid ${color}` : `3px solid ${color}`,
+                        border: standalone ? `1.5px dashed ${color}` : undefined,
+                        borderLeft: standalone ? `3px solid ${color}` : `3px solid ${color}`,
+                        borderRadius: 4,
+                        padding: '3px 5px',
+                        cursor: 'grab',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div style={{ fontSize: 10, fontWeight: 600, color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {standalone ? '🚶 ' : ''}{displayName || APPT_TYPE_LABEL[a.type] || a.type}
+                      </div>
+                      <div style={{ fontSize: 9, color: C.gray, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {formatTime(a.time)}{` · ${APPT_TYPE_LABEL[a.type] || a.type}`}
+                      </div>
+                      {a.status === 'confirmed' && (
+                        <div style={{ fontSize: 8, color: '#16A34A', fontWeight: 700, marginTop: 1 }}>✓ confirmed</div>
+                      )}
+                    </div>
+                  );
+
+                  return (
+                    <div
+                      key={a.id}
+                      style={{
+                        position: 'absolute',
+                        top: topPx,
+                        left: `calc(50px + ${ci} * ((100% - 50px) / 7) + 3px)`,
+                        width: `calc((100% - 50px) / 7 - 6px)`,
+                        minHeight: 40,
+                        zIndex: 1,
+                      }}
+                    >
+                      <DraggableAppointment appt={a}>
+                        {apptContent}
+                      </DraggableAppointment>
+                    </div>
+                  );
+                });
+              })}
+            </div>
+          </DndContext>
         </div>
       </div>
     );
