@@ -304,86 +304,7 @@ const BulkMessageModal = ({ clients, boutiqueName, boutiqueId, onClose }) => {
   );
 };
 
-// ─── MergeDuplicatesModal ─────────────────────────────────────────────────────
-const MergeDuplicatesModal = ({ clients, mergeClients, onClose, toast }) => {
-  const [keepId, setKeepId] = useState(null);
-  const [removeId, setRemoveId] = useState(null);
-  const [working, setWorking] = useState(false);
-
-  const pairs = [];
-  const seen = new Set();
-  for (let i = 0; i < clients.length; i++) {
-    for (let j = i + 1; j < clients.length; j++) {
-      const a = clients[i]; const b = clients[j];
-      const nameA = (a.name||'').toLowerCase().trim();
-      const nameB = (b.name||'').toLowerCase().trim();
-      const key = [a.id,b.id].sort().join('-');
-      if (!seen.has(key) && nameA && nameB && (nameA===nameB || nameA.startsWith(nameB) || nameB.startsWith(nameA))) {
-        seen.add(key); pairs.push([a,b]);
-      }
-    }
-  }
-
-  const doMerge = async () => {
-    if (!keepId || !removeId) return;
-    setWorking(true);
-    const kept = clients.find(c=>c.id===keepId);
-    const removed = clients.find(c=>c.id===removeId);
-    const mergedPoints = (kept?.loyalty_points||0) + (removed?.loyalty_points||0);
-    const { error } = await mergeClients(keepId, removeId, mergedPoints);
-    setWorking(false);
-    if (error) { toast('Merge failed: ' + error.message, 'error'); return; }
-    toast('Clients merged ✓');
-    onClose();
-  };
-
-  return (
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-      <div style={{background:'#fff',borderRadius:16,width:520,maxHeight:'80vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.18)',overflow:'hidden'}}>
-        <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
-          <div>
-            <div style={{fontWeight:600,fontSize:15,color:C.ink}}>Merge duplicate clients</div>
-            <div style={{fontSize:11,color:C.gray,marginTop:2}}>{pairs.length} potential duplicate pair{pairs.length!==1?'s':''} found</div>
-          </div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray}}>×</button>
-        </div>
-        <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:10}}>
-          {pairs.length === 0 ? (
-            <div style={{textAlign:'center',padding:'40px 20px',color:C.gray,fontSize:13}}>
-              <div style={{fontSize:32,marginBottom:12}}>✅</div>
-              No duplicate clients detected
-            </div>
-          ) : pairs.map(([a,b]) => (
-            <div key={a.id+b.id} style={{border:`1px solid ${C.border}`,borderRadius:12,padding:14,background:C.ivory}}>
-              <div style={{fontSize:11,fontWeight:600,color:C.gray,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:10}}>Duplicate pair — click "Keep" on one to select</div>
-              <div style={{display:'flex',gap:8}}>
-                {[a,b].map(cl=>(
-                  <div key={cl.id} style={{flex:1,background:'#fff',border:`2px solid ${keepId===cl.id?C.rosa:C.border}`,borderRadius:10,padding:12,transition:'border-color 0.15s'}}>
-                    <div style={{fontSize:13,fontWeight:600,color:C.ink,marginBottom:3}}>{cl.name}</div>
-                    <div style={{fontSize:11,color:C.gray}}>{cl.phone||'No phone'}</div>
-                    <div style={{fontSize:11,color:C.gray,marginBottom:6}}>{cl.email||'No email'}</div>
-                    <div style={{fontSize:10,color:C.gray,marginBottom:8}}>{cl.loyalty_points||0} pts · {cl.totalEvents||0} events</div>
-                    <button onClick={()=>{const other=cl.id===a.id?b:a;setKeepId(cl.id);setRemoveId(other.id);}}
-                      style={{width:'100%',padding:'5px',borderRadius:7,border:`1px solid ${keepId===cl.id?C.rosa:C.border}`,background:keepId===cl.id?C.rosaPale:'#fff',color:keepId===cl.id?C.rosa:C.gray,fontSize:11,fontWeight:600,cursor:'pointer'}}>
-                      {keepId===cl.id?'✓ Keeping':'Keep this one'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',gap:8,flexShrink:0}}>
-          <button onClick={onClose} style={{flex:1,padding:'9px',borderRadius:8,border:`1px solid ${C.border}`,background:'#fff',fontSize:13,cursor:'pointer',color:C.gray}}>Cancel</button>
-          <button onClick={doMerge} disabled={!keepId||!removeId||working}
-            style={{flex:2,padding:'9px',borderRadius:8,border:'none',background:keepId&&removeId?C.rosa:'#e5e7eb',color:keepId&&removeId?'#fff':C.gray,fontSize:13,fontWeight:600,cursor:keepId&&removeId?'pointer':'default'}}>
-            {working?'Merging…':'Merge & delete duplicate'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+// ─── (MergeDuplicatesModal removed — merge UI is inline in Clients component) ──
 
 // ─── Referral Tree ────────────────────────────────────────────────────────────
 function buildReferralTree(clients) {
@@ -791,6 +712,9 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
   const [search, setSearch] = useState('');
   const [showNew, setShowNew] = useState(false);
   const [showMerge, setShowMerge] = useState(false);
+  const [mergeGroups, setMergeGroups] = useState([]);
+  const [merging, setMerging] = useState(false);
+  const [selectedMerge, setSelectedMerge] = useState(null); // {keep: clientId, remove: clientId, groupIdx: number}
   const [showImport, setShowImport] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
   const [sortCol, setSortCol] = useState('name');
@@ -820,6 +744,39 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
   const anyBulkSelected = bulkSelected.size > 0;
   const toggleBulkSelect = (id) => setBulkSelected(s => { const n=new Set(s); n.has(id)?n.delete(id):n.add(id); return n; });
   const clearBulkSelection = () => setBulkSelected(new Set());
+
+  const findDuplicates = () => {
+    const phoneMap = {};
+    const emailMap = {};
+    const dupeGroups = [];
+    const seen = new Set();
+
+    (rawClients||[]).forEach(c => {
+      if (c.phone) {
+        const p = c.phone.replace(/\D/g,'');
+        if (p.length >= 7) {
+          if (!phoneMap[p]) phoneMap[p] = [];
+          phoneMap[p].push(c);
+        }
+      }
+      if (c.email) {
+        const e = c.email.toLowerCase().trim();
+        if (!emailMap[e]) emailMap[e] = [];
+        emailMap[e].push(c);
+      }
+    });
+
+    Object.values(phoneMap).filter(g=>g.length>1).forEach(g=>{
+      const key = g.map(c=>c.id).sort().join('-');
+      if (!seen.has(key)) { seen.add(key); dupeGroups.push({reason:'Same phone',clients:g}); }
+    });
+    Object.values(emailMap).filter(g=>g.length>1).forEach(g=>{
+      const key = g.map(c=>c.id).sort().join('-');
+      if (!seen.has(key)) { seen.add(key); dupeGroups.push({reason:'Same email',clients:g}); }
+    });
+
+    return dupeGroups;
+  };
 
   const bulkExportClients = () => {
     const rows = rawClients.filter(c=>bulkSelected.has(c.id)).map(c=>({
@@ -927,7 +884,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
             <button onClick={() => setShowTree(t => !t)} style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${showTree ? C.rosa : C.border}`, background: showTree ? C.rosaPale : '#fff', fontSize: 12, color: showTree ? C.rosa : C.gray, cursor: 'pointer', fontWeight: 500 }}>🌳 Referral tree</button>
           )}
           <button onClick={() => setShowBulk(true)} style={{padding:'7px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'#fff',fontSize:12,color:C.gray,cursor:'pointer',fontWeight:500}}>📣 Bulk message</button>
-          {mergeClients && <button onClick={() => setShowMerge(true)} style={{padding:'7px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'#fff',fontSize:12,color:C.gray,cursor:'pointer',fontWeight:500}}>⚡ Merge duplicates</button>}
+          <GhostBtn label="Find duplicates" onClick={() => { const groups = findDuplicates(); setMergeGroups(groups); setShowMerge(true); }} />
           <button onClick={() => setShowImport(true)} style={{padding:'7px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'#fff',fontSize:12,color:C.gray,cursor:'pointer',fontWeight:500}}>⬆ Import CSV</button>
           <PrimaryBtn label="+ New client" colorScheme="success" onClick={() => setShowNew(true)} />
         </div>
@@ -1314,13 +1271,76 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
           createClient={createClient}
         />
       )}
-      {showMerge && mergeClients && (
-        <MergeDuplicatesModal
-          clients={rawClients}
-          mergeClients={mergeClients}
-          toast={toast}
-          onClose={() => setShowMerge(false)}
-        />
+      {showMerge && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
+          <div style={{background:C.white,borderRadius:16,width:520,maxHeight:'88dvh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
+            <div style={{padding:'16px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+              <div>
+                <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Duplicate clients</span>
+                <div style={{fontSize:12,color:C.gray,marginTop:1}}>{mergeGroups.length} potential duplicate{mergeGroups.length!==1?'s':''} found</div>
+              </div>
+              <button onClick={()=>{setShowMerge(false);setSelectedMerge(null);}} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray}}>×</button>
+            </div>
+            <div style={{flex:1,overflowY:'auto',padding:'12px 20px',display:'flex',flexDirection:'column',gap:12}}>
+              {mergeGroups.length===0&&(
+                <div style={{textAlign:'center',padding:'32px 0'}}>
+                  <div style={{fontSize:32,marginBottom:8}}>✅</div>
+                  <div style={{fontSize:14,color:C.ink,fontWeight:500}}>No duplicates found</div>
+                  <div style={{fontSize:12,color:C.gray,marginTop:4}}>All clients have unique phone numbers and email addresses</div>
+                </div>
+              )}
+              {mergeGroups.map((group,gi)=>(
+                <div key={gi} style={{border:`1px solid ${C.border}`,borderRadius:10,padding:'12px 14px'}}>
+                  <div style={{fontSize:11,color:C.rosa,fontWeight:600,marginBottom:10,textTransform:'uppercase',letterSpacing:'0.05em'}}>{group.reason}</div>
+                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                    {group.clients.map(cl=>(
+                      <div key={cl.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:8,border:`2px solid ${selectedMerge?.keep===cl.id&&selectedMerge?.groupIdx===gi?C.rosa:C.border}`,cursor:'pointer',transition:'border-color 0.15s'}}
+                        onClick={()=>setSelectedMerge(prev=>{
+                          if(!prev||prev.groupIdx!==gi) return {keep:cl.id,remove:group.clients.find(c=>c.id!==cl.id)?.id,groupIdx:gi};
+                          if(prev.keep===cl.id) return null;
+                          return {keep:cl.id,remove:group.clients.find(c=>c.id!==cl.id)?.id,groupIdx:gi};
+                        })}>
+                        <div style={{width:34,height:34,borderRadius:'50%',background:C.rosaPale,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600,color:C.rosa,flexShrink:0}}>{cl.name?.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13,fontWeight:500,color:C.ink}}>{cl.name}</div>
+                          <div style={{fontSize:11,color:C.gray}}>{cl.phone} · {cl.email}</div>
+                        </div>
+                        {selectedMerge?.keep===cl.id&&selectedMerge?.groupIdx===gi&&(
+                          <span style={{fontSize:10,padding:'2px 8px',borderRadius:8,background:C.rosaPale,color:C.rosa,fontWeight:600}}>KEEP</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {selectedMerge?.groupIdx===gi&&selectedMerge.keep&&selectedMerge.remove&&(
+                    <button
+                      onClick={async()=>{
+                        if(!selectedMerge.keep||!selectedMerge.remove) return;
+                        setMerging(true);
+                        await supabase.from('events').update({client_id:selectedMerge.keep}).eq('client_id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
+                        await supabase.from('client_interactions').update({client_id:selectedMerge.keep}).eq('client_id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
+                        await supabase.from('client_tasks').update({client_id:selectedMerge.keep}).eq('client_id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
+                        await supabase.from('pipeline_leads').update({client_id:selectedMerge.keep}).eq('client_id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
+                        const removed = group.clients.find(c=>c.id===selectedMerge.remove);
+                        const kept = group.clients.find(c=>c.id===selectedMerge.keep);
+                        if(removed?.loyalty_points>0){
+                          await supabase.from('clients').update({loyalty_points:(kept?.loyalty_points||0)+(removed?.loyalty_points||0)}).eq('id',selectedMerge.keep).eq('boutique_id',clBoutique.id);
+                        }
+                        await supabase.from('clients').delete().eq('id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
+                        setMerging(false);
+                        setSelectedMerge(null);
+                        setMergeGroups(g=>g.filter((_,i)=>i!==gi));
+                        toast('Clients merged ✓');
+                      }}
+                      disabled={merging}
+                      style={{marginTop:10,width:'100%',padding:'8px',background:C.rosa,color:C.white,border:'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:500}}>
+                      {merging?'Merging…':'Merge — keep selected client'}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
       {/* Bulk SMS modal */}
       {showSmsModal && (

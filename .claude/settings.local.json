@@ -119,7 +119,8 @@
       "Bash(grep -r \"cloneEvent\\\\|duplicate.*event\" /c/Dev/novela/src --include=*.jsx --include=*.js)",
       "Bash(grep -r \"vendor.*tab\\\\|vendor.*section\\\\|EventDetail.*vendor\" /c/Dev/novela/src --include=*.jsx --include=*.js)",
       "Bash(grep -r \"SMS.*template\\\\|smsTemplate\" /c/Dev/novela/src --include=*.jsx --include=*.js)",
-      "Bash(grep -r \"stub\\\\|TODO\\\\|FIXME\\\\|coming.*soon\" /c/Dev/novela/src/pages --include=*.jsx)"
+      "Bash(grep -r \"stub\\\\|TODO\\\\|FIXME\\\\|coming.*soon\" /c/Dev/novela/src/pages --include=*.jsx)",
+      "Bash(grep -E \"\\\\.jsx$\")"
     ]
   }
 }

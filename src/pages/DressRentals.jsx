@@ -124,6 +124,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
   const rented=allGowns.filter(d=>d.status==='rented'||d.status==='picked_up');
   const overdueItems=rented.filter(d=>isOverdue(d)).sort((a,b)=>daysLate(b)-daysLate(a));
   const onTimeItems=rented.filter(d=>!isOverdue(d)).sort((a,b)=>daysUntilReturn(a)-daysUntilReturn(b));
+  const cleaningItems=allGowns.filter(d=>d.status==='cleaning').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   const reservedItems=allGowns.filter(d=>d.status==='reserved').sort((a,b)=>{
     const aD=a.pickup_date||a.pickupDate||'';
     const bD=b.pickup_date||b.pickupDate||'';
@@ -158,7 +159,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     const nowConfirmed=new Date().toISOString().slice(0,10);
     const prevStatus=d.status;
     await updateDress?.(d.id,{
-      status:'returned',
+      status:'cleaning',
       condition:data.condition||null,
       notes:data.notes||null,
       return_date_confirmed:nowConfirmed,
@@ -173,7 +174,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
         inventory_id:d.id,
         action:'checked_in',
         prev_status:prevStatus,
-        new_status:'returned',
+        new_status:'cleaning',
         user_name:boutique.name||'Staff',
         event_id:activeEvent?.id||null,
         client_name:clientName,
@@ -203,7 +204,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
       }
     }
 
-    toast('Return logged for #'+d.sku);
+    toast('Return logged for #'+d.sku+' — now in cleaning');
     setReturnDress(null);
   };
   const handlePickup=async(d,data)=>{
@@ -233,6 +234,33 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
   const handleMarkCleaned=async(d)=>{
     await updateDress?.(d.id,{status:'available'});
     toast('Dress #'+d.sku+' is now available');
+  };
+
+  const handleReturnReminder=async(item)=>{
+    const boutiqueName=boutique?.name||'Your boutique';
+    const returnDate=item.return_date
+      ?new Date(item.return_date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})
+      :'soon';
+    const msg=`Hi! This is a reminder that your dress rental from ${boutiqueName} is due for return on ${returnDate}. Please contact us if you need to make arrangements. Thank you! 💕`;
+    try{await navigator.clipboard.writeText(msg);}catch{}
+    if(item.client_id&&boutique?.id){
+      await supabase.from('client_interactions').insert({
+        boutique_id:boutique.id,
+        client_id:item.client_id,
+        type:'sms',
+        title:'Return reminder sent',
+        body:msg,
+        occurred_at:new Date().toISOString(),
+        is_editable:false,
+        author_name:'Staff',
+      });
+    }
+    toast('Reminder copied to clipboard ✓');
+  };
+
+  const handleMarkAvailable=async(itemId)=>{
+    await updateDress?.(itemId,{status:'available',last_cleaned:new Date().toISOString().slice(0,10)});
+    toast('Marked as available ✓');
   };
 
   // ── Item Audit History Modal ─────────────────────────────────────────────
@@ -477,6 +505,9 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
         <div style={{display:'flex',gap:6,flexShrink:0}} onClick={e=>e.stopPropagation()}>
           {(section==='overdue'||section==='rented')&&(
             <button onClick={()=>setReturnDress(d)} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${over?'var(--color-danger)':'var(--color-success)'}`,background:'transparent',color:over?'var(--color-danger)':'var(--color-success)',fontSize:11,fontWeight:500,cursor:'pointer'}}>Log return</button>
+          )}
+          {(section==='overdue'||section==='rented')&&(
+            <button onClick={()=>handleReturnReminder(d)} style={{padding:'6px 10px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,fontSize:11,cursor:'pointer'}} title="Copy SMS reminder to clipboard">📨 Remind</button>
           )}
           {(section==='overdue'||section==='rented')&&(
             <button onClick={()=>setDamageAssessDress(d)} style={{padding:'6px 10px',borderRadius:6,border:`1px solid ${C.red}`,background:C.redBg,color:C.red,fontSize:11,fontWeight:600,cursor:'pointer'}}>⚠ Damage</button>
@@ -1814,6 +1845,8 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
             overdueItems={overdueItems}
             onTimeItems={onTimeItems}
             reservedItems={reservedItems}
+            cleaningItems={cleaningItems}
+            handleMarkAvailable={handleMarkAvailable}
             RentalRow={RentalRow}
           />
         )}

@@ -439,6 +439,58 @@ function downloadApptIcs(appt, clientName, boutique) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+// Financial summary ring — rendered at top of overview tab
+function FinancialRing({ total, paid, milestones }) {
+  const t = Number(total) || 0;
+  const p = Number(paid) || 0;
+  const remaining = Math.max(0, t - p);
+  const overdue = (milestones||[]).filter(m=>m.status==='overdue').reduce((s,m)=>s+Number(m.amount||0),0);
+  const pct = t > 0 ? Math.min(100, Math.round((p/t)*100)) : (p>0?100:0);
+
+  // SVG ring params
+  const r = 38, cx = 44, cy = 44, circ = 2*Math.PI*r;
+  const dash = (pct/100)*circ;
+
+  return (
+    <div style={{background:C.white,border:`1px solid ${C.border}`,borderRadius:14,padding:'16px 20px',display:'flex',gap:20,alignItems:'center',marginBottom:12}}>
+      {/* Ring */}
+      <div style={{flexShrink:0,position:'relative',width:88,height:88}}>
+        <svg width={88} height={88} style={{transform:'rotate(-90deg)'}}>
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke={C.border} strokeWidth={8}/>
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke={overdue>0?'#EF4444':C.rosa} strokeWidth={8}
+            strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+            style={{transition:'stroke-dasharray 0.6s ease'}}/>
+        </svg>
+        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+          <span style={{fontSize:18,fontWeight:700,color:overdue>0?'#EF4444':C.ink,lineHeight:1}}>{pct}%</span>
+          <span style={{fontSize:9,color:C.gray,marginTop:1}}>paid</span>
+        </div>
+      </div>
+      {/* Numbers */}
+      <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontSize:12,color:C.gray}}>Total</span>
+          <span style={{fontSize:13,fontWeight:600,color:C.ink}}>{fmt(t)}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontSize:12,color:'#10B981'}}>Collected</span>
+          <span style={{fontSize:13,fontWeight:600,color:'#10B981'}}>{fmt(p)}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontSize:12,color:C.gray}}>Remaining</span>
+          <span style={{fontSize:13,fontWeight:500,color:C.inkMid||C.gray}}>{fmt(remaining)}</span>
+        </div>
+        {overdue>0&&(
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'#FEF2F2',borderRadius:6,padding:'4px 8px',marginTop:2}}>
+            <span style={{fontSize:12,color:'#DC2626',fontWeight:500}}>⚠ Overdue</span>
+            <span style={{fontSize:13,fontWeight:700,color:'#DC2626'}}>{fmt(overdue)}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,deleteEvent,markPaid,createMilestone,deleteMilestone,createJob,updateJob,updateClient,updateDress,staff=[],inventory=[],logRefund,logTip,refunds=[]}) => {
   const toast = useToast();
   const { myRole, boutique, session } = useAuth();
@@ -1289,6 +1341,8 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
           const typeInfo = EVT_TYPES[ev.type] || { label: ev.type, icon: '📅' };
           return (
             <div style={{padding:'20px 20px 32px',maxWidth:900,margin:'0 auto'}}>
+              {/* ── Financial summary ring ── */}
+              <FinancialRing total={ev.total} paid={ev.paid} milestones={milestones}/>
               {/* ── Two-column overview grid ── */}
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))',gap:16,marginBottom:16}}>
                 {/* Left: Event info card */}

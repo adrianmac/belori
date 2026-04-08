@@ -2045,6 +2045,7 @@ const Settings = ({boutique, initialTab, setScreen}) => {
   const [automations,setAutomations]=useState(()=>({...DEFAULT_AUTOMATIONS,...(boutique?.automations||{})}));
   useEffect(()=>{if(boutique?.automations) setAutomations(a=>({...DEFAULT_AUTOMATIONS,...boutique.automations}));},[boutique?.id]);
   const toggle=(k)=>setAutomations(a=>({...a,[k]:!a[k]}));
+  const handleAutomationsChange=(patch)=>setAutomations(a=>({...a,...patch}));
   // ── Loyalty Tiers state ─────────────────────────────────────────
   const DEFAULT_LOYALTY_TIERS_SETTINGS=[
     {name:'Bronze',  min_points:0,    color:'#cd7f32',perks:['Priority booking']},
@@ -2826,6 +2827,68 @@ const Settings = ({boutique, initialTab, setScreen}) => {
               <LanguageToggle/>
               <CurrencySelector/>
               <KioskModeCard/>
+              <Card>
+                <CardHead title="Appointment defaults"/>
+                <div style={{padding:'0 16px 16px',display:'flex',flexDirection:'column',gap:12}}>
+                  <div>
+                    <div style={{...LBL}}>Default appointment duration</div>
+                    <select value={automations.appointmentDuration||60} onChange={e=>handleAutomationsChange({appointmentDuration:Number(e.target.value)})} style={{...inputSt}}>
+                      <option value={30}>30 minutes</option>
+                      <option value={45}>45 minutes</option>
+                      <option value={60}>1 hour</option>
+                      <option value={90}>1.5 hours</option>
+                      <option value={120}>2 hours</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div style={{...LBL}}>Booking buffer (time between appointments)</div>
+                    <select value={automations.bookingBuffer||15} onChange={e=>handleAutomationsChange({bookingBuffer:Number(e.target.value)})} style={{...inputSt}}>
+                      <option value={0}>No buffer</option>
+                      <option value={15}>15 minutes</option>
+                      <option value={30}>30 minutes</option>
+                      <option value={60}>1 hour</option>
+                    </select>
+                  </div>
+                </div>
+              </Card>
+              <Card>
+                <CardHead title="Business hours" sub="Shown on your booking page"/>
+                <div style={{padding:'0 16px 16px',display:'flex',flexDirection:'column',gap:8}}>
+                  {['mon','tue','wed','thu','fri','sat','sun'].map(day=>{
+                    const LABELS={mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'};
+                    const h=(automations.businessHours||{})[day]||{open:'09:00',close:day==='sat'?'17:00':'18:00',enabled:day!=='sun'};
+                    return (
+                      <div key={day} style={{display:'flex',alignItems:'center',gap:12}}>
+                        <label style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',minWidth:90}}>
+                          <input type="checkbox" checked={!!h.enabled} onChange={e=>{
+                            const bh={...(automations.businessHours||{}),[day]:{...h,enabled:e.target.checked}};
+                            handleAutomationsChange({businessHours:bh});
+                          }}/>
+                          <span style={{fontSize:13,color:C.ink,fontWeight:h.enabled?500:400}}>{LABELS[day]}</span>
+                        </label>
+                        {h.enabled?(
+                          <div style={{display:'flex',gap:8,alignItems:'center',flex:1}}>
+                            <input type="time" value={h.open||'09:00'} onChange={e=>{
+                              const bh={...(automations.businessHours||{}),[day]:{...h,open:e.target.value}};
+                              handleAutomationsChange({businessHours:bh});
+                            }} style={{...inputSt,flex:1,padding:'5px 8px',fontSize:12}}/>
+                            <span style={{fontSize:12,color:C.gray}}>to</span>
+                            <input type="time" value={h.close||'18:00'} onChange={e=>{
+                              const bh={...(automations.businessHours||{}),[day]:{...h,close:e.target.value}};
+                              handleAutomationsChange({businessHours:bh});
+                            }} style={{...inputSt,flex:1,padding:'5px 8px',fontSize:12}}/>
+                          </div>
+                        ):(
+                          <span style={{fontSize:12,color:C.gray}}>Closed</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{padding:'0 16px 16px'}}>
+                  <PrimaryBtn label={autoSaving?'Saving…':'Save scheduling'} colorScheme="success" onClick={saveAutomations}/>
+                </div>
+              </Card>
             </>
           )}
 

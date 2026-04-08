@@ -638,6 +638,8 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
   const [bulkWorking, setBulkWorking] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showQuickPay, setShowQuickPay] = useState(false);
+  const [bulkSelected, setBulkSelected] = useState(new Set());
+  const [bulkSending, setBulkSending] = useState(false);
 
   const filtered = tab === 'all' ? allPayments : allPayments.filter(p => p.status === tab);
   const totalOverdue = allPayments.filter(p => p.status === 'overdue').reduce((s, p) => s + p.amount, 0);
@@ -689,6 +691,41 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
     toast(`Reminders logged for ${overdue.length} client${overdue.length !== 1 ? 's' : ''} ✓`);
   };
 
+  const selectAllOverdue = () => {
+    const overdueIds = allPayments.filter(p => p.status === 'overdue').map(p => p.id);
+    setBulkSelected(new Set(overdueIds));
+  };
+
+  const handleBulkReminder = async () => {
+    if (!bulkSelected.size) return;
+    setBulkSending(true);
+    const selectedMilestones = allPayments.filter(m => bulkSelected.has(m.id));
+    let sent = 0;
+    for (const m of selectedMilestones) {
+      const eventData = events?.find(e => e.id === m.event_id);
+      if (eventData?.client_id) {
+        await supabase.from('client_interactions').insert({
+          boutique_id: boutique.id,
+          client_id: eventData.client_id,
+          type: 'sms',
+          title: `Payment reminder sent — ${m.label}`,
+          body: `Reminder sent for ${fmt(Number(m.amount))} due ${m.due_date}`,
+          occurred_at: new Date().toISOString(),
+          is_editable: false,
+          author_name: 'System',
+        });
+      }
+      await supabase.from('payment_milestones')
+        .update({ last_reminded_at: new Date().toISOString() })
+        .eq('id', m.id)
+        .eq('boutique_id', boutique.id);
+      sent++;
+    }
+    setBulkSending(false);
+    setBulkSelected(new Set());
+    toast(`Reminders logged for ${sent} milestone${sent !== 1 ? 's' : ''}`);
+  };
+
   // Group milestones by event_id to detect "payment plan" events (≥3 unpaid on same event)
   const planEventIds = useMemo(() => {
     const counts = {};
@@ -733,15 +770,41 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
           </div>
         ))}
       </div>
-      <div style={{display:'flex',gap:8,padding:'10px 20px',background:C.white,borderBottom:`1px solid ${C.border}`}}>
+      <div style={{display:'flex',gap:8,padding:'10px 20px',background:C.white,borderBottom:`1px solid ${C.border}`,alignItems:'center',flexWrap:'wrap'}}>
         {['all','overdue','pending','paid','aging'].map(t => (
           <button key={t} onClick={()=>setTab(t)}
             style={{fontSize:12,padding:'5px 14px',borderRadius:999,border:`1px solid ${tab===t?C.rosa:C.border}`,background:tab===t?C.rosaPale:'transparent',color:tab===t?C.rosa:C.gray,cursor:'pointer',textTransform:'capitalize'}}>
             {t === 'all' ? 'All payments' : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
+        {allPayments.some(p => p.status === 'overdue') && (
+          <button
+            onClick={selectAllOverdue}
+            style={{marginLeft:'auto',fontSize:12,padding:'5px 14px',borderRadius:999,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,cursor:'pointer',fontWeight:500,whiteSpace:'nowrap'}}>
+            Select all overdue
+          </button>
+        )}
       </div>
-      {/* (bulk bar moved to floating pill below) */}
+      {/* ── Bulk reminder sticky bar ─────────────────────────────────── */}
+      {bulkSelected.size > 0 && (
+        <div style={{
+          position:'sticky',top:0,zIndex:10,
+          background:'#1C1012',color:C.white,
+          padding:'10px 16px',
+          display:'flex',alignItems:'center',justifyContent:'space-between',
+          borderRadius:10,margin:'0 20px 0 20px',marginTop:8,
+          boxShadow:'0 4px 12px rgba(0,0,0,0.15)'
+        }}>
+          <span style={{fontSize:13}}>{bulkSelected.size} milestone{bulkSelected.size!==1?'s':''} selected</span>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={()=>setBulkSelected(new Set())} style={{background:'rgba(255,255,255,0.15)',border:'none',color:C.white,padding:'5px 12px',borderRadius:6,cursor:'pointer',fontSize:12}}>Clear</button>
+            <button onClick={handleBulkReminder} disabled={bulkSending} style={{background:C.rosa,border:'none',color:C.white,padding:'5px 14px',borderRadius:6,cursor:'pointer',fontSize:12,fontWeight:500,opacity:bulkSending?0.7:1}}>
+              {bulkSending?'Sending…':'📨 Send reminders'}
+            </button>
+          </div>
+        </div>
+      )}
+      {/* (bulk mark-paid/export bar is the floating pill below) */}
       {/* ── Aging AR Breakdown (summary strip — hidden on Aging tab) ───── */}
       {tab !== 'aging' && (() => {
         const today = new Date();
@@ -908,7 +971,14 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
                 onMouseLeave={e=>{if(!selected.has(p.id))e.currentTarget.style.background=p.status==='overdue'?'#FEF2F2':'transparent';}}>
                 <td style={{padding:'var(--row-padding)',paddingRight:4}} onClick={e=>e.stopPropagation()}>
                   {p.status !== 'paid' && (
-                    <input type="checkbox" checked={selected.has(p.id)} onChange={()=>toggleSelect(p.id)}
+                    <input type="checkbox"
+                      checked={selected.has(p.id)}
+                      onChange={()=>{
+                        toggleSelect(p.id);
+                        if (p.status === 'overdue' || p.status === 'pending') {
+                          setBulkSelected(s => { const n = new Set(s); n.has(p.id) ? n.delete(p.id) : n.add(p.id); return n; });
+                        }
+                      }}
                       style={{cursor:'pointer',width:14,height:14,accentColor:C.rosa}}/>
                   )}
                 </td>

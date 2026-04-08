@@ -293,7 +293,7 @@ const CollapsibleSection = ({ sectionKey, label, items, screen, setScreen, open,
 };
 
 // ─── SIDEBAR (full desktop) ───────────────────────────────────────────────────
-const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique, onSignOut, badges = {}, onSearch, alertCount = 0, onAlerts, myRole = 'owner', focusMode = false, onToggleFocus }) => {
+const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique, onSignOut, badges = {}, onSearch, alertCount = 0, onAlerts, myRole = 'owner', focusMode = false, onToggleFocus, onShortcuts }) => {
   const { isEnabled } = useModules();
   const { t } = useI18n();
   const toggleFocus = onToggleFocus;
@@ -449,6 +449,18 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
           <span style={{ fontSize: 14 }}>{focusMode ? '⚡' : '◎'}</span>
           <span style={{ flex: 1, textAlign: 'left' }}>{focusMode ? 'Exit Focus Mode' : 'Focus Mode'}</span>
           <span style={{ fontSize: 9, opacity: 0.5 }}>{focusMode ? 'ON' : 'OFF'}</span>
+        </button>
+
+        {/* Keyboard shortcuts help button */}
+        <button
+          onClick={() => onShortcuts && onShortcuts()}
+          style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:13,padding:'4px 6px',borderRadius:6,display:'flex',alignItems:'center',gap:6,width:'100%',minHeight:'unset',minWidth:'unset'}}
+          title="Keyboard shortcuts (?)"
+          onMouseEnter={e=>{e.currentTarget.style.background=C.grayBg;e.currentTarget.style.color=C.ink;}}
+          onMouseLeave={e=>{e.currentTarget.style.background='none';e.currentTarget.style.color=C.gray;}}
+        >
+          <span style={{width:18,height:18,borderRadius:'50%',border:`1.5px solid currentColor`,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0}}>?</span>
+          <span style={{fontSize:11}}>Keyboard shortcuts</span>
         </button>
 
         {/* Account row */}

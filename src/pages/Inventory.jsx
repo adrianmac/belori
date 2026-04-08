@@ -206,7 +206,8 @@ const AddItemModal = ({onClose,onCreate,boutique}) => {
     const payload={sku,name,category:catId,group:cat.group,color,size:sizeOrDim,track:tracking,price:Number(price)||0,deposit:Number(deposit)||0,status:'available',notes,condition,
       ...(final_image_url?{image_url:final_image_url,photo_url:final_image_url}:{}),
       ...(tracking==='quantity'?{totalQty:Number(totalQty)||1,availQty:Number(totalQty)||1,reservedQty:0,outQty:0,dmgQty:0,minStock:Number(minStock)||1}:{}),
-      ...(tracking==='consumable'?{currentStock:Number(currentStock)||0,restockPoint:Number(restockPoint)||0,restockQty:Number(restockQty)||0,unit}:{})};
+      ...(tracking==='consumable'?{currentStock:Number(currentStock)||0,restockPoint:Number(restockPoint)||0,restockQty:Number(restockQty)||0,unit}:{}),
+      ...(tracking!=='consumable'&&restockPoint?{restockPoint:Number(restockPoint)}:{})};
     const res=await onCreate?.(payload);
     if(res?.error)setErr(res.error.message||'Could not add item');
     else onClose();
@@ -329,6 +330,11 @@ const AddItemModal = ({onClose,onCreate,boutique}) => {
               <div><div style={LBL}>Deposit</div><input type="number" value={deposit} onChange={e=>setDeposit(e.target.value)} placeholder="100" style={inputSt}/></div>
               <div><div style={LBL}>Replacement cost</div><input type="number" value={replaceCost} onChange={e=>setReplaceCost(e.target.value)} placeholder="800" style={inputSt}/></div>
             </div>
+            <div style={{marginTop:10}}>
+              <div style={{...LBL}}>Restock alert at <span style={{fontWeight:400,color:C.gray}}>(optional)</span></div>
+              <input type="number" min="0" value={restockPoint||''} onChange={e=>setRestockPoint(e.target.value)} placeholder="e.g. 2" style={{...inputSt}}/>
+              <div style={{fontSize:11,color:C.gray,marginTop:3}}>Alert when available quantity falls to or below this number</div>
+            </div>
           </>)}
 
           {/* Condition */}
@@ -412,7 +418,8 @@ const EditItemModal = ({item, onClose, onUpdate}) => {
     const updates={sku,name,category:catId,group:cat.group,color,size:sizeOrDim,track:tracking,
       price:Number(price)||0,deposit:Number(deposit)||0,notes,condition,image_url,
       ...(tracking==='quantity'?{totalQty:Number(totalQty)||1,availQty:Number(totalQty)||1,minStock:Number(minStock)||1}:{}),
-      ...(tracking==='consumable'?{currentStock:Number(currentStock)||0,restockPoint:Number(restockPoint)||0,restockQty:Number(restockQty)||0,unit}:{})};
+      ...(tracking==='consumable'?{currentStock:Number(currentStock)||0,restockPoint:Number(restockPoint)||0,restockQty:Number(restockQty)||0,unit}:{}),
+      ...(tracking!=='consumable'?{restockPoint:restockPoint?Number(restockPoint):null}:{})};
     const res=await onUpdate?.(item.id, updates);
     if(res?.error)setErr(res.error.message||'Could not update item');
     else onClose();
@@ -502,6 +509,11 @@ const EditItemModal = ({item, onClose, onUpdate}) => {
               <div><div style={LBL}>Rental price</div><input type="number" value={price} onChange={e=>setPrice(e.target.value)} style={inputSt}/></div>
               <div><div style={LBL}>Deposit</div><input type="number" value={deposit} onChange={e=>setDeposit(e.target.value)} style={inputSt}/></div>
               <div><div style={LBL}>Replacement cost</div><input type="number" value={replaceCost} onChange={e=>setReplaceCost(e.target.value)} style={inputSt}/></div>
+            </div>
+            <div style={{marginTop:10}}>
+              <div style={{...LBL}}>Restock alert at <span style={{fontWeight:400,color:C.gray}}>(optional)</span></div>
+              <input type="number" min="0" value={restockPoint||''} onChange={e=>setRestockPoint(e.target.value)} placeholder="e.g. 2" style={{...inputSt}}/>
+              <div style={{fontSize:11,color:C.gray,marginTop:3}}>Alert when available quantity falls to or below this number</div>
             </div>
           </>)}
 
@@ -901,6 +913,12 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
     (d.track==='consumable'&&d.currentStock!=null&&d.currentStock<=d.minStock)
   )).length;
 
+  const lowStockItems=allData.filter(item=>{
+    const stock=item.availQty??item.currentStock??0;
+    const threshold=item.restockPoint||item.minStock||0;
+    return threshold>0&&stock<=threshold;
+  });
+
   const filtered=allData.filter(d=>{
     const q=(d.name+' '+d.sku+' '+(d.color||'')).toLowerCase();
     const matchesSearch=!search||q.includes(search.toLowerCase());
@@ -1034,6 +1052,7 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
           <div style={{fontSize:11,color:C.gray,marginBottom:6}}>{[d.color,d.size?`Size ${d.size}`:'',INV_CATS.find(c=>c.id===d.cat)?.label||d.cat].filter(Boolean).join(' · ')}</div>
           {d.minStock>0&&d.currentStock!=null&&d.currentStock<=0&&<span style={{fontSize:10,background:'#FEE2E2',color:'#DC2626',padding:'2px 6px',borderRadius:4,fontWeight:600,display:'inline-block',marginBottom:4}}>✕ Out of stock</span>}
           {d.minStock>0&&d.currentStock!=null&&d.currentStock>0&&d.currentStock<=d.minStock&&<span style={{fontSize:10,background:'#FEF2F2',color:'#DC2626',padding:'2px 6px',borderRadius:4,fontWeight:600,display:'inline-block',marginBottom:4}}>⚠ Low stock</span>}
+          {(()=>{const stock=d.availQty??d.currentStock??0;const threshold=d.restockPoint||d.minStock||0;if(threshold>0&&stock<=threshold&&d.track==='individual'){return<span style={{fontSize:10,padding:'1px 6px',borderRadius:8,background:'#FEF3C7',color:'#92400E',fontWeight:600,display:'inline-block',marginBottom:4,marginLeft:0}}>Low stock</span>;}return null;})()}
           {d.track!=='consumable'&&<div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:8}}>
             <span style={{color:C.ink,fontWeight:500}}>{fmt(d.price||0)}<span style={{color:C.gray,fontWeight:400}}>/rental</span></span>
             {d.deposit>0&&<span style={{color:C.gray}}>Dep: {fmt(d.deposit||0)}</span>}
@@ -1081,7 +1100,7 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
             ?<><span style={{fontSize:12,color:d.currentStock<=d.restockPoint?'var(--color-danger)':C.ink}}>{d.currentStock} {d.unit}s</span>
               {d.minStock>0&&d.currentStock!=null&&d.currentStock<=0&&<span style={{fontSize:10,background:'#FEE2E2',color:'#DC2626',padding:'1px 5px',borderRadius:4,fontWeight:600}}>✕ Out</span>}
               {d.minStock>0&&d.currentStock!=null&&d.currentStock>0&&d.currentStock<=d.minStock&&<span style={{fontSize:10,background:'#FEF2F2',color:'#DC2626',padding:'1px 5px',borderRadius:4,fontWeight:600}}>⚠ Low</span>}</>
-            :<Badge text={s.label} bg={s.bg} color={s.col}/>}
+            :(()=>{const stock=d.availQty??d.currentStock??0;const threshold=d.restockPoint||d.minStock||0;return<><Badge text={s.label} bg={s.bg} color={s.col}/>{threshold>0&&stock<=threshold&&<span style={{fontSize:10,padding:'1px 6px',borderRadius:8,background:'#FEF3C7',color:'#92400E',fontWeight:600,marginLeft:4}}>Low stock</span>}</>;})()}
         </div>
         <div style={{...colBase,width:80,fontSize:12,color:C.ink,whiteSpace:'nowrap'}}>{d.track==='consumable'?'—':fmt(d.price||0)}</div>
         <div style={{...colBase,flex:1,fontSize:11,color:C.gray}}>{d.client?.name||d.client||''}{d.track==='consumable'&&d.currentStock<=d.restockPoint?<span style={{color:'var(--color-warning)'}}>Restock needed</span>:''}</div>
@@ -1150,6 +1169,19 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
 
       {/* ══ INVENTORY VIEW ══ */}
       {mainView==='inventory'&&<>
+
+      {/* Low stock restock banner */}
+      {lowStockItems.length>0&&!lowStockBannerDismissed&&(
+        <div style={{margin:'0 16px',marginTop:12,marginBottom:0,background:'#FEF3C7',border:'1px solid #FDE68A',borderRadius:10,padding:'10px 14px',display:'flex',alignItems:'center',gap:10}}>
+          <span style={{fontSize:16}}>⚠️</span>
+          <div style={{flex:1}}>
+            <span style={{fontSize:13,fontWeight:600,color:'#92400E'}}>{lowStockItems.length} item{lowStockItems.length!==1?'s':''} below restock level</span>
+            <div style={{fontSize:11,color:'#92400E',marginTop:1}}>{lowStockItems.slice(0,3).map(i=>i.name).join(', ')}{lowStockItems.length>3?` +${lowStockItems.length-3} more`:''}</div>
+          </div>
+          <button onClick={()=>{setLowStockFilter(true);setLowStockBannerDismissed(true);}} style={{padding:'4px 12px',borderRadius:6,border:'1px solid #FCD34D',background:'#FDE68A',color:'#92400E',fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>Filter →</button>
+          <button onClick={()=>setLowStockBannerDismissed(true)} style={{background:'none',border:'none',fontSize:16,color:'#92400E',cursor:'pointer',lineHeight:1,padding:'0 2px'}}>×</button>
+        </div>
+      )}
 
       {/* Attention banner */}
       {attention.length>0&&(

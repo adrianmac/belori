@@ -22,6 +22,7 @@ import UpgradeModal from "../components/UpgradeModal";
 import PageErrorBoundary from "../components/PageErrorBoundary.jsx";
 import GlobalSearch from "../components/GlobalSearch.jsx";
 import NotificationCenter, { useAlertCount } from "../components/NotificationCenter.jsx";
+import KeyboardShortcutsModal from "../components/KeyboardShortcutsModal.jsx";
 import Dashboard from "./Dashboard";
 import {
   MeasurementsScreen, VendorsScreen, DressCatalogScreen, FBBeoScreen,
@@ -401,7 +402,7 @@ export default function NovelApp() {
       '--brand-primary': boutique?.primary_color || '#C9697A',
       '--brand-pale': hexToPale(boutique?.primary_color || '#C9697A'),
     }}>
-      <Sidebar screen={screen} setScreen={goScreen} boutique={boutique} boutiques={boutiques} onSwitchBoutique={switchBoutique} onSignOut={signOut} badges={sidebarBadges} onSearch={()=>setShowSearch(true)} alertCount={alertCount} onAlerts={()=>setShowAlerts(s=>!s)} myRole={myRole} focusMode={focusMode} onToggleFocus={toggleFocus}/>
+      <Sidebar screen={screen} setScreen={goScreen} boutique={boutique} boutiques={boutiques} onSwitchBoutique={switchBoutique} onSignOut={signOut} badges={sidebarBadges} onSearch={()=>setShowSearch(true)} alertCount={alertCount} onAlerts={()=>setShowAlerts(s=>!s)} myRole={myRole} focusMode={focusMode} onToggleFocus={toggleFocus} onShortcuts={()=>setShowShortcuts(s=>!s)}/>
       <IconRail screen={screen} setScreen={goScreen} onSignOut={signOut} boutique={boutique} boutiques={boutiques} onSwitchBoutique={switchBoutique} badges={sidebarBadges} onSearch={()=>setShowSearch(true)} myRole={myRole}/>
       <div className="belori-main" style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',minHeight:0}}>
         <TrialBanner setScreen={goScreen}/>
@@ -429,7 +430,7 @@ export default function NovelApp() {
           <NotificationCenter events={events} payments={payments} inventory={inventory} setScreen={setScreen} setSelectedEvent={setSelectedEvent} onClose={()=>setShowAlerts(false)}/>
         </div>
       )}
-      {showShortcuts&&<ShortcutsHint onClose={()=>setShowShortcuts(false)}/>}
+      {showShortcuts&&<KeyboardShortcutsModal onClose={()=>setShowShortcuts(false)}/>}
       {upgradeModal&&<UpgradeModal feature={upgradeModal.feature} minPlan={upgradeModal.minPlan} onClose={()=>setUpgradeModal(null)}/>}
       <QuickActionFAB setScreen={goScreen}/>
     </div>

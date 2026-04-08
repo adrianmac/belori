@@ -277,9 +277,10 @@ function buildRuleInsights({ payments, events, inventory, clients }) {
     });
   }
 
-  // Low stock consumables
+  // Low stock consumables + any item with minStock set
   const lowStock = (inventory || []).filter(i =>
-    i.track === 'consumable' && i.restockPoint > 0 && i.currentStock <= i.restockPoint
+    (i.track === 'consumable' && i.restockPoint > 0 && i.currentStock <= i.restockPoint) ||
+    (i.minStock > 0 && (i.availQty||i.currentStock||0) <= i.minStock)
   );
   if (lowStock.length > 0) {
     insights.push({
@@ -372,152 +373,64 @@ const AIInsightsPanel = ({ payments, events, inventory, clients, setScreen }) =>
 };
 
 // ─── REVENUE FORECAST PANEL ──────────────────────────────────────────────────
-const RevenueForecastPanel = () => {
-  const { boutique } = useAuth();
-  const [milestones, setMilestones] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [hoveredBar, setHoveredBar] = useState(null);
-
-  useEffect(() => {
-    if (!boutique?.id) return;
-    const now = new Date();
-    const d90 = new Date(now.getTime() + 90 * 86400000).toISOString().split('T')[0];
-    const today = now.toISOString().split('T')[0];
-
-    supabase
-      .from('payment_milestones')
-      .select('id, amount, due_date, status')
-      .eq('boutique_id', boutique.id)
-      .neq('status', 'paid')
-      .gte('due_date', today)
-      .lte('due_date', d90)
-      .then(({ data }) => {
-        setMilestones(data || []);
-        setLoading(false);
-      });
-  }, [boutique?.id]);
-
-  // Compute period sums
+function RevenueForecastPanel({ payments }) {
   const now = new Date();
-  const today = now.toISOString().split('T')[0];
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString().slice(0,10);
+  const lastMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0,10);
+  const today = now.toISOString().slice(0,10);
+  const d30   = new Date(now.getTime()+30*86400000).toISOString().slice(0,10);
+  const d60   = new Date(now.getTime()+60*86400000).toISOString().slice(0,10);
+  const d90   = new Date(now.getTime()+90*86400000).toISOString().slice(0,10);
 
-  function sumInDays(days) {
-    const cutoff = new Date(now.getTime() + days * 86400000).toISOString().split('T')[0];
-    return milestones.filter(m => m.due_date >= today && m.due_date <= cutoff);
-  }
+  const pmt = payments || [];
+  const thisMonth = pmt.filter(p=>p.status==='paid'&&p.paid_date>=thisMonthStart).reduce((s,p)=>s+Number(p.amount||0),0);
+  const lastMonth = pmt.filter(p=>p.status==='paid'&&p.paid_date>=lastMonthStart&&p.paid_date<=lastMonthEnd).reduce((s,p)=>s+Number(p.amount||0),0);
+  const next30 = pmt.filter(p=>p.status!=='paid'&&p.due_date>=today&&p.due_date<=d30).reduce((s,p)=>s+Number(p.amount||0),0);
+  const next60 = pmt.filter(p=>p.status!=='paid'&&p.due_date>d30&&p.due_date<=d60).reduce((s,p)=>s+Number(p.amount||0),0);
+  const next90 = pmt.filter(p=>p.status!=='paid'&&p.due_date>d60&&p.due_date<=d90).reduce((s,p)=>s+Number(p.amount||0),0);
 
-  const p30 = sumInDays(30);
-  const p60 = sumInDays(60);
-  const p90 = sumInDays(90);
-
-  // Build 12-week bars
-  const weeks = Array.from({ length: 12 }, (_, i) => {
-    const start = new Date(now.getTime() + i * 7 * 86400000);
-    const end = new Date(now.getTime() + (i + 1) * 7 * 86400000);
-    const startStr = start.toISOString().split('T')[0];
-    const endStr = end.toISOString().split('T')[0];
-    const label = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const items = milestones.filter(m => m.due_date >= startStr && m.due_date < endStr);
-    const total = items.reduce((s, m) => s + Number(m.amount || 0), 0);
-    return { label, total, count: items.length };
-  });
-
-  const maxWeekTotal = Math.max(...weeks.map(w => w.total), 1);
-
-  const PERIOD_CARDS = [
-    { label: 'Next 30 days', items: p30 },
-    { label: 'Next 60 days', items: p60 },
-    { label: 'Next 90 days', items: p90 },
-  ];
+  const trend = lastMonth > 0 ? ((thisMonth - lastMonth) / lastMonth) * 100 : null;
+  const trendUp = trend !== null && trend >= 0;
 
   return (
     <Card>
-      <div style={{ padding: '14px 16px 6px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>Revenue Forecast</span>
-        <span style={{ fontSize: 11, color: C.gray, background: C.grayBg, border: `1px solid ${C.border}`, borderRadius: 6, padding: '2px 7px' }}>Based on upcoming payment milestones</span>
-      </div>
-
-      {loading ? (
-        <div style={{ padding: '24px 16px', textAlign: 'center', color: C.gray, fontSize: 13 }}>Loading forecast…</div>
-      ) : (
-        <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* 3 forecast cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-            {PERIOD_CARDS.map((pc, i) => {
-              const total = pc.items.reduce((s, m) => s + Number(m.amount || 0), 0);
-              const intensity = i / 2; // 0, 0.5, 1
-              const bg = `hsl(${348 - intensity * 10}, ${65 + intensity * 10}%, ${97 - intensity * 4}%)`;
-              const col = `hsl(${348 - intensity * 10}, ${55 + intensity * 5}%, ${42 - intensity * 6}%)`;
-              return (
-                <div key={i} style={{ background: bg, border: `1px solid ${C.rosaLight}`, borderRadius: 10, padding: '12px 14px' }}>
-                  <div style={{ fontSize: 11, color: col, fontWeight: 500, marginBottom: 4 }}>{pc.label}</div>
-                  <div style={{ fontSize: 22, fontWeight: 600, color: C.ink, lineHeight: 1 }}>{fmt(total)}</div>
-                  <div style={{ fontSize: 11, color: C.gray, marginTop: 4 }}>{pc.items.length} milestone{pc.items.length !== 1 ? 's' : ''}</div>
-                </div>
-              );
-            })}
+      <CardHead title="Revenue" sub="collected & forecast"/>
+      <div style={{padding:'0 16px 16px',display:'flex',flexDirection:'column',gap:12}}>
+        {/* This month vs last */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <div style={{background:C.rosaPale,borderRadius:10,padding:'10px 12px'}}>
+            <div style={{fontSize:10,color:C.rosa,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>This month</div>
+            <div style={{fontSize:18,fontWeight:700,color:C.ink}}>{fmt(thisMonth)}</div>
+            {trend!==null&&<div style={{fontSize:11,color:trendUp?'#10B981':'#EF4444',marginTop:2}}>{trendUp?'↑':'↓'} {Math.abs(Math.round(trend))}% vs last month</div>}
           </div>
-
-          {/* Bar chart — 12 weeks */}
-          <div>
-            <div style={{ fontSize: 11, color: C.gray, marginBottom: 8, fontWeight: 500 }}>Weekly breakdown (next 12 weeks)</div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 110, position: 'relative', overflow: 'visible' }}>
-              {weeks.map((w, i) => {
-                const heightPct = maxWeekTotal > 0 ? (w.total / maxWeekTotal) * 100 : 0;
-                const barH = Math.max(heightPct * 0.8, w.total > 0 ? 4 : 1);
-                const intensity = i / 11;
-                const barBg = w.total === 0
-                  ? C.border
-                  : `hsl(${348 - intensity * 15}, ${60 + intensity * 20}%, ${70 - intensity * 25}%)`;
-                const isHovered = hoveredBar === i;
-
-                return (
-                  <div
-                    key={i}
-                    style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%', position: 'relative', cursor: w.total > 0 ? 'pointer' : 'default' }}
-                    onMouseEnter={() => w.total > 0 && setHoveredBar(i)}
-                    onMouseLeave={() => setHoveredBar(null)}
-                  >
-                    {/* Tooltip */}
-                    {isHovered && (
-                      <div style={{
-                        position: 'absolute', bottom: barH + 6, left: '50%', transform: 'translateX(-50%)',
-                        background: C.ink, color: C.white, fontSize: 10, fontWeight: 500,
-                        padding: '4px 7px', borderRadius: 5, whiteSpace: 'nowrap', zIndex: 10,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                        pointerEvents: 'none',
-                      }}>
-                        {fmt(w.total)}
-                        <div style={{ fontSize: 9, color: C.rosaLight, textAlign: 'center' }}>{w.count} due</div>
-                      </div>
-                    )}
-                    <div style={{
-                      width: '100%',
-                      height: `${barH}%`,
-                      background: barBg,
-                      borderRadius: '3px 3px 0 0',
-                      transition: 'background 0.15s, transform 0.1s',
-                      transform: isHovered ? 'scaleY(1.04)' : 'scaleY(1)',
-                      transformOrigin: 'bottom',
-                    }} />
-                  </div>
-                );
-              })}
-            </div>
-            {/* X-axis labels — show every 3rd to avoid crowding */}
-            <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-              {weeks.map((w, i) => (
-                <div key={i} style={{ flex: 1, textAlign: 'center', fontSize: 9, color: C.gray, overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                  {i % 3 === 0 ? w.label : ''}
-                </div>
-              ))}
-            </div>
+          <div style={{background:C.grayBg,borderRadius:10,padding:'10px 12px'}}>
+            <div style={{fontSize:10,color:C.gray,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Last month</div>
+            <div style={{fontSize:18,fontWeight:700,color:C.inkMid||C.ink}}>{fmt(lastMonth)}</div>
           </div>
         </div>
-      )}
+        {/* Forecast bars */}
+        {(next30+next60+next90)>0&&(
+          <div>
+            <div style={{fontSize:11,color:C.gray,fontWeight:500,marginBottom:8}}>Expected (unpaid milestones)</div>
+            {[{label:'Next 30 days',amt:next30,color:'#3B82F6'},{label:'31–60 days',amt:next60,color:'#8B5CF6'},{label:'61–90 days',amt:next90,color:'#6B7280'}].map(row=>(
+              <div key={row.label} style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+                <div style={{fontSize:11,color:C.gray,width:90,flexShrink:0}}>{row.label}</div>
+                <div style={{flex:1,height:6,background:C.border,borderRadius:3,overflow:'hidden'}}>
+                  <div style={{height:'100%',background:row.color,borderRadius:3,width:row.amt>0?`${Math.min(100,Math.round((row.amt/(next30+next60+next90))*100))}%`:'0%',transition:'width 0.4s'}}/>
+                </div>
+                <div style={{fontSize:12,fontWeight:500,color:C.ink,width:72,textAlign:'right',flexShrink:0}}>{fmt(row.amt)}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {(next30+next60+next90)===0&&pmt.length>0&&(
+          <div style={{fontSize:12,color:C.gray,textAlign:'center',padding:'8px 0'}}>No upcoming milestones due in the next 90 days</div>
+        )}
+      </div>
     </Card>
   );
-};
+}
 
 // ─── STAFF UTILIZATION CARD ──────────────────────────────────────────────────
 function StaffUtilizationCard({ events, staff }) {
@@ -962,11 +875,11 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
           setScreen={setScreen}
         />
 
+        {/* Revenue Forecast Panel */}
+        <RevenueForecastPanel payments={payments}/>
+
         {/* Staff Utilization Card */}
         <StaffUtilizationCard events={events} staff={staff}/>
-
-        {/* Revenue Forecast Panel */}
-        <RevenueForecastPanel />
 
         <div className="dash-layout" style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:16}}>
           <div style={{display:'flex',flexDirection:'column',gap:14}}>
