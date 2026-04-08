@@ -484,7 +484,7 @@ const TipModal = ({ eventId, onLogTip, onClose }) => {
 };
 
 // ─── SORTABLE MILESTONE ROW ───────────────────────────────────────────────────
-const SortableMilestone = ({ m, i, total, onMarkPaid, onRemind, onGeneratePayLink, onLogRefund }) => {
+const SortableMilestone = ({ m, i, total, onMarkPaid, onRemind, onGeneratePayLink, copiedPayLinkId, onLogRefund }) => {
   const [hovered, setHovered] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: m.id });
 
@@ -571,7 +571,7 @@ const SortableMilestone = ({ m, i, total, onMarkPaid, onRemind, onGeneratePayLin
             <span onClick={() => onRemind(m)} style={{ fontSize: 11, color: C.gray, cursor: 'pointer' }}>Remind</span>
             {m.stripe_payment_link_url
               ? <a href={m.stripe_payment_link_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#15803D', fontWeight: 500, textDecoration: 'none' }}>💳 Pay online</a>
-              : onGeneratePayLink && <span onClick={() => onGeneratePayLink(m)} style={{ fontSize: 11, color: C.gray, cursor: 'pointer' }}>Generate link</span>}
+              : onGeneratePayLink && <span onClick={() => onGeneratePayLink(m)} style={{ fontSize: 11, color: copiedPayLinkId === m.id ? '#065F46' : C.gray, fontWeight: copiedPayLinkId === m.id ? 500 : 400, cursor: 'pointer', background: copiedPayLinkId === m.id ? '#D1FAE5' : 'transparent', borderRadius: 4, padding: copiedPayLinkId === m.id ? '1px 5px' : 0, transition: 'all 0.15s' }}>{copiedPayLinkId === m.id ? '✓ Copied' : 'Generate link'}</span>}
           </div>
         )}
         {ms === 'pending' && (
@@ -579,7 +579,7 @@ const SortableMilestone = ({ m, i, total, onMarkPaid, onRemind, onGeneratePayLin
             <span onClick={() => onMarkPaid(m)} style={{ fontSize: 11, color: C.rosa, fontWeight: 500, cursor: 'pointer' }}>Mark paid</span>
             {m.stripe_payment_link_url
               ? <a href={m.stripe_payment_link_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#15803D', fontWeight: 500, textDecoration: 'none' }}>💳 Pay online</a>
-              : onGeneratePayLink && <span onClick={() => onGeneratePayLink(m)} style={{ fontSize: 11, color: C.gray, cursor: 'pointer' }}>Generate link</span>}
+              : onGeneratePayLink && <span onClick={() => onGeneratePayLink(m)} style={{ fontSize: 11, color: copiedPayLinkId === m.id ? '#065F46' : C.gray, fontWeight: copiedPayLinkId === m.id ? 500 : 400, cursor: 'pointer', background: copiedPayLinkId === m.id ? '#D1FAE5' : 'transparent', borderRadius: 4, padding: copiedPayLinkId === m.id ? '1px 5px' : 0, transition: 'all 0.15s' }}>{copiedPayLinkId === m.id ? '✓ Copied' : 'Generate link'}</span>}
           </div>
         )}
         {ms === 'paid' && (
@@ -621,6 +621,7 @@ const PaymentMilestonesCard = ({
   onRemind,
   onReorder,
   onGeneratePayLink,
+  copiedPayLinkId,
   createMilestone,
   boutique,
   onLogRefund: onLogRefundProp,
@@ -688,6 +689,7 @@ const PaymentMilestonesCard = ({
                   onMarkPaid={onMarkPaid}
                   onRemind={onRemind}
                   onGeneratePayLink={onGeneratePayLink}
+                  copiedPayLinkId={copiedPayLinkId}
                   onLogRefund={logRefund ? handleLogRefund : undefined}
                 />
               ))}

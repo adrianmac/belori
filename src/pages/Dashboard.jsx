@@ -291,6 +291,18 @@ function buildRuleInsights({ payments, events, inventory, clients }) {
     });
   }
 
+  // High-value clients with loyalty points
+  const loyalClients = (clients || []).filter(c => (c.loyalty_points || 0) >= 500);
+  if (loyalClients.length > 0) {
+    insights.push({
+      severity: 'purple',
+      icon: '💎',
+      message: `${loyalClients.length} VIP client${loyalClients.length !== 1 ? 's' : ''} with 500+ loyalty points`,
+      action: 'View clients',
+      screen: 'clients',
+    });
+  }
+
   // No overdue payments — positive insight
   if (overduePmts.length === 0 && (payments || []).length > 0) {
     insights.push({
@@ -302,17 +314,18 @@ function buildRuleInsights({ payments, events, inventory, clients }) {
     });
   }
 
-  // Sort: red first, then amber, then blue, then green
-  const order = { red: 0, amber: 1, blue: 2, green: 3 };
+  // Sort: red first, then amber, then blue, then purple, then green
+  const order = { red: 0, amber: 1, blue: 2, purple: 3, green: 4 };
   insights.sort((a, b) => (order[a.severity] ?? 9) - (order[b.severity] ?? 9));
   return insights.slice(0, 5);
 }
 
 const INSIGHT_STYLE = {
-  red:   { border: C.red,     bg: C.redBg,    text: C.red },
-  amber: { border: C.amber,   bg: C.amberBg,  text: C.amber },
-  blue:  { border: C.blue,    bg: C.blueBg,   text: C.blue },
-  green: { border: C.green,   bg: C.greenBg,  text: C.green },
+  red:    { border: C.red,     bg: C.redBg,    text: C.red },
+  amber:  { border: C.amber,   bg: C.amberBg,  text: C.amber },
+  blue:   { border: C.blue,    bg: C.blueBg,   text: C.blue },
+  green:  { border: C.green,   bg: C.greenBg,  text: C.green },
+  purple: { border: '#7C3AED', bg: '#F5F3FF',  text: '#5B21B6' },
 };
 
 const AIInsightsPanel = ({ payments, events, inventory, clients, setScreen }) => {
@@ -505,6 +518,53 @@ const RevenueForecastPanel = () => {
     </Card>
   );
 };
+
+// ─── STAFF UTILIZATION CARD ──────────────────────────────────────────────────
+function StaffUtilizationCard({ events, staff }) {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+  const allAppts = (events || []).flatMap(e => e.appointments || []);
+  const monthAppts = allAppts.filter(a => a.date >= monthStart && a.date <= monthEnd && a.staff_id);
+
+  if (!staff?.length || !monthAppts.length) return null;
+
+  const counts = {};
+  monthAppts.forEach(a => {
+    counts[a.staff_id] = (counts[a.staff_id] || 0) + 1;
+  });
+
+  const staffWithCounts = (staff || [])
+    .map(s => ({ ...s, count: counts[s.id] || 0 }))
+    .filter(s => s.count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  if (!staffWithCounts.length) return null;
+  const maxCount = staffWithCounts[0].count;
+
+  return (
+    <Card>
+      <CardHead title="Staff this month" sub={`${monthAppts.length} appointment${monthAppts.length!==1?'s':''}`}/>
+      <div style={{padding:'0 16px 16px',display:'flex',flexDirection:'column',gap:10}}>
+        {staffWithCounts.map(s => (
+          <div key={s.id} style={{display:'flex',alignItems:'center',gap:10}}>
+            <Avatar initials={s.initials||s.name?.split(' ').map(w=>w[0]).join('').slice(0,2)||'?'} size={28} bg={s.color||C.rosaPale} color={C.white}/>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
+                <span style={{fontSize:12,fontWeight:500,color:C.ink}}>{s.name}</span>
+                <span style={{fontSize:11,color:C.gray}}>{s.count} appt{s.count!==1?'s':''}</span>
+              </div>
+              <div style={{height:4,borderRadius:2,background:C.border,overflow:'hidden'}}>
+                <div style={{height:'100%',borderRadius:2,background:C.rosa,width:`${Math.round((s.count/maxCount)*100)}%`,transition:'width 0.4s'}}/>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
 
 // ─── FOCUS DASHBOARD ─────────────────────────────────────────────────────────
 const FocusDashboard = ({ setScreen, setSelectedEvent, events, staff, onToggleFocus }) => {
@@ -901,6 +961,9 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
           clients={clients}
           setScreen={setScreen}
         />
+
+        {/* Staff Utilization Card */}
+        <StaffUtilizationCard events={events} staff={staff}/>
 
         {/* Revenue Forecast Panel */}
         <RevenueForecastPanel />

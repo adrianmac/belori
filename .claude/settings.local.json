@@ -104,7 +104,17 @@
       "Bash(del \"C:\\\\Dev\\\\novela\\\\patch-dress.cjs\")",
       "Bash(node /c/Dev/novela/patch_eventdetail.cjs)",
       "Bash(ls .env*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(grep -i \"\\\\.env$\\\\|\\\\.env\\\\.local\\\\|\\\\.env\\\\.production\")",
+      "Bash(gh repo:*)",
+      "Bash(where gh:*)",
+      "Bash(winget list:*)",
+      "Bash(git config:*)",
+      "Bash(git remote:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(grep -r \"mobile\\\\|responsive\\\\|isMobile\" /c/Dev/novela/src/pages/*.jsx)",
+      "Bash(grep -r \"keyboard\\\\|shortcut\\\\|Cmd\\\\|Ctrl\" /c/Dev/novela/src/pages/*.jsx)"
     ]
   }
 }

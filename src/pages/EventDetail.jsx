@@ -515,6 +515,8 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
   const [contracts,setContracts]=useState([]);
   const [showContractModal,setShowContractModal]=useState(false);
   const [copiedContractId,setCopiedContractId]=useState(null);
+  // Payment link copy feedback
+  const [copiedPayLinkId,setCopiedPayLinkId]=useState(null);
   // Runsheet
   const [showRunsheet,setShowRunsheet]=useState(false);
   // Reschedule
@@ -530,8 +532,31 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
     if(!showOverflow)return;
     const handler=e=>{if(overflowRef.current&&!overflowRef.current.contains(e.target))setShowOverflow(false);};
     document.addEventListener('mousedown',handler);
-    return ()=>document.removeEventListener('mousedown',handler);
+    document.addEventListener('touchstart',handler,{passive:true});
+    return ()=>{document.removeEventListener('mousedown',handler);document.removeEventListener('touchstart',handler);};
   },[showOverflow]);
+  // Global keyboard shortcuts
+  useEffect(()=>{
+    const handler = (e) => {
+      if (e.key === 'Escape') {
+        if (showOverflow) { setShowOverflow(false); return; }
+        if (showScheduleAppt) { setShowScheduleAppt(false); return; }
+        if (showAddTask) { setShowAddTask(false); return; }
+        if (showAddMilestone) { setShowAddMilestone(false); return; }
+        if (showEditEvent) { setShowEditEvent(false); return; }
+        if (showMarkPaid) { setShowMarkPaid(null); return; }
+        if (showEmailComposer) { setShowEmailComposer(false); return; }
+        if (showDeleteConfirm) { setShowDeleteConfirm(false); return; }
+        if (showDayOf) { setShowDayOf(false); return; }
+        if (showRunsheet) { setShowRunsheet(false); return; }
+        if (showReschedule) { setShowReschedule(false); return; }
+        if (showContractModal) { setShowContractModal(false); return; }
+        if (dressSuggestionsOpen) { setDressSuggestionsOpen(false); return; }
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [showOverflow,showScheduleAppt,showAddTask,showAddMilestone,showEditEvent,showMarkPaid,showEmailComposer,showDeleteConfirm,showDayOf,showRunsheet,showReschedule,showContractModal,dressSuggestionsOpen]);
   // Mobile tab state
   const [mobileTab,setMobileTab]=useState('overview');
   // AI features
@@ -713,34 +738,44 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
       .then(({ data }) => setClientMeasurements(data || null));
   }, [liveEvent?.client_id, boutique?.id]);
 
-  // Fetch payment risk once when milestones are available
+  // Fetch payment risk once when milestones are available — rule-based
   useEffect(() => {
     if (!liveEvent?.id || paymentRiskFetched) return;
     const ms = (liveEvent.milestones || []);
     if (!ms.length) return;
     setPaymentRiskFetched(true);
-    setPaymentRiskLoading(true);
-    const overdueCount = ms.filter(m => m.status === 'overdue').length;
-    supabase.functions.invoke('ai-suggest', {
-      body: {
-        type: 'payment_risk',
-        eventType: liveEvent.type,
-        total: liveEvent.total,
-        paid: liveEvent.paid,
-        daysUntil: liveEvent.daysUntil,
-        overdueCount,
-        prevOverdue: overdueCount,
-      },
-    }).then(({ data }) => {
-      if (data?.result) {
-        try {
-          const raw = data.result.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-          const parsed = JSON.parse(raw);
-          if (parsed?.risk) setPaymentRisk(parsed);
-        } catch { /* ignore */ }
-      }
-    }).catch(() => { /* graceful degradation */ })
-    .finally(() => setPaymentRiskLoading(false));
+    const total = Number(liveEvent.total) || 0;
+    const paid = Number(liveEvent.paid) || 0;
+    const remaining = total - paid;
+    const days = liveEvent.daysUntil ?? 999;
+    const overdueMs = ms.filter(m => m.status === 'overdue');
+    const overdueCount = overdueMs.length;
+    const overdueAmt = overdueMs.reduce((s, m) => s + Number(m.amount || 0), 0);
+    const paidPct = total > 0 ? paid / total : 1;
+
+    let risk, reason, action;
+    if (overdueCount > 0 && days <= 30) {
+      risk = 'critical';
+      reason = `${overdueCount} overdue milestone${overdueCount>1?'s':''} (${fmt(overdueAmt)}) with only ${days} days until the event.`;
+      action = 'Send payment reminder immediately';
+    } else if (overdueCount > 0) {
+      risk = 'high';
+      reason = `${overdueCount} overdue milestone${overdueCount>1?'s':''} totaling ${fmt(overdueAmt)}.`;
+      action = 'Follow up with client';
+    } else if (paidPct < 0.5 && days <= 60) {
+      risk = 'medium';
+      reason = `Only ${Math.round(paidPct*100)}% paid with ${days} days remaining. ${fmt(remaining)} still owed.`;
+      action = 'Schedule payment check-in';
+    } else if (paidPct >= 1) {
+      risk = 'low';
+      reason = 'Fully paid — no payment risk.';
+      action = null;
+    } else {
+      risk = 'low';
+      reason = `${Math.round(paidPct*100)}% paid. ${fmt(remaining)} remaining with ${days} days until event.`;
+      action = null;
+    }
+    setPaymentRisk({ risk, reason, action });
   }, [liveEvent?.id, liveEvent?.milestones?.length]);
 
   // Load mood board from event
@@ -995,34 +1030,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
   }
 
   // ── Payment risk analyzer ───────────────────────────────────────────────────
-  async function fetchPaymentRisk(evData, milestonesData) {
-    if (paymentRiskFetched || paymentRiskLoading) return;
-    if (!milestonesData || milestonesData.length === 0) return;
-    setPaymentRiskLoading(true);
-    setPaymentRiskFetched(true);
-    try {
-      const overdueCount = milestonesData.filter(m => m.status === 'overdue').length;
-      const { data, error } = await supabase.functions.invoke('ai-suggest', {
-        body: {
-          type: 'payment_risk',
-          eventType: evData.type,
-          total: evData.total,
-          paid: evData.paid,
-          daysUntil: evData.daysUntil,
-          overdueCount,
-          prevOverdue: overdueCount,
-        },
-      });
-      if (!error && data?.result) {
-        try {
-          const raw = data.result.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-          const parsed = JSON.parse(raw);
-          if (parsed?.risk) setPaymentRisk(parsed);
-        } catch { /* ignore parse errors — risk badge is optional */ }
-      }
-    } catch { /* graceful degradation */ }
-    setPaymentRiskLoading(false);
-  }
+  // Risk is now computed locally in the useEffect above — no AI call needed.
 
   // ── Email invoice handler ───────────────────────────────────────────────
   async function handleSendInvoice() {
@@ -1106,6 +1114,8 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
       });
       if (error || !data?.url) { toast('Could not generate link', 'error'); return; }
       await navigator.clipboard.writeText(data.url);
+      setCopiedPayLinkId(m.id);
+      setTimeout(() => setCopiedPayLinkId(null), 2000);
       toast('Payment link created & copied to clipboard ✓');
       await refetchEvent();
     } catch { toast('Could not generate link', 'error'); }
@@ -1678,6 +1688,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                 milestones={milestones}
                 onAddMilestone={() => setShowAddMilestone(true)}
                 onGeneratePayLink={generatePayLink}
+                copiedPayLinkId={copiedPayLinkId}
                 createMilestone={createMilestone}
                 boutique={boutique}
                 onReorder={async (newOrder) => {
