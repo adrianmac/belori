@@ -598,6 +598,8 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
     document.addEventListener('touchstart',handler,{passive:true});
     return ()=>{document.removeEventListener('mousedown',handler);document.removeEventListener('touchstart',handler);};
   },[showOverflow]);
+  // Dress recommendation engine — declared early so escape handler dep array can reference it
+  const [dressSuggestionsOpen,setDressSuggestionsOpen]=useState(false);
   // Global keyboard shortcuts
   useEffect(()=>{
     const handler = (e) => {
@@ -643,7 +645,6 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
   const [editingCaptionText,setEditingCaptionText]=useState('');
   // Dress recommendation engine
   const [clientMeasurements,setClientMeasurements]=useState(null);
-  const [dressSuggestionsOpen,setDressSuggestionsOpen]=useState(false);
   const [reservingDressId,setReservingDressId]=useState(null);
   // Duplicate appointment detection
   const [apptConflict,setApptConflict]=useState(null);
