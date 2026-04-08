@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { C, fmt } from '../lib/colors';
 import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, useToast,
-  inputSt, LBL } from '../lib/ui.jsx';
+  inputSt, LBL, EmptyState } from '../lib/ui.jsx';
 import { ALTERATION_TRANSITIONS } from '../lib/urgency';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
 import { supabase } from '../lib/supabase';
@@ -1018,7 +1018,7 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
       </div>
 
       {/* FILTER BAR */}
-      <div style={{padding:'16px 20px',background:C.white,borderBottom:`1px solid ${C.border}`,flexShrink:0,display:'flex',gap:16,alignItems:'center',flexWrap:'wrap'}}>
+      <div style={{padding:'16px 20px',background:C.white,borderBottom:`1px solid ${C.border}`,flexShrink:0,display:'flex',gap:16,alignItems:'center',flexWrap:'wrap',position:'sticky',top:0,zIndex:10}}>
         <div style={{position:'relative',display:'flex',alignItems:'center',flex:1,minWidth:250}}>
           <svg style={{position:'absolute',left:14,color:C.gray}} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search client, garment, or work item..."
@@ -1088,24 +1088,23 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
       {view==='kanban'?(
         data.length===0?(
           <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',background:C.ivory}}>
-            <div style={{textAlign:'center',padding:'60px 40px',background:C.white,borderRadius:20,border:`1px dashed ${C.border}`,maxWidth:480,boxShadow:'0 2px 8px rgba(0,0,0,0.04)'}}>
-              <div style={{fontSize:56,marginBottom:16,lineHeight:1}}>✂️</div>
-              <div style={{fontSize:18,fontWeight:600,color:C.ink,marginBottom:8}}>No alteration jobs yet</div>
-              <div style={{fontSize:13,color:C.gray,marginBottom:24,lineHeight:1.6}}>Jobs created from an event will appear here.<br/>You can also create a standalone job directly.</div>
-              <PrimaryBtn label="+ New alteration job" onClick={()=>setNewJobOpen(true)}/>
-            </div>
+            <EmptyState
+              icon="✂️"
+              title="No alteration jobs"
+              subtitle="Create a new job from an event or use the + button above"
+              action={() => setNewJobOpen(true)}
+              actionLabel="+ New job"
+            />
           </div>
         ):filtered.length===0?(
           <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',background:C.ivory}}>
-            <div style={{textAlign:'center',padding:'60px 40px',background:C.white,borderRadius:20,border:`1px dashed ${C.border}`,maxWidth:420,boxShadow:'0 2px 8px rgba(0,0,0,0.04)'}}>
-              <div style={{fontSize:48,marginBottom:16,lineHeight:1}}>🔍</div>
-              <div style={{fontSize:16,fontWeight:600,color:C.ink,marginBottom:8}}>No jobs match your filters</div>
-              <div style={{fontSize:13,color:C.gray,marginBottom:20}}>Try adjusting the search or filter options.</div>
-              <button onClick={()=>{setSearch('');setFilter('all');setStaffFilter('');}}
-                style={{padding:'8px 20px',background:C.white,border:`1px solid ${C.border}`,borderRadius:8,fontSize:13,fontWeight:500,cursor:'pointer',color:C.ink}}>
-                Clear filters
-              </button>
-            </div>
+            <EmptyState
+              icon="🔍"
+              title="No jobs match your filters"
+              subtitle="Try adjusting the search or filter options."
+              action={() => { setSearch(''); setFilter('all'); setStaffFilter(''); }}
+              actionLabel="Clear filters"
+            />
           </div>
         ):(
         <div className="alt-kanban page-scroll" style={{flex:1,display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,padding:20,overflowX:'auto',overflowY:'hidden',background:C.ivory}}>
@@ -1230,19 +1229,23 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
       ):(
         <div className="page-scroll" style={{flex:1,overflowY:'auto',padding:20}}>
           {data.length===0?(
-            <div style={{textAlign:'center',padding:'80px 20px',background:C.white,borderRadius:20,border:`1px dashed ${C.border}`,maxWidth:480,margin:'60px auto',boxShadow:'0 2px 8px rgba(0,0,0,0.04)'}}>
-              <div style={{fontSize:56,marginBottom:16,lineHeight:1}}>✂️</div>
-              <div style={{fontSize:18,fontWeight:600,color:C.ink,marginBottom:8}}>No alteration jobs yet</div>
-              <div style={{fontSize:13,color:C.gray,marginBottom:24,lineHeight:1.6}}>Jobs created from an event will appear here.<br/>You can also create a standalone job directly.</div>
-              <PrimaryBtn label="+ New alteration job" onClick={()=>setNewJobOpen(true)}/>
-            </div>
+            <EmptyState
+              icon="✂️"
+              title="No alteration jobs"
+              subtitle="Create a new job from an event or use the + button above"
+              action={() => setNewJobOpen(true)}
+              actionLabel="+ New job"
+              style={{margin:'60px auto',maxWidth:480}}
+            />
           ):filtered.length===0?(
-            <div style={{textAlign:'center',padding:'60px 20px',background:C.white,borderRadius:16,border:`1px dashed ${C.border}`,maxWidth:420,margin:'40px auto'}}>
-              <div style={{fontSize:48,marginBottom:16}}>🔍</div>
-              <div style={{fontSize:16,fontWeight:500,color:C.ink,marginBottom:6}}>No jobs match your filters</div>
-              <div style={{fontSize:13,color:C.gray,marginBottom:20}}>Try adjusting the search or filter options.</div>
-              {(search||filter!=='all'||staffFilter)&&<button onClick={()=>{setSearch('');setFilter('all');setStaffFilter('');}} style={{marginTop:4,padding:'8px 20px',background:C.white,border:`1px solid ${C.border}`,borderRadius:8,fontSize:13,fontWeight:500,cursor:'pointer'}}>Clear filters</button>}
-            </div>
+            <EmptyState
+              icon="🔍"
+              title="No jobs match your filters"
+              subtitle="Try adjusting the search or filter options."
+              action={() => { setSearch(''); setFilter('all'); setStaffFilter(''); }}
+              actionLabel="Clear filters"
+              style={{margin:'40px auto',maxWidth:420}}
+            />
           ):(
             <div style={{display:'flex',flexDirection:'column',gap:12}}>
               {/* Seamstress productivity panel */}

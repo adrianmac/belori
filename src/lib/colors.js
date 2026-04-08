@@ -11,6 +11,13 @@ export const C = {
   border:'#E5E7EB', borderDark:'#D1D5DB',
   gray:'#6B7280', grayBg:'#F9FAFB',
   white:'#FFFFFF',
+
+  // Semantic aliases — mirror the CSS variables in index.html
+  success:'#10B981', successBg:'#D1FAE5', successText:'#065F46',
+  danger:'#DC2626',  dangerBg:'#FEF2F2',  dangerBorder:'#FECACA',
+  warning:'#F59E0B', warningBg:'#FEF3C7', warningText:'#92400E',
+  info:'#3B82F6',    infoBg:'#EFF6FF',    infoBorder:'#BFDBFE',   infoText:'#1E40AF',
+  purpleBorder:'#DDD6FE', purpleText:'#5B21B6', purplePale:'#F5F3FF',
 };
 
 // ─── UTILITIES ─────────────────────────────────────────────────────────────

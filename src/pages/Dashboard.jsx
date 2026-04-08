@@ -65,7 +65,7 @@ const NewAppointmentModal = ({events, staff, onClose, onSaved}) => {
           <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:20,display:'flex',flexDirection:'column',gap:14}}>
-          {err && <div style={{fontSize:12,color:'#dc2626',background:'#fef2f2',padding:'8px 12px',borderRadius:7,border:'1px solid #fecaca'}}>{err}</div>}
+          {err && <div style={{fontSize:12,color:'var(--color-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7,border:'1px solid var(--border-danger)'}}>{err}</div>}
           <div>
             <div style={{...LBL}}>Event *</div>
             <select value={eventId} onChange={e=>setEventId(e.target.value)} style={{...inputSt}}>
@@ -141,8 +141,8 @@ function DailyBriefingBanner({ appointments, payments, events }) {
         <div style={{ fontSize: 12, color: C.gray, marginTop: 2 }}>{todayStr}</div>
         <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
           {todayAppts > 0 && <span style={{ fontSize: 12, color: C.rosa, fontWeight: 500 }}>📅 {todayAppts} appointment{todayAppts !== 1 ? 's' : ''} today</span>}
-          {overdueCount > 0 && <span style={{ fontSize: 12, color: '#DC2626', fontWeight: 500 }}>⚠️ {overdueCount} overdue payment{overdueCount !== 1 ? 's' : ''}</span>}
-          {todayAppts === 0 && overdueCount === 0 && <span style={{ fontSize: 12, color: '#10B981', fontWeight: 500 }}>✅ Clear day — no urgent items</span>}
+          {overdueCount > 0 && <span style={{ fontSize: 12, color: 'var(--color-danger)', fontWeight: 500 }}>⚠️ {overdueCount} overdue payment{overdueCount !== 1 ? 's' : ''}</span>}
+          {todayAppts === 0 && overdueCount === 0 && <span style={{ fontSize: 12, color: 'var(--color-success)', fontWeight: 500 }}>✅ Clear day — no urgent items</span>}
         </div>
       </div>
       <button onClick={dismiss} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1, padding: 4, flexShrink: 0 }}>×</button>
@@ -232,9 +232,9 @@ const OnboardingChecklist = ({events, clients, staff, inventory, payments, appoi
   return (
     <>
       {showCelebration && (
-        <div style={{background:'#D1FAE5',border:'1px solid #6EE7B7',borderRadius:10,padding:'10px 16px',display:'flex',alignItems:'center',gap:10,marginBottom:0}}>
+        <div style={{background:'var(--bg-success)',border:'1px solid var(--border-success)',borderRadius:10,padding:'10px 16px',display:'flex',alignItems:'center',gap:10,marginBottom:0}}>
           <span style={{fontSize:18}}>🎉</span>
-          <span style={{fontSize:13,fontWeight:600,color:'#065F46'}}>Setup complete! Your boutique is ready to go.</span>
+          <span style={{fontSize:13,fontWeight:600,color:'var(--text-success)'}}>Setup complete! Your boutique is ready to go.</span>
         </div>
       )}
       <Card>
@@ -526,7 +526,7 @@ function RevenueForecastPanel({ payments }) {
           <div style={{background:C.rosaPale,borderRadius:10,padding:'10px 12px'}}>
             <div style={{fontSize:10,color:C.rosa,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>This month</div>
             <div style={{fontSize:18,fontWeight:700,color:C.ink}}>{fmt(thisMonth)}</div>
-            {trend!==null&&<div style={{fontSize:11,color:trendUp?'#10B981':'#EF4444',marginTop:2}}>{trendUp?'↑':'↓'} {Math.abs(Math.round(trend))}% vs last month</div>}
+            {trend!==null&&<div style={{fontSize:11,color:trendUp?'var(--color-success)':'var(--color-danger)',marginTop:2}}>{trendUp?'↑':'↓'} {Math.abs(Math.round(trend))}% vs last month</div>}
           </div>
           <div style={{background:C.grayBg,borderRadius:10,padding:'10px 12px'}}>
             <div style={{fontSize:10,color:C.gray,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Last month</div>
@@ -537,7 +537,7 @@ function RevenueForecastPanel({ payments }) {
         {(next30+next60+next90)>0&&(
           <div>
             <div style={{fontSize:11,color:C.gray,fontWeight:500,marginBottom:8}}>Expected (unpaid milestones)</div>
-            {[{label:'Next 30 days',amt:next30,color:'#3B82F6'},{label:'31–60 days',amt:next60,color:'#8B5CF6'},{label:'61–90 days',amt:next90,color:'#6B7280'}].map(row=>(
+            {[{label:'Next 30 days',amt:next30,color:'var(--color-info)'},{label:'31–60 days',amt:next60,color:'var(--color-purple)'},{label:'61–90 days',amt:next90,color:C.gray}].map(row=>(
               <div key={row.label} style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
                 <div style={{fontSize:11,color:C.gray,width:90,flexShrink:0}}>{row.label}</div>
                 <div style={{flex:1,height:6,background:C.border,borderRadius:3,overflow:'hidden'}}>
@@ -624,15 +624,15 @@ function EndOfDaySummary({ payments, events, appointments }) {
       <CardHead title="Today's recap" sub={new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })} />
       <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {totalAppts > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: doneAppts === totalAppts ? '#D1FAE5' : '#F9FAFB', borderRadius: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: doneAppts === totalAppts ? 'var(--bg-success)' : C.grayBg, borderRadius: 8 }}>
             <span style={{ fontSize: 13, color: C.ink }}>Appointments</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: doneAppts === totalAppts ? '#065F46' : C.ink }}>{doneAppts}/{totalAppts} done</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: doneAppts === totalAppts ? 'var(--text-success)' : C.ink }}>{doneAppts}/{totalAppts} done</span>
           </div>
         )}
         {paidToday.length > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: '#D1FAE5', borderRadius: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: 'var(--bg-success)', borderRadius: 8 }}>
             <span style={{ fontSize: 13, color: C.ink }}>Payments collected</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#065F46' }}>{fmt(revenueToday)}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-success)' }}>{fmt(revenueToday)}</span>
           </div>
         )}
         {eventsToday > 0 && (
@@ -759,7 +759,7 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, payments, staff, 
                       <div style={{ fontSize: 11, color: C.gray }}>{APPT_TYPE_LABELS[a.type] || 'Appointment'}{a.note ? ` · ${a.note}` : ''}</div>
                     </div>
                     {isDone
-                      ? <span style={{ fontSize: 11, fontWeight: 600, color: '#059669', background: '#D1FAE5', padding: '3px 8px', borderRadius: 6 }}>Done</span>
+                      ? <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-success)', background: 'var(--bg-success)', padding: '3px 8px', borderRadius: 6 }}>Done</span>
                       : <Badge text={cfg.tag} bg={cfg.tagBg} color={cfg.tagCol} />
                     }
                   </div>
@@ -777,7 +777,7 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, payments, staff, 
                       ));
                       reloadAppts();
                     }}
-                    style={{ fontSize: 12, fontWeight: 500, color: '#059669', background: '#D1FAE5', border: '1px solid #6EE7B7', borderRadius: 7, padding: '6px 12px', cursor: 'pointer', minHeight: 'unset', minWidth: 'unset' }}
+                    style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-success)', background: 'var(--bg-success)', border: '1px solid var(--border-success)', borderRadius: 7, padding: '6px 12px', cursor: 'pointer', minHeight: 'unset', minWidth: 'unset' }}
                   >
                     Mark all complete
                   </button>
@@ -796,10 +796,10 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, payments, staff, 
               const isTomorrow = item.return_date === tomorrow;
               return (
                 <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: i < dueReturns.length - 1 ? `1px solid ${C.border}` : 'none' }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: isToday ? '#DC2626' : '#D97706', flexShrink: 0 }} />
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: isToday ? 'var(--color-danger)' : C.amber, flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: C.ink }}>{item.name}</div>
-                    <div style={{ fontSize: 11, color: isToday ? '#DC2626' : '#D97706', fontWeight: 500 }}>
+                    <div style={{ fontSize: 11, color: isToday ? 'var(--color-danger)' : C.amber, fontWeight: 500 }}>
                       {isToday ? 'Due TODAY' : isTomorrow ? 'Due tomorrow' : `Due ${item.return_date}`}
                     </div>
                   </div>
@@ -822,17 +822,17 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, payments, staff, 
               const isTomorrow = job.deadline === tomorrow;
               const clientName = job.clients?.name || 'Client';
               const STATUS_LABEL = { pending: 'Pending', in_progress: 'In progress', fitting: 'Fitting', ready: 'Ready' };
-              const statusColors = { pending: C.gray, in_progress: '#D97706', fitting: C.rosa, ready: '#059669' };
+              const statusColors = { pending: C.gray, in_progress: C.amber, fitting: C.rosa, ready: 'var(--color-success)' };
               return (
                 <div key={job.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: i < dueAlts.length - 1 ? `1px solid ${C.border}` : 'none', cursor: 'pointer' }}
                   onClick={() => setScreen('alterations')}
                   onMouseEnter={e => e.currentTarget.style.background = C.ivory}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: isToday ? '#DC2626' : '#D97706', flexShrink: 0 }} />
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: isToday ? 'var(--color-danger)' : C.amber, flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: C.ink }}>{clientName} — {job.garment}</div>
-                    <div style={{ fontSize: 11, color: isToday ? '#DC2626' : '#D97706', fontWeight: 500 }}>
+                    <div style={{ fontSize: 11, color: isToday ? 'var(--color-danger)' : C.amber, fontWeight: 500 }}>
                       {isToday ? 'Deadline TODAY' : isTomorrow ? 'Due tomorrow' : `Due ${job.deadline}`}
                     </div>
                   </div>
@@ -988,7 +988,7 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
     {label:'Active events',val:`${events.length}`,sub:`${events.filter(e=>e.type==='wedding').length} weddings · ${events.filter(e=>e.type==='quince').length} quinces`,subCol:C.gray,icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>,iconBg:'var(--bg-info)',iconCol:'var(--color-info)',onClick:()=>setScreen('events')},
     {label:'Dresses rented',val:`${rentedCount}/${totalCount}`,sub:returnsDue.length>0?`${returnsDue.length} due back soon`:'No returns due soon',subCol:returnsDue.length>0?'var(--color-warning)':C.gray,icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 3c-2 0-4 1.5-5.5 4L4 12v8h16v-8l-2.5-5C16 4.5 14 3 12 3z"/></svg>,iconBg:'var(--bg-primary)',iconCol:'var(--color-primary)',onClick:()=>setScreen('inventory')},
     {label:'Payments overdue',val:fmt(overdueTotal),sub:`${payments.filter(p=>p.status==='overdue').length} clients · action needed`,subCol:'var(--color-danger)',icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>,iconBg:'var(--bg-danger)',iconCol:'var(--color-danger)',onClick:()=>setScreen('payments')},
-    {label:"This week's revenue",val:weeklyRevenue !== null ? fmtCurrency(weeklyRevenue) : '—',sub:'Last 7 days collected',subCol:'#10B981',icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>,iconBg:'#D1FAE5',iconCol:'#10B981',onClick:()=>setScreen('payments')},
+    {label:"This week's revenue",val:weeklyRevenue !== null ? fmtCurrency(weeklyRevenue) : '—',sub:'Last 7 days collected',subCol:'var(--color-success)',icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>,iconBg:'var(--bg-success)',iconCol:'var(--color-success)',onClick:()=>setScreen('payments')},
   ];
 
   return (
@@ -1004,18 +1004,18 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
         action="Act now"
         onAction={()=>{setSelectedEvent(alert.event.id);setScreen('event_detail');}}
       />}
-      <div className="page-scroll" style={{flex:1,minHeight:0,overflowY:'auto',padding:isTablet?16:20,display:'flex',flexDirection:'column',gap:isTablet?12:16}}>
+      <div className="page-scroll" style={{flex:1,minHeight:0,overflowY:'auto',padding:isTablet?16:20,display:'flex',flexDirection:'column',gap:isTablet?12:16,maxWidth:1200,margin:'0 auto',width:'100%',boxSizing:'border-box'}}>
         <DailyBriefingBanner appointments={todayAppts} payments={payments} events={events}/>
         <OnboardingChecklist events={events} clients={clients} staff={staff} inventory={inventory} payments={payments} appointments={todayAppts} setScreen={setScreen}/>
 
         {/* Churn alert widget */}
         {churnCount > 0 && (
-          <div style={{ background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ background: 'var(--bg-warning)', border: '1px solid var(--border-warning)', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#92400E' }}>⚠️ {churnCount} clients need re-engagement</div>
-              <div style={{ fontSize: 11, color: '#B45309', marginTop: 2 }}>Last contact was 90+ days ago with no upcoming events</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-warning)' }}>⚠️ {churnCount} clients need re-engagement</div>
+              <div style={{ fontSize: 11, color: 'var(--color-warning)', marginTop: 2 }}>Last contact was 90+ days ago with no upcoming events</div>
             </div>
-            <button onClick={() => setScreen('reports')} style={{ padding: '6px 12px', background: '#D97706', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={() => setScreen('reports')} style={{ padding: '6px 12px', background: 'var(--color-warning)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
               View →
             </button>
           </div>

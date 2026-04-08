@@ -9,6 +9,7 @@ import {
   Topbar, PrimaryBtn, GhostBtn, Badge, Avatar,
   ProgressBar, EventTypeBadge, inputSt, LBL, useToast,
 } from '../lib/ui.jsx'
+import { useLayoutMode } from '../hooks/useLayoutMode.jsx'
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -670,6 +671,7 @@ const FILTERS = [
 export default function EventPlanning({ setScreen, setSelectedEvent }) {
   const { events = [], loading } = useEvents()
   const { getStaff } = useBoutique()
+  const { isTablet } = useLayoutMode()
   const [staff, setStaff]             = useState([])
   const [filter, setFilter]           = useState('all')
   const [selectedId, setSelectedId]   = useState(null)
@@ -755,12 +757,17 @@ export default function EventPlanning({ setScreen, setSelectedEvent }) {
       </div>
 
       {/* Main layout: left panel + right panel */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: isTablet ? 'column' : 'row', overflow: 'hidden' }}>
 
         {/* LEFT PANEL */}
         <div style={{
-          width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column',
-          borderRight: `1px solid ${C.border}`, background: C.white, overflow: 'hidden',
+          width: isTablet ? '100%' : 'clamp(220px, 25vw, 320px)',
+          minWidth: isTablet ? undefined : 220,
+          flexShrink: 0, display: 'flex', flexDirection: 'column',
+          borderRight: isTablet ? 'none' : `1px solid ${C.border}`,
+          borderBottom: isTablet ? `1px solid ${C.border}` : 'none',
+          background: C.white, overflow: 'hidden',
+          maxHeight: isTablet ? '40%' : undefined,
         }}>
           {/* Filter tabs */}
           <div style={{

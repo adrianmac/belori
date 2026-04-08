@@ -71,6 +71,25 @@ export const StatusDot = ({status}) => {
   return <div style={{width:8,height:8,borderRadius:'50%',background:colors[status]||C.gray,flexShrink:0,marginTop:4}}/>;
 };
 
+export function EmptyState({ icon = '📭', title, subtitle, action, actionLabel, style = {} }) {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '48px 24px', textAlign: 'center', ...style
+    }}>
+      <div style={{ fontSize: 40, marginBottom: 12, lineHeight: 1 }}>{icon}</div>
+      {title && <div style={{ fontSize: 14, fontWeight: 600, color: '#1C1012', marginBottom: 6 }}>{title}</div>}
+      {subtitle && <div style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, maxWidth: 280 }}>{subtitle}</div>}
+      {action && actionLabel && (
+        <button onClick={action} style={{
+          marginTop: 16, padding: '8px 20px', borderRadius: 8, border: 'none',
+          background: '#C9697A', color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer'
+        }}>{actionLabel}</button>
+      )}
+    </div>
+  );
+}
+
 // ─── TOAST SYSTEM ──────────────────────────────────────────────────────────
 export const ToastCtx=createContext(()=>{});
 export const ToastProvider=({children})=>{
@@ -95,6 +114,97 @@ export const ToastProvider=({children})=>{
   );
 };
 export const useToast=()=>useContext(ToastCtx);
+
+// ─── SKELETON LOADERS ──────────────────────────────────────────────────────────
+const skeletonKeyframes = `
+@keyframes belori-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}`;
+
+// Inject keyframes once
+if (typeof document !== 'undefined' && !document.getElementById('belori-skeleton-style')) {
+  const s = document.createElement('style');
+  s.id = 'belori-skeleton-style';
+  s.textContent = skeletonKeyframes;
+  document.head.appendChild(s);
+}
+
+const skeletonBase = {
+  background: 'linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%)',
+  backgroundSize: '400px 100%',
+  animation: 'belori-shimmer 1.4s ease infinite',
+  borderRadius: 6,
+  display: 'block',
+};
+
+export function SkeletonLine({ width = '100%', height = 12, style = {} }) {
+  return <span style={{ ...skeletonBase, width, height, ...style }}/>;
+}
+
+export function SkeletonCard({ rows = 3, style = {} }) {
+  return (
+    <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10, ...style }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+        <span style={{ ...skeletonBase, width: 36, height: 36, borderRadius: '50%', flexShrink: 0 }}/>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <SkeletonLine width="55%" height={13}/>
+          <SkeletonLine width="35%" height={10}/>
+        </div>
+      </div>
+      {Array.from({ length: rows - 1 }).map((_, i) => (
+        <SkeletonLine key={i} width={i % 2 === 0 ? '80%' : '60%'} height={10}/>
+      ))}
+    </div>
+  );
+}
+
+export function SkeletonList({ count = 5, style = {} }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, ...style }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <SkeletonCard key={i} rows={2}/>
+      ))}
+    </div>
+  );
+}
+
+export function SkeletonTable({ rows = 6, cols = 4, style = {} }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 1, ...style }}>
+      {/* Header */}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, padding: '8px 12px', background: '#F9FAFB', borderRadius: '8px 8px 0 0' }}>
+        {Array.from({ length: cols }).map((_, i) => <SkeletonLine key={i} height={10} width="60%"/>)}
+      </div>
+      {/* Rows */}
+      {Array.from({ length: rows }).map((_, r) => (
+        <div key={r} style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, padding: '10px 12px', background: r % 2 === 0 ? '#fff' : '#FAFAFA', borderBottom: '1px solid #F3F4F6' }}>
+          {Array.from({ length: cols }).map((_, c) => (
+            <SkeletonLine key={c} height={11} width={c === 0 ? '75%' : c === cols-1 ? '40%' : '55%'}/>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function SkeletonDashboard() {
+  return (
+    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Stat cards row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
+        {[1,2,3,4,5].map(i => (
+          <div key={i} style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <SkeletonLine width="50%" height={10}/>
+            <SkeletonLine width="70%" height={22}/>
+          </div>
+        ))}
+      </div>
+      <SkeletonCard rows={4}/>
+      <SkeletonList count={3}/>
+    </div>
+  );
+}
 
 // ─── NAV ICONS ─────────────────────────────────────────────────────────────
 export const icons = {

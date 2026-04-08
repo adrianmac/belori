@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { C, fmt } from '../lib/colors'
-import { Topbar, inputSt, LBL, useToast } from '../lib/ui.jsx'
+import { Topbar, inputSt, LBL, useToast, EmptyState } from '../lib/ui.jsx'
 import { useVendors } from '../hooks/useVendors'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -742,30 +742,15 @@ export default function Vendors({ goScreen }) {
             Loading vendors…
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{
-            textAlign: 'center', padding: '60px 20px',
-            background: C.white, borderRadius: 14,
-            border: `1px dashed ${C.border}`,
-          }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginBottom: 8 }}>
-              {search || catFilter !== 'all' ? 'No vendors match your filters' : 'No vendors yet'}
-            </div>
-            <div style={{ fontSize: 13, color: C.gray, marginBottom: 20 }}>
-              {search || catFilter !== 'all'
-                ? 'Try adjusting your search or category filter.'
-                : 'Add your florists, photographers, DJs, and other go-to contacts.'}
-            </div>
-            {!search && catFilter === 'all' && (
-              <button
-                onClick={() => setModal({ mode: 'add' })}
-                style={{
-                  padding: '9px 20px', borderRadius: 8, background: C.rosa,
-                  color: C.white, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                }}
-              >+ Add your first vendor</button>
-            )}
-          </div>
+          <EmptyState
+            icon="🏪"
+            title={search || catFilter !== 'all' ? 'No vendors match your filters' : 'No vendors yet'}
+            subtitle={search || catFilter !== 'all'
+              ? 'Try adjusting your search or category filter.'
+              : 'Add your florists, photographers, DJs, and other go-to contacts.'}
+            action={!search && catFilter === 'all' ? () => setModal({ mode: 'add' }) : undefined}
+            actionLabel={!search && catFilter === 'all' ? '+ Add your first vendor' : undefined}
+          />
         ) : (
           <div style={{
             display: 'grid',

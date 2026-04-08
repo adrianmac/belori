@@ -909,7 +909,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
         ))}
       </div>
       {/* FILTER BAR */}
-      <div style={{ padding: '16px 20px', background: C.white, borderBottom: `1px solid ${C.border}`, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ padding: '16px 20px', background: C.white, borderBottom: `1px solid ${C.border}`, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12, position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <svg style={{ position: 'absolute', left: 14, color: C.gray }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search clients by name, phone, or email..." style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: 10, border: `1px solid ${search ? C.rosa : C.border}`, fontSize: 'var(--text-input)', outline: 'none', boxSizing: 'border-box', background: C.grayBg, transition: 'all 0.2s', boxShadow: search ? `0 0 0 3px ${C.rosaPale}` : 'inset 0 1px 2px rgba(0,0,0,0.02)' }} onFocus={e => { e.target.style.borderColor = C.rosa; e.target.style.boxShadow = `0 0 0 3px ${C.rosaPale}`; }} onBlur={e => { if (!search) { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'inset 0 1px 2px rgba(0,0,0,0.02)'; } }} />

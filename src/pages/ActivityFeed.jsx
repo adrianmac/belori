@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { C } from '../lib/colors';
-import { Topbar, GhostBtn, inputSt } from '../lib/ui.jsx';
+import { Topbar, GhostBtn, inputSt, EmptyState } from '../lib/ui.jsx';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -135,13 +135,11 @@ export default function ActivityFeed({ setScreen }) {
         )}
 
         {!loading && items.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 60 }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>📋</div>
-            <div style={{ fontSize: 14, color: C.ink, fontWeight: 500 }}>No activity yet</div>
-            <div style={{ fontSize: 12, color: C.gray, marginTop: 4 }}>
-              {filter !== 'all' ? 'Try a different filter' : 'Activity from client interactions will appear here'}
-            </div>
-          </div>
+          <EmptyState
+            icon="📋"
+            title="No activity yet"
+            subtitle={filter !== 'all' ? 'Try a different filter' : 'Activity from client interactions will appear here'}
+          />
         )}
 
         {items.length > 0 && (

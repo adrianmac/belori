@@ -3,7 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { C, fmt } from '../lib/colors';
 import { supabase } from '../lib/supabase';
 import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, useToast,
-  inputSt, LBL } from '../lib/ui.jsx';
+  inputSt, LBL, EmptyState } from '../lib/ui.jsx';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
 import { DRESS_TRANSITIONS } from '../lib/urgency.js';
 import { useAuth } from '../context/AuthContext';
@@ -1313,11 +1313,13 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
         )}
         {view==='bycat'&&<ByCatView/>}
         {filtered.length===0&&(
-          <div style={{textAlign:'center',padding:60,color:C.gray}}>
-            <div style={{fontSize:36,marginBottom:8}}>🔍</div>
-            <div style={{fontSize:14,fontWeight:500,color:C.ink}}>No items found</div>
-            <div style={{fontSize:12,marginTop:4}}>Try a different search or filter</div>
-          </div>
+          <EmptyState
+            icon="👗"
+            title="No inventory items"
+            subtitle="Add dresses, decorations, and accessories to your inventory"
+            action={() => setAddOpen(true)}
+            actionLabel="+ Add item"
+          />
         )}
       </div>
 

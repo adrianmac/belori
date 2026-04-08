@@ -2224,10 +2224,20 @@ const Settings = ({boutique, initialTab, setScreen}) => {
       <Topbar title="Settings" subtitle="Manage your boutique preferences and configurations"/>
       
       {/* Tab Navigation */}
-      <div style={{display:'flex',gap:24,padding:'0 24px',background:C.white,borderBottom:`1px solid ${C.border}`,flexShrink:0,overflowX:'auto',scrollbarWidth:'none'}}>
+      <div style={{
+        display:'flex',gap:24,padding:'0 24px',
+        background:C.white,borderBottom:`1px solid ${C.border}`,
+        flexShrink:0,
+        overflowX:'auto',
+        WebkitOverflowScrolling:'touch',
+        scrollbarWidth:'none',
+        msOverflowStyle:'none',
+        whiteSpace:'nowrap',
+        position:'sticky',top:48,zIndex:10,
+      }}>
         {TABS.map(tab=>(
           <button key={tab.id} onClick={()=>setActiveTab(tab.id)}
-            style={{padding:'12px 0 10px',background:'none',border:'none',borderBottom:`2px solid ${activeTab===tab.id?C.rosa:'transparent'}`,color:activeTab===tab.id?C.rosa:C.gray,fontSize:13,fontWeight:activeTab===tab.id?600:500,cursor:'pointer',transition:'all 0.2s',whiteSpace:'nowrap',marginTop:2}}>
+            style={{padding:'12px 0 10px',background:'none',border:'none',borderBottom:`2px solid ${activeTab===tab.id?C.rosa:'transparent'}`,color:activeTab===tab.id?C.rosa:C.gray,fontSize:13,fontWeight:activeTab===tab.id?600:500,cursor:'pointer',transition:'all 0.2s',whiteSpace:'nowrap',marginTop:2,flexShrink:0}}>
             {tab.label}
           </button>
         ))}

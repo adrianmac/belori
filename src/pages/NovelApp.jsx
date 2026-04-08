@@ -12,7 +12,7 @@ import { useModules } from "../hooks/useModules.jsx";
 import { useBilling } from "../hooks/useBilling";
 import { useLocations } from "../hooks/useLocations";
 import { C } from "../lib/colors";
-import { ToastProvider } from "../lib/ui.jsx";
+import { ToastProvider, SkeletonDashboard } from "../lib/ui.jsx";
 import { canAccess, defaultSettingsTab } from "../lib/permissions.js";
 import { useI18n } from "../lib/i18n/index.jsx";
 import Sidebar, { BottomNav, IconRail } from "../components/Sidebar.jsx";
@@ -154,7 +154,9 @@ const AccessDenied = () => (
 );
 
 const PageLoading = () => (
-  <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:C.gray,fontSize:13}}>Loading…</div>
+  <div style={{flex:1,overflow:'auto'}}>
+    <SkeletonDashboard/>
+  </div>
 );
 
 const SHORTCUT_ROWS = [

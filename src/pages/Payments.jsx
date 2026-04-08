@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { C, fmt, pct, EVT_TYPES } from '../lib/colors';
 import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, StatusDot,
-  SvcTag, useToast, inputSt, LBL } from '../lib/ui.jsx';
+  SvcTag, useToast, inputSt, LBL, EmptyState } from '../lib/ui.jsx';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -786,7 +786,7 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
           </div>
         ))}
       </div>
-      <div style={{display:'flex',gap:8,padding:'10px 20px',background:C.white,borderBottom:`1px solid ${C.border}`,alignItems:'center',flexWrap:'wrap'}}>
+      <div style={{display:'flex',gap:8,padding:'10px 20px',background:C.white,borderBottom:`1px solid ${C.border}`,alignItems:'center',flexWrap:'wrap',position:'sticky',top:0,zIndex:10}}>
         {['all','overdue','pending','paid','aging'].map(t => (
           <button key={t} onClick={()=>setTab(t)}
             style={{fontSize:12,padding:'5px 14px',borderRadius:999,border:`1px solid ${tab===t?C.rosa:C.border}`,background:tab===t?C.rosaPale:'transparent',color:tab===t?C.rosa:C.gray,cursor:'pointer',textTransform:'capitalize'}}>
@@ -916,7 +916,11 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
             {/* Detail table */}
             <Card style={{overflowX:'auto'}}>
               {agingRows.length === 0 ? (
-                <div style={{padding:'40px 20px',textAlign:'center',color:C.gray,fontSize:13}}>No open milestones — all paid up!</div>
+                <EmptyState
+                  icon="💳"
+                  title="No payment milestones"
+                  subtitle="Add milestones to events to track deposits and final payments"
+                />
               ) : (
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:13,minWidth:780}}>
                   <thead>

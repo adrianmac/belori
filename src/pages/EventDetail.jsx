@@ -48,10 +48,10 @@ function planningNeedsAttention(ev) {
   );
 }
 function PlanningCountdownBadge({ daysUntil }) {
-  const cfg = daysUntil <= 0  ? { text: 'Today!', bg: '#FEE2E2', color: '#B91C1C' }
-            : daysUntil <= 7  ? { text: `${daysUntil}d`, bg: '#FEE2E2', color: '#B91C1C' }
-            : daysUntil <= 30 ? { text: `${daysUntil}d`, bg: '#FEF3C7', color: '#B45309' }
-            : { text: `${daysUntil}d`, bg: '#DBEAFE', color: '#1D4ED8' };
+  const cfg = daysUntil <= 0  ? { text: 'Today!', bg: 'var(--bg-danger)',   color: 'var(--color-danger)'  }
+            : daysUntil <= 7  ? { text: `${daysUntil}d`, bg: 'var(--bg-danger)',   color: 'var(--color-danger)'  }
+            : daysUntil <= 30 ? { text: `${daysUntil}d`, bg: 'var(--bg-warning)', color: 'var(--color-warning)' }
+            : { text: `${daysUntil}d`, bg: 'var(--bg-info)', color: 'var(--color-info)' };
   return (
     <span style={{ fontSize: 10, padding: '3px 7px', borderRadius: 999, background: cfg.bg, color: cfg.color, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0, minWidth: 34, textAlign: 'center' }}>
       {cfg.text}
@@ -91,12 +91,12 @@ function PlanningBoardPanel({ ev, liveEvent, tasks, appointments, milestones, no
         {(totalAlertTasks > 0 || totalOverdue > 0) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: C.grayBg, borderBottom: `1px solid ${C.border}`, flexWrap: 'wrap' }}>
             {totalAlertTasks > 0 && (
-              <span style={{ fontSize: 11, color: '#B91C1C', fontWeight: 600, background: '#FEE2E2', padding: '2px 7px', borderRadius: 6 }}>
+              <span style={{ fontSize: 11, color: 'var(--color-danger)', fontWeight: 600, background: 'var(--bg-danger)', padding: '2px 7px', borderRadius: 6 }}>
                 {totalAlertTasks} alert
               </span>
             )}
             {totalOverdue > 0 && (
-              <span style={{ fontSize: 11, color: '#B45309', fontWeight: 600, background: '#FEF3C7', padding: '2px 7px', borderRadius: 6 }}>
+              <span style={{ fontSize: 11, color: 'var(--color-warning)', fontWeight: 600, background: 'var(--bg-warning)', padding: '2px 7px', borderRadius: 6 }}>
                 ${totalOverdue} overdue
               </span>
             )}
@@ -130,8 +130,8 @@ function PlanningBoardPanel({ ev, liveEvent, tasks, appointments, milestones, no
                     <div style={{ fontSize: 10, color: C.gray, marginTop: 1 }}>{typeInfo.icon} {typeInfo.label} · {event.date}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
-                    {alertTask && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#B91C1C', display: 'block' }} />}
-                    {overdue && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#B45309', display: 'block' }} />}
+                    {alertTask && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-danger)', display: 'block' }} />}
+                    {overdue && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-warning)', display: 'block' }} />}
                     {!alertTask && !overdue && <span style={{ fontSize: 10, color: C.green }}>✓</span>}
                   </div>
                 </div>
@@ -157,7 +157,7 @@ function PlanningBoardPanel({ ev, liveEvent, tasks, appointments, milestones, no
                 <div style={{ marginTop: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.gray, marginBottom: 4 }}>
                     <span>${selectedPlanEvent.paid || 0} paid of ${selectedPlanEvent.total}</span>
-                    {(selectedPlanEvent.overdue || 0) > 0 && <span style={{ color: '#B91C1C', fontWeight: 600 }}>${selectedPlanEvent.overdue} overdue</span>}
+                    {(selectedPlanEvent.overdue || 0) > 0 && <span style={{ color: 'var(--color-danger)', fontWeight: 600 }}>${selectedPlanEvent.overdue} overdue</span>}
                   </div>
                   <ProgressBar paid={selectedPlanEvent.paid || 0} total={selectedPlanEvent.total} height={5} />
                 </div>
@@ -180,13 +180,13 @@ function PlanningBoardPanel({ ev, liveEvent, tasks, appointments, milestones, no
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: C.gray, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Tasks ({openTasks.length} open)</div>
                   {alertTasks.length > 0 && (
-                    <div style={{ background: '#FEE2E2', borderRadius: 8, padding: '8px 10px', marginBottom: 6, fontSize: 12, color: '#B91C1C', fontWeight: 500 }}>
+                    <div style={{ background: 'var(--bg-danger)', borderRadius: 8, padding: '8px 10px', marginBottom: 6, fontSize: 12, color: 'var(--color-danger)', fontWeight: 500 }}>
                       ⚠ {alertTasks.length} alert task{alertTasks.length > 1 ? 's' : ''}: {alertTasks.slice(0,2).map(t => t.text).join(', ')}
                     </div>
                   )}
                   {openTasks.slice(0, 5).map(t => (
                     <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: `1px solid ${C.border}` }}>
-                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: t.alert ? '#B91C1C' : C.border, flexShrink: 0 }} />
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: t.alert ? 'var(--color-danger)' : C.border, flexShrink: 0 }} />
                       <span style={{ fontSize: 12, color: C.ink, flex: 1 }}>{t.text}</span>
                       <span style={{ fontSize: 10, color: C.gray }}>{t.category || ''}</span>
                     </div>
@@ -205,7 +205,7 @@ function PlanningBoardPanel({ ev, liveEvent, tasks, appointments, milestones, no
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: C.gray, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Appointments</div>
                   {missing.map((m, i) => (
-                    <div key={i} style={{ padding: '6px 10px', borderRadius: 7, background: '#FEF3C7', color: '#B45309', fontSize: 11, fontWeight: 500, marginBottom: 4 }}>
+                    <div key={i} style={{ padding: '6px 10px', borderRadius: 7, background: 'var(--bg-warning)', color: 'var(--color-warning)', fontSize: 11, fontWeight: 500, marginBottom: 4 }}>
                       ⚠ No {((m?.type || m || '').toString()).replace(/_/g, ' ')} scheduled
                     </div>
                   ))}
@@ -396,7 +396,7 @@ function FilesPanel({ files, filesLoading, uploadFile, deleteFile, getPublicUrl,
                 </div>
                 <div style={{display:'flex',gap:6,flexShrink:0}}>
                   {url && <a href={url} target="_blank" rel="noopener noreferrer" style={{padding:'5px 10px',border:`1px solid ${C.border}`,borderRadius:6,background:'transparent',color:C.gray,cursor:'pointer',fontSize:11,textDecoration:'none'}}>View</a>}
-                  <button onClick={async()=>{ if(!confirm(`Delete "${displayName}"?`))return; const {error}=await deleteFile(file.name); if(error)toast('Delete failed','error'); else toast('File deleted'); }} style={{padding:'5px 10px',border:'1px solid #FECACA',borderRadius:6,background:'#FFF5F5',color:'#DC2626',cursor:'pointer',fontSize:11}}>Delete</button>
+                  <button onClick={async()=>{ if(!confirm(`Delete "${displayName}"?`))return; const {error}=await deleteFile(file.name); if(error)toast('Delete failed','error'); else toast('File deleted'); }} style={{padding:'5px 10px',border:'1px solid var(--border-danger)',borderRadius:6,background:'var(--bg-danger)',color:'var(--color-danger)',cursor:'pointer',fontSize:11}}>Delete</button>
                 </div>
               </div>
             )
@@ -473,17 +473,17 @@ function FinancialRing({ total, paid, milestones }) {
           <span style={{fontSize:13,fontWeight:600,color:C.ink}}>{fmt(t)}</span>
         </div>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <span style={{fontSize:12,color:'#10B981'}}>Collected</span>
-          <span style={{fontSize:13,fontWeight:600,color:'#10B981'}}>{fmt(p)}</span>
+          <span style={{fontSize:12,color:'var(--color-success)'}}>Collected</span>
+          <span style={{fontSize:13,fontWeight:600,color:'var(--color-success)'}}>{fmt(p)}</span>
         </div>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span style={{fontSize:12,color:C.gray}}>Remaining</span>
           <span style={{fontSize:13,fontWeight:500,color:C.inkMid||C.gray}}>{fmt(remaining)}</span>
         </div>
         {overdue>0&&(
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'#FEF2F2',borderRadius:6,padding:'4px 8px',marginTop:2}}>
-            <span style={{fontSize:12,color:'#DC2626',fontWeight:500}}>⚠ Overdue</span>
-            <span style={{fontSize:13,fontWeight:700,color:'#DC2626'}}>{fmt(overdue)}</span>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--bg-danger)',borderRadius:6,padding:'4px 8px',marginTop:2}}>
+            <span style={{fontSize:12,color:'var(--color-danger)',fontWeight:500}}>⚠ Overdue</span>
+            <span style={{fontSize:13,fontWeight:700,color:'var(--color-danger)'}}>{fmt(overdue)}</span>
           </div>
         )}
       </div>
@@ -1244,7 +1244,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
   return (
     <div {...swipeBack} style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
       {/* ── STICKY TOPBAR ── */}
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 16px',height:52,background:C.white,borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 16px',height:52,background:C.white,borderBottom:`1px solid ${C.border}`,flexShrink:0,position:'sticky',top:0,zIndex:20}}>
         <div style={{display:'flex',alignItems:'center',gap:6,minWidth:0}}>
           <button onClick={()=>setScreen('events')} style={{display:'flex',alignItems:'center',gap:4,fontSize:12,color:C.gray,cursor:'pointer',background:'none',border:'none',padding:'8px 6px',minHeight:44}}>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -1317,8 +1317,8 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                   <button key={i} onClick={()=>{item.action();setShowOverflow(false);}}
                     style={{display:'flex',alignItems:'center',width:'100%',padding:'11px 16px',background:'transparent',border:'none',
                       borderTop:i>0?`1px solid ${C.border}`:'none',cursor:'pointer',fontSize:13,textAlign:'left',
-                      color:item.danger?'#DC2626':C.ink,fontWeight:item.danger?500:400}}
-                    onMouseEnter={e=>e.currentTarget.style.background=item.danger?'#FFF5F5':C.grayBg}
+                      color:item.danger?'var(--color-danger)':C.ink,fontWeight:item.danger?500:400}}
+                    onMouseEnter={e=>e.currentTarget.style.background=item.danger?'var(--bg-danger)':C.grayBg}
                     onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                     {item.label}
                   </button>
@@ -1741,9 +1741,9 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                 );
                 if (!paymentRisk) return null;
                 const riskConfig = {
-                  low:    {bg:'#F0FDF4',col:'#166534',dot:'#22C55E',label:'Low risk'},
-                  medium: {bg:'#FFFBEB',col:'#92400E',dot:'#F59E0B',label:'Medium risk'},
-                  high:   {bg:'#FEF2F2',col:'#991B1B',dot:'#EF4444',label:'High risk'},
+                  low:    {bg:'var(--bg-success)',col:'var(--text-success)',dot:'var(--color-success)',label:'Low risk'},
+                  medium: {bg:'var(--bg-warning)',col:'var(--text-warning)',dot:'var(--color-warning)',label:'Medium risk'},
+                  high:   {bg:'var(--bg-danger)', col:'var(--text-danger)', dot:'var(--color-danger)', label:'High risk'},
                 }[paymentRisk.risk] || {bg:C.grayBg,col:C.gray,dot:C.gray,label:'Unknown risk'};
                 return (
                   <div key="risk-badge" style={{display:'flex',alignItems:'flex-start',gap:10,padding:'10px 14px',borderRadius:8,background:riskConfig.bg,border:`1px solid ${riskConfig.dot}30`}}>
@@ -2194,7 +2194,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                 const cStaff=c.staff_id?staff.find(s=>s.id===c.staff_id)?.name:null;
                 const cTime=c.time?(()=>{const[h,m]=c.time.split(':').map(Number);const ampm=h>=12?'PM':'AM';const hh=h%12||12;return `${hh}:${String(m).padStart(2,'0')} ${ampm}`;})():null;
                 return (
-                  <div style={{padding:'8px 12px',borderRadius:8,background:'#FEF3C7',border:'1px solid #FDE68A',fontSize:12,color:'#92400E'}}>
+                  <div style={{padding:'8px 12px',borderRadius:8,background:'var(--bg-warning)',border:'1px solid var(--border-warning)',fontSize:12,color:'var(--text-warning)'}}>
                     ⚠️ {cStaff?<><strong>{cStaff}</strong> already has</>:'There is already'} a <strong>{c.type}</strong> appointment{cTime?' at '+cTime:''} on this date — you can still save.
                   </div>
                 );
@@ -2362,7 +2362,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                 const cStaff=c.staff_id?staff.find(s=>s.id===c.staff_id)?.name:null;
                 const cTime=c.time?(()=>{const[h,m]=c.time.split(':').map(Number);const ampm=h>=12?'PM':'AM';const hh=h%12||12;return `${hh}:${String(m).padStart(2,'0')} ${ampm}`;})():null;
                 return (
-                  <div style={{padding:'8px 12px',borderRadius:8,background:'#FEF3C7',border:'1px solid #FDE68A',fontSize:12,color:'#92400E'}}>
+                  <div style={{padding:'8px 12px',borderRadius:8,background:'var(--bg-warning)',border:'1px solid var(--border-warning)',fontSize:12,color:'var(--text-warning)'}}>
                     ⚠️ {cStaff?<><strong>{cStaff}</strong> already has</>:'There is already'} a <strong>{c.type}</strong> appointment{cTime?' at '+cTime:''} on this date — you can still save.
                   </div>
                 );
@@ -2381,14 +2381,14 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
           <div style={{background:C.white,borderRadius:16,width:400,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
             <div style={{padding:'20px 20px 0',textAlign:'center'}}>
-              <div style={{width:48,height:48,borderRadius:'50%',background:'#FEE2E2',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px'}}>
-                <svg width="22" height="22" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4" stroke="#DC2626" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <div style={{width:48,height:48,borderRadius:'50%',background:'var(--bg-danger)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px'}}>
+                <svg width="22" height="22" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4" stroke="var(--color-danger)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </div>
               <div style={{fontSize:16,fontWeight:600,color:C.ink,marginBottom:8}}>Delete this event?</div>
               <div style={{fontSize:13,color:C.gray,marginBottom:4}}>
                 <strong style={{color:C.ink}}>{ev.client}</strong> — {ev.type} {ev.event_date ? `· ${new Date(ev.event_date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}` : ''}
               </div>
-              <div style={{fontSize:12,color:'#DC2626',background:'#FEF2F2',borderRadius:8,padding:'8px 12px',margin:'12px 0'}}>
+              <div style={{fontSize:12,color:'var(--color-danger)',background:'var(--bg-danger)',borderRadius:8,padding:'8px 12px',margin:'12px 0'}}>
                 This will permanently delete the event, all milestones, appointments, notes, and tasks. This cannot be undone.
               </div>
             </div>
@@ -2400,7 +2400,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                 toast('Event deleted');
                 setShowDeleteConfirm(false);
                 setScreen('events');
-              }} style={{flex:1,padding:'9px 16px',borderRadius:8,border:'none',background:'#DC2626',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+              }} style={{flex:1,padding:'9px 16px',borderRadius:8,border:'none',background:'var(--color-danger)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>
                 Delete permanently
               </button>
             </div>
@@ -2508,11 +2508,11 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
         const hasMeasurements = clientMeasurements && (clientMeasurements.bust || clientMeasurements.waist);
         function ScoreDots({ score }) {
           const MAX = 8;
-          const dotColors = ['#DC2626','#D97706','#B45309','#15803D','#15803D'];
+          const dotColors = ['var(--color-danger)','var(--color-warning)',C.amber,C.green,C.green];
           const filled = Math.min(score, MAX); // use 5 dots display max
           const displayMax = 5;
           const filledDots = Math.round((filled / MAX) * displayMax);
-          const col = score >= 6 ? '#15803D' : score >= 3 ? '#B45309' : '#6B7280';
+          const col = score >= 6 ? C.green : score >= 3 ? C.amber : C.gray;
           return (
             <span style={{display:'inline-flex',gap:2,alignItems:'center'}}>
               {Array.from({length: displayMax}).map((_, i) => (

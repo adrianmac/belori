@@ -5,7 +5,7 @@ import { C, fmt, pct, SVC_LABELS, SVC_COLORS, EVT_TYPES, TYPE_SVCS,
   TYPE_DEFAULT_SVCS, COLOR_PRESETS, STYLE_OPTIONS } from '../lib/colors';
 import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, SvcTag,
   Countdown, EventTypeBadge, ProgressBar, StatusDot, AlertBanner, useToast,
-  inputSt, LBL } from '../lib/ui.jsx';
+  inputSt, LBL, SkeletonList } from '../lib/ui.jsx';
 import { getPriorityAlert, getCountdownConfig, DRESS_TRANSITIONS,
   ALTERATION_TRANSITIONS } from '../lib/urgency';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
@@ -1807,6 +1807,8 @@ const EventsList = ({setScreen,setSelectedEvent,events,createEvent,duplicateEven
     clearSelection();
   };
 
+  if (!events) return <SkeletonList count={5} style={{padding:'0 16px',marginTop:16}}/>;
+
   return (
     <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
 
@@ -1828,7 +1830,7 @@ const EventsList = ({setScreen,setSelectedEvent,events,createEvent,duplicateEven
 
       {/* List-mode filter bar */}
       {view==='list'&&(
-        <div style={{display:'flex',gap:8,padding:'10px 20px',background:C.white,borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',alignItems:'center'}}>
+        <div style={{display:'flex',gap:8,padding:'10px 20px',background:C.white,borderBottom:`1px solid ${C.border}`,flexWrap:'wrap',alignItems:'center',position:'sticky',top:0,zIndex:10}}>
           {anySelected&&(
             <label style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer',marginRight:4}}>
               <input type="checkbox" checked={allFilteredSelected} onChange={toggleAll} style={{width:16,height:16,cursor:'pointer',accentColor:C.rosa}}/>
