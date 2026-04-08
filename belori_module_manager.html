@@ -1,0 +1,536 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;font-size:13px;background:#F0EDE9}
+:root{
+  --rosa:#C9697A;--rh:#B85868;--rp:#FDF5F6;--rl:#E8B4BB;
+  --ink:#1C1012;--gray:#6B7280;--gl:#9CA3AF;--border:#E5E7EB;
+  --ivory:#F8F4F0;--green:#15803D;--gbg:#DCFCE7;
+  --amber:#B45309;--abg:#FEF3C7;--red:#B91C1C;--rbg:#FEE2E2;
+  --blue:#1D4ED8;--bbg:#DBEAFE;--purple:#7C3AED;--pbg:#EDE9FE;
+}
+
+/* shell */
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:680px;border-radius:12px;border:1px solid var(--border);overflow:hidden;background:#F0EDE9}
+
+/* sidebar */
+.sidebar{background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column}
+.sb-top{padding:14px 16px;border-bottom:1px solid var(--border)}
+.sb-brand{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sb-lm{width:28px;height:28px;background:var(--ink);border-radius:6px;display:flex;align-items:center;justify-content:center}
+.sb-name{font-size:13px;font-weight:500;color:var(--ink)}
+.sb-plan{display:flex;align-items:center;justify-content:space-between}
+.plan-badge{font-size:10px;font-weight:500;padding:3px 9px;border-radius:99px;background:#FEF3C7;color:#92400E}
+.plan-link{font-size:10px;color:var(--rosa);cursor:pointer}
+.sb-nav{padding:8px;flex:1}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--gray);transition:all .12s;margin-bottom:1px}
+.nav-item:hover{background:var(--ivory);color:var(--ink)}
+.nav-item.active{background:var(--rp);color:var(--rosa);font-weight:500}
+.nav-item svg{width:14px;height:14px;stroke:currentColor;fill:none;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:9px;font-weight:500;padding:1px 6px;border-radius:99px}
+.nb-green{background:var(--gbg);color:var(--green)}
+.nb-amber{background:var(--abg);color:var(--amber)}
+.nb-gray{background:#F3F4F6;color:var(--gray)}
+
+/* main */
+.main{padding:20px;overflow-y:auto}
+.main-head{margin-bottom:18px}
+.main-title{font-size:18px;font-weight:500;color:var(--ink);margin-bottom:4px}
+.main-sub{font-size:12px;color:var(--gl);line-height:1.5}
+
+/* filter bar */
+.filter-bar{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.fb-pill{padding:5px 13px;border-radius:99px;border:1px solid var(--border);background:#fff;font-size:11px;font-weight:500;color:var(--gray);cursor:pointer;transition:all .12s}
+.fb-pill.on{border-color:var(--rosa);background:var(--rp);color:var(--rosa)}
+.fb-search{flex:1;min-width:160px;height:34px;border:1px solid var(--border);border-radius:8px;padding:0 11px;font-size:12px;outline:none;background:#fff}
+.fb-search:focus{border-color:var(--rosa)}
+
+/* module grid */
+.mod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+
+/* module card */
+.mod-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;transition:all .15s;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.mod-card:hover{border-color:var(--rosa);box-shadow:0 3px 10px rgba(0,0,0,.09)}
+.mod-card.enabled{border-color:var(--green);background:#FAFFFE}
+.mod-card.core{border-color:var(--border);background:var(--ivory)}
+.mod-card.enabled .mod-card-footer{border-top-color:#D1FAE5}
+.mod-card.core .mod-card-footer{border-top-color:var(--border)}
+
+.mod-card-top{display:flex;align-items:flex-start;gap:11px}
+.mod-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mod-icon svg{width:20px;height:20px;fill:none;stroke-width:1.4}
+.mod-title-row{flex:1}
+.mod-name{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:3px;display:flex;align-items:center;gap:6px}
+.mod-tag{font-size:9px;font-weight:500;padding:2px 6px;border-radius:4px}
+.t-core{background:#F3F4F6;color:var(--gray)}
+.t-new{background:#EDE9FE;color:#7C3AED}
+.t-pro{background:#FEF3C7;color:#92400E}
+.mod-desc{font-size:11px;color:var(--gl);line-height:1.5}
+
+.mod-features{display:flex;flex-direction:column;gap:3px}
+.mf{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gray)}
+.mf-dot{width:5px;height:5px;border-radius:50%;background:var(--gl);flex-shrink:0}
+.mod-card.enabled .mf-dot{background:var(--green)}
+
+.mod-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border);margin-top:2px}
+.mod-plan-req{font-size:10px;color:var(--gl)}
+.mod-plan-req.upgrade{color:var(--amber);font-weight:500;cursor:pointer}
+
+/* toggle */
+.toggle{display:flex;align-items:center;gap:8px;cursor:pointer;flex-shrink:0}
+.toggle-track{width:36px;height:20px;border-radius:99px;background:#E5E7EB;position:relative;transition:background .2s;flex-shrink:0}
+.toggle-track.on{background:var(--green)}
+.toggle-track.core-track{background:#D1D5DB;cursor:not-allowed}
+.toggle-thumb{width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-track.on .toggle-thumb{transform:translateX(16px)}
+.toggle-lbl{font-size:11px;font-weight:500;color:var(--gray)}
+.toggle-track.on + .toggle-lbl{color:var(--green)}
+
+/* section label */
+.sec-label{font-size:10px;font-weight:500;color:var(--gl);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;margin-top:16px;display:flex;align-items:center;gap:8px}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.sec-label:first-child{margin-top:0}
+
+/* stats bar */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.stat-cell{background:#fff;border:1px solid var(--border);border-radius:9px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.stat-n{font-size:20px;font-weight:500;color:var(--ink);line-height:1}
+.stat-n.green{color:var(--green)}.stat-n.amber{color:var(--amber)}
+.stat-l{font-size:10px;color:var(--gl);margin-top:3px}
+
+/* dependency warning */
+.dep-warn{background:var(--abg);border:1px solid #FDE68A;border-radius:7px;padding:7px 10px;font-size:11px;color:#78350F;display:none;margin-top:6px}
+
+/* save bar */
+.save-bar{position:sticky;bottom:0;background:rgba(248,244,240,.95);backdrop-filter:blur(8px);border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;display:none}
+.save-bar.visible{display:flex}
+.save-msg{font-size:12px;color:var(--amber);display:flex;align-items:center;gap:6px}
+.btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:none;white-space:nowrap;transition:all .12s}
+.btn-p{background:var(--rosa);color:#fff;box-shadow:0 2px 7px rgba(201,105,122,.35)}.btn-p:hover{background:var(--rh)}
+.btn-g{background:#fff;color:var(--gray);border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+/* sidebar changes count */
+.changes-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);display:inline-block;margin-left:4px;display:none}
+.changes-dot.visible{display:inline-block}
+
+/* preview panel */
+.preview-panel{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;display:none}
+.preview-panel.open{display:block}
+
+/* toast */
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--gbg);color:var(--green);border:1px solid #86EFAC;padding:7px 16px;border-radius:8px;font-size:12px;font-weight:500;z-index:999;pointer-events:none;white-space:nowrap;display:none}
+</style>
+
+<div class="toast" id="toast"></div>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-top">
+    <div class="sb-brand">
+      <div class="sb-lm"><svg width="14" height="14" viewBox="0 0 32 32" fill="none"><path d="M7 25V7l18 18V7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="sb-name">Belori</span>
+    </div>
+    <div class="sb-plan">
+      <span class="plan-badge">Growth plan</span>
+      <span class="plan-link" onclick="toast2('Upgrade flow coming soon')">Upgrade →</span>
+    </div>
+  </div>
+  <div class="sb-nav">
+    <div class="nav-item active" onclick="setView('modules',this)">
+      <svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1.2"/><rect x="9" y="1" width="6" height="6" rx="1.2"/><rect x="1" y="9" width="6" height="6" rx="1.2"/><rect x="9" y="9" width="6" height="6" rx="1.2"/></svg>
+      Modules
+      <span class="nav-badge nb-amber" id="pending-badge" style="display:none">Unsaved</span>
+    </div>
+    <div class="nav-item" onclick="setView('sidebar',this)">
+      <svg viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="12" rx="1.5"/><path d="M6 2v12" stroke-linecap="round"/></svg>
+      Navigation
+    </div>
+    <div class="nav-item" onclick="setView('plan',this)">
+      <svg viewBox="0 0 16 16"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 7h14M4 10h3" stroke-linecap="round"/></svg>
+      Plan & billing
+    </div>
+    <div class="nav-item" onclick="setView('team',this)">
+      <svg viewBox="0 0 16 16"><circle cx="6" cy="5" r="2.5"/><circle cx="12" cy="5" r="2.5"/><path d="M1 14c0-2.761 2.239-4 5-4M8 14c0-2.761 2.239-4 5-4" stroke-linecap="round"/></svg>
+      Team & roles
+    </div>
+    <div class="nav-item" onclick="setView('audit',this)">
+      <svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h8" stroke-linecap="round"/></svg>
+      Audit log
+    </div>
+
+    <div style="font-size:9px;font-weight:500;color:var(--gl);text-transform:uppercase;letter-spacing:.06em;padding:10px 10px 5px;margin-top:8px">Your boutique</div>
+    <div class="nav-item" onclick="toast2('Navigating to dashboard...')">
+      <svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1.2"/><rect x="9" y="1" width="6" height="6" rx="1.2"/><rect x="1" y="9" width="6" height="6" rx="1.2"/><rect x="9" y="9" width="6" height="6" rx="1.2"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="toast2('Navigating to events...')">
+      <svg viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="12" rx="1.5"/><path d="M5 1v2M11 1v2M1 6h14" stroke-linecap="round"/></svg>
+      Events
+    </div>
+    <div class="nav-item" onclick="toast2('Navigating to clients...')">
+      <svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke-linecap="round"/></svg>
+      Clients
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="main-content">
+  <!-- populated by JS -->
+</div>
+
+</div>
+
+<script>
+const MODULES = [
+  // ── CORE (always on) ──
+  {id:'events',      name:'Events',            cat:'core',    tag:'core',  icon:'cal',   color:'#FDF5F6', ic:'#C9697A', enabled:true,  plan:'all',
+    desc:'Event creation, detail pages, milestones, tasks, notes, and inspiration. The central hub — always active.',
+    features:['Event creation & detail page','Payment milestones & overdue alerts','Tasks checklist & staff notes','Vision & inspiration capture','Urgency engine & blocking issues']},
+  {id:'clients',     name:'Clients & CRM',     cat:'core',    tag:'core',  icon:'people',color:'#FDF5F6', ic:'#C9697A', enabled:true,  plan:'all',
+    desc:'Client records, CRM interaction timeline, loyalty tiers, tags, preferences, and pipeline management.',
+    features:['Client profiles & contact info','Interaction timeline (calls, notes, SMS)','Loyalty tier system & points','CRM tags & segmentation','Sales pipeline kanban']},
+  {id:'staff',       name:'Staff & roles',     cat:'core',    tag:'core',  icon:'team',  color:'#FDF5F6', ic:'#C9697A', enabled:true,  plan:'all',
+    desc:'Staff accounts, role-based permissions, and team management. Required for all other modules.',
+    features:['Owner / coordinator / front desk / seamstress roles','Per-role feature access','Staff activity log']},
+  {id:'settings',    name:'Settings',          cat:'core',    tag:'core',  icon:'gear',  color:'#FDF5F6', ic:'#C9697A', enabled:true,  plan:'all',
+    desc:'Boutique profile, SMS automations, layout mode, branding, and module management.',
+    features:['Boutique profile & branding','Automation preferences','Layout mode (desktop/tablet)','Module manager (this page)']},
+
+  // ── SERVICES ──
+  {id:'dress_rental',name:'Dress rental',       cat:'services',tag:null,    icon:'dress', color:'#FDF5F6', ic:'#C9697A', enabled:true,  plan:'all',
+    desc:'Full dress rental lifecycle — reserve, pickup, return, cleaning. QR scanning, overdue tracking, and late fees.',
+    features:['4-tab rental dashboard (Catalog / Active / Returns / History)','Reserve → Pickup → Return → Cleaning lifecycle','QR code scanning for check-in/check-out','Overdue alerts, late fees, damage fees','Walk-in rentals without event link']},
+  {id:'alterations', name:'Alterations',        cat:'services',tag:null,    icon:'scissors',color:'#DBEAFE',ic:'#1D4ED8',enabled:true,  plan:'all',
+    desc:'Alteration job management with kanban board, seamstress assignment, urgency tracking, and fitting appointments.',
+    features:['Kanban board (Measure / In progress / Fitting / Complete)','Job linked to event or walk-in rental','Seamstress assignment & deadline tracking','Auto-tasks for fitting appointments','Urgency detection (event ≤7 days)']},
+  {id:'decoration',  name:'Decoration & inventory',cat:'services',tag:null, icon:'star',  color:'#FEF3C7', ic:'#B45309', enabled:true,  plan:'all',
+    desc:'Full inventory system for linens, centerpieces, equipment, and decoration items. Availability checks and event assignment.',
+    features:['7 categories, 40+ subcategories','Individual / quantity / consumable tracking modes','Event assignment & availability conflict detection','Shortfall alerts & restock notifications','Decoration sets (named bundles)']},
+  {id:'event_planning',name:'Event planning',   cat:'services',tag:null,    icon:'plan',  color:'#EDE9FE', ic:'#7C3AED', enabled:true,  plan:'all',
+    desc:'Full coordination services — run-of-show, vendor notes, appointment scheduling, and coordinator assignment.',
+    features:['Coordinator assignment per event','Run-of-show scheduling & itinerary','Appointment scheduling (consultations, fittings, walkthroughs)','Service packages (Full / Day-of / Consultation)']},
+
+  // ── NEW MODULES ──
+  {id:'pos',         name:'Point of sale',      cat:'operations',tag:null,  icon:'card',  color:'#DCFCE7', ic:'#15803D', enabled:true,  plan:'all',
+    desc:'Full register for walk-in transactions. Simplified and customizable service grid, payment methods, and receipt printing.',
+    features:['Service grid with highlight colors','Custom button builder','Cash, card, Zelle, Venmo, check, split payment','Numpad for custom amounts','Receipt printing & SMS receipt']},
+  {id:'measurements',name:'Measurements',       cat:'services',tag:'new',   icon:'ruler', color:'#DBEAFE', ic:'#1D4ED8', enabled:false, plan:'all',
+    desc:'Structured measurements database per client. Track all body measurements, compare across fittings, and link to alteration jobs.',
+    features:['Per-client measurement records (bust, waist, hips, etc.)','History across multiple fittings','Compare measurements vs dress specs','Auto-populate alteration job from measurements','PDF measurement sheet for seamstress']},
+  {id:'vendors',     name:'Vendor management',  cat:'operations',tag:'new',  icon:'vendor',color:'#EDE9FE', ic:'#7C3AED', enabled:false, plan:'all',
+    desc:'Track external vendors (photographers, DJs, florists, caterers, transport) assigned to events. Contacts, notes, and status.',
+    features:['Vendor directory with categories','Assign vendors to events','Contact info, pricing notes, and contracts','Vendor status per event (confirmed / pending / cancelled)','Vendor history per client event']},
+  {id:'floorplan',   name:'Floorplan builder',  cat:'operations',tag:'new',  icon:'floor', color:'#EDE9FE', ic:'#7C3AED', enabled:false, plan:'growth',
+    desc:'2D drag-and-drop room layout tool. Design table arrangements, assign linen assignments visually, and share with clients.',
+    features:['Drag-and-drop table/chair placement','Link linen inventory to table assignments','Save and version floor plan per event','Export as PDF or image for client review','Room preset templates (ballroom, chapel, garden)']},
+  {id:'client_portal',name:'Client portal',     cat:'client',  tag:'new',   icon:'portal',color:'#FDF5F6', ic:'#C9697A', enabled:false, plan:'growth',
+    desc:'Branded client-facing portal where clients view their event, approve documents, track milestones, and pay online.',
+    features:['Event detail view (read-only)','Milestone payment with Stripe checkout link','E-signature for contracts in-browser','Inspiration board view','Appointment schedule & upcoming dates']},
+  {id:'appt_booking',name:'Appointment booking',cat:'client',  tag:'new',   icon:'appt',  color:'#DCFCE7', ic:'#15803D', enabled:false, plan:'growth',
+    desc:'Public self-scheduling page for clients to book consultations and fittings from available slots.',
+    features:['Public booking calendar with staff availability','Service type selection (consult, fitting, pickup)','SMS & email confirmation','Syncs with internal appointment schedule','Buffer time and blackout date management']},
+  {id:'esign',       name:'E-signatures',       cat:'documents',tag:'new',  icon:'sign',  color:'#DBEAFE', ic:'#1D4ED8', enabled:false, plan:'all',
+    desc:'In-browser contract signing for clients. No PDF download required — sign via the client portal or a shareable link.',
+    features:['In-browser signature capture','Signature blocks on any contract template','Signed PDF generated and stored automatically','Email notification on signature','Audit trail: who signed, when, from what IP']},
+  {id:'email_marketing',name:'Email marketing', cat:'marketing',tag:'new',  icon:'email', color:'#EDE9FE', ic:'#7C3AED', enabled:false, plan:'growth',
+    desc:'Branded email broadcasts, seasonal promotions, and drip campaigns to client segments.',
+    features:['Broadcast emails to client segments (by tag, tier, event type)','Pre-built templates (trunk show, seasonal sale, re-engagement)','Campaign performance tracking (opens, clicks)','Scheduled send and drip sequences','Unsubscribe management (CAN-SPAM compliant)']},
+  {id:'online_payments',name:'Client payment links',cat:'finance',tag:'new',icon:'pay',   color:'#DCFCE7', ic:'#15803D', enabled:false, plan:'all',
+    desc:'Send clients a Stripe-powered payment link for any milestone. They pay by card without coming in.',
+    features:['Payment link generated per milestone','Stripe checkout (card + Apple/Google Pay)','Automatic milestone status update on payment','Email + SMS receipt to client','Partial payment support']},
+  {id:'fb_beo',      name:'Food & beverage / BEO',cat:'services',tag:'new', icon:'fork',  color:'#FEF3C7', ic:'#B45309', enabled:false, plan:'pro',
+    desc:'Menu management, catering item library, and Banquet Event Order generation for boutiques that provide catering coordination.',
+    features:['F&B item library with pricing','BEO template generation per event','Dietary restriction tracking','Caterer vendor assignment','Cost vs. revenue tracking per menu item']},
+  {id:'ticketing',   name:'Registration & ticketing',cat:'marketing',tag:'new',icon:'ticket',color:'#EDE9FE',ic:'#7C3AED',enabled:false,plan:'growth',
+    desc:'Public event registration and ticket sales for trunk shows, sample sales, and boutique events.',
+    features:['Public event page with registration form','Paid and free ticket types','Attendee management & check-in','QR code tickets','Post-event email to attendees']},
+  {id:'staff_sched', name:'Staff scheduling',    cat:'operations',tag:'new', icon:'rota',  color:'#DCFCE7', ic:'#15803D', enabled:false, plan:'growth',
+    desc:'Schedule staff shifts and assign them to events. See availability conflicts before booking appointments.',
+    features:['Weekly staff schedule view','Assign staff to events & appointments','Availability conflict detection','Time-off and blackout management','Staff hours summary (not payroll)']},
+  {id:'multi_location',name:'Multi-location',    cat:'operations',tag:'new', icon:'map',   color:'#FEF3C7', ic:'#B45309', enabled:false, plan:'pro',
+    desc:'Owner-level dashboard across multiple boutique locations. Rollup revenue, events, and staff from one view.',
+    features:['Cross-location revenue & events dashboard','Per-location vs total comparison','Staff roster across locations','Inventory transfers between locations','Location-scoped vs global reports']},
+  {id:'retail',      name:'Retail / product sales',cat:'operations',tag:'new',icon:'bag',  color:'#FDF5F6', ic:'#C9697A', enabled:false, plan:'all',
+    desc:'Sell accessories, veils, shoes, and gift items as products. Track stock, cost of goods, and ring up at POS.',
+    features:['Product catalog with SKUs and stock levels','Cost of goods and margin tracking','Sell through POS or event order','Low-stock alerts','Product sales history per client']},
+  {id:'expenses',    name:'Expense tracking',    cat:'finance', tag:'new',   icon:'receipt',color:'#FEF3C7', ic:'#B45309', enabled:false, plan:'all',
+    desc:'Log boutique expenses against events or as general overhead. Track P&L alongside event revenue.',
+    features:['Expense categories (cleaning, supplies, marketing, staff)','Link expenses to events or overhead','Revenue vs expense summary','Export for accountant (CSV)','Budget vs actual per event']},
+  {id:'accounting',  name:'Accounting export',   cat:'finance', tag:'new',   icon:'book',  color:'#DCFCE7', ic:'#15803D', enabled:false, plan:'growth',
+    desc:'Push revenue, invoices, and payments to QuickBooks or export structured CSV for your accountant.',
+    features:['QuickBooks Online integration','Chart of accounts mapping','Automatic sync on milestone paid','CSV export (all transactions, by period)','Tax line item support']},
+  {id:'reports',     name:'Financial reports',   cat:'finance', tag:'new',   icon:'chart',  color:'#DCFCE7', ic:'#15803D', enabled:false, plan:'growth',
+    desc:'Monthly P&L, revenue by service type, top clients, and booking pace reports with charts.',
+    features:['Monthly P&L summary','Revenue by service category','Top clients by lifetime value','Booking pace & forecast','Export as PDF or CSV']},
+  {id:'reviews',     name:'Reviews & reputation',cat:'marketing',tag:'new',  icon:'star2', color:'#FEF3C7', ic:'#B45309', enabled:false, plan:'all',
+    desc:'Automate post-event review requests and manage your boutique reputation from one place.',
+    features:['Auto SMS review request after event','Google review link integration','Internal star rating per event','Filter: only send to events with no overdue payments','Review history per client']},
+  {id:'photo_gallery',name:'Photo gallery',      cat:'client',  tag:'new',   icon:'photo', color:'#EDE9FE', ic:'#7C3AED', enabled:false, plan:'all',
+    desc:'Per-event photo gallery for inspiration, dress photos, ceremony shots, and decoration setups.',
+    features:['Upload photos per event (setup, ceremony, portrait)','Organize by phase (before/during/after)','Share gallery link with client','Use as portfolio on public booking page','Storage via Supabase Storage']},
+  {id:'dress_catalog',name:'Dress catalog mgmt',cat:'services', tag:'new',   icon:'hanger',color:'#FDF5F6', ic:'#C9697A', enabled:false, plan:'all',
+    desc:'Receiving, purchasing, and consignment tracking for new dress arrivals. Log cost, designer, and available sizing.',
+    features:['New dress receiving workflow','Cost, designer, and consignment terms','Size availability search (by measurement range)','Dress catalog with filtering','Discontinue and archive flow']},
+  {id:'waitlist',    name:'Waitlist',            cat:'client',  tag:'new',   icon:'wait',  color:'#DCFCE7', ic:'#15803D', enabled:false, plan:'all',
+    desc:'Put leads on a waitlist for a booked date. Auto-notify when the date opens.',
+    features:['Waitlist per event date or service','Ranked queue management','Auto SMS when date/slot opens','Convert waitlist lead to event with one tap','Waitlist analytics (demand by date)']},
+  {id:'audit_ui',    name:'Audit log UI',        cat:'operations',tag:'new', icon:'log',   color:'#F3F4F6', ic:'#6B7280', enabled:false, plan:'growth',
+    desc:'Staff-facing view of all changes made to any record. Who changed what, when, and what it was before.',
+    features:['Timeline of all record changes','Filter by staff member, date, module','Revert capability (owner only)','Track field-level diffs (old → new value)','Export audit log as CSV']},
+  {id:'data_export', name:'Data export',         cat:'operations',tag:'new', icon:'export',color:'#F3F4F6', ic:'#6B7280', enabled:false, plan:'all',
+    desc:'Export all boutique data — clients, events, payments, inventory — as CSV or JSON for backup or migration.',
+    features:['Full data export (all tables)','Scoped exports (clients only, payments only, etc.)','JSON format for developer handoff','Scheduled monthly auto-export via email','GDPR-compliant data deletion tool']},
+  {id:'2fa',         name:'Two-factor auth',     cat:'security',tag:'new',   icon:'lock',  color:'#F3F4F6', ic:'#6B7280', enabled:false, plan:'all',
+    desc:'Enforce 2FA for owner and coordinator roles. Adds an extra layer of security for accounts with financial access.',
+    features:['TOTP (authenticator app) for owner/coordinator','SMS 2FA fallback','Session management (see active logins)','Force 2FA on financial actions','Role-scoped enforcement']},
+  {id:'sms_compliance',name:'SMS compliance',    cat:'security',tag:'new',   icon:'shield',color:'#F3F4F6', ic:'#6B7280', enabled:false, plan:'all',
+    desc:'TCPA-compliant STOP/UNSUBSCRIBE handling for all Twilio SMS. Required for US boutiques sending marketing messages.',
+    features:['Auto-handle STOP / HELP / UNSUBSCRIBE replies','Opt-out list management','Per-client SMS consent tracking','Compliance audit log','Required if Email marketing module is enabled']},
+]
+
+const CAT_LABELS = {core:'Core (always on)',services:'Services',operations:'Operations',client:'Client-facing',finance:'Finance',marketing:'Marketing & growth',documents:'Documents & legal',security:'Security & compliance'}
+const PLAN_ORDER = {all:0,growth:1,pro:2}
+const PLAN_LABELS = {all:'All plans',growth:'Growth plan+',pro:'Pro plan'}
+const ICONS = {
+  cal:'<rect x="1" y="2" width="14" height="12" rx="1.5"/><path d="M5 1v2M11 1v2M1 6h14" stroke-linecap="round"/>',
+  people:'<circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke-linecap="round"/>',
+  team:'<circle cx="5.5" cy="5" r="2.5"/><circle cx="12" cy="5" r="2.5"/><path d="M0 14c0-2.761 2.239-4 5.5-4M8 14c0-2.761 2.239-4 5.5-4" stroke-linecap="round"/>',
+  gear:'<circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.93 2.93l1.41 1.41M11.66 11.66l1.41 1.41M2.93 13.07l1.41-1.41M11.66 4.34l1.41-1.41" stroke-linecap="round"/>',
+  dress:'<path d="M8 1c-1.5 0-4 1.2-4 4v3L2 14h12L14 8V5c0-2.8-2.5-4-4-4Z" stroke-linejoin="round"/>',
+  scissors:'<path d="M3 3l8 8M11 3L3 11" stroke-linecap="round"/><circle cx="3" cy="3" r="1.8"/><circle cx="11" cy="11" r="1.8"/>',
+  star:'<path d="M8 2l1.5 3.5H13l-2.8 2 1 3.5L8 9l-3.2 2 1-3.5L3 5.5h3.5L8 2Z" stroke-linejoin="round"/>',
+  plan:'<rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h3" stroke-linecap="round"/>',
+  card:'<rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 7h14M4 11h3" stroke-linecap="round"/>',
+  ruler:'<path d="M2 13L13 2l2 2-3.5 3.5.8.8-1.2 1.2-.8-.8L8.7 11l.8.8-1.2 1.2-.8-.8L4 16l-2-2Z" stroke-linejoin="round"/>',
+  vendor:'<circle cx="8" cy="8" r="5"/><path d="M5 8h6M8 5v6" stroke-linecap="round"/>',
+  floor:'<rect x="1" y="1" width="14" height="14" rx="1.5"/><path d="M1 6h14M6 1v14" stroke-linecap="round"/>',
+  portal:'<circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2" stroke-linecap="round"/>',
+  appt:'<rect x="1" y="2" width="14" height="12" rx="1.5"/><path d="M5 1v2M11 1v2M1 6h14M5 9h2M9 9h2M5 11.5h2M9 11.5h2" stroke-linecap="round"/>',
+  sign:'<path d="M2 12l2-2 8-8 2 2-8 8-2 2-2-2Z" stroke-linejoin="round"/><path d="M2 14h4" stroke-linecap="round"/>',
+  email:'<rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 5l7 5 7-5" stroke-linecap="round"/>',
+  pay:'<rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 7h14"/><circle cx="8" cy="10" r="1.5" fill="currentColor"/>',
+  fork:'<path d="M5 1v4M5 7v7M8 1v2a3 3 0 0 0 3 3v7" stroke-linecap="round"/>',
+  ticket:'<path d="M2 5.5h12v5H2V5.5Z" stroke-linejoin="round"/><path d="M6 5.5v5M2 7.5h1M2 9h1M13 7.5h1M13 9h1" stroke-linecap="round"/>',
+  rota:'<rect x="1" y="2" width="14" height="12" rx="1.5"/><path d="M5 1v2M11 1v2M1 6h14M5 9h2M9 9h2" stroke-linecap="round"/>',
+  map:'<path d="M1 3l5 2 4-2 5 2v10l-5-2-4 2-5-2V3Z" stroke-linejoin="round"/><path d="M6 5v10M10 3v10" stroke-linecap="round"/>',
+  bag:'<path d="M4 5V4a4 4 0 0 1 8 0v1"/><rect x="2" y="5" width="12" height="9" rx="1.5"/>',
+  receipt:'<rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h3" stroke-linecap="round"/>',
+  book:'<rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M2 1h12M5 5h6M5 8h6M5 11h4" stroke-linecap="round"/>',
+  chart:'<path d="M1 14h14M4 14V8M8 14V5M12 14V10" stroke-linecap="round"/>',
+  star2:'<path d="M8 2l1.5 3.5H13l-2.8 2 1 3.5L8 9l-3.2 2 1-3.5L3 5.5h3.5L8 2Z" stroke-linejoin="round"/>',
+  photo:'<rect x="1" y="2" width="14" height="11" rx="1.5"/><circle cx="5.5" cy="6" r="1.5"/><path d="M1 11l4-3 3 3 2-2 4 4" stroke-linecap="round" stroke-linejoin="round"/>',
+  hanger:'<path d="M8 2a2 2 0 0 1 2 2c0 .8-.5 1.5-1 2L2 12h12l-7-6" stroke-linecap="round" stroke-linejoin="round"/>',
+  wait:'<circle cx="8" cy="8" r="6.5"/><path d="M8 5v3l2 1.5" stroke-linecap="round"/>',
+  log:'<path d="M2 4h12M2 8h12M2 12h8" stroke-linecap="round"/>',
+  export:'<path d="M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1" stroke-linecap="round"/>',
+  lock:'<rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke-linecap="round"/>',
+  shield:'<path d="M8 1l6 2.5v5C14 12 11 14.5 8 15c-3-0.5-6-3-6-6.5v-5L8 1Z" stroke-linejoin="round"/>',
+}
+
+let state = MODULES.map(m=>({id:m.id,enabled:m.enabled}))
+let dirty = false
+let activeFilter = 'all'
+let searchQ = ''
+let CURRENT_PLAN = 'growth'
+
+function getState(id){ return state.find(s=>s.id===id)?.enabled }
+function setState(id,val){
+  const s=state.find(s=>s.id===id)
+  if(s){ s.enabled=val; dirty=true; renderSaveBar() }
+}
+
+function renderModules(){
+  const main = document.getElementById('main-content')
+  const cats = [...new Set(MODULES.map(m=>m.cat))]
+
+  // group by category
+  const filtered = MODULES.filter(m => {
+    const q = searchQ.toLowerCase()
+    const matchQ = !q || m.name.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q)
+    const matchF = activeFilter==='all' ? true
+      : activeFilter==='enabled' ? getState(m.id)
+      : activeFilter==='disabled' ? !getState(m.id) && m.cat!=='core'
+      : activeFilter==='new' ? m.tag==='new'
+      : activeFilter===m.cat
+    return matchQ && matchF
+  })
+
+  const enabledCount = state.filter(s=>s.enabled).length
+  const totalNonCore = MODULES.filter(m=>m.cat!=='core').length
+  const enabledNonCore = state.filter(s=>{
+    const m=MODULES.find(mm=>mm.id===s.id)
+    return s.enabled && m?.cat!=='core'
+  }).length
+
+  let html = `
+    <div class="main-head">
+      <div class="main-title">Module manager</div>
+      <div class="main-sub">Enable or disable features for Bella Bridal. Core modules are always active. Optional modules can be toggled per your plan.</div>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-cell"><div class="stat-n green">${enabledCount}</div><div class="stat-l">Active modules</div></div>
+      <div class="stat-cell"><div class="stat-n">${totalNonCore - enabledNonCore}</div><div class="stat-l">Disabled</div></div>
+      <div class="stat-cell"><div class="stat-n amber">${MODULES.filter(m=>m.tag==='new').length}</div><div class="stat-l">New modules</div></div>
+      <div class="stat-cell"><div class="stat-n" style="color:var(--purple)">3</div><div class="stat-l">Pro-only locked</div></div>
+    </div>
+    <div class="filter-bar">
+      <input class="fb-search" placeholder="Search modules..." id="mod-search" value="${searchQ}" oninput="searchQ=this.value;renderModules()">
+      <button class="fb-pill${activeFilter==='all'?' on':''}" onclick="setFilter('all')">All</button>
+      <button class="fb-pill${activeFilter==='enabled'?' on':''}" onclick="setFilter('enabled')">Enabled</button>
+      <button class="fb-pill${activeFilter==='disabled'?' on':''}" onclick="setFilter('disabled')">Disabled</button>
+      <button class="fb-pill${activeFilter==='new'?' on':''}" onclick="setFilter('new')">New ✨</button>
+      <button class="fb-pill${activeFilter==='services'?' on':''}" onclick="setFilter('services')">Services</button>
+      <button class="fb-pill${activeFilter==='finance'?' on':''}" onclick="setFilter('finance')">Finance</button>
+      <button class="fb-pill${activeFilter==='security'?' on':''}" onclick="setFilter('security')">Security</button>
+    </div>
+  `
+
+  // group by category
+  const catGroups = {}
+  filtered.forEach(m => {
+    if(!catGroups[m.cat]) catGroups[m.cat]=[]
+    catGroups[m.cat].push(m)
+  })
+
+  Object.entries(catGroups).forEach(([cat, mods]) => {
+    html += `<div class="sec-label">${CAT_LABELS[cat]||cat}</div><div class="mod-grid">`
+    mods.forEach(m => {
+      const en = getState(m.id)
+      const isCore = m.cat==='core'
+      const planOk = PLAN_ORDER[CURRENT_PLAN] >= PLAN_ORDER[m.plan]
+      const cardClass = isCore ? 'core' : en ? 'enabled' : ''
+
+      html += `<div class="mod-card ${cardClass}">
+        <div class="mod-card-top">
+          <div class="mod-icon" style="background:${m.color}">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="${m.ic}" stroke-width="1.4">${ICONS[m.icon]||ICONS.star}</svg>
+          </div>
+          <div class="mod-title-row">
+            <div class="mod-name">
+              ${m.name}
+              ${m.tag==='core'?'<span class="mod-tag t-core">Core</span>':''}
+              ${m.tag==='new'?'<span class="mod-tag t-new">New</span>':''}
+              ${m.tag==='pro'?'<span class="mod-tag t-pro">Pro</span>':''}
+            </div>
+            <div class="mod-desc">${m.desc}</div>
+          </div>
+        </div>
+        <div class="mod-features">
+          ${m.features.slice(0,3).map(f=>`<div class="mf"><div class="mf-dot"></div>${f}</div>`).join('')}
+          ${m.features.length>3?`<div class="mf" style="color:var(--gl)"><div class="mf-dot" style="background:var(--border)"></div>+${m.features.length-3} more features</div>`:''}
+        </div>
+        <div class="mod-card-footer">
+          <span class="mod-plan-req ${!planOk?'upgrade':''}" onclick="${!planOk?'toast2(\'Upgrade to '+PLAN_LABELS[m.plan]+' to unlock this module\')':''}">${planOk?PLAN_LABELS[m.plan]:PLAN_LABELS[m.plan]+' — upgrade to unlock'}</span>
+          ${isCore
+            ? `<div class="toggle"><div class="toggle-track core-track on"><div class="toggle-thumb"></div></div><span class="toggle-lbl" style="color:var(--green)">Always on</span></div>`
+            : planOk
+              ? `<div class="toggle" onclick="toggleModule('${m.id}')"><div class="toggle-track${en?' on':''}" id="tt-${m.id}"><div class="toggle-thumb"></div></div><span class="toggle-lbl" id="tl-${m.id}">${en?'Enabled':'Disabled'}</span></div>`
+              : `<button onclick="toast2('Upgrade to ${PLAN_LABELS[m.plan]} to unlock ${m.name}')" style="height:28px;padding:0 10px;background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;border-radius:6px;font-size:10px;font-weight:500;cursor:pointer">Upgrade to unlock</button>`
+          }
+        </div>
+      </div>`
+    })
+    html += `</div>`
+  })
+
+  if(filtered.length===0){
+    html += `<div style="text-align:center;padding:40px;color:var(--gl)"><div style="font-size:14px;font-weight:500;color:var(--ink);margin-bottom:4px">No modules found</div><div style="font-size:12px">Try a different search or filter</div></div>`
+  }
+
+  main.innerHTML = html + renderSaveBar(true)
+  // re-focus search
+  const si = document.getElementById('mod-search')
+  if(si && searchQ) si.setSelectionRange(si.value.length,si.value.length)
+}
+
+function renderSaveBar(returnHtml){
+  const html = dirty
+    ? `<div class="save-bar visible" id="save-bar">
+        <div class="save-msg">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="stroke:#B45309;stroke-width:1.3"><circle cx="8" cy="8" r="7"/><path d="M8 5v3M8 11v.5" stroke-linecap="round"/></svg>
+          Unsaved changes
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-g" onclick="discardChanges()">Discard</button>
+          <button class="btn btn-p" onclick="saveChanges()">Save & apply changes</button>
+        </div>
+      </div>`
+    : ''
+  if(returnHtml) return html
+  const existing = document.getElementById('save-bar')
+  if(dirty && !existing) document.getElementById('main-content').insertAdjacentHTML('beforeend', html)
+  if(!dirty && existing) existing.remove()
+  // update nav badge
+  const pb = document.getElementById('pending-badge')
+  if(pb){ pb.style.display = dirty?'':'none' }
+}
+
+function toggleModule(id){
+  const m = MODULES.find(mm=>mm.id===id)
+  if(!m||m.cat==='core') return
+  const cur = getState(id)
+  const newVal = !cur
+  setState(id, newVal)
+  const tt=document.getElementById('tt-'+id)
+  const tl=document.getElementById('tl-'+id)
+  if(tt){ tt.classList.toggle('on',newVal) }
+  if(tl){ tl.textContent = newVal?'Enabled':'Disabled'; tl.style.color = newVal?'var(--green)':''; }
+  const card = tt?.closest('.mod-card')
+  if(card){ card.classList.toggle('enabled',newVal); card.classList.toggle('',!newVal) }
+  const pb = document.getElementById('pending-badge')
+  if(pb) pb.style.display='inline'
+  renderSaveBar()
+}
+
+function setFilter(f){
+  activeFilter=f
+  renderModules()
+}
+
+function saveChanges(){
+  dirty=false
+  renderModules()
+  toast2('Changes saved — modules updated')
+  // sync sidebar navigation visibility
+}
+
+function discardChanges(){
+  state = MODULES.map(m=>({id:m.id,enabled:m.enabled}))
+  dirty=false
+  renderModules()
+  toast2('Changes discarded')
+}
+
+function setView(v, el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'))
+  el.classList.add('active')
+  if(v==='modules'){ renderModules(); return }
+  const msgs={
+    sidebar:'Navigation editor — drag to reorder sidebar items per enabled module',
+    plan:'Plan & billing — manage subscription, view usage, upgrade',
+    team:'Team & roles — invite staff, set permissions per module',
+    audit:'Audit log — all changes, who made them, when',
+  }
+  document.getElementById('main-content').innerHTML=`
+    <div class="main-head">
+      <div class="main-title">${el.textContent.trim()}</div>
+      <div class="main-sub">${msgs[v]||''}</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:40px;text-align:center;color:var(--gl);box-shadow:0 1px 4px rgba(0,0,0,.06)">
+      <div style="font-size:14px;font-weight:500;color:var(--ink);margin-bottom:6px">Coming in the next build</div>
+      <div style="font-size:12px;line-height:1.6">${msgs[v]||'This section is being built.'}</div>
+      <button onclick="setView('modules',document.querySelector('.nav-item'))" style="margin-top:16px;height:36px;padding:0 16px;background:var(--rosa);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;box-shadow:0 2px 7px rgba(201,105,122,.3)">← Back to modules</button>
+    </div>`
+}
+
+function toast2(msg){
+  const t=document.getElementById('toast')
+  t.textContent=msg;t.style.display='block'
+  clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2600)
+}
+
+renderModules()
+</script>

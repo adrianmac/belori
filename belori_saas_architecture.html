@@ -1,0 +1,618 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;font-size:12px}
+:root{
+  --ink:#1C1012;--gray:#6B7280;--gl:#9CA3AF;--border:#E5E7EB;
+  --rosa:#C9697A;--rp:#FDF5F6;
+  --green:#15803D;--gbg:#DCFCE7;
+  --amber:#B45309;--abg:#FEF3C7;
+  --blue:#1D4ED8;--bbg:#DBEAFE;
+  --purple:#7C3AED;--pbg:#EDE9FE;
+  --red:#B91C1C;
+}
+
+.wrap{background:#F0EDE9;border-radius:12px;overflow:hidden}
+
+/* tabs */
+.tabs{background:#1C1012;padding:0 16px;display:flex;gap:0}
+.tab{padding:10px 16px;font-size:12px;font-weight:500;color:#9E7880;cursor:pointer;border-bottom:2.5px solid transparent;transition:all .12s;white-space:nowrap}
+.tab.on{color:#C9697A;border-bottom-color:#C9697A}
+
+.view{display:none;padding:16px}.view.on{display:block}
+
+/* ── LAYER DIAGRAM ── */
+.arch-diagram{display:flex;flex-direction:column;gap:0}
+.layer{border-radius:10px;margin-bottom:8px;overflow:hidden}
+.layer-head{padding:8px 14px;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:500;cursor:pointer;user-select:none}
+.layer-head svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.4;flex-shrink:0}
+.layer-body{padding:10px 14px 12px;border-top:1px solid rgba(255,255,255,.12);display:none}
+.layer-body.open{display:block}
+.layer-title{font-size:13px;font-weight:500}
+.layer-sub{font-size:10px;opacity:.8;margin-left:auto}
+
+/* layer colors */
+.l-client{background:#1C1012;color:#fff}
+.l-edge{background:#2D1A1C;color:#E8B4BB}
+.l-app{background:#C9697A;color:#fff}
+.l-api{background:#1D4ED8;color:#fff}
+.l-infra{background:#15803D;color:#fff}
+.l-data{background:#7C3AED;color:#fff}
+.l-3p{background:#B45309;color:#fff}
+.l-ops{background:#374151;color:#fff}
+
+/* service boxes */
+.svc-grid{display:grid;gap:8px}
+.svc-g2{grid-template-columns:1fr 1fr}
+.svc-g3{grid-template-columns:1fr 1fr 1fr}
+.svc-g4{grid-template-columns:repeat(4,1fr)}
+.svc-g5{grid-template-columns:repeat(5,1fr)}
+.svc-box{background:rgba(255,255,255,.12);border-radius:8px;padding:9px 10px;border:1px solid rgba(255,255,255,.15)}
+.svc-box.planned{opacity:.55;border-style:dashed}
+.sb-name{font-size:11px;font-weight:500;margin-bottom:3px}
+.sb-desc{font-size:10px;opacity:.75;line-height:1.4}
+.sb-badge{display:inline-block;font-size:9px;font-weight:500;padding:1px 6px;border-radius:99px;margin-top:4px;background:rgba(255,255,255,.2)}
+.sb-tech{display:inline-block;font-size:9px;font-weight:500;padding:2px 7px;border-radius:4px;margin-top:4px;background:rgba(0,0,0,.25);font-family:monospace}
+.sb-phase{display:inline-block;font-size:9px;font-weight:500;padding:2px 7px;border-radius:4px;margin-top:4px;background:rgba(255,200,0,.25);color:#fff;font-family:monospace}
+
+/* flow arrows */
+.flow-arrow{display:flex;align-items:center;justify-content:center;padding:4px 0;color:var(--gl);font-size:10px;gap:6px}
+.arrow-line{flex:1;height:1px;background:var(--border);max-width:60px}
+
+/* ── FLOW DIAGRAM ── */
+.flow-wrap{overflow-x:auto}
+.flow-canvas{min-width:700px;padding:10px 0}
+.flow-row{display:flex;align-items:center;gap:0;margin-bottom:2px}
+.flow-node{
+  background:#fff;border:1.5px solid var(--border);border-radius:9px;
+  padding:8px 12px;font-size:11px;font-weight:500;color:var(--ink);
+  white-space:nowrap;text-align:center;flex-shrink:0;
+  box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer;transition:all .12s;
+}
+.flow-node:hover{border-color:var(--rosa);box-shadow:0 2px 8px rgba(201,105,122,.2)}
+.flow-node.primary{background:#1C1012;color:#fff;border-color:#1C1012}
+.flow-node.success{background:var(--gbg);color:var(--green);border-color:#86EFAC}
+.flow-node.warn{background:var(--abg);color:var(--amber);border-color:#FDE68A}
+.flow-node.info{background:var(--bbg);color:var(--blue);border-color:#BFDBFE}
+.flow-node.purple{background:var(--pbg);color:var(--purple);border-color:#DDD6FE}
+.flow-node.rosa{background:var(--rp);color:var(--rosa);border-color:var(--rl)}
+.flow-arrow-h{display:flex;align-items:center;padding:0 4px;color:var(--gl);font-size:11px;flex-shrink:0}
+.flow-section-label{font-size:9px;font-weight:500;color:var(--gl);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px;display:flex;align-items:center;gap:8px}
+.flow-section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.flow-col{display:flex;flex-direction:column;gap:6px}
+.flow-group{background:#F8F4F0;border:1px solid var(--border);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:140px}
+.flow-group-label{font-size:9px;font-weight:500;color:var(--gl);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+
+/* ── TENANCY DIAGRAM ── */
+.tenant-diagram{display:flex;flex-direction:column;gap:12px}
+.tenant-org{border:2px solid #1C1012;border-radius:12px;overflow:hidden}
+.t-org-head{background:#1C1012;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.t-org-name{font-size:13px;font-weight:500;color:#fff}
+.t-org-sub{font-size:10px;color:#9E7880}
+.t-org-body{padding:12px;background:#F8F4F0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.t-boutique{background:#fff;border:1.5px solid var(--border);border-radius:9px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.t-b-name{font-size:12px;font-weight:500;color:var(--ink);margin-bottom:5px}
+.t-b-row{display:flex;justify-content:space-between;font-size:10px;padding:2px 0;color:var(--gray)}
+.t-b-badge{display:inline-block;font-size:9px;font-weight:500;padding:1px 6px;border-radius:99px;margin-top:5px}
+.pill-g{background:var(--gbg);color:var(--green)}
+.pill-a{background:var(--abg);color:var(--amber)}
+.pill-p{background:var(--pbg);color:var(--purple)}
+.pill-b{background:var(--bbg);color:var(--blue)}
+
+/* ── SECURITY DIAGRAM ── */
+.sec-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sec-card{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.sc-head{padding:10px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sc-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sc-icon svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.4}
+.sc-title{font-size:12px;font-weight:500;color:var(--ink)}
+.sc-body{padding:10px 13px;display:flex;flex-direction:column;gap:5px}
+.sc-item{font-size:11px;color:var(--gray);display:flex;align-items:flex-start;gap:6px;line-height:1.4}
+.sc-dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:4px}
+.sc-dot.warn{background:var(--amber)}
+
+/* code block */
+.code-block{background:#1C1012;color:#E8B4BB;border-radius:8px;padding:12px;font-family:monospace;font-size:11px;line-height:1.7;overflow-x:auto;margin-top:10px}
+.code-block .kw{color:#C9697A}.code-block .str{color:#9FE1CB}
+.code-block .cm{color:#4A2030}
+
+/* detail table */
+.detail-table{width:100%;border-collapse:collapse;font-size:11px;background:#fff;border-radius:9px;overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.detail-table th{background:#F8F4F0;padding:8px 12px;text-align:left;font-size:10px;font-weight:500;color:var(--gl);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
+.detail-table td{padding:8px 12px;border-bottom:1px solid #F3F4F6;color:var(--gray);vertical-align:top}
+.detail-table tr:last-child td{border-bottom:none}
+.detail-table td:first-child{font-weight:500;color:var(--ink);white-space:nowrap}
+.td-code{font-family:monospace;font-size:10px;background:#F8F4F0;padding:1px 5px;border-radius:3px}
+
+/* status banner */
+.status-banner{background:var(--abg);border:1px solid #FDE68A;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--amber);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+</style>
+
+<div class="wrap">
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab on" onclick="swTab('layers',this)">Stack layers</div>
+  <div class="tab" onclick="swTab('tenancy',this)">Multi-tenancy</div>
+  <div class="tab" onclick="swTab('flow',this)">Request flow</div>
+  <div class="tab" onclick="swTab('data',this)">Data isolation</div>
+  <div class="tab" onclick="swTab('security',this)">Security</div>
+  <div class="tab" onclick="swTab('deploy',this)">Deploy & scale</div>
+</div>
+
+<!-- ══ STACK LAYERS ══ -->
+<div class="view on" id="v-layers">
+
+  <div class="status-banner">
+    ⚠ Current stack as of March 2026. Dashed boxes = planned but not yet implemented. Phase numbers reference migration roadmap.
+  </div>
+
+  <div class="arch-diagram">
+
+    <!-- CLIENT -->
+    <div class="layer l-client">
+      <div class="layer-head" onclick="tog(this)">
+        <svg viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="10" rx="1.5"/><path d="M5 14h6M8 12v2" stroke-linecap="round"/></svg>
+        <span class="layer-title">Client layer</span>
+        <span class="layer-sub">Browser · Desktop · iPad</span>
+        <svg viewBox="0 0 10 10" style="margin-left:8px"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </div>
+      <div class="layer-body open">
+        <div class="svc-grid svc-g3">
+          <div class="svc-box"><div class="sb-name">Staff web app</div><div class="sb-desc">Vite + React 19 SPA. React Router v7. Inline CSS-in-JS. Two layout modes (desktop/tablet).</div><span class="sb-tech">belori.app</span></div>
+          <div class="svc-box planned"><div class="sb-name">Client portal</div><div class="sb-desc">Read-only event view, e-sign contracts, pay milestones. Token-based, no login required.</div><span class="sb-phase">Phase 2+</span></div>
+          <div class="svc-box planned"><div class="sb-name">Public booking page</div><div class="sb-desc">Boutique-branded booking form. Lead capture, service selection.</div><span class="sb-phase">Phase 2+</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDGE -->
+    <div class="layer l-edge">
+      <div class="layer-head" onclick="tog(this)">
+        <svg viewBox="0 0 16 16"><path d="M1 8h14M8 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="layer-title">Edge / CDN layer</span>
+        <span class="layer-sub">Vercel Edge Network · Global CDN</span>
+        <svg viewBox="0 0 10 10" style="margin-left:8px"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </div>
+      <div class="layer-body open">
+        <div class="svc-grid svc-g4">
+          <div class="svc-box"><div class="sb-name">Vercel CDN</div><div class="sb-desc">Static SPA assets served globally. ~10ms TTFB worldwide for JS/CSS bundles.</div><span class="sb-tech">vercel.com</span></div>
+          <div class="svc-box planned"><div class="sb-name">Edge middleware</div><div class="sb-desc">Auth token validation, multi-tenant routing, boutique slug resolution.</div><span class="sb-phase">Phase 2</span></div>
+          <div class="svc-box planned"><div class="sb-name">Rate limiting</div><div class="sb-desc">Per-IP rate limits on public endpoints.</div><span class="sb-phase">Phase 2</span></div>
+          <div class="svc-box planned"><div class="sb-name">DDoS protection</div><div class="sb-desc">Vercel's built-in attack protection. Automatic IP blocking on abuse patterns.</div><span class="sb-phase">Phase 2</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APP -->
+    <div class="layer l-app">
+      <div class="layer-head" onclick="tog(this)">
+        <svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1.2"/><rect x="9" y="1" width="6" height="6" rx="1.2"/><rect x="1" y="9" width="6" height="6" rx="1.2"/><rect x="9" y="9" width="6" height="6" rx="1.2"/></svg>
+        <span class="layer-title">Application layer</span>
+        <span class="layer-sub">Vite · React 19 · React Router v7</span>
+        <svg viewBox="0 0 10 10" style="margin-left:8px"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </div>
+      <div class="layer-body open">
+        <div class="svc-grid svc-g4">
+          <div class="svc-box"><div class="sb-name">NovelApp.jsx</div><div class="sb-desc">~6200-line monolith. All UI components defined here. Screen-based router via useState.</div><span class="sb-tech">src/pages/NovelApp.jsx</span></div>
+          <div class="svc-box"><div class="sb-name">Data hooks</div><div class="sb-desc">All data fetching + mutation in src/hooks/. Components call hook functions, never Supabase directly.</div><span class="sb-tech">src/hooks/</span></div>
+          <div class="svc-box"><div class="sb-name">AuthContext</div><div class="sb-desc">Supabase Auth session. Resolves user → boutique_members → boutique on login.</div><span class="sb-tech">src/context/AuthContext.jsx</span></div>
+          <div class="svc-box planned"><div class="sb-name">Module router</div><div class="sb-desc">Every screen will check boutique module state. Disabled modules hide nav + show fallback.</div><span class="sb-phase">Phase 6</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BACKGROUND JOBS -->
+    <div class="layer l-api">
+      <div class="layer-head" onclick="tog(this)">
+        <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3l2 2" stroke-linecap="round"/></svg>
+        <span class="layer-title">Background jobs & queues</span>
+        <span class="layer-sub">Inngest · Phase 7</span>
+        <svg viewBox="0 0 10 10" style="margin-left:8px"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </div>
+      <div class="layer-body open">
+        <div class="svc-grid svc-g4">
+          <div class="svc-box planned"><div class="sb-name">Inngest functions</div><div class="sb-desc">Serverless background jobs with retries, delays, fan-out. No worker servers to manage.</div><span class="sb-phase">Phase 7</span></div>
+          <div class="svc-box planned"><div class="sb-name">SMS automations</div><div class="sb-desc">Return reminders (48h + day-of), payment reminders, birthday SMS, win-back campaigns.</div><span class="sb-phase">Phase 7</span></div>
+          <div class="svc-box planned"><div class="sb-name">PDF generation</div><div class="sb-desc">Contract PDFs, invoices, measurement sheets. Puppeteer → Supabase Storage.</div><span class="sb-phase">Phase 7</span></div>
+          <div class="svc-box planned"><div class="sb-name">Webhooks inbound</div><div class="sb-desc">Stripe payment events, Twilio SMS delivery and reply handling (STOP/HELP).</div><span class="sb-phase">Phase 5+</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFRASTRUCTURE -->
+    <div class="layer l-infra">
+      <div class="layer-head" onclick="tog(this)">
+        <svg viewBox="0 0 16 16"><rect x="1" y="4" width="14" height="4" rx="1"/><rect x="1" y="10" width="14" height="4" rx="1"/><circle cx="12.5" cy="6" r="1" fill="currentColor"/><circle cx="12.5" cy="12" r="1" fill="currentColor"/></svg>
+        <span class="layer-title">Infrastructure</span>
+        <span class="layer-sub">Supabase · Vercel</span>
+        <svg viewBox="0 0 10 10" style="margin-left:8px"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </div>
+      <div class="layer-body open">
+        <div class="svc-grid svc-g4">
+          <div class="svc-box"><div class="sb-name">Supabase PostgreSQL</div><div class="sb-desc">Primary database. boutique_id scoping in JS today. RLS coming in Phase 3. Managed Postgres 15.</div><span class="sb-tech">supabase-js v2</span></div>
+          <div class="svc-box"><div class="sb-name">Supabase Auth</div><div class="sb-desc">Email/password auth. JWT sessions. boutique_members join resolves user → boutique at login.</div><span class="sb-tech">Supabase Auth</span></div>
+          <div class="svc-box"><div class="sb-name">Supabase Storage</div><div class="sb-desc">PDFs, photos, contracts. Per-boutique path prefix. Signed URLs for access control.</div><span class="sb-tech">S3-compatible</span></div>
+          <div class="svc-box planned"><div class="sb-name">Upstash Redis</div><div class="sb-desc">Session cache, rate limit counters, module state cache. Serverless-native Redis.</div><span class="sb-phase">Phase 3+</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATA -->
+    <div class="layer l-data">
+      <div class="layer-head" onclick="tog(this)">
+        <svg viewBox="0 0 16 16"><ellipse cx="8" cy="4" rx="6" ry="2"/><path d="M2 4v4c0 1.105 2.686 2 6 2s6-.895 6-2V4"/><path d="M2 8v4c0 1.105 2.686 2 6 2s6-.895 6-2V8"/></svg>
+        <span class="layer-title">Data layer</span>
+        <span class="layer-sub">boutique_id scoping today · RLS Phase 3</span>
+        <svg viewBox="0 0 10 10" style="margin-left:8px"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </div>
+      <div class="layer-body open">
+        <div class="svc-grid svc-g4">
+          <div class="svc-box"><div class="sb-name">JS-level scoping</div><div class="sb-desc">Every hook query uses .eq('boutique_id', boutique.id). Enforced in application code today.</div><span class="sb-tech">supabase-js</span></div>
+          <div class="svc-box planned"><div class="sb-name">Row Level Security</div><div class="sb-desc">RLS on every table using is_boutique_member(). Adds DB-level enforcement on top of JS scoping.</div><span class="sb-phase">Phase 3</span></div>
+          <div class="svc-box planned"><div class="sb-name">Audit log</div><div class="sb-desc">Immutable append-only log: who, what, when, old value, new value.</div><span class="sb-phase">Phase 3+</span></div>
+          <div class="svc-box"><div class="sb-name">Backups</div><div class="sb-desc">Supabase managed daily backups. Point-in-time recovery on paid plans.</div><span class="sb-tech">Supabase</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3RD PARTY -->
+    <div class="layer l-3p">
+      <div class="layer-head" onclick="tog(this)">
+        <svg viewBox="0 0 16 16"><path d="M2 8a6 6 0 1 0 12 0A6 6 0 0 0 2 8Z"/><path d="M8 2c0 0-3 2-3 6s3 6 3 6M8 2c0 0 3 2 3 6s-3 6-3 6M2 8h12" stroke-linecap="round"/></svg>
+        <span class="layer-title">Third-party services</span>
+        <span class="layer-sub">Supabase Auth · Stripe (Phase 5) · Twilio (Phase 7)</span>
+        <svg viewBox="0 0 10 10" style="margin-left:8px"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </div>
+      <div class="layer-body open">
+        <div class="svc-grid svc-g4">
+          <div class="svc-box"><div class="sb-name">Supabase Auth</div><div class="sb-desc">Email/password auth. JWT sessions. No Clerk — Supabase Auth handles all session management natively.</div><span class="sb-tech">@supabase/supabase-js</span></div>
+          <div class="svc-box planned"><div class="sb-name">Stripe</div><div class="sb-desc">Subscription billing ($49/$129/$299/mo). Stripe Connect for boutique payment acceptance. Payment links.</div><span class="sb-phase">Phase 5</span></div>
+          <div class="svc-box planned"><div class="sb-name">Twilio</div><div class="sb-desc">Outbound SMS automations. Inbound reply handling (STOP/HELP). Sub-accounts per boutique.</div><span class="sb-phase">Phase 7</span></div>
+          <div class="svc-box planned"><div class="sb-name">Resend</div><div class="sb-desc">Transactional email (invoices, contracts, receipts). Email marketing module broadcasts.</div><span class="sb-phase">Phase 7</span></div>
+        </div>
+        <div class="svc-grid svc-g4" style="margin-top:8px">
+          <div class="svc-box planned"><div class="sb-name">Sentry</div><div class="sb-desc">Error monitoring. Per-boutique error tagging. Performance traces.</div><span class="sb-phase">Phase 3+</span></div>
+          <div class="svc-box planned"><div class="sb-name">PostHog</div><div class="sb-desc">Product analytics. Module adoption tracking. Feature flags for gradual rollouts.</div><span class="sb-phase">Phase 3+</span></div>
+          <div class="svc-box planned"><div class="sb-name">Loops</div><div class="sb-desc">Belori's own lifecycle email: onboarding sequence, trial expiry, module tips.</div><span class="sb-phase">Phase 7</span></div>
+          <div class="svc-box planned"><div class="sb-name">Checkly</div><div class="sb-desc">Synthetic monitoring. E2E login/booking tests every 5 minutes. On-call paging if broken.</div><span class="sb-phase">Phase 3+</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPS -->
+    <div class="layer l-ops">
+      <div class="layer-head" onclick="tog(this)">
+        <svg viewBox="0 0 16 16"><path d="M2 3h12v2H2V3ZM2 7h12v2H2V7ZM2 11h12v2H2V11Z" stroke-linecap="round"/></svg>
+        <span class="layer-title">DevOps & operations</span>
+        <span class="layer-sub">Vercel deploys · No CI/CD yet</span>
+        <svg viewBox="0 0 10 10" style="margin-left:8px"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </div>
+      <div class="layer-body open">
+        <div class="svc-grid svc-g4">
+          <div class="svc-box planned"><div class="sb-name">GitHub Actions CI/CD</div><div class="sb-desc">PR checks: lint + test. Merge to main → auto-deploy. Not yet configured.</div><span class="sb-phase">Phase 3+</span></div>
+          <div class="svc-box"><div class="sb-name">Vercel deployments</div><div class="sb-desc">Manual + git-triggered deploys. Zero-downtime. Preview URLs per branch. Instant rollback.</div><span class="sb-tech">vercel.com</span></div>
+          <div class="svc-box"><div class="sb-name">Supabase migrations</div><div class="sb-desc">Raw SQL migrations run via Supabase MCP tool or dashboard. No ORM migration runner yet.</div><span class="sb-tech">Supabase SQL editor</span></div>
+          <div class="svc-box planned"><div class="sb-name">Status page</div><div class="sb-desc">Public status.belori.app showing uptime for app, payments, SMS, database.</div><span class="sb-phase">Phase 5+</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ MULTI-TENANCY ══ -->
+<div class="view" id="v-tenancy">
+  <div class="tenant-diagram">
+
+    <div class="tenant-org">
+      <div class="t-org-head">
+        <svg width="18" height="18" viewBox="0 0 32 32" fill="none"><path d="M7 25V7l18 18V7" stroke="#C9697A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div>
+          <div class="t-org-name">Belori — shared Supabase project</div>
+          <div class="t-org-sub">One database · boutique_members links users to boutiques · boutique_id on every table</div>
+        </div>
+      </div>
+      <div class="t-org-body">
+        <div class="t-boutique">
+          <div class="t-b-name">MBB (current test boutique)</div>
+          <div class="t-b-row"><span>Auth user</span><span style="font-family:monospace;font-size:9px">adrianmac@gmail.com</span></div>
+          <div class="t-b-row"><span>Plan</span><span>Starter</span></div>
+          <div class="t-b-row"><span>Staff</span><span>1 seat</span></div>
+          <div class="t-b-row"><span>Modules on</span><span>9 / 32 (all hardcoded)</span></div>
+          <span class="t-b-badge pill-g">Active</span>
+        </div>
+        <div class="t-boutique">
+          <div class="t-b-name">Rosa Bridal Boutique</div>
+          <div class="t-b-row"><span>Auth user</span><span style="font-family:monospace;font-size:9px">owner@rosa.com</span></div>
+          <div class="t-b-row"><span>Plan</span><span>Starter</span></div>
+          <div class="t-b-row"><span>Staff</span><span>2 seats</span></div>
+          <div class="t-b-row"><span>Modules on</span><span>9 / 32</span></div>
+          <span class="t-b-badge pill-b">Future tenant</span>
+        </div>
+        <div class="t-boutique">
+          <div class="t-b-name">Glamour Events & Bridal</div>
+          <div class="t-b-row"><span>Auth user</span><span style="font-family:monospace;font-size:9px">owner@glamour.com</span></div>
+          <div class="t-b-row"><span>Plan</span><span>Pro</span></div>
+          <div class="t-b-row"><span>Staff</span><span>12 seats</span></div>
+          <div class="t-b-row"><span>Modules on</span><span>29 / 32</span></div>
+          <span class="t-b-badge pill-p">Future tenant</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+      <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:10px">Tenancy model — shared infrastructure, isolated data</div>
+      <table class="detail-table">
+        <thead><tr><th>Layer</th><th>Current strategy</th><th>Implementation</th><th>Target (phase)</th></tr></thead>
+        <tbody>
+          <tr><td>Database rows</td><td>JS-level scoping</td><td>Every hook query: <span class="td-code">.eq('boutique_id', boutique.id)</span></td><td>RLS policies (Phase 3)</td></tr>
+          <tr><td>Auth</td><td>Supabase Auth + boutique_members</td><td>JWT → <span class="td-code">auth.uid()</span> → <span class="td-code">boutique_members</span> → <span class="td-code">boutique.id</span></td><td>No change</td></tr>
+          <tr><td>Storage</td><td>Supabase Storage</td><td><span class="td-code">boutiques/{boutiqueId}/</span> path prefix</td><td>Signed URLs (Phase 3)</td></tr>
+          <tr><td>SMS</td><td>Not implemented</td><td>—</td><td>Twilio sub-accounts per boutique (Phase 7)</td></tr>
+          <tr><td>Payments</td><td>Not implemented</td><td>—</td><td>Stripe Connect per boutique (Phase 5)</td></tr>
+          <tr><td>Cache</td><td>Not implemented</td><td>—</td><td>Redis: <span class="td-code">boutique:{id}:modules</span> (Phase 3+)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ REQUEST FLOW ══ -->
+<div class="view" id="v-flow">
+  <div class="flow-canvas">
+
+    <div class="flow-section-label">Login — auth + boutique resolution</div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <div class="flow-node primary">Login form</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node rosa">supabase.auth.signInWithPassword()</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node">JWT session stored</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node info">boutique_members query</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node">boutique resolved</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node success">AuthContext ready</div>
+    </div>
+
+    <div class="flow-section-label">Data fetch — hook pattern</div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <div class="flow-node primary">Component mounts</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node rosa">useEvents() hook</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node">boutique.id from useAuth()</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node info">supabase.from('events').eq('boutique_id', id)</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node">setEvents(data)</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node success">Component re-renders</div>
+    </div>
+
+    <div class="flow-section-label">Mutation — hook function call</div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <div class="flow-node primary">Button tap / form submit</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node rosa">hook function (e.g. createEvent)</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node">JS validation</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node info">supabase.from().insert({ ...data, boutique_id })</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node">optimistic state update</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node success">UI reflects new data</div>
+    </div>
+
+    <div class="flow-section-label">Background job — Inngest (Phase 7)</div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+      <div class="flow-node warn">inngest.send(event)</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node">Inngest queue</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node rosa">Function triggered</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node">Automation settings check</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node purple">Twilio / Resend / Puppeteer</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node success">Done (retry on fail)</div>
+    </div>
+
+    <div class="flow-section-label">New boutique onboarding (Phase 2)</div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <div class="flow-node primary">Sign up form</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node rosa">supabase.auth.signUp()</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node">Insert boutiques row</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node">Insert boutique_members row</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node info">Seed default modules</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node purple">Stripe customer (Phase 5)</div>
+      <div class="flow-arrow-h">→</div>
+      <div class="flow-node success">Onboarding email (Phase 7)</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ DATA ISOLATION ══ -->
+<div class="view" id="v-data">
+  <div style="display:flex;flex-direction:column;gap:12px">
+
+    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+      <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:4px">Current: JS-level scoping (no RLS yet)</div>
+      <div style="font-size:11px;color:var(--gray);margin-bottom:10px">Every query manually scoped in hooks. RLS adds DB-level enforcement in Phase 3.</div>
+      <div class="code-block"><span class="cm">// src/hooks/useEvents.js — ALL queries follow this pattern</span>
+<span class="kw">async function</span> fetch() {
+  <span class="kw">const</span> { data } = <span class="kw">await</span> supabase
+    .from(<span class="str">'events'</span>)
+    .select(<span class="str">'*'</span>)
+    .eq(<span class="str">'boutique_id'</span>, boutique.id)  <span class="cm">// ALWAYS scoped — never omit</span>
+    .order(<span class="str">'date'</span>, { ascending: <span class="kw">true</span> })
+  <span class="kw">if</span> (data) setEvents(data)
+}
+
+<span class="cm">// boutiqueId always from useAuth() — never from user input</span>
+<span class="kw">async function</span> createEvent(payload) {
+  <span class="kw">return</span> supabase.from(<span class="str">'events'</span>).insert({
+    ...payload,
+    boutique_id: boutique.id  <span class="cm">// injected from auth context</span>
+  }).select().single()
+}</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+      <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:4px">Phase 3 target: Row Level Security</div>
+      <div style="font-size:11px;color:var(--gray);margin-bottom:10px">Applied to every table. Uses boutique_members, not Clerk org_id.</div>
+      <div class="code-block"><span class="cm">-- Helper function (created once)</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> is_boutique_member(target_boutique_id uuid)
+<span class="kw">RETURNS</span> boolean <span class="kw">LANGUAGE</span> sql <span class="kw">STABLE SECURITY DEFINER AS</span> $$
+  <span class="kw">SELECT EXISTS</span> (
+    <span class="kw">SELECT</span> 1 <span class="kw">FROM</span> boutique_members
+    <span class="kw">WHERE</span> boutique_id = target_boutique_id
+      <span class="kw">AND</span> user_id = auth.uid()   <span class="cm">-- Supabase Auth, not Clerk</span>
+  );
+$$;
+
+<span class="cm">-- Applied to every table</span>
+<span class="kw">ALTER TABLE</span> events <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+<span class="kw">CREATE POLICY</span> <span class="str">"boutique_isolation"</span> <span class="kw">ON</span> events
+  <span class="kw">FOR ALL USING</span> (is_boutique_member(boutique_id));</div>
+    </div>
+
+    <table class="detail-table">
+      <thead><tr><th>Table</th><th>Isolation key</th><th>Current (JS)</th><th>Phase 3 (RLS)</th></tr></thead>
+      <tbody>
+        <tr><td>events</td><td><span class="td-code">boutique_id</span></td><td>.eq('boutique_id', id)</td><td>boutique_isolation policy</td></tr>
+        <tr><td>clients</td><td><span class="td-code">boutique_id</span></td><td>.eq('boutique_id', id)</td><td>boutique_isolation policy</td></tr>
+        <tr><td>inventory</td><td><span class="td-code">boutique_id</span></td><td>.eq('boutique_id', id)</td><td>boutique_isolation + module check</td></tr>
+        <tr><td>alterations</td><td><span class="td-code">boutique_id</span></td><td>.eq('boutique_id', id)</td><td>boutique_isolation + module check</td></tr>
+        <tr><td>payments</td><td><span class="td-code">boutique_id</span></td><td>.eq('boutique_id', id)</td><td>boutique_isolation policy</td></tr>
+        <tr><td>client_interactions</td><td><span class="td-code">boutique_id</span></td><td>.eq('boutique_id', id)</td><td>boutique_isolation policy</td></tr>
+        <tr><td>boutique_modules</td><td><span class="td-code">boutique_id</span></td><td>.eq('boutique_id', id)</td><td>boutique_isolation (owner write)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ SECURITY ══ -->
+<div class="view" id="v-security">
+  <div class="sec-grid">
+    <div class="sec-card">
+      <div class="sc-head"><div class="sc-icon" style="background:var(--bbg)"><svg viewBox="0 0 16 16" stroke="#1D4ED8"><path d="M8 1l6 2.5v5C14 12 11 14.5 8 15c-3-.5-6-3-6-6.5v-5L8 1Z" stroke-linejoin="round"/></svg></div><div class="sc-title">Authentication & authorization</div></div>
+      <div class="sc-body">
+        <div class="sc-item"><div class="sc-dot"></div>Supabase Auth JWT on every request — anon key never exposes service role</div>
+        <div class="sc-item"><div class="sc-dot"></div>boutique.id always resolved from boutique_members via auth.uid() — never from user input</div>
+        <div class="sc-item"><div class="sc-dot"></div>Role model: owner / coordinator / front_desk / seamstress / decorator (stored in boutique_members)</div>
+        <div class="sc-item"><div class="sc-dot warn"></div>Role enforcement currently in UI only — DB-level role checks coming in Phase 3</div>
+        <div class="sc-item"><div class="sc-dot warn"></div>No RLS yet — JS scoping is the only isolation layer until Phase 3</div>
+        <div class="sc-item"><div class="sc-dot warn"></div>Module manager restricted to owner role — enforced in UI today, DB in Phase 6</div>
+      </div>
+    </div>
+    <div class="sec-card">
+      <div class="sc-head"><div class="sc-icon" style="background:var(--gbg)"><svg viewBox="0 0 16 16" stroke="#15803D"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke-linecap="round"/></svg></div><div class="sc-title">Data security</div></div>
+      <div class="sc-body">
+        <div class="sc-item"><div class="sc-dot"></div>All queries scoped by boutique_id in hooks — no cross-tenant data possible via app code</div>
+        <div class="sc-item"><div class="sc-dot warn"></div>No RLS — DB-level isolation is a gap until Phase 3</div>
+        <div class="sc-item"><div class="sc-dot"></div>Supabase anon key is safe to expose — it can only access data RLS allows</div>
+        <div class="sc-item"><div class="sc-dot"></div>Service role key never used in frontend — only in server-side scripts/webhooks</div>
+        <div class="sc-item"><div class="sc-dot"></div>Environment variables in Vercel encrypted secrets — not in codebase</div>
+        <div class="sc-item"><div class="sc-dot warn"></div>No PII scrubbing in error logs yet — Sentry/error monitoring not set up</div>
+      </div>
+    </div>
+    <div class="sec-card">
+      <div class="sc-head"><div class="sc-icon" style="background:var(--abg)"><svg viewBox="0 0 16 16" stroke="#B45309"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3M8 11v.5" stroke-linecap="round"/></svg></div><div class="sc-title">Input validation</div></div>
+      <div class="sc-body">
+        <div class="sc-item"><div class="sc-dot"></div>Client-side JS validation in hook functions before DB writes</div>
+        <div class="sc-item"><div class="sc-dot warn"></div>No Zod schemas yet — validation is ad-hoc JS checks. Zod planned for Phase 3.</div>
+        <div class="sc-item"><div class="sc-dot"></div>SQL injection impossible — supabase-js uses parameterized queries only</div>
+        <div class="sc-item"><div class="sc-dot"></div>React auto-escapes all rendered values — no XSS from data</div>
+        <div class="sc-item"><div class="sc-dot warn"></div>Webhook signature verification not yet implemented (no webhooks yet)</div>
+        <div class="sc-item"><div class="sc-dot warn"></div>No rate limiting on Supabase queries from client yet</div>
+      </div>
+    </div>
+    <div class="sec-card">
+      <div class="sc-head"><div class="sc-icon" style="background:var(--pbg)"><svg viewBox="0 0 16 16" stroke="#7C3AED"><path d="M2 8h12M8 2v12" stroke-linecap="round"/><circle cx="8" cy="8" r="6.5"/></svg></div><div class="sc-title">Compliance</div></div>
+      <div class="sc-body">
+        <div class="sc-item"><div class="sc-dot warn"></div>TCPA: SMS opt-out not yet implemented (no SMS) — needed in Phase 7</div>
+        <div class="sc-item"><div class="sc-dot warn"></div>CAN-SPAM: email marketing module not built — needed in Phase 7</div>
+        <div class="sc-item"><div class="sc-dot warn"></div>GDPR: data export tool not built yet — planned Phase 6 module</div>
+        <div class="sc-item"><div class="sc-dot"></div>PCI-DSS: no card data touches Belori — Stripe handles all card storage (Phase 5)</div>
+        <div class="sc-item"><div class="sc-dot warn"></div>Audit log: not implemented yet — planned Phase 3+</div>
+        <div class="sc-item"><div class="sc-dot"></div>SOC 2: Supabase, Stripe, and Vercel are all SOC 2 Type II certified</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DEPLOY & SCALE ══ -->
+<div class="view" id="v-deploy">
+  <table class="detail-table" style="margin-bottom:14px">
+    <thead><tr><th>Concern</th><th>Current state</th><th>Provider / tool</th><th>Target</th></tr></thead>
+    <tbody>
+      <tr><td>App hosting</td><td>Vite SPA deployed to Vercel. Static files on CDN. No SSR.</td><td>Vercel</td><td>No change</td></tr>
+      <tr><td>Database</td><td>Supabase Postgres. Single project. No read replicas yet.</td><td>Supabase</td><td>Read replicas for reports (Phase 6)</td></tr>
+      <tr><td>Auth</td><td>Supabase Auth. Email/password. JWT sessions.</td><td>Supabase Auth</td><td>Invite flow + role enforcement (Phase 2)</td></tr>
+      <tr><td>Background jobs</td><td>None — all operations are synchronous.</td><td>—</td><td>Inngest (Phase 7)</td></tr>
+      <tr><td>File storage</td><td>Supabase Storage. Not yet used in app.</td><td>Supabase Storage</td><td>PDFs + photos (Phase 5+)</td></tr>
+      <tr><td>Cache</td><td>None — all data fetched fresh from Supabase.</td><td>—</td><td>Upstash Redis (Phase 3+)</td></tr>
+      <tr><td>SMS delivery</td><td>Not implemented.</td><td>—</td><td>Twilio sub-accounts (Phase 7)</td></tr>
+      <tr><td>Email delivery</td><td>Not implemented.</td><td>—</td><td>Resend (Phase 7)</td></tr>
+      <tr><td>Payments</td><td>Not implemented. Manual cash/card tracking only.</td><td>—</td><td>Stripe + Stripe Connect (Phase 5)</td></tr>
+      <tr><td>Monitoring</td><td>None. Errors surface in browser console only.</td><td>—</td><td>Sentry + PostHog (Phase 3+)</td></tr>
+      <tr><td>CI/CD</td><td>Manual Vercel deploys. No automated test pipeline.</td><td>Vercel CLI</td><td>GitHub Actions (Phase 3+)</td></tr>
+      <tr><td>DB migrations</td><td>Raw SQL via Supabase MCP tool or dashboard.</td><td>Supabase</td><td>No change — keep raw SQL migrations</td></tr>
+    </tbody>
+  </table>
+
+  <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+    <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:10px">Environment promotion path</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="flow-node">Local dev<br><span style="font-size:10px;color:var(--gl)">localhost:5173</span></div>
+      <div class="flow-arrow-h">→ git push →</div>
+      <div class="flow-node info">Vercel preview<br><span style="font-size:10px">belori-git-branch.vercel.app</span></div>
+      <div class="flow-arrow-h">→ merge →</div>
+      <div class="flow-node success">Production<br><span style="font-size:10px">belori.app</span></div>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--gl);line-height:1.7">
+      Currently: one Supabase project shared by local dev and production. No staging environment yet.
+      Preview deploys point at the same production DB — be careful with schema migrations.
+      Staging environment separation is a Phase 3 task.
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-top:12px">
+    <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:10px">Scale headroom (current architecture)</div>
+    <table class="detail-table">
+      <thead><tr><th>Bottleneck</th><th>Current headroom</th><th>Solution at scale</th></tr></thead>
+      <tbody>
+        <tr><td>Vercel functions</td><td>Unlimited concurrent (static SPA)</td><td>Already serverless</td></tr>
+        <tr><td>Supabase Postgres</td><td>500 pooled connections</td><td>Read replicas + PgBouncer</td></tr>
+        <tr><td>Supabase Auth</td><td>Handles millions of users</td><td>No change needed</td></tr>
+        <tr><td>React bundle</td><td>833KB minified — NovelApp.jsx is ~6200 lines</td><td>Split into route-based chunks (Phase 4)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<script>
+function swTab(id,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'))
+  el.classList.add('on')
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'))
+  document.getElementById('v-'+id).classList.add('on')
+}
+function tog(head){
+  const body=head.nextElementSibling
+  body.classList.toggle('open')
+}
+</script>

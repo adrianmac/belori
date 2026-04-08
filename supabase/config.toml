@@ -1,0 +1,12 @@
+project_id = "bohdabdgqgfeatpxyvbz"
+[functions.inngest]
+verify_jwt = false   # Inngest handles its own request signing
+
+[functions.inngest-send]
+verify_jwt = false   # Called at signup before email confirmation
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false

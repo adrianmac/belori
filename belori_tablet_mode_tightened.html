@@ -1,0 +1,531 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#D8D4D0}
+.outer{padding:14px 12px 18px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.screen-nav{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.snav-btn{padding:6px 14px;border-radius:99px;border:1px solid #E5E7EB;background:#fff;font-size:11px;font-weight:500;cursor:pointer;color:#6B7280;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.snav-btn.active{background:#C9697A;color:#fff;border-color:#C9697A;box-shadow:0 2px 6px rgba(201,105,122,.35)}
+.ipad-frame{width:100%;max-width:820px;background:#1A0E10;border-radius:20px;padding:11px;border:1px solid #2C1A1C}
+.ipad-screen{background:#F0EDE9;border-radius:10px;overflow:hidden;display:flex;height:540px}
+.screen-lbl{font-size:10px;font-weight:500;color:#9CA3AF;letter-spacing:.06em;text-transform:uppercase;text-align:center}
+
+/* ── Sidebar ── */
+.t-sb{width:66px;background:#fff;border-right:1px solid #E9E6E6;display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.t-sb-top{width:100%;padding:10px 0 8px;border-bottom:1px solid #E9E6E6;display:flex;justify-content:center}
+.t-logo{width:34px;height:34px;background:#1C1012;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.t-nav{padding:6px 5px;flex:1;display:flex;flex-direction:column;gap:1px;width:100%;overflow-y:auto}
+.t-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 4px;border-radius:10px;cursor:pointer;width:100%;position:relative;border:none;background:transparent;transition:all .12s}
+.t-item:active{transform:scale(.94)}
+.t-item.on{background:#FDF5F6}
+.t-item svg{width:20px;height:20px;stroke:#A0A0A0;stroke-width:1.4;fill:none}
+.t-item.on svg{stroke:#C9697A}
+.t-item-lbl{font-size:8px;color:#A0A0A0;text-align:center;line-height:1.2}
+.t-item.on .t-item-lbl{color:#C9697A;font-weight:500}
+.t-item-badge{position:absolute;top:5px;right:4px;min-width:15px;height:15px;border-radius:8px;font-size:8px;font-weight:500;display:flex;align-items:center;justify-content:center;padding:0 3px}
+.tb-red{background:#B91C1C;color:#fff}
+.tb-purple{background:#7C3AED;color:#fff}
+.t-sb-foot{padding:7px 5px 10px;border-top:1px solid #E9E6E6;width:100%;display:flex;justify-content:center}
+.t-udot{width:36px;height:36px;border-radius:50%;background:#FDF5F6;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#C9697A;cursor:pointer}
+
+/* ── Main ── */
+.t-main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+
+/* Topbar — tighter */
+.t-topbar{height:52px;background:#fff;border-bottom:1px solid #E9E6E6;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0}
+.t-page-title{font-size:15px;font-weight:500;color:#1C1012}
+.t-page-sub{font-size:11px;color:#9CA3AF;margin-top:1px}
+.t-tb-r{display:flex;gap:7px;align-items:center;margin-left:auto}
+
+/* Buttons — with shadows */
+.btn-primary{height:42px;padding:0 16px;background:#C9697A;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 3px 8px rgba(201,105,122,.40),0 1px 2px rgba(201,105,122,.25);transition:all .12s}
+.btn-primary:active{transform:scale(.96);box-shadow:0 1px 3px rgba(201,105,122,.3)}
+.btn-ghost{height:42px;padding:0 14px;background:#fff;color:#5B5B5B;border:1px solid #E5E7EB;border-radius:9px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);transition:all .12s}
+.btn-ghost:active{transform:scale(.96);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.btn-icon{width:42px;height:42px;border:1px solid #E5E7EB;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#6B7280;flex-shrink:0;box-shadow:0 2px 5px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05)}
+.btn-icon:active{transform:scale(.96)}
+
+/* Row action buttons */
+.btn-row{height:38px;padding:0 12px;background:#fff;border:1.5px solid #E5E7EB;border-radius:8px;font-size:11px;font-weight:500;color:#5B5B5B;cursor:pointer;white-space:nowrap;box-shadow:0 2px 4px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)}
+.btn-row:active{transform:scale(.96)}
+.btn-row-red{background:#FFF0F0;border-color:#FBBCBC;color:#B91C1C;box-shadow:0 2px 4px rgba(185,28,28,.12),0 1px 2px rgba(185,28,28,.08)}
+.btn-row-collect{background:#B91C1C;color:#fff;border-color:#B91C1C;box-shadow:0 3px 7px rgba(185,28,28,.35),0 1px 2px rgba(185,28,28,.2)}
+.btn-card-action{height:36px;padding:0 14px;background:#FDF5F6;color:#C9697A;border:1px solid #E8B4BB;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;box-shadow:0 2px 5px rgba(201,105,122,.18),0 1px 2px rgba(201,105,122,.1)}
+.btn-card-action:active{transform:scale(.96)}
+.btn-card-action-red{background:#FEE2E2;color:#B91C1C;border-color:#FCA5A5;box-shadow:0 2px 5px rgba(185,28,28,.15),0 1px 2px rgba(185,28,28,.08)}
+.btn-remind{background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;box-shadow:0 2px 5px rgba(180,83,9,.14),0 1px 2px rgba(180,83,9,.08)}
+.btn-schedule{background:#DBEAFE;color:#1E40AF;border:1px solid #BFDBFE;box-shadow:0 2px 5px rgba(29,78,216,.14),0 1px 2px rgba(29,78,216,.08)}
+
+/* Alert */
+.t-alert{background:#FFFBEB;border-bottom:1px solid #FDE68A;padding:8px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.t-alert-text{font-size:12px;color:#78350F;flex:1;line-height:1.3}
+.btn-alert{height:36px;padding:0 14px;background:#F59E0B;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 3px 7px rgba(245,158,11,.35),0 1px 2px rgba(245,158,11,.2)}
+.btn-alert:active{transform:scale(.96)}
+
+/* Filter tabs */
+.t-ftabs{background:#fff;border-bottom:1px solid #E9E6E6;padding:0 14px;display:flex;gap:0;flex-shrink:0}
+.t-ftab{padding:9px 13px;font-size:12px;color:#9CA3AF;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.t-ftab.on{color:#C9697A;font-weight:500;border-bottom-color:#C9697A}
+
+/* Content */
+.t-content{flex:1;overflow-y:auto;padding:12px;background:#F0EDE9}
+
+/* Stats — tighter */
+.t-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.t-stat{background:#fff;border:1px solid #E9E6E6;border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:11px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.t-stat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.t-stat-icon svg{width:20px;height:20px;fill:none}
+.t-stat-num{font-size:20px;font-weight:500;color:#1C1012;line-height:1}
+.t-stat-lbl{font-size:11px;color:#9CA3AF;margin-top:2px}
+.t-stat-sub{font-size:10px;margin-top:1px}
+
+/* Quick actions — tighter */
+.t-qa{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.t-qa-btn{background:#fff;border:1px solid #E9E6E6;border-radius:12px;padding:13px 8px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:all .13s;box-shadow:0 2px 5px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)}
+.t-qa-btn:active{border-color:#C9697A;background:#FDF5F6;transform:scale(.96);box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.t-qa-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.t-qa-icon svg{width:20px;height:20px;fill:none}
+.t-qa-lbl{font-size:11px;font-weight:500;color:#1C1012;text-align:center;line-height:1.2}
+
+/* Cards */
+.t-card{background:#fff;border:1px solid #E9E6E6;border-radius:12px;overflow:hidden;margin-bottom:9px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.t-card-head{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid #F0EDE9}
+.t-card-title{font-size:13px;font-weight:500;color:#1C1012}
+.t-card-sub{font-size:11px;color:#9CA3AF;margin-top:1px}
+
+/* Rows — tighter */
+.t-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid #F3F4F6;cursor:pointer;min-height:58px;transition:background .1s}
+.t-row:last-child{border-bottom:none}
+.t-row:active{background:#FDF5F6}
+.t-row-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0}
+.t-row-main{flex:1;min-width:0}
+.t-row-name{font-size:13px;font-weight:500;color:#1C1012}
+.t-row-sub{font-size:11px;color:#9CA3AF;margin-top:1px}
+.t-row-r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+
+/* Badges */
+.bdg{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:99px;white-space:nowrap}
+.b-green{background:#DCFCE7;color:#15803D}
+.b-amber{background:#FEF3C7;color:#B45309}
+.b-red{background:#FEE2E2;color:#B91C1C}
+.b-blue{background:#DBEAFE;color:#1D4ED8}
+.b-purple{background:#EDE9FE;color:#7C3AED}
+.b-rosa{background:#FDF5F6;color:#C9697A}
+.b-gray{background:#F3F4F6;color:#6B7280}
+
+/* Progress */
+.prog{height:4px;background:#E5E7EB;border-radius:2px;overflow:hidden;margin-top:4px}
+.prog-f{height:100%;border-radius:2px}
+
+/* Section label */
+.sec-lbl{font-size:10px;font-weight:500;color:#9CA3AF;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.sec-lbl::after{content:'';flex:1;height:1px;background:#E9E6E6}
+
+/* Overdue banner */
+.ov-banner{background:#FEF2F2;border:1px solid #FBBCBC;border-radius:10px;padding:10px 13px;margin-bottom:10px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 4px rgba(185,28,28,.1)}
+.ov-text{flex:1;font-size:12px;color:#7F1D1D;line-height:1.4}
+
+/* Event cards */
+.ev-card{background:#fff;border:1px solid #E9E6E6;border-radius:12px;padding:13px 14px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.06);transition:all .12s}
+.ev-card.urg{border-left:3px solid #B91C1C}
+.ev-card:active{background:#FDF5F6}
+.ev-top{display:flex;gap:12px;align-items:flex-start;margin-bottom:7px}
+.ev-date-m{font-size:10px;font-weight:500;color:#9CA3AF;text-transform:uppercase;text-align:center}
+.ev-date-d{font-size:22px;font-weight:500;color:#1C1012;line-height:1;text-align:center}
+.ev-name{font-size:13px;font-weight:500;color:#1C1012}
+.ev-venue{font-size:11px;color:#9CA3AF;margin-top:2px}
+.ev-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.ev-val{font-size:14px;font-weight:500;color:#1C1012;text-align:right}
+.ev-foot{border-top:1px solid #F3F4F6;padding-top:7px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#9CA3AF}
+
+/* Alteration kanban */
+.alt-kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.alt-col{background:#E8E4E0;border-radius:9px;padding:7px}
+.alt-col-head{font-size:9px;font-weight:500;color:#9CA3AF;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
+.alt-card{background:#fff;border:1px solid #E9E6E6;border-radius:7px;padding:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07);transition:all .12s}
+.alt-card:active{border-color:#C9697A;transform:scale(.97)}
+.alt-card-name{font-size:11px;font-weight:500;color:#1C1012}
+.alt-card-work{font-size:10px;color:#9CA3AF;margin-top:1px}
+.alt-empty{font-size:10px;color:#B4B2A9;text-align:center;padding:6px 0;font-style:italic}
+.btn-move{width:100%;margin-top:6px;height:30px;border:1px solid #E9E6E6;border-radius:6px;background:#F8F4F0;font-size:10px;font-weight:500;color:#6B7280;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.btn-move:active{background:#FDF5F6;border-color:#C9697A;color:#C9697A}
+
+/* Info tiles */
+.tile{background:#F0EDE9;border-radius:8px;padding:9px 12px;flex:1}
+.tile-lbl{font-size:9px;font-weight:500;color:#9CA3AF;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.tile-val{font-size:12px;font-weight:500;color:#1C1012}
+.tile-sub{font-size:10px;color:#9CA3AF;margin-top:1px}
+
+/* Dress icon */
+.dress-icon{width:42px;height:54px;background:#F0EDE9;border-radius:8px;border:1px solid #E9E6E6;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* Pay row */
+.pay-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #F3F4F6;min-height:56px;cursor:pointer}
+.pay-row:active{background:#F8F4F0}
+.pay-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.pay-amount{font-size:14px;font-weight:500;min-width:52px;text-align:right}
+</style>
+
+<div class="outer">
+<div class="screen-nav" id="snav">
+  <button class="snav-btn active" onclick="go('dashboard',this)">Dashboard</button>
+  <button class="snav-btn" onclick="go('events',this)">Events</button>
+  <button class="snav-btn" onclick="go('detail',this)">Event detail</button>
+  <button class="snav-btn" onclick="go('rentals',this)">Dress rentals</button>
+  <button class="snav-btn" onclick="go('alts',this)">Alterations</button>
+  <button class="snav-btn" onclick="go('payments',this)">Payments</button>
+</div>
+
+<div class="ipad-frame">
+<div class="ipad-screen">
+
+  <!-- SIDEBAR -->
+  <div class="t-sb">
+    <div class="t-sb-top">
+      <div class="t-logo"><svg width="16" height="16" viewBox="0 0 32 32" fill="none"><path d="M7 25V7l18 18V7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+    <div class="t-nav" id="sb"></div>
+    <div class="t-sb-foot"><div class="t-udot">IM</div></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="t-main" id="main"></div>
+
+</div>
+</div>
+
+<div class="screen-lbl" id="lbl">Dashboard — tighter spacing · button shadows · quick-action grid</div>
+</div>
+
+<script>
+const NAV=[
+  {id:'dashboard',l:'Home',i:'<rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/>'},
+  {id:'events',l:'Events',i:'<rect x="1" y="2" width="14" height="12" rx="1.5"/><path d="M5 1v2M11 1v2M1 6h14" stroke-linecap="round"/>',b:{v:14,c:'tb-purple'}},
+  {id:'clients',l:'Clients',i:'<circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke-linecap="round"/>'},
+  {id:'alts',l:'Alts',i:'<path d="M3 3l10 10M13 3L3 13" stroke-linecap="round"/><circle cx="3" cy="3" r="2"/><circle cx="13" cy="13" r="2"/>',b:{v:4,c:'tb-red'}},
+  {id:'rentals',l:'Rentals',i:'<path d="M8 1c-1.5 0-4 1.2-4 4v3L2 14h12L14 8V5c0-2.8-2.5-4-4-4Z" stroke-linejoin="round"/>'},
+  {id:'inventory',l:'Inventory',i:'<rect x="1" y="7" width="14" height="7" rx="1"/><path d="M3 7V5a5 5 0 0 1 10 0v2" stroke-linecap="round"/>'},
+  {id:'payments',l:'Payments',i:'<rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 7h14"/>',b:{v:3,c:'tb-red'}},
+  {id:'settings',l:'Settings',i:'<circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2" stroke-linecap="round"/>'},
+]
+
+function buildSB(active){
+  document.getElementById('sb').innerHTML=NAV.map(n=>`
+    <button class="t-item${n.id===active?' on':''}" onclick="go('${n.id}',null)">
+      <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">${n.i}</svg>
+      <span class="t-item-lbl">${n.l}</span>
+      ${n.b?`<span class="t-item-badge ${n.b.c}">${n.b.v}</span>`:''}
+    </button>`).join('')
+}
+
+const S={
+dashboard:{lbl:'Dashboard — tighter layout · button shadows · 6-up quick actions',html:`
+<div class="t-topbar">
+  <div style="flex:1"><div class="t-page-title">Good morning, Isabel</div><div class="t-page-sub">Monday · 5 appointments</div></div>
+  <div class="t-tb-r">
+    <div class="btn-icon"><svg width="18" height="18" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="#6B7280" stroke-width="1.4"/><path d="M10.5 10.5L14 14" stroke="#6B7280" stroke-width="1.4" stroke-linecap="round"/></svg></div>
+    <button class="btn-primary"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>New client</button>
+  </div>
+</div>
+<div class="t-alert">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><circle cx="8" cy="8" r="7" stroke="#B45309" stroke-width="1.2"/><path d="M8 5v3M8 11v.5" stroke="#B45309" stroke-width="1.4" stroke-linecap="round"/></svg>
+  <div class="t-alert-text"><strong>Sophia R.</strong> — fitting not scheduled · deposit ($450) overdue · 6 days to wedding</div>
+  <button class="btn-alert">Fix now</button>
+</div>
+<div class="t-content">
+  <div class="t-stats">
+    <div class="t-stat"><div class="t-stat-icon" style="background:#DCFCE7"><svg viewBox="0 0 16 16" stroke="#15803D"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 7h14" stroke-linecap="round"/></svg></div><div><div class="t-stat-num" style="color:#15803D">$18,240</div><div class="t-stat-lbl">Revenue this month</div><div class="t-stat-sub" style="color:#15803D">+22%</div></div></div>
+    <div class="t-stat"><div class="t-stat-icon" style="background:#FEE2E2"><svg viewBox="0 0 16 16" stroke="#B91C1C"><circle cx="8" cy="8" r="7"/><path d="M8 5v3M8 11v.5" stroke-linecap="round"/></svg></div><div><div class="t-stat-num" style="color:#B91C1C">$1,650</div><div class="t-stat-lbl">Overdue</div><div class="t-stat-sub" style="color:#B91C1C">2 clients</div></div></div>
+    <div class="t-stat"><div class="t-stat-icon" style="background:#DBEAFE"><svg viewBox="0 0 16 16" stroke="#1D4ED8"><rect x="1" y="2" width="14" height="12" rx="1.5"/><path d="M5 1v2M11 1v2M1 6h14" stroke-linecap="round"/></svg></div><div><div class="t-stat-num">14</div><div class="t-stat-lbl">Active events</div><div class="t-stat-sub" style="color:#9CA3AF">8 wed · 6 qce</div></div></div>
+    <div class="t-stat"><div class="t-stat-icon" style="background:#FDF5F6"><svg viewBox="0 0 16 16" stroke="#C9697A"><path d="M8 1c-1.5 0-4 1.2-4 4v3L2 14h12L14 8V5c0-2.8-2.5-4-4-4Z" stroke-linejoin="round"/></svg></div><div><div class="t-stat-num">9/24</div><div class="t-stat-lbl">Dresses out</div><div class="t-stat-sub" style="color:#B45309">2 overdue</div></div></div>
+  </div>
+  <div class="sec-lbl">Quick actions</div>
+  <div class="t-qa">
+    <div class="t-qa-btn"><div class="t-qa-icon" style="background:#FDF5F6"><svg viewBox="0 0 16 16" fill="none" stroke="#C9697A" stroke-width="1.2"><path d="M8 1c-1.5 0-4 1.2-4 4v3L2 14h12L14 8V5c0-2.8-2.5-4-4-4Z" stroke-linejoin="round"/></svg></div><div class="t-qa-lbl">New rental</div></div>
+    <div class="t-qa-btn"><div class="t-qa-icon" style="background:#DCFCE7"><svg viewBox="0 0 16 16" fill="none" stroke="#15803D" stroke-width="1.5"><path d="M3 8l3 3 7-7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="t-qa-lbl">Log return</div></div>
+    <div class="t-qa-btn"><div class="t-qa-icon" style="background:#DBEAFE"><svg viewBox="0 0 16 16" fill="none" stroke="#1D4ED8" stroke-width="1.2"><rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4" stroke-linecap="round"/></svg></div><div class="t-qa-lbl">Invoice</div></div>
+    <div class="t-qa-btn"><div class="t-qa-icon" style="background:#EDE9FE"><svg viewBox="0 0 16 16" fill="none" stroke="#7C3AED" stroke-width="1.2"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke-linecap="round"/></svg></div><div class="t-qa-lbl">New client</div></div>
+    <div class="t-qa-btn"><div class="t-qa-icon" style="background:#FEF3C7"><svg viewBox="0 0 16 16" fill="none" stroke="#B45309" stroke-width="1.2"><rect x="2" y="2" width="8" height="8" rx="1"/><path d="M6 6h8v8H6z" stroke-linejoin="round"/></svg></div><div class="t-qa-lbl">Scan QR</div></div>
+    <div class="t-qa-btn"><div class="t-qa-icon" style="background:#F3F4F6"><svg viewBox="0 0 16 16" fill="none" stroke="#6B7280" stroke-width="1.4"><path d="M8 3v10M3 8h10" stroke-linecap="round"/></svg></div><div class="t-qa-lbl">Add task</div></div>
+  </div>
+  <div class="t-card">
+    <div class="t-card-head"><div><div class="t-card-title">Today's appointments</div><div class="t-card-sub">5 scheduled</div></div><button class="btn-card-action">View all</button></div>
+    <div class="t-row"><div style="font-size:12px;color:#9CA3AF;min-width:34px;font-weight:500">9:30</div><div class="t-row-av" style="background:#FDF5F6;color:#C9697A">SR</div><div class="t-row-main"><div class="t-row-name">Sophia Rodriguez</div><div class="t-row-sub">Final fitting · #BB-047 · Ana R.</div></div><div class="t-row-r"><span class="bdg b-blue">Fitting</span><button class="btn-row" style="height:34px">Mark done</button></div></div>
+    <div class="t-row"><div style="font-size:12px;color:#9CA3AF;min-width:34px;font-weight:500">11:00</div><div class="t-row-av" style="background:#EDE9FE;color:#7C3AED">LF</div><div class="t-row-main"><div class="t-row-name">Lucia Flores</div><div class="t-row-sub">Planning consult · Quinceañera</div></div><div class="t-row-r"><span class="bdg b-amber">Consult</span><button class="btn-row" style="height:34px">Mark done</button></div></div>
+    <div class="t-row"><div style="font-size:12px;color:#9CA3AF;min-width:34px;font-weight:500">1:00</div><div class="t-row-av" style="background:#FDF5F6;color:#C9697A">VC</div><div class="t-row-main"><div class="t-row-name">Valentina Cruz</div><div class="t-row-sub">Dress pickup · #BB-031</div></div><div class="t-row-r"><span class="bdg b-green">Pickup</span><button class="btn-row" style="height:34px">Mark done</button></div></div>
+  </div>
+</div>`},
+
+events:{lbl:'Events — tighter cards · urgency border · pay progress',html:`
+<div class="t-topbar">
+  <div style="flex:1"><div class="t-page-title">Events</div><div class="t-page-sub">14 active</div></div>
+  <div class="t-tb-r">
+    <div class="btn-icon"><svg width="18" height="18" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.5" stroke="#6B7280" stroke-width="1.4"/><path d="M10.5 10.5L14 14" stroke="#6B7280" stroke-width="1.4" stroke-linecap="round"/></svg></div>
+    <button class="btn-primary"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>New event</button>
+  </div>
+</div>
+<div class="t-ftabs">
+  <div class="t-ftab on">All (14)</div><div class="t-ftab">Weddings (8)</div><div class="t-ftab">Quinceañeras (6)</div><div class="t-ftab">This week (2)</div>
+</div>
+<div class="t-content">
+  <div class="ev-card urg">
+    <div class="ev-top">
+      <div><div class="ev-date-m">MAR</div><div class="ev-date-d">22</div></div>
+      <div style="flex:1"><div class="ev-name">Sophia &amp; Rafael Rodriguez</div><div class="ev-venue">St. Anthony's Chapel · ~180 guests</div><div class="ev-tags"><span class="bdg b-green">Dress</span><span class="bdg b-blue">Alts</span><span class="bdg b-purple">Planning</span><span class="bdg b-amber">Deco</span></div></div>
+      <div style="text-align:right"><div class="ev-val">$6,800</div><div style="font-size:11px;color:#B91C1C;margin-top:1px">$450 overdue</div><span class="bdg b-red" style="margin-top:4px;display:block">6 days</span></div>
+    </div>
+    <div class="ev-foot"><span>Maria G.</span><div style="display:flex;align-items:center;gap:8px"><div style="width:140px"><div class="prog"><div class="prog-f" style="width:93%;background:#15803D"></div></div></div><span style="font-size:10px;color:#15803D;font-weight:500">93%</span></div></div>
+  </div>
+  <div class="ev-card">
+    <div class="ev-top">
+      <div><div class="ev-date-m">MAR</div><div class="ev-date-d">29</div></div>
+      <div style="flex:1"><div class="ev-name">Valentina Cruz — Quinceañera</div><div class="ev-venue">La Rosa Banquet Hall · ~120 guests</div><div class="ev-tags"><span class="bdg b-green">Dress</span><span class="bdg b-purple">Planning</span><span class="bdg b-amber">Deco</span></div></div>
+      <div style="text-align:right"><div class="ev-val">$4,200</div><div style="font-size:11px;color:#15803D;margin-top:1px">100% paid</div><span class="bdg b-amber" style="margin-top:4px;display:block">13 days</span></div>
+    </div>
+    <div class="ev-foot"><span>Maria G.</span><div style="display:flex;align-items:center;gap:8px"><div style="width:140px"><div class="prog"><div class="prog-f" style="width:100%;background:#15803D"></div></div></div><span style="font-size:10px;color:#15803D;font-weight:500">100%</span></div></div>
+  </div>
+  <div class="ev-card">
+    <div class="ev-top">
+      <div><div class="ev-date-m">APR</div><div class="ev-date-d">5</div></div>
+      <div style="flex:1"><div class="ev-name">Diana Torres — Quinceañera</div><div class="ev-venue">Casa de León · ~95 guests</div><div class="ev-tags"><span class="bdg b-green">Dress</span><span class="bdg b-blue">Alts</span></div></div>
+      <div style="text-align:right"><div class="ev-val">$3,800</div><div style="font-size:11px;color:#9CA3AF;margin-top:1px">$1,900 paid</div><span class="bdg b-gray" style="margin-top:4px;display:block">20 days</span></div>
+    </div>
+    <div class="ev-foot"><span>Isabel M.</span><div style="display:flex;align-items:center;gap:8px"><div style="width:140px"><div class="prog"><div class="prog-f" style="width:50%;background:#B45309"></div></div></div><span style="font-size:10px;color:#B45309;font-weight:500">50%</span></div></div>
+  </div>
+</div>`},
+
+detail:{lbl:'Event detail — stat strip · milestone rows · dress tiles',html:`
+<div class="t-topbar">
+  <div style="flex:1"><div class="t-page-title">Sophia &amp; Rafael Rodriguez</div><div class="t-page-sub">Wedding · Mar 22 · 6 days</div></div>
+  <div class="t-tb-r">
+    <button class="btn-ghost">Edit</button>
+    <button class="btn-primary">+ Service</button>
+  </div>
+</div>
+<div class="t-alert">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><circle cx="8" cy="8" r="7" stroke="#B45309" stroke-width="1.2"/><path d="M8 5v3M8 11v.5" stroke="#B45309" stroke-width="1.4" stroke-linecap="round"/></svg>
+  <div class="t-alert-text"><strong>2 issues:</strong> Deco deposit overdue · Final fitting not scheduled</div>
+  <button class="btn-alert">Fix</button>
+</div>
+<div class="t-content">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px">
+    <div style="background:#fff;border:1px solid #E9E6E6;border-radius:9px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)"><div style="font-size:17px;font-weight:500;color:#15803D">$6,350</div><div style="font-size:10px;color:#9CA3AF">Paid</div></div>
+    <div style="background:#fff;border:1px solid #E9E6E6;border-radius:9px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)"><div style="font-size:17px;font-weight:500;color:#B91C1C">$450</div><div style="font-size:10px;color:#9CA3AF">Overdue</div></div>
+    <div style="background:#fff;border:1px solid #E9E6E6;border-radius:9px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)"><div style="font-size:17px;font-weight:500;color:#1C1012">7/10</div><div style="font-size:10px;color:#9CA3AF">Tasks</div></div>
+    <div style="background:#fff;border:1px solid #E9E6E6;border-radius:9px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06)"><div style="font-size:17px;font-weight:500;color:#B45309">2</div><div style="font-size:10px;color:#9CA3AF">Issues</div></div>
+  </div>
+  <div class="t-card">
+    <div class="t-card-head"><div><div class="t-card-title">Payment milestones</div><div class="t-card-sub">$6,350 of $6,800</div></div><button class="btn-card-action">+ Add</button></div>
+    <div class="t-row"><div style="width:10px;height:10px;border-radius:50%;background:#15803D;flex-shrink:0"></div><div class="t-row-main"><div class="t-row-name">Booking deposit</div><div class="t-row-sub">Paid Mar 10 · Zelle</div></div><div class="t-row-r"><span style="font-size:13px;font-weight:500;color:#15803D">$1,700 ✓</span></div></div>
+    <div class="t-row" style="background:#FFF8F8"><div style="width:10px;height:10px;border-radius:50%;background:#B91C1C;flex-shrink:0"></div><div class="t-row-main"><div class="t-row-name" style="color:#B91C1C">Decoration deposit — OVERDUE</div><div class="t-row-sub" style="color:#B91C1C">Due Feb 20 · 3 days late</div></div><div class="t-row-r"><span style="font-size:13px;font-weight:500;color:#B91C1C">$500</span><div style="display:flex;gap:5px;margin-top:3px"><button class="btn-row btn-row-collect" style="height:34px">Collect</button><button class="btn-row" style="height:34px">Remind</button></div></div></div>
+    <div class="t-row"><div style="width:10px;height:10px;border-radius:50%;background:#B45309;flex-shrink:0"></div><div class="t-row-main"><div class="t-row-name">Final balance</div><div class="t-row-sub">Due Mar 8</div></div><div class="t-row-r"><span style="font-size:13px;font-weight:500;color:#B45309">$1,200</span></div></div>
+  </div>
+  <div class="t-card">
+    <div class="t-card-head"><div><div class="t-card-title">Dress rental</div><div class="t-card-sub">#BB-047 · Reserved</div></div><button class="btn-primary" style="height:36px;font-size:11px">Mark picked up</button></div>
+    <div style="padding:12px 14px">
+      <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+        <div class="dress-icon"><svg width="24" height="32" viewBox="0 0 24 32" fill="none"><path d="M12 1c-1.5 0-4 1.2-4 4v3L2 30h20L16 8V5c0-2.8-2.5-4-4-4Z" fill="#C9697A" opacity=".4"/></svg></div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:500;color:#1C1012">Ivory A-line cathedral</div><div style="font-size:11px;color:#9CA3AF;font-family:monospace">#BB-047 · Size 8 · Bridal</div><div style="display:flex;gap:8px;margin-top:6px"><span class="bdg b-amber">Reserved</span><span style="font-size:11px;color:#15803D;font-weight:500">Dep. $300 ✓</span></div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+        <div class="tile"><div class="tile-lbl">Pickup</div><div class="tile-val">Mar 21</div><div class="tile-sub">1:00 PM</div></div>
+        <div class="tile"><div class="tile-lbl">Return due</div><div class="tile-val">Mar 24</div><div class="tile-sub">by 5pm · $25/day late</div></div>
+      </div>
+    </div>
+  </div>
+</div>`},
+
+rentals:{lbl:'Dress rentals — overdue banner · large action buttons · return due tab',html:`
+<div class="t-topbar">
+  <div style="flex:1"><div class="t-page-title">Dress rentals</div><div class="t-page-sub">24 gowns · 9 rented · 2 overdue</div></div>
+  <div class="t-tb-r">
+    <button class="btn-ghost">Scan QR</button>
+    <button class="btn-primary">+ New rental</button>
+  </div>
+</div>
+<div class="t-ftabs">
+  <div class="t-ftab">Catalog</div><div class="t-ftab on">Active</div><div class="t-ftab" style="color:#B91C1C;font-weight:500">Due (2)</div><div class="t-ftab">History</div>
+</div>
+<div class="t-content">
+  <div class="ov-banner">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;stroke:#B91C1C;stroke-width:1.2;stroke-linecap:round"><circle cx="8" cy="8" r="7"/><path d="M8 5v3M8 11v.5" stroke-width="1.4"/></svg>
+    <div class="ov-text"><strong>2 dresses overdue.</strong> BB-047 (Sophia R.) and BB-055 (Maria G.) — due Mar 24, now 3 days late.</div>
+    <button class="btn-primary" style="height:36px;font-size:11px">Send reminders</button>
+  </div>
+  <div class="sec-lbl">Overdue returns</div>
+  <div class="t-card" style="border-color:#FBBCBC">
+    <div class="t-row" style="border-left:3px solid #B91C1C;background:#FFF8F8;min-height:62px">
+      <div class="dress-icon" style="background:#FEE2E2;width:38px;height:50px"><svg width="20" height="28" viewBox="0 0 24 32" fill="none"><path d="M12 1c-1.5 0-4 1.2-4 4v3L2 30h20L16 8V5c0-2.8-2.5-4-4-4Z" fill="#B91C1C" opacity=".5"/></svg></div>
+      <div class="t-row-main">
+        <div class="t-row-name">Ivory A-line cathedral</div>
+        <div class="t-row-sub">#BB-047 · Sophia Rodriguez · (956) 214-8830</div>
+        <div style="font-size:11px;color:#B91C1C;font-weight:500;margin-top:2px">Due Mar 24 · 3 days late · $75 accrued</div>
+      </div>
+      <div class="t-row-r">
+        <span class="bdg b-red">Overdue</span>
+        <button class="btn-row btn-row-collect" style="height:34px">Log return</button>
+        <button class="btn-row btn-row-red" style="height:34px">Call client</button>
+      </div>
+    </div>
+  </div>
+  <div class="sec-lbl">Currently out</div>
+  <div class="t-card">
+    <div class="t-row" style="min-height:62px">
+      <div class="dress-icon" style="background:#FEF3C7;width:38px;height:50px"><svg width="20" height="28" viewBox="0 0 24 32" fill="none"><path d="M12 1c-1.5 0-4 1.2-4 4v3L2 30h20L16 8V5c0-2.8-2.5-4-4-4Z" fill="#B45309" opacity=".4"/></svg></div>
+      <div class="t-row-main">
+        <div class="t-row-name">Rose quartz ball gown</div>
+        <div class="t-row-sub">#BB-031 · Valentina Cruz · Due today</div>
+        <div style="width:160px;margin-top:5px"><div class="prog"><div class="prog-f" style="width:85%;background:#B45309"></div></div></div>
+      </div>
+      <div class="t-row-r">
+        <span class="bdg b-amber">Due today</span>
+        <button class="btn-row" style="height:34px">Log return</button>
+      </div>
+    </div>
+    <div class="t-row" style="min-height:62px">
+      <div class="dress-icon" style="background:#DBEAFE;width:38px;height:50px"><svg width="20" height="28" viewBox="0 0 24 32" fill="none"><path d="M12 1c-1.5 0-4 1.2-4 4v3L2 30h20L16 8V5c0-2.8-2.5-4-4-4Z" fill="#1D4ED8" opacity=".4"/></svg></div>
+      <div class="t-row-main">
+        <div class="t-row-name">Royal blue corset gown</div>
+        <div class="t-row-sub">#QG-014 · Isabella Fuentes · Due Apr 21</div>
+        <div style="width:160px;margin-top:5px"><div class="prog"><div class="prog-f" style="width:33%;background:#15803D"></div></div></div>
+      </div>
+      <div class="t-row-r">
+        <span class="bdg b-blue">4 days left</span>
+        <button class="btn-row" style="height:34px">View event</button>
+      </div>
+    </div>
+  </div>
+  <div class="sec-lbl">Upcoming pickups</div>
+  <div class="t-card">
+    <div class="t-row" style="min-height:62px">
+      <div class="dress-icon" style="background:#DCFCE7;width:38px;height:50px"><svg width="20" height="28" viewBox="0 0 24 32" fill="none"><path d="M12 1c-1.5 0-4 1.2-4 4v3L2 30h20L16 8V5c0-2.8-2.5-4-4-4Z" fill="#15803D" opacity=".4"/></svg></div>
+      <div class="t-row-main">
+        <div class="t-row-name">Blush tulle princess</div>
+        <div class="t-row-sub">#BB-033 · Diana Torres · Pickup Apr 4</div>
+      </div>
+      <div class="t-row-r">
+        <span class="bdg b-rosa">Reserved</span>
+        <button class="btn-row btn-schedule" style="height:34px">Mark picked up</button>
+      </div>
+    </div>
+  </div>
+</div>`},
+
+alts:{lbl:'Alterations — compact kanban · Move buttons · urgent list',html:`
+<div class="t-topbar">
+  <div style="flex:1"><div class="t-page-title">Alterations</div><div class="t-page-sub">4 active jobs · 2 urgent</div></div>
+  <div class="t-tb-r">
+    <button class="btn-ghost">List view</button>
+    <button class="btn-primary">+ New job</button>
+  </div>
+</div>
+<div class="t-ftabs">
+  <div class="t-ftab on">All (4)</div><div class="t-ftab" style="color:#B91C1C">Urgent (2)</div><div class="t-ftab">My jobs</div>
+</div>
+<div class="t-content">
+  <div class="alt-kanban">
+    <div class="alt-col">
+      <div class="alt-col-head"><span>Measure</span></div>
+      <div class="alt-card" style="border-color:#FBBCBC"><div class="alt-card-name">Carmen Santos</div><div class="alt-card-work">Bridal gown</div><div style="margin-top:4px"><span class="bdg b-red" style="font-size:9px;padding:1px 5px">30d</span></div><button class="btn-move">Move →</button></div>
+    </div>
+    <div class="alt-col">
+      <div class="alt-col-head"><span>In progress</span><span class="bdg b-blue" style="font-size:8px;padding:1px 5px">2</span></div>
+      <div class="alt-card" style="border-color:#FBBCBC;margin-bottom:5px"><div class="alt-card-name">Sophia Rodriguez</div><div class="alt-card-work">Hem · Bustle · Waist</div><div style="margin-top:4px"><span class="bdg b-red" style="font-size:9px;padding:1px 5px">6d</span></div><button class="btn-move">Move →</button></div>
+      <div class="alt-card"><div class="alt-card-name">Diana Torres</div><div class="alt-card-work">Hem · Straps</div><div style="margin-top:4px"><span class="bdg b-gray" style="font-size:9px;padding:1px 5px">20d</span></div><button class="btn-move">Move →</button></div>
+    </div>
+    <div class="alt-col">
+      <div class="alt-col-head"><span>Fitting</span><span class="bdg b-purple" style="font-size:8px;padding:1px 5px">1</span></div>
+      <div class="alt-card"><div class="alt-card-name">Rosa Nunez</div><div class="alt-card-work">Full alts</div><div style="margin-top:4px"><span class="bdg b-gray" style="font-size:9px;padding:1px 5px">45d</span></div><button class="btn-move">Move →</button></div>
+    </div>
+    <div class="alt-col">
+      <div class="alt-col-head"><span>Complete</span></div>
+      <div class="alt-empty">None yet</div>
+    </div>
+  </div>
+  <div class="sec-lbl">Urgent — act now</div>
+  <div class="t-card">
+    <div class="t-row" style="border-left:3px solid #B91C1C;min-height:62px">
+      <div class="t-row-av" style="background:#FDF5F6;color:#C9697A">SR</div>
+      <div class="t-row-main">
+        <div class="t-row-name">Sophia Rodriguez — Bridal gown</div>
+        <div class="t-row-sub">Hem · Bustle · Waist · Ana Reyes</div>
+        <div style="font-size:11px;color:#B91C1C;font-weight:500;margin-top:2px">Deadline Mar 19 — 2 days · Final fitting NOT scheduled</div>
+      </div>
+      <div class="t-row-r">
+        <span class="bdg b-red">Critical</span>
+        <button class="btn-row btn-schedule" style="height:34px">Schedule fitting</button>
+      </div>
+    </div>
+  </div>
+</div>`},
+
+payments:{lbl:'Payments — overdue collect buttons · remind buttons with color-coded shadows',html:`
+<div class="t-topbar">
+  <div style="flex:1"><div class="t-page-title">Payments</div><div class="t-page-sub">$1,650 overdue · 3 reminders pending</div></div>
+  <div class="t-tb-r">
+    <button class="btn-ghost">Export</button>
+    <button class="btn-primary">Send reminders</button>
+  </div>
+</div>
+<div class="t-ftabs">
+  <div class="t-ftab on">All</div><div class="t-ftab" style="color:#B91C1C">Overdue (3)</div><div class="t-ftab">This week (4)</div><div class="t-ftab">Paid</div>
+</div>
+<div class="t-content">
+  <div class="t-stats">
+    <div class="t-stat"><div class="t-stat-icon" style="background:#DCFCE7"><svg viewBox="0 0 16 16" stroke="#15803D"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 7h14" stroke-linecap="round"/></svg></div><div><div class="t-stat-num" style="color:#15803D">$86,400</div><div class="t-stat-lbl">Collected YTD</div></div></div>
+    <div class="t-stat"><div class="t-stat-icon" style="background:#FEE2E2"><svg viewBox="0 0 16 16" stroke="#B91C1C"><circle cx="8" cy="8" r="7"/><path d="M8 5v3M8 11v.5" stroke-linecap="round"/></svg></div><div><div class="t-stat-num" style="color:#B91C1C">$1,650</div><div class="t-stat-lbl">Overdue total</div></div></div>
+  </div>
+  <div class="sec-lbl">Overdue — action required</div>
+  <div class="t-card" style="margin-bottom:10px">
+    <div class="pay-row" style="background:#FFF8F8;border-left:3px solid #B91C1C">
+      <div class="pay-dot" style="background:#B91C1C"></div>
+      <div class="pay-info" style="flex:1"><div style="font-size:13px;font-weight:500;color:#1C1012">Sophia Rodriguez</div><div style="font-size:11px;color:#B91C1C;margin-top:1px">Decoration deposit · 3 days overdue</div></div>
+      <div class="pay-amount" style="color:#B91C1C;margin-right:8px">$450</div>
+      <button class="btn-row btn-row-collect" style="height:36px">Collect</button>
+    </div>
+    <div class="pay-row" style="background:#FFF8F8;border-left:3px solid #B91C1C">
+      <div class="pay-dot" style="background:#B91C1C"></div>
+      <div class="pay-info" style="flex:1"><div style="font-size:13px;font-weight:500;color:#1C1012">Diana Torres</div><div style="font-size:11px;color:#B91C1C;margin-top:1px">Final balance · 2 days overdue</div></div>
+      <div class="pay-amount" style="color:#B91C1C;margin-right:8px">$1,200</div>
+      <button class="btn-row btn-row-collect" style="height:36px">Collect</button>
+    </div>
+  </div>
+  <div class="sec-lbl">Due this week</div>
+  <div class="t-card">
+    <div class="pay-row">
+      <div class="pay-dot" style="background:#B45309"></div>
+      <div class="pay-info" style="flex:1"><div style="font-size:13px;font-weight:500;color:#1C1012">Isabella Fuentes</div><div style="font-size:11px;color:#9CA3AF;margin-top:1px">2nd installment · Due Mar 20</div></div>
+      <div class="pay-amount" style="margin-right:8px">$1,350</div>
+      <button class="btn-row btn-remind" style="height:36px">Remind</button>
+    </div>
+    <div class="pay-row">
+      <div class="pay-dot" style="background:#B45309"></div>
+      <div class="pay-info" style="flex:1"><div style="font-size:13px;font-weight:500;color:#1C1012">Carmen Santos</div><div style="font-size:11px;color:#9CA3AF;margin-top:1px">Booking deposit · Due Mar 22</div></div>
+      <div class="pay-amount" style="margin-right:8px">$2,100</div>
+      <button class="btn-row btn-remind" style="height:36px">Remind</button>
+    </div>
+    <div class="pay-row" style="border-bottom:none">
+      <div class="pay-dot" style="background:#9CA3AF"></div>
+      <div class="pay-info" style="flex:1"><div style="font-size:13px;font-weight:500;color:#1C1012">Monica Garza</div><div style="font-size:11px;color:#9CA3AF;margin-top:1px">Mid-point payment · Due Mar 25</div></div>
+      <div class="pay-amount" style="margin-right:8px">$800</div>
+      <button class="btn-row" style="height:36px">Remind</button>
+    </div>
+  </div>
+</div>`}
+}
+
+function go(id,btn){
+  const s=S[id]
+  if(!s)return
+  buildSB(id)
+  document.getElementById('main').innerHTML=s.html
+  document.getElementById('lbl').textContent=s.lbl
+  document.querySelectorAll('.snav-btn').forEach(b=>b.classList.remove('active'))
+  if(btn){btn.classList.add('active')}
+  else{
+    const ids=['dashboard','events','detail','rentals','alts','payments']
+    document.querySelectorAll('.snav-btn').forEach((b,i)=>{if(ids[i]===id)b.classList.add('active')})
+  }
+}
+go('dashboard',null)
+</script>

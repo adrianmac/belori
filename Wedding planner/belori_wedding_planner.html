@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Belori — Wedding Planning</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#F0EDE9;color:#1C1012;font-size:13px}
+:root{
+  --rosa:#C9697A;--rh:#B85868;--rp:#FDF5F6;--rl:#E8B4BB;
+  --ink:#1C1012;--gray:#6B7280;--gl:#9CA3AF;--border:#E5E7EB;
+  --ivory:#F8F4F0;--green:#15803D;--gbg:#DCFCE7;
+  --amber:#B45309;--abg:#FEF3C7;--red:#B91C1C;--rbg:#FEE2E2;
+  --blue:#1D4ED8;--bbg:#DBEAFE;--purple:#7C3AED;--pbg:#EDE9FE;
+  --gold:#D4AF37;
+}
+
+/* ── Layout ── */
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.main{flex:1;overflow-y:auto;padding:20px;max-width:1100px}
+
+/* ── Sidebar ── */
+.sb-top{padding:14px 16px;border-bottom:1px solid var(--border)}
+.sb-brand{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sb-lm{width:28px;height:28px;background:var(--rosa);border-radius:6px;display:flex;align-items:center;justify-content:center}
+.sb-name{font-size:13px;font-weight:500}
+.sb-event{font-size:11px;color:var(--rosa);font-weight:500;font-style:italic}
+.sb-date{font-size:10px;color:var(--gl)}
+.countdown{background:var(--rp);border:1px solid var(--rl);border-radius:8px;padding:10px 12px;margin:10px 16px;text-align:center}
+.cd-num{font-size:28px;font-weight:500;color:var(--rosa);line-height:1}
+.cd-lbl{font-size:10px;color:var(--gl);margin-top:2px}
+.nav-section{font-size:9px;font-weight:500;color:var(--gl);text-transform:uppercase;letter-spacing:.06em;padding:10px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;font-size:12px;color:var(--gray);transition:all .12s;border-left:3px solid transparent}
+.nav-item:hover{background:var(--ivory);color:var(--ink)}
+.nav-item.active{background:var(--rp);color:var(--rosa);font-weight:500;border-left-color:var(--rosa)}
+.nav-item .ni-icon{width:16px;height:16px;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:9px;font-weight:500;padding:1px 6px;border-radius:99px}
+.nb-r{background:var(--rbg);color:var(--red)}
+.nb-g{background:var(--gbg);color:var(--green)}
+.nb-a{background:var(--abg);color:var(--amber)}
+.progress-bar{margin:12px 16px 0}
+.pb-label{font-size:10px;color:var(--gl);display:flex;justify-content:space-between;margin-bottom:4px}
+.pb-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.pb-fill{height:100%;background:linear-gradient(90deg,var(--rosa),var(--gold));border-radius:3px;transition:width .4s}
+
+/* ── Page header ── */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.page-title{font-size:20px;font-weight:500;color:var(--ink)}
+.page-sub{font-size:12px;color:var(--gl);margin-top:2px}
+
+/* ── Cards ── */
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:12px}
+.card-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:500;color:var(--ink)}
+.card-body{padding:14px 16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+/* ── Stat cells ── */
+.stat{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.stat-num{font-size:22px;font-weight:500;color:var(--ink)}
+.stat-num.green{color:var(--green)}.stat-num.red{color:var(--red)}.stat-num.amber{color:var(--amber)}.stat-num.rosa{color:var(--rosa)}
+.stat-lbl{font-size:11px;color:var(--gl);margin-top:3px}
+.stat-sub{font-size:10px;color:var(--gl);margin-top:1px}
+
+/* ── Buttons ── */
+.btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:none;white-space:nowrap;transition:all .12s;display:inline-flex;align-items:center;gap:5px}
+.btn-p{background:var(--rosa);color:#fff;box-shadow:0 2px 7px rgba(201,105,122,.35)}.btn-p:hover{background:var(--rh)}
+.btn-g{background:#fff;color:var(--gray);border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.08)}.btn-g:hover{background:var(--ivory)}
+.btn-sm{padding:5px 10px;font-size:11px;border-radius:7px}
+.btn-xs{padding:3px 8px;font-size:10px;border-radius:5px}
+
+/* ── Checklist items ── */
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6;cursor:pointer}
+.check-item:last-child{border-bottom:none}
+.check-box{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.check-item.done .check-box{background:var(--green);border-color:var(--green)}
+.check-item.done .check-text{text-decoration:line-through;color:var(--gl)}
+.check-text{font-size:12px;color:var(--ink);flex:1}
+.check-meta{font-size:10px;color:var(--gl);margin-top:2px}
+.check-item:hover{background:var(--ivory);margin:0 -16px;padding:8px 16px;border-radius:6px}
+
+/* ── Budget table ── */
+.budget-table{width:100%;border-collapse:collapse}
+.budget-table th{padding:8px 10px;text-align:left;font-size:10px;font-weight:500;color:var(--gl);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);background:var(--ivory)}
+.budget-table td{padding:9px 10px;font-size:12px;border-bottom:1px solid #F3F4F6;color:var(--gray)}
+.budget-table tr:last-child td{border-bottom:none}
+.budget-table td:first-child{font-weight:500;color:var(--ink)}
+.budget-table tr:hover td{background:#FAFAFA}
+.budget-prog{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:3px;width:100%}
+.budget-prog-fill{height:100%;border-radius:3px}
+.cat-row td{background:#F8F4F0;font-weight:500!important;font-size:11px!important;color:var(--ink)!important;text-transform:uppercase;letter-spacing:.04em}
+
+/* ── Guest list ── */
+.guest-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F3F4F6;font-size:12px}
+.guest-row:last-child{border-bottom:none}
+.guest-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0}
+.guest-name{flex:1;font-weight:500;color:var(--ink)}
+.guest-cat{font-size:10px;color:var(--gl)}
+.rsvp-badge{font-size:10px;font-weight:500;padding:2px 8px;border-radius:99px}
+.rsvp-yes{background:var(--gbg);color:var(--green)}
+.rsvp-no{background:var(--rbg);color:var(--red)}
+.rsvp-wait{background:var(--abg);color:var(--amber)}
+.tier-badge{font-size:9px;font-weight:500;padding:1px 6px;border-radius:99px;margin-left:4px}
+.t-must{background:var(--pbg);color:var(--purple)}
+.t-nice{background:var(--bbg);color:var(--blue)}
+
+/* ── Vendor cards ── */
+.vendor-card{border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;gap:12px;align-items:flex-start;margin-bottom:8px;transition:all .12s}
+.vendor-card:hover{border-color:var(--rosa);box-shadow:0 2px 8px rgba(201,105,122,.1)}
+.vendor-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.vendor-name{font-size:13px;font-weight:500;color:var(--ink)}
+.vendor-type{font-size:10px;color:var(--gl);margin-top:1px}
+.vendor-details{flex:1}
+.vendor-status{margin-left:auto;text-align:right}
+.stage-badge{font-size:10px;font-weight:500;padding:3px 8px;border-radius:99px}
+.s-booked{background:var(--gbg);color:var(--green)}
+.s-inquiry{background:var(--abg);color:var(--amber)}
+.s-sourcing{background:#F3F4F6;color:var(--gray)}
+.s-signed{background:var(--pbg);color:var(--purple)}
+
+/* ── Run of show ── */
+.ros-row{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid #F3F4F6;align-items:flex-start}
+.ros-row:last-child{border-bottom:none}
+.ros-time{font-size:12px;font-weight:500;color:var(--rosa);min-width:56px;flex-shrink:0;padding-top:1px}
+.ros-action{font-size:12px;font-weight:500;color:var(--ink)}
+.ros-details{font-size:11px;color:var(--gl);margin-top:2px}
+.ros-dot{width:8px;height:8px;border-radius:50%;background:var(--rosa);flex-shrink:0;margin-top:5px}
+.ros-line{position:relative}
+.ros-line::before{content:'';position:absolute;left:3px;top:14px;bottom:-8px;width:2px;background:var(--border)}
+
+/* ── Music items ── */
+.music-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F3F4F6;font-size:12px}
+.music-item:last-child{border-bottom:none}
+.music-label{color:var(--gl);min-width:170px;font-size:11px}
+.music-value{color:var(--ink);font-weight:500;flex:1}
+.music-empty{color:var(--gl);font-style:italic}
+
+/* ── Alcohol calc ── */
+.alc-row{display:grid;grid-template-columns:120px 60px 60px 80px 70px;gap:8px;padding:7px 0;border-bottom:1px solid #F3F4F6;font-size:12px;align-items:center}
+.alc-row:last-child{border-bottom:none}
+.alc-head{font-weight:500;font-size:10px;color:var(--gl);text-transform:uppercase;letter-spacing:.04em}
+
+/* ── Tabs ── */
+.tab-strip{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.tab{padding:9px 16px;font-size:12px;font-weight:500;color:var(--gl);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;transition:all .12s}
+.tab.on{color:var(--rosa);border-bottom-color:var(--rosa)}
+
+/* ── Badges ── */
+.bdg{display:inline-block;font-size:10px;font-weight:500;padding:2px 8px;border-radius:99px}
+.b-g{background:var(--gbg);color:var(--green)}.b-r{background:var(--rbg);color:var(--red)}
+.b-a{background:var(--abg);color:var(--amber)}.b-b{background:var(--bbg);color:var(--blue)}
+.b-p{background:var(--pbg);color:var(--purple)}.b-gray{background:#F3F4F6;color:var(--gray)}
+.b-rosa{background:var(--rp);color:var(--rosa)}.b-gold{background:#FEF3C7;color:#92400E}
+
+/* ── Input ── */
+.inp{height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font-size:12px;outline:none;width:100%;background:#fff}
+.inp:focus{border-color:var(--rosa);box-shadow:0 0 0 3px var(--rp)}
+.inp-sm{height:30px;font-size:11px;border-radius:6px}
+
+/* ── Priority cards ── */
+.priority-col{background:var(--ivory);border-radius:10px;padding:12px}
+.priority-title{font-size:11px;font-weight:500;color:var(--ink);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.priority-item{font-size:12px;color:var(--gray);padding:5px 8px;background:#fff;border-radius:6px;margin-bottom:5px;border:1px solid var(--border)}
+.priority-item.positive{border-left:3px solid var(--green)}
+.priority-item.negative{border-left:3px solid var(--red)}
+
+/* ── Seating ── */
+.table-card{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center;margin-bottom:8px}
+.table-name{font-size:11px;font-weight:500;color:var(--rosa);margin-bottom:6px}
+.table-guest{font-size:11px;color:var(--gray);padding:3px 0;border-bottom:1px solid #F3F4F6}
+.table-guest:last-child{border-bottom:none}
+
+/* ── Views ── */
+.view{display:none}.view.active{display:block}
+
+/* ── Honeymoon ── */
+.hn-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start}
+.hn-day{width:40px;height:40px;border-radius:9px;background:var(--rp);color:var(--rosa);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0}
+
+/* ── Budget summary bar ── */
+.budget-summary{background:var(--rp);border:1.5px solid var(--rl);border-radius:10px;padding:14px;display:flex;gap:20px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.bs-item{text-align:center}
+.bs-num{font-size:18px;font-weight:500;color:var(--rosa)}
+.bs-lbl{font-size:10px;color:var(--gl);margin-top:1px}
+
+/* ── Section divider ── */
+.sec-div{font-size:10px;font-weight:500;color:var(--gl);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px;margin:14px 0 8px}
+.sec-div::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── Legal checklist ── */
+.legal-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6}
+.legal-item:last-child{border-bottom:none}
+.legal-check{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.legal-item.done .legal-check{background:var(--green);border-color:var(--green)}
+.legal-item.done .legal-text{text-decoration:line-through;color:var(--gl)}
+.legal-text{flex:1;font-size:12px;color:var(--ink)}
+.legal-type{font-size:10px;color:var(--gl);margin-top:2px}
+
+/* Gift tracker */
+.gift-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6;font-size:12px}
+.gift-row:last-child{border-bottom:none}
+.gift-guest{flex:1;font-weight:500;color:var(--ink)}
+.gift-item{flex:2;color:var(--gray)}
+.gift-status{flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-top">
+    <div class="sb-brand">
+      <div class="sb-lm"><svg width="14" height="14" viewBox="0 0 32 32" fill="none"><path d="M7 25V7l18 18V7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="sb-name">Belori</span>
+    </div>
+    <div class="sb-event">Sam & Michael Rodriguez</div>
+    <div class="sb-date">Wedding · March 12, 2026</div>
+  </div>
+
+  <div class="countdown" style="margin:12px 14px">
+    <div class="cd-num" id="countdown-days">—</div>
+    <div class="cd-lbl">days until the wedding</div>
+    <div style="margin-top:8px">
+      <div class="pb-label"><span>Planning progress</span><span style="color:var(--rosa)">38%</span></div>
+      <div class="pb-track"><div class="pb-fill" style="width:38%"></div></div>
+    </div>
+  </div>
+
+  <div class="nav-section">Planning</div>
+  <div class="nav-item active" onclick="goView('overview',this)">
+    <svg class="ni-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+    Overview
+  </div>
+  <div class="nav-item" onclick="goView('checklist',this)">
+    <svg class="ni-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 4h8M6 8h8M6 12h5"/><path d="M2 4l1 1 2-2M2 8l1 1 2-2M2 12l1 1 2-2" stroke-linecap="round"/></svg>
+    Planning checklist
+    <span class="nav-badge nb-a">32 left</span>
+  </div>
+  <div class="nav-item" onclick="goView('budget',this)">
+    <svg class="ni-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 7h14M8 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>
+    Budget
+  </div>
+  <div class="nav-item" onclick="goView('guests',this)">
+    <svg class="ni-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="6" cy="5" r="2.5"/><circle cx="12" cy="5" r="2.5"/><path d="M1 14c0-2.761 2.239-4 5-4M8 14c0-2.761 2.239-4 5-4" stroke-linecap="round"/></svg>
+    Guest list
+    <span class="nav-badge nb-g">10 yes</span>
+  </div>
+  <div class="nav-item" onclick="goView('vendors',this)">
+    <svg class="ni-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 14V6l6-4 6 4v8"/><path d="M6 14V10h4v4"/></svg>
+    Vendors
+    <span class="nav-badge nb-r">2 pending</span>
+  </div>
+
+  <div class="nav-section">Day of</div>
+  <div class="nav-item" onclick="goView('dayof',this)">
+    <svg class="ni-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="2" width="14" height="12" rx="1.5"/><path d="M5 1v2M11 1v2M1 6h14" stroke-linecap="round"/></svg>
+    Day-of overview
+  </div>
+  <div class="nav-item" onclick="goView('runofshow',this)">
+    <svg class="ni-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 2v12M4 5l4-3 4 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Run of show
+  </div>
+  <div class="nav-item" onclick="goView('seating',this)">
+    <svg class="ni-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="4" cy="4" r="2"/><circle cx="12" cy="4" r="2"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="8" cy="8" r="2"/></svg>
+    Seating chart
+  </div>
+
+  <div class="nav-section">Details</div>
+  <div class="nav-item" onclick="goView('music',this)">
+    <svg class="ni-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 12V4l8-2v8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="10" r="2"/></svg>
+    Music planning
+  </div>
+  <div class="nav-item" onclick="goView('alcohol',this)">
+    <svg class="ni-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 1l1 7h4l1-7H5ZM6 8v6M10 8v6M4 14h8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Alcohol calculator
+  </div>
+  <div class="nav-item" onclick="goView('legal',this)">
+    <svg class="ni-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h3" stroke-linecap="round"/></svg>
+    Legal checklist
+  </div>
+  <div class="nav-item" onclick="goView('gifts',this)">
+    <svg class="ni-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="6" width="14" height="9" rx="1"/><path d="M1 9h14M8 6V15M8 6s-1.5-5 3-5c0 0-1 4-3 5ZM8 6s1.5-5-3-5c0 0 1 4 3 5Z" stroke-linecap="round"/></svg>
+    Gift tracker
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- OVERVIEW -->
+<div class="view active" id="v-overview">
+  <div class="page-header">
+    <div><div class="page-title">Sam & Michael's Wedding</div><div class="page-sub">March 12, 2026 · Planning dashboard</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-g btn-sm">Export PDF</button>
+      <button class="btn btn-p btn-sm">+ Add task</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="g4" style="margin-bottom:14px">
+    <div class="stat"><div class="stat-num rosa">147</div><div class="stat-lbl">Days to go</div></div>
+    <div class="stat"><div class="stat-num">$18,000</div><div class="stat-sub" style="color:var(--green);font-size:11px">spent of $35,000</div><div class="stat-lbl">Budget used</div></div>
+    <div class="stat"><div class="stat-num green">10</div><div class="stat-sub">5 waiting · 0 no</div><div class="stat-lbl">RSVPs confirmed</div></div>
+    <div class="stat"><div class="stat-num amber">2</div><div class="stat-sub">of 11 booked</div><div class="stat-lbl">Vendors pending</div></div>
+  </div>
+
+  <div class="g2">
+    <!-- Left col -->
+    <div>
+      <!-- Priorities -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">💍 Wedding priorities</div><button class="btn btn-g btn-xs">Edit</button></div>
+        <div class="card-body">
+          <div class="g2">
+            <div class="priority-col">
+              <div class="priority-title">✓ What matters to Sam</div>
+              <div class="priority-item positive">Personal, intimate moments</div>
+              <div class="priority-item positive">Ease of transportation</div>
+              <div class="priority-item positive">Great photography</div>
+            </div>
+            <div class="priority-col">
+              <div class="priority-title">✓ What matters to Michael</div>
+              <div class="priority-item positive">Staying under budget</div>
+              <div class="priority-item positive">Dancing all night</div>
+              <div class="priority-item positive">Delicious food</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;padding:9px 12px;background:var(--abg);border-radius:8px;font-size:11px;color:#78350F">
+            <strong>Nuclear option:</strong> "If it all gets too much — late night snack bar + backyard ceremony. We're in."
+          </div>
+          <div style="margin-top:8px;padding:9px 12px;background:var(--rp);border-radius:8px;font-size:12px;color:var(--rosa);font-style:italic;text-align:center">
+            "This will be a great day, but we will have better days"
+          </div>
+        </div>
+      </div>
+
+      <!-- Planning progress -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">📋 Next tasks to complete</div><button class="btn btn-g btn-xs" onclick="goView('checklist',document.querySelectorAll('.nav-item')[2])">View all</button></div>
+        <div class="card-body" style="padding:8px 16px">
+          <div class="check-item" onclick="this.classList.toggle('done')">
+            <div class="check-box"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <div><div class="check-text">Buy wedding dress</div><div class="check-meta">9 months out</div></div>
+          </div>
+          <div class="check-item" onclick="this.classList.toggle('done')">
+            <div class="check-box"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <div><div class="check-text">Schedule hair & makeup trials</div><div class="check-meta">9 months out</div></div>
+          </div>
+          <div class="check-item done" onclick="this.classList.toggle('done')">
+            <div class="check-box"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <div><div class="check-text">Establish a budget</div><div class="check-meta">12 months out</div></div>
+          </div>
+          <div class="check-item done" onclick="this.classList.toggle('done')">
+            <div class="check-box"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <div><div class="check-text">Choose venue</div><div class="check-meta">12 months out</div></div>
+          </div>
+          <div class="check-item" onclick="this.classList.toggle('done')">
+            <div class="check-box"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <div><div class="check-text">Send save the dates</div><div class="check-meta">9 months out</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right col -->
+    <div>
+      <!-- Budget snapshot -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">💰 Budget snapshot</div><button class="btn btn-g btn-xs" onclick="goView('budget',document.querySelectorAll('.nav-item')[3])">View detail</button></div>
+        <div class="card-body" style="padding:10px 16px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:12px;color:var(--gl)">Total budget</span>
+            <span style="font-size:12px;font-weight:500">$35,000</span>
+          </div>
+          <div class="pb-track" style="height:8px;margin-bottom:6px"><div class="pb-fill" style="width:51%"></div></div>
+          <div style="font-size:10px;color:var(--gl);display:flex;justify-content:space-between;margin-bottom:10px"><span>$18,000 committed</span><span>$17,000 remaining</span></div>
+          ${[
+            ['Venue & Ceremony','#C9697A',75,'$5,250'],
+            ['Food / Service','#1D4ED8',60,'$6,300'],
+            ['Photography','#7C3AED',45,'$3,500'],
+            ['Music / Entertainment','#15803D',30,'$2,800'],
+            ['Florals / Decor','#B45309',20,'$2,800'],
+            ['Paper & Signage','#9CA3AF',10,'$1,050'],
+          ].map(([name,color,pct,amount])=>`
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>
+            <span style="font-size:11px;color:var(--gray);flex:1">${name}</span>
+            <div class="budget-prog" style="width:80px"><div class="budget-prog-fill" style="width:${pct}%;background:${color}"></div></div>
+            <span style="font-size:11px;font-weight:500;color:var(--ink);min-width:42px;text-align:right">${amount}</span>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Vendor status -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">🤝 Vendor status</div><button class="btn btn-g btn-xs" onclick="goView('vendors',document.querySelectorAll('.nav-item')[5])">View all</button></div>
+        <div class="card-body" style="padding:8px 16px">
+          ${[
+            ['St. Anthony\'s Chapel','Venue','✓','booked'],
+            ['Maria\'s Catering','Caterer','✓','booked'],
+            ['Ana Flores Photography','Photographer','🔄','inquiry'],
+            ['DJ Marcos','Entertainment','🔄','inquiry'],
+            ['Bella\'s Florist','Florist','○','sourcing'],
+          ].map(([name,type,icon,status])=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F3F4F6;font-size:12px">
+            <span style="font-size:14px">${icon}</span>
+            <div style="flex:1"><div style="font-weight:500;color:var(--ink)">${name}</div><div style="font-size:10px;color:var(--gl)">${type}</div></div>
+            <span class="stage-badge ${status==='booked'?'s-booked':status==='inquiry'?'s-inquiry':'s-sourcing'}">${status==='booked'?'Booked':status==='inquiry'?'In talks':'Sourcing'}</span>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKLIST -->
+<div class="view" id="v-checklist">
+  <div class="page-header">
+    <div><div class="page-title">Planning checklist</div><div class="page-sub">12-month roadmap to your wedding day</div></div>
+    <div style="display:flex;gap:6px">
+      <span class="bdg b-g">18 done</span>
+      <span class="bdg b-a">32 remaining</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+  ${[
+    ['12 Months Out',[
+      ['Choose Wedding Motto','done'],['Engagement party planning','done'],['Establish a budget','done'],
+      ['First pass at guest list','done'],['Choose a date','done'],['Choose a venue','done'],
+      ['Choose a caterer',''],['Hotel room block',''],['Insure the engagement ring',''],
+    ]],
+    ['11–10 Months Out',[
+      ['Book DJ','done'],['Book Photographer',''],['Book Band',''],
+      ['Book Videographer',''],['Book Florist','done'],['Interview coordinators','done'],
+      ['Begin collecting addresses',''],['Dress shopping',''],['Take engagement photos',''],
+    ]],
+    ['9–8 Months Out',[
+      ['Buy wedding dress',''],['Schedule alterations',''],['Send save the dates',''],
+      ['Book / ask about officiant',''],['Schedule hair & makeup trials',''],
+      ['Create registry',''],['Begin selecting wedding party outfits',''],
+      ['Book rehearsal dinner space',''],['Hire ceremony musicians',''],
+    ]],
+    ['6–5 Months Out',[
+      ['Schedule time together',''],['Finalize decor plan',''],['Finalize lighting plan',''],
+      ['Begin premarital counseling',''],['Make DIY plan',''],['Dance lessons',''],
+      ['Book transportation for guests',''],['Book honeymoon',''],
+    ]],
+    ['3–2 Months Out',[
+      ['Plan food options',''],['Begin drafting vows',''],['Select readings',''],
+      ['Send out invites',''],['Create rain / crisis plan',''],['RSVP deadline (6 weeks)',''],
+      ['Marriage license',''],['Wedding party gifts',''],['Bridal shower',''],
+    ]],
+    ['Month of & Week of',[
+      ['Pay vendors in full',''],['Create seating chart',''],['Final venue walkthrough',''],
+      ['Chase down RSVPs',''],['Get final numbers to vendors',''],['Ring cleaning',''],
+      ['Nail appointment',''],['Pack for honeymoon',''],['Practice vows',''],
+    ]],
+  ].map(([phase, tasks])=>`
+  <div class="card">
+    <div class="card-head" style="background:var(--ivory)">
+      <div class="card-title">${phase}</div>
+      <span class="bdg b-g" style="font-size:9px">${tasks.filter(t=>t[1]==='done').length}/${tasks.length}</span>
+    </div>
+    <div class="card-body" style="padding:8px 16px">
+      ${tasks.map(([task,done])=>`
+      <div class="check-item${done?' done':''}" onclick="this.classList.toggle('done')">
+        <div class="check-box"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <div class="check-text">${task}</div>
+      </div>`).join('')}
+    </div>
+  </div>`).join('')}
+  </div>
+</div>
+
+<!-- BUDGET -->
+<div class="view" id="v-budget">
+  <div class="page-header">
+    <div><div class="page-title">Budget</div><div class="page-sub">Track every dollar from estimate to actuals</div></div>
+    <button class="btn btn-p btn-sm">+ Add line item</button>
+  </div>
+  <div class="budget-summary">
+    <div class="bs-item"><div class="bs-num">$35,000</div><div class="bs-lbl">Total budget</div></div>
+    <div style="width:1px;height:36px;background:var(--rl)"></div>
+    <div class="bs-item"><div class="bs-num" style="color:var(--green)">$18,000</div><div class="bs-lbl">Committed / spent</div></div>
+    <div style="width:1px;height:36px;background:var(--rl)"></div>
+    <div class="bs-item"><div class="bs-num">$17,000</div><div class="bs-lbl">Remaining</div></div>
+    <div style="width:1px;height:36px;background:var(--rl)"></div>
+    <div class="bs-item"><div class="bs-num" style="color:var(--amber)">51%</div><div class="bs-lbl">Budget used</div></div>
+    <div style="flex:1"></div>
+    <div style="font-size:11px;color:var(--rosa)">$120/guest (est. 150 guests)</div>
+  </div>
+
+  <div class="card">
+    <table class="budget-table">
+      <thead><tr><th>Category / Item</th><th>Budgeted</th><th>Vendor Est.</th><th>Actualized</th><th>Remaining</th><th>Vendor</th><th>Stage</th></tr></thead>
+      <tbody>
+      ${[
+        {cat:'Paper & Signage', budget:1050, items:[
+          ['Invitations',300,280,280],['Save the Dates',200,195,195],['Escort Cards',150,0,150],
+          ['Thank You Cards',200,0,200],['Postage',100,0,100],['Signage',100,0,100],
+        ]},
+        {cat:'Venue & Ceremony', budget:5250, items:[
+          ['Venue fee',4500,4500,4500,'St. Anthony\'s','Signed ✓'],
+          ['Ceremony fees',500,500,500],['Additional fees',250,0,250],
+        ]},
+        {cat:'Food / Service', budget:6300, items:[
+          ['Caterer',5000,4800,0,'Maria\'s Catering','Deposit'],
+          ['Dessert table / cake',800,750,0],['Misc',500,0,500],
+        ]},
+        {cat:'Beverage', budget:3500, items:[
+          ['Bar service',3000,2800,0],['Toast champagne',500,0,500],
+        ]},
+        {cat:'Photography', budget:3500, items:[
+          ['Photographer',2800,2500,0,'Ana Flores','In talks'],
+          ['Videographer',500,0,500],['Photo album',200,0,200],
+        ]},
+        {cat:'Music / Entertainment', budget:2800, items:[
+          ['DJ',2500,2200,0,'DJ Marcos','In talks'],
+          ['DJ equipment',300,0,300],
+        ]},
+        {cat:'Florals / Decor', budget:2800, items:[
+          ['Bridal bouquet',400,0,400],['Ceremony florals',800,0,800],
+          ['Reception centerpieces',1200,0,1200],['Additional decor',400,0,400],
+        ]},
+      ].map(cat=>`
+        <tr class="cat-row"><td colspan="7">${cat.cat} — budgeted $${cat.budget.toLocaleString()}</td></tr>
+        ${cat.items.map(([item,bud,est,act,vendor='',stage=''])=>{
+          const rem = bud - act
+          const pct = bud>0?Math.round(act/bud*100):0
+          return `<tr>
+            <td style="padding-left:24px">${item}</td>
+            <td>$${bud.toLocaleString()}</td>
+            <td>${est>0?'$'+est.toLocaleString():'—'}</td>
+            <td style="color:${act>0?'var(--green)':'var(--gl)'}">${act>0?'$'+act.toLocaleString():'—'}</td>
+            <td style="color:${rem<0?'var(--red)':rem===bud?'var(--gl)':'var(--amber)'}">$${rem.toLocaleString()}</td>
+            <td style="color:var(--gl);font-size:11px">${vendor}</td>
+            <td>${stage?`<span class="bdg b-g" style="font-size:9px">${stage}</span>`:''}</td>
+          </tr>`
+        }).join('')}
+      `).join('')}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- GUESTS -->
+<div class="view" id="v-guests">
+  <div class="page-header">
+    <div><div class="page-title">Guest list</div><div class="page-sub">15 invited · 10 confirmed · 5 waiting</div></div>
+    <button class="btn btn-p btn-sm">+ Add guest</button>
+  </div>
+  <div class="g4" style="margin-bottom:14px">
+    <div class="stat"><div class="stat-num">15</div><div class="stat-lbl">Total invited</div></div>
+    <div class="stat"><div class="stat-num green">10</div><div class="stat-lbl">RSVP yes</div></div>
+    <div class="stat"><div class="stat-num amber">5</div><div class="stat-lbl">Waiting</div></div>
+    <div class="stat"><div class="stat-num red">0</div><div class="stat-lbl">RSVP no</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><div class="card-title">All guests</div>
+        <div style="display:flex;gap:6px">
+          <select class="inp inp-sm" style="width:120px"><option>All categories</option><option>Couple Friends</option><option>Sam's Family</option><option>Michael's Family</option></select>
+        </div>
+      </div>
+      <div class="card-body" style="padding:8px 16px">
+        ${[
+          ['Betty & The Jetts','Couple Friends','#DBEAFE','#1D4ED8','BJ','Yes',10,'Nice'],
+          ['Suzie & Josh','Couple Friends','#EDE9FE','#7C3AED','SJ','Waiting',5,'Must'],
+          ['Grandma Rose','Sam\'s Family','#FDF5F6','#C9697A','GR','Yes',1,'Must'],
+          ['Uncle Carlos','Michael\'s Family','#DCFCE7','#15803D','UC','Yes',2,'Must'],
+          ['The Smiths','Couple Friends','#FEF3C7','#B45309','TS','Yes',4,'Nice'],
+          ['Diana Torres','Sam\'s Friends','#EDE9FE','#7C3AED','DT','Waiting',2,'Nice'],
+        ].map(([name,cat,bg,ic,init,rsvp,qty,tier])=>`
+        <div class="guest-row">
+          <div class="guest-av" style="background:${bg};color:${ic}">${init}</div>
+          <div><div class="guest-name">${name}<span class="tier-badge ${tier==='Must'?'t-must':'t-nice'}">${tier}</span></div><div class="guest-cat">${cat} · ${qty} guest${qty>1?'s':''}</div></div>
+          <span class="rsvp-badge ${rsvp==='Yes'?'rsvp-yes':rsvp==='No'?'rsvp-no':'rsvp-wait'}">${rsvp}</span>
+          <button class="btn btn-g btn-xs">Edit</button>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-head"><div class="card-title">Budget calculator</div></div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid #F3F4F6"><span style="color:var(--gl)">Total wedding budget</span><span style="font-weight:500">$35,000</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid #F3F4F6"><span style="color:var(--gl)">Venue % of budget</span><span style="font-weight:500">45%</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid #F3F4F6"><span style="color:var(--gl)">Available for F&B</span><span style="font-weight:500">$15,750</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid #F3F4F6"><span style="color:var(--gl)">Guest count</span><span style="font-weight:500">120 guests</span></div>
+            <div style="background:var(--rp);border:1px solid var(--rl);border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:20px;font-weight:500;color:var(--rosa)">$131/head</div>
+              <div style="font-size:11px;color:var(--gl);margin-top:2px">Maximum cost per plate</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Catering preferences</div></div>
+        <div class="card-body" style="padding:8px 16px">
+          ${[
+            ['Betty & The Jetts','Chicken','None'],
+            ['Suzie & Josh','Fish','Vegetarian'],
+            ['Grandma Rose','Chicken','Low Sodium'],
+            ['Uncle Carlos','Steak','None'],
+            ['The Smiths','Chicken','Gluten Free'],
+          ].map(([name,meal,diet])=>`
+          <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F3F4F6;font-size:12px">
+            <span style="flex:1;font-weight:500;color:var(--ink)">${name}</span>
+            <span class="bdg b-b" style="font-size:9px">${meal}</span>
+            ${diet!=='None'?`<span class="bdg b-a" style="font-size:9px">${diet}</span>`:''}
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VENDORS -->
+<div class="view" id="v-vendors">
+  <div class="page-header">
+    <div><div class="page-title">Vendors</div><div class="page-sub">Track sourcing, contracts, and payments</div></div>
+    <button class="btn btn-p btn-sm">+ Add vendor</button>
+  </div>
+  <div class="tab-strip">
+    <div class="tab on" onclick="swTab(this,'vt-all')">All vendors</div>
+    <div class="tab" onclick="swTab(this,'vt-contracts')">Contracts & payments</div>
+    <div class="tab" onclick="swTab(this,'vt-questions')">Questions log</div>
+    <div class="tab" onclick="swTab(this,'vt-venue')">Venue comparison</div>
+  </div>
+
+  <div id="vt-all">
+  ${[
+    {name:"St. Anthony's Chapel",type:'Venue',icon:'⛪',contact:'Father Juan',phone:'(956) 555-0100',total:4500,deposit:1500,due:'21 days prior',stage:'booked',notes:'Ceremony 4pm'},
+    {name:"Maria's Catering",type:'Caterer',icon:'🍽️',contact:'Maria Reyes',phone:'(956) 555-0200',total:5000,deposit:1000,due:'90 days prior',stage:'booked',notes:'150 guest count confirmed'},
+    {name:'Ana Flores Photography',type:'Photographer',icon:'📷',contact:'Ana Flores',phone:'(956) 555-0300',total:2800,deposit:500,due:'on booking',stage:'inquiry',notes:'Portfolio review scheduled'},
+    {name:'DJ Marcos',type:'Entertainment',icon:'🎧',contact:'Marcos Ruiz',phone:'(956) 555-0400',total:2200,deposit:400,due:'on booking',stage:'inquiry',notes:'Call scheduled Mar 30'},
+    {name:"Bella's Florist",type:'Florist',icon:'💐',contact:'',phone:'',total:0,deposit:0,due:'',stage:'sourcing',notes:'Sourcing quotes'},
+    {name:'Happy Rides Transport',type:'Transportation',icon:'🚗',contact:'',phone:'',total:0,deposit:0,due:'',stage:'sourcing',notes:''},
+  ].map(v=>`
+  <div class="vendor-card">
+    <div class="vendor-icon" style="background:${v.stage==='booked'?'var(--gbg)':v.stage==='inquiry'?'var(--abg)':'#F3F4F6'}">${v.icon}</div>
+    <div class="vendor-details">
+      <div class="vendor-name">${v.name}</div>
+      <div class="vendor-type">${v.type}${v.contact?' · '+v.contact:''}</div>
+      ${v.phone?`<div style="font-size:11px;color:var(--gl);margin-top:3px">${v.phone}</div>`:''}
+      ${v.notes?`<div style="font-size:11px;color:var(--gray);margin-top:4px;background:var(--ivory);padding:4px 8px;border-radius:5px">${v.notes}</div>`:''}
+    </div>
+    <div class="vendor-status">
+      <span class="stage-badge ${v.stage==='booked'?'s-booked':v.stage==='inquiry'?'s-inquiry':'s-sourcing'}">${v.stage==='booked'?'Booked ✓':v.stage==='inquiry'?'In talks':'Sourcing'}</span>
+      ${v.total>0?`<div style="margin-top:6px;font-size:11px;color:var(--ink);font-weight:500;text-align:right">$${v.total.toLocaleString()}</div>`:''}
+      ${v.deposit>0?`<div style="font-size:10px;color:var(--gl)">Deposit: $${v.deposit}</div>`:''}
+      <div style="display:flex;gap:5px;margin-top:8px;justify-content:flex-end">
+        <button class="btn btn-g btn-xs">Edit</button>
+        ${v.stage==='sourcing'?'<button class="btn btn-p btn-xs">+ Contact</button>':''}
+      </div>
+    </div>
+  </div>`).join('')}
+  </div>
+
+  <div id="vt-contracts" style="display:none">
+    <div class="card">
+      <table class="budget-table">
+        <thead><tr><th>Vendor</th><th>Company</th><th>Total Due</th><th>Deposit</th><th>Next Payment</th><th>Due Date</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Venue</td><td>St. Anthony's Chapel</td><td>$4,500</td><td style="color:var(--green)">$1,500 ✓</td><td>$1,500</td><td>6 months prior</td><td style="font-size:11px">Security deposit returned 45 days post</td></tr>
+          <tr><td>Caterer</td><td>Maria's Catering</td><td>$5,000</td><td style="color:var(--green)">$1,000 ✓</td><td>$4,000</td><td>30 days prior</td><td></td></tr>
+          <tr><td>Photographer</td><td>Ana Flores Photography</td><td>$2,800</td><td style="color:var(--amber)">$500 pending</td><td>$500</td><td>On booking</td><td style="font-size:11px">Contract not yet signed</td></tr>
+          <tr><td>Entertainment</td><td>DJ Marcos</td><td>$2,200</td><td style="color:var(--amber)">$400 pending</td><td>$400</td><td>On booking</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="vt-questions" style="display:none">
+    <div class="card">
+      <div class="card-head"><div class="card-title">Vendor Q&A log</div><button class="btn btn-p btn-xs">+ Add question</button></div>
+      <table class="budget-table">
+        <thead><tr><th>Vendor</th><th>Question</th><th>Answer</th><th>Date</th></tr></thead>
+        <tbody>
+          <tr><td>Venue</td><td>What's included in the rental fee?</td><td style="color:var(--green)">Tables, chairs, setup/breakdown, bridal suite</td><td>Feb 15</td></tr>
+          <tr><td>Caterer</td><td>Can you accommodate vegan guests?</td><td style="color:var(--green)">Yes, need 2 weeks notice</td><td>Feb 20</td></tr>
+          <tr><td>Photographer</td><td>Do you offer engagement sessions?</td><td style="color:var(--gl);font-style:italic">Awaiting response</td><td>Mar 1</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="vt-venue" style="display:none">
+    <div class="card">
+      <table class="budget-table">
+        <thead><tr><th>Venue</th><th>Type</th><th>Capacity</th><th>Cost/person</th><th>F&B Min</th><th>Lodging</th><th>Rating</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--green)">St. Anthony's Chapel ✓</td><td>Chapel + Hall</td><td>250 max</td><td>$30/person</td><td>—</td><td>Off site</td><td>⭐⭐⭐⭐⭐</td><td><span class="bdg b-g">Booked</span></td></tr>
+          <tr><td>The Crane Estate</td><td>Estate</td><td>250 max</td><td>$15,000 fee</td><td>$25,000</td><td>Off site</td><td>⭐⭐⭐⭐</td><td><span class="bdg b-r">Cut</span></td></tr>
+          <tr><td>Garden Venue Ipswich</td><td>Garden</td><td>150 max</td><td>$12,000 fee</td><td>—</td><td>On site</td><td>⭐⭐⭐</td><td><span class="bdg b-r">Cut - capacity</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- DAY OF -->
+<div class="view" id="v-dayof">
+  <div class="page-header"><div><div class="page-title">Day-of overview</div><div class="page-sub">March 12, 2026 — at a glance</div></div></div>
+  <div class="g2">
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-head"><div class="card-title">📍 Key info</div></div>
+        <div class="card-body">
+          ${[
+            ['Wedding date','March 12, 2026'],
+            ['Venue address','1234 Chapel Way, McAllen TX 78501'],
+            ['Hotel','DoubleTree McAllen — (956) 555-0500'],
+            ['Sunrise','6:23 AM'],['Sunset','5:56 PM'],
+            ['Guest count','120 confirmed'],
+            ['Ceremony','4:00 PM'],['Cocktail hour','6:00 PM'],['Reception','7:00 PM'],
+          ].map(([k,v])=>`
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid #F3F4F6">
+            <span style="color:var(--gl)">${k}</span><span style="font-weight:500;text-align:right">${v}</span>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">👑 Party people</div></div>
+        <div class="card-body" style="padding:8px 16px">
+          ${[
+            ['Bride','Sam Rodriguez','(956) 555-0001'],
+            ['Groom','Michael Rodriguez','(956) 555-0002'],
+            ['Maid of Honor','Jessica Torres','(956) 555-0003'],
+            ['Best Man','Carlos Ruiz','(956) 555-0004'],
+            ['Officiant','Father Juan','(956) 555-0100'],
+            ['Planner / Coordinator','Maria G.','(956) 555-0200'],
+            ['Photographer','Ana Flores','(956) 555-0300'],
+            ['DJ','DJ Marcos','(956) 555-0400'],
+          ].map(([role,name,phone])=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F3F4F6;font-size:12px">
+            <div style="flex:1"><div style="font-weight:500;color:var(--ink)">${name}</div><div style="font-size:10px;color:var(--gl)">${role}</div></div>
+            <div style="font-size:11px;color:var(--gray)">${phone}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-head"><div class="card-title">📅 Weekend schedule</div></div>
+        <div class="card-body" style="padding:8px 16px">
+          ${[
+            ['Friday','Hotel check-in · 3:00 PM','DoubleTree McAllen'],
+            ['Friday','Rehearsal','St. Anthony\'s Chapel'],
+            ['Friday','Rehearsal dinner','La Casa Restaurant'],
+            ['Saturday','Wedding party hotel arrival · 8:00 AM','DoubleTree'],
+            ['Saturday','Getting ready · 8:00 AM','Bridal suite'],
+            ['Saturday','Ceremony · 4:00 PM','St. Anthony\'s Chapel'],
+            ['Saturday','Cocktail hour · 6:00 PM','Venue patio'],
+            ['Saturday','Reception · 7:00 PM','Venue hall'],
+            ['Saturday','After party · 11:00 PM','Hotel bar'],
+            ['Sunday','Farewell brunch · 10:00 AM','Hotel restaurant'],
+          ].map(([day,event,venue])=>`
+          <div style="display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid #F3F4F6;font-size:12px">
+            <span style="font-size:10px;font-weight:500;color:var(--rosa);min-width:50px;text-transform:uppercase;padding-top:1px">${day}</span>
+            <div><div style="font-weight:500;color:var(--ink)">${event}</div><div style="font-size:10px;color:var(--gl)">${venue}</div></div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RUN OF SHOW -->
+<div class="view" id="v-runofshow">
+  <div class="page-header">
+    <div><div class="page-title">Run of show</div><div class="page-sub">March 12, 2026 — minute-by-minute timeline</div></div>
+    <button class="btn btn-g btn-sm">Export PDF</button>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><div class="card-title">Morning schedule</div></div>
+      <div class="card-body" style="padding:8px 16px">
+        ${[
+          ['8:00 AM','Sam & bridal party getting ready','Bridal suite · Hair & makeup team on site'],
+          ['8:00 AM','Michael & groomsmen getting ready','Hotel room · Suits on'],
+          ['9:30 AM','Photographer arrives','Getting ready shots both sides'],
+          ['10:30 AM','Hair & makeup finishes','Bridal party dressed'],
+          ['11:00 AM','Groomsmen photos','Venue lawn · Coordinator with groom'],
+          ['12:00 PM','Bridal party photos','Chapel garden'],
+          ['1:00 PM','Sam & Michael lunch','Bridal suite — together or separate'],
+          ['2:30 PM','Guests begin arriving','Coordinator at entrance'],
+          ['3:30 PM','Wedding party final prep','Behind ceremony space'],
+          ['3:50 PM','Guests seated','Ushers in position'],
+          ['4:00 PM','Ceremony begins','Processional'],
+        ].map(([time,action,notes])=>`
+        <div class="ros-row">
+          <div class="ros-time">${time}</div>
+          <div style="flex:1"><div class="ros-action">${action}</div><div class="ros-details">${notes}</div></div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">Reception timeline</div></div>
+      <div class="card-body" style="padding:8px 16px">
+        ${[
+          ['4:00 PM','Ceremony','Officiant leads · 25-30 min'],
+          ['4:30 PM','Ceremony ends','Recessional · Rice toss'],
+          ['4:45 PM','Cocktail hour begins','Guests move to patio'],
+          ['5:00 PM','Bride & Groom portraits','With photographer · 45 min'],
+          ['6:00 PM','Guests seated for reception','Escort cards at entrance'],
+          ['6:15 PM','Grand entrance','DJ announces wedding party'],
+          ['6:20 PM','First dance','Sam & Michael'],
+          ['6:30 PM','Dinner service','Caterer begins'],
+          ['7:00 PM','Toasts','MOH, Best Man, Parents'],
+          ['7:30 PM','Cake cutting'],
+          ['7:45 PM','Dancing opens for all'],
+          ['10:00 PM','Last call'],
+          ['10:30 PM','Final song','Guests exit'],
+          ['11:00 PM','After party','Hotel bar for those still going'],
+        ].map(([time,action,notes=''])=>`
+        <div class="ros-row">
+          <div class="ros-time">${time}</div>
+          <div style="flex:1"><div class="ros-action">${action}</div>${notes?`<div class="ros-details">${notes}</div>`:''}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SEATING -->
+<div class="view" id="v-seating">
+  <div class="page-header">
+    <div><div class="page-title">Seating arrangement</div><div class="page-sub">10 tables · 120 guests</div></div>
+    <button class="btn btn-p btn-sm">+ Add guest to table</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+    ${[
+      ['Sweetheart Table',['Sam Rodriguez (Bride)','Michael Rodriguez (Groom)']],
+      ['King\'s Table 1',['Jessica Torres (MOH)','Carlos Ruiz (Best Man)','Mother of Bride','Father of Bride','Mother of Groom','Father of Groom']],
+      ['Table 1 — Couple Friends',['Betty & The Jetts (x10)','The Smiths (x4)']],
+      ['Table 2 — Sam\'s Family',['Grandma Rose','Uncle Tony & Aunt Maria','Cousins (x4)']],
+      ['Table 3 — Michael\'s Family',['Uncle Carlos (x2)','Aunt Linda family (x5)']],
+      ['Table 4 — Friends',['Suzie & Josh (x5)','Diana Torres (x2)','Ana Caballero (x3)']],
+      ['Table 5 — Work Friends',['Sam\'s colleagues (x6)']],
+      ['Table 6 — Michael\'s Friends',['College friends (x8)']],
+    ].map(([name,guests])=>`
+    <div class="table-card">
+      <div class="table-name">${name}</div>
+      ${guests.map(g=>`<div class="table-guest">${g}</div>`).join('')}
+      <button class="btn btn-g btn-xs" style="margin-top:8px;width:100%">+ Add guest</button>
+    </div>`).join('')}
+  </div>
+</div>
+
+<!-- MUSIC -->
+<div class="view" id="v-music">
+  <div class="page-header"><div><div class="page-title">Music planning</div><div class="page-sub">Special moments, must-haves, and the do-not-play list</div></div></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><div class="card-title">🎵 Special moments</div></div>
+      <div class="card-body" style="padding:8px 16px">
+        ${[
+          ['Processional (ceremony entrance)',''],
+          ['Bridal processional',''],
+          ['Ceremony recessional',''],
+          ['Grand entrance (reception)',''],
+          ['First dance',''],
+          ['Father-daughter dance',''],
+          ['Mother-son dance',''],
+          ['Party starter','Mr. Brightside — The Killers'],
+          ['Bouquet toss',''],
+          ['Cake cutting song',''],
+          ['Last song of the night',''],
+        ].map(([label,value])=>`
+        <div class="music-item">
+          <span class="music-label">${label}</span>
+          ${value?`<span class="music-value">${value}</span>`:`<span class="music-empty">Not set yet</span>`}
+          <button class="btn btn-g btn-xs">Edit</button>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-head"><div class="card-title">🎶 Must-haves (15 songs)</div><button class="btn btn-g btn-xs">+ Add</button></div>
+        <div class="card-body" style="padding:8px 16px">
+          ${['Mr. Brightside','September — Earth, Wind & Fire','Dancing Queen — ABBA','Shake It Off — Taylor Swift','Brown Eyed Girl','Sweet Caroline']
+            .map(s=>`<div style="font-size:12px;padding:6px 0;border-bottom:1px solid #F3F4F6;color:var(--gray);display:flex;justify-content:space-between">${s}<button class="btn btn-g btn-xs">×</button></div>`).join('')}
+          <div style="font-size:11px;color:var(--gl);padding-top:8px;text-align:center">6 of 15 filled</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">🚫 Do not play</div><button class="btn btn-g btn-xs">+ Add</button></div>
+        <div class="card-body" style="padding:8px 16px">
+          ${['Cha Cha Slide','YMCA','Macarena','Cotton Eye Joe']
+            .map(s=>`<div style="font-size:12px;padding:6px 0;border-bottom:1px solid #F3F4F6;color:var(--red)">${s}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ALCOHOL CALCULATOR -->
+<div class="view" id="v-alcohol">
+  <div class="page-header"><div><div class="page-title">Alcohol calculator</div><div class="page-sub">Based on 120 guests · 6 hour reception</div></div></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><div class="card-title">⚙️ Calculator inputs</div></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${[
+            ['Total guests','120'],['Reception hours','6'],['Drinks per person','8'],
+            ['Wine %','50%'],['Beer %','30%'],['Liquor %','20%'],
+          ].map(([label,val])=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">
+            <span style="color:var(--gl)">${label}</span>
+            <input class="inp inp-sm" style="width:80px;text-align:right" value="${val}">
+          </div>`).join('')}
+          <div style="background:var(--rp);border:1px solid var(--rl);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:18px;font-weight:500;color:var(--rosa)">960 total drinks</div>
+            <div style="font-size:11px;color:var(--gl);margin-top:2px">for 120 guests over 6 hours</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">🍾 Bottles needed</div></div>
+      <div class="card-body" style="padding:8px 16px">
+        <div style="font-size:10px;font-weight:500;color:var(--gl);text-transform:uppercase;letter-spacing:.04em;padding:6px 0;display:grid;grid-template-columns:120px 50px 50px 60px 70px;gap:8px">
+          <span>Type</span><span>ABV</span><span>Size</span><span>Servings</span><span>Bottles</span>
+        </div>
+        ${[
+          ['White Wine','14%','750ml',4,60,'#DBEAFE'],
+          ['Red Wine','14%','750ml',4,60,'#EDE9FE'],
+          ['Beer (bottle)','5%','12oz/6pk',6,36,'#FEF3C7'],
+          ['Beer (can)','5%','12oz/12pk',12,18,'#FEF3C7'],
+          ['Vodka','40%','Handle 1.5L',24,8,'#DCFCE7'],
+          ['Gin','40%','Handle 1.5L',24,4,'#DCFCE7'],
+          ['Tequila','40%','750ml',12,6,'#DCFCE7'],
+          ['Whiskey','40%','750ml',12,5,'#DCFCE7'],
+          ['Toast Champagne','14%','Magnum 1.5L',8,15,'#FDF5F6'],
+        ].map(([type,abv,size,perBottle,bottles,bg])=>`
+        <div style="display:grid;grid-template-columns:120px 50px 50px 60px 70px;gap:8px;padding:7px 0;border-bottom:1px solid #F3F4F6;font-size:12px;align-items:center">
+          <span style="font-weight:500;color:var(--ink)">${type}</span>
+          <span style="color:var(--gl)">${abv}</span>
+          <span style="color:var(--gl);font-size:10px">${size}</span>
+          <span style="color:var(--gl)">${perBottle}/bottle</span>
+          <span style="font-weight:500;color:var(--rosa);background:${bg};padding:2px 8px;border-radius:5px;text-align:center">${bottles}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LEGAL -->
+<div class="view" id="v-legal">
+  <div class="page-header"><div><div class="page-title">Legal & name change</div><div class="page-sub">Everything official before and after the big day</div></div></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-head"><div class="card-title">📋 Pre-wedding legal</div></div>
+      <div class="card-body" style="padding:8px 16px">
+        ${[
+          ['Apply for marriage license','Wedding','Local courthouse / online','$50–$100','Done 30-60 days before'],
+          ['Check marriage license expiration','Wedding','—','—','Most expire in 60-90 days'],
+          ['Prenuptial agreement (if applicable)','Legal','Attorney','Varies',''],
+          ['Update beneficiary designations','Financial','Employer / Insurance','Free',''],
+          ['Review joint insurance needs','Financial','Insurance provider','Varies',''],
+          ['Insure engagement ring','Insurance','Jewelry insurer','~$300/yr',''],
+        ].map(([task,type,loc,cost,notes])=>`
+        <div class="legal-item" onclick="this.classList.toggle('done')">
+          <div class="legal-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <div style="flex:1">
+            <div class="legal-text">${task}</div>
+            <div class="legal-type">${type} · ${loc} · ${cost}${notes?' · '+notes:''}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">📋 Post-wedding name change</div></div>
+      <div class="card-body" style="padding:8px 16px">
+        ${[
+          ['Social Security card','Government','ssa.gov','Free','Do this first — others require it'],
+          ['Driver\'s license / State ID','Government','DMV','$10-30','Bring SS card + marriage cert'],
+          ['Passport','Government','travel.state.gov','$130+','6-8 week processing'],
+          ['Bank accounts','Financial','Your bank','Free',''],
+          ['Credit cards','Financial','Call each card','Free',''],
+          ['Employer / payroll','Work','HR department','Free',''],
+          ['Voter registration','Government','vote.gov','Free',''],
+          ['Insurance policies','Insurance','Agent','Free','Auto, health, life'],
+          ['Utilities','Utilities','Call each','Free',''],
+          ['Post office / USPS','Mail','USPS.com','Free',''],
+        ].map(([task,type,loc,cost,notes])=>`
+        <div class="legal-item" onclick="this.classList.toggle('done')">
+          <div class="legal-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <div style="flex:1">
+            <div class="legal-text">${task}</div>
+            <div class="legal-type">${type}${loc?' · '+loc:''}${cost?' · '+cost:''}${notes?' · '+notes:''}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GIFT TRACKER -->
+<div class="view" id="v-gifts">
+  <div class="page-header">
+    <div><div class="page-title">Gift tracker</div><div class="page-sub">Track received gifts and thank you cards</div></div>
+    <button class="btn btn-p btn-sm">+ Add gift</button>
+  </div>
+  <div class="g4" style="margin-bottom:14px">
+    <div class="stat"><div class="stat-num">14</div><div class="stat-lbl">Gifts received</div></div>
+    <div class="stat"><div class="stat-num green">$4,200</div><div class="stat-lbl">Cash / checks</div></div>
+    <div class="stat"><div class="stat-num amber">6</div><div class="stat-lbl">Thank yous sent</div></div>
+    <div class="stat"><div class="stat-num red">8</div><div class="stat-lbl">Thank yous pending</div></div>
+  </div>
+  <div class="card">
+    <table class="budget-table">
+      <thead><tr><th>Guest</th><th>Gift type</th><th>Item</th><th>Category</th><th>Received</th><th>Thank you sent</th><th>Address</th></tr></thead>
+      <tbody>
+        ${[
+          ['Grandma Rose','Check','$500 check','Cash / Check','Sep 21, 2025',true,'3708 Merrily Way'],
+          ['Betty & The Jetts','Registry','Le Creuset Dutch Oven','Kitchen - Cookware','Mar 12, 2026',false,'45 Main St'],
+          ['Suzie & Josh','Registry','KitchenAid Mixer','Kitchen - Appliance','Mar 12, 2026',true,'890 Oak Ave'],
+          ['Uncle Carlos','Cash','$300 cash','Cash / Check','Mar 12, 2026',false,''],
+          ['The Smiths','Registry','Bedding set','Bedroom - Bedding','Mar 12, 2026',false,''],
+          ['Diana Torres','Registry','Yeti Cooler','Home - Fun','Mar 14, 2026',true,''],
+        ].map(([guest,type,item,cat,received,thankYou,addr])=>`
+        <tr>
+          <td>${guest}</td>
+          <td><span class="bdg b-gray" style="font-size:9px">${type}</span></td>
+          <td style="color:var(--gray)">${item}</td>
+          <td style="font-size:11px;color:var(--gl)">${cat}</td>
+          <td style="font-size:11px">${received}</td>
+          <td style="text-align:center">${thankYou?'<span class="bdg b-g" style="font-size:9px">Sent ✓</span>':'<button class="btn btn-p btn-xs">Mark sent</button>'}</td>
+          <td style="font-size:11px;color:var(--gl)">${addr}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+// Countdown
+function updateCountdown(){
+  const wedding = new Date('2026-03-12')
+  const today = new Date()
+  const days = Math.ceil((wedding - today) / (1000 * 60 * 60 * 24))
+  document.getElementById('countdown-days').textContent = Math.max(0, days)
+}
+updateCountdown()
+
+// Navigation
+function goView(id, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
+  document.getElementById('v-' + id).classList.add('active')
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  if (el) el.classList.add('active')
+}
+
+// Sub-tabs (vendors)
+function swTab(el, targetId) {
+  el.closest('.view').querySelectorAll('.tab').forEach(t => t.classList.remove('on'))
+  el.classList.add('on')
+  const parent = el.closest('.view')
+  // hide/show vendor sub-panels
+  const panels = ['vt-all','vt-contracts','vt-questions','vt-venue']
+  panels.forEach(pid => {
+    const el2 = document.getElementById(pid)
+    if (el2) el2.style.display = pid === targetId ? 'block' : 'none'
+  })
+}
+
+// Checklist toggle with animation
+document.querySelectorAll('.check-item').forEach(item => {
+  item.addEventListener('click', function() {
+    this.classList.toggle('done')
+    const box = this.querySelector('.check-box')
+    if (box) {
+      box.style.transform = 'scale(0.85)'
+      setTimeout(() => box.style.transform = '', 150)
+    }
+  })
+})
+
+// Legal checklist
+document.querySelectorAll('.legal-item').forEach(item => {
+  item.addEventListener('click', function() {
+    this.classList.toggle('done')
+  })
+})
+</script>
+</body>
+</html>
