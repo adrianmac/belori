@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { C, fmt, pct, EVT_TYPES } from '../lib/colors';
 import { useAuth } from '../context/AuthContext';
 import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, SvcTag,
@@ -51,9 +51,9 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
   const [historyDress,setHistoryDress]=useState(null); // dress to show audit history for
   const [catalogPage,setCatalogPage]=useState(1);
   const CATALOG_PAGE_SIZE=40;
-  const [similarDresses,setSimilarDresses]=useState([]);
   const [showSimilar,setShowSimilar]=useState(false);
   const [similarForDress,setSimilarForDress]=useState(null);
+  const [lateFeeConfirm,setLateFeeConfirm]=useState(null); // {itemId, daysLate, feeAmount, item}
 
   // Auto-open new rental modal via FAB custom event
   useEffect(()=>{
@@ -149,16 +149,19 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
       .slice(0,4);
   };
 
+  // useMemo: find similar dresses whenever the selected dress changes (Task 3)
+  const similarDresses = useMemo(() => {
+    if (!detailDress || detailDress.status === 'available') return [];
+    return findSimilarDresses(detailDress, allGowns);
+  }, [detailDress, allGowns]);
+
   const handleDressSelect=(dress)=>{
     setDetailDress(dress);
     if(!['available'].includes(dress.status)){
-      const similar=findSimilarDresses(dress,allGowns);
-      setSimilarDresses(similar);
-      setShowSimilar(similar.length>0);
+      setShowSimilar(true);
       setSimilarForDress(dress.id);
     } else {
       setShowSimilar(false);
-      setSimilarDresses([]);
       setSimilarForDress(null);
     }
   };
@@ -306,6 +309,29 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     toast('Marked as available ✓');
   };
 
+  // ── Task 1: Charge late fee → insert payment_milestone
+  const handleChargeLaterFee=async(item)=>{
+    const dl=Math.max(1,Math.floor((Date.now()-new Date(item.return_date))/(86400000)));
+    const feeAmount=dl*LATE_FEE_PER_DAY;
+    setLateFeeConfirm({item,daysLate:dl,feeAmount});
+  };
+  const confirmChargeLaterFee=async()=>{
+    if(!lateFeeConfirm)return;
+    const {item,daysLate:dl,feeAmount}=lateFeeConfirm;
+    const activeEvent=events?.find(e=>e.client_id===item.client_id);
+    const {error}=await supabase.from('payment_milestones').insert({
+      boutique_id:boutique.id,
+      event_id:activeEvent?.id||null,
+      label:`Late return fee (${dl} day${dl!==1?'s':''})`,
+      amount:feeAmount,
+      due_date:new Date().toISOString().split('T')[0],
+      status:'pending',
+    });
+    if(error){toast('Failed to charge fee: '+error.message,'error');}
+    else{toast(`Late fee of ${fmt(feeAmount)} charged`);}
+    setLateFeeConfirm(null);
+  };
+
   // ── Item Audit History Modal ─────────────────────────────────────────────
   const ITEM_ACTION_STYLE={
     checked_out: {bg:C.amberBg, col:C.amber,  label:'Checked out'},
@@ -329,7 +355,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
             </div>
             <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer'}}>×</button>
           </div>
-          <div style={{flex:1,overflowY:'auto',padding:'4px 0'}}>
+          <div style={{flex:1,overflowY:'auto',padding:'4px 0',boxShadow:'inset 0 -8px 8px -8px rgba(0,0,0,0.15)'}}>
             {loading&&<div style={{textAlign:'center',padding:32,color:C.gray,fontSize:12}}>Loading…</div>}
             {!loading&&entries.length===0&&(
               <div style={{textAlign:'center',padding:40,color:C.gray}}>
@@ -555,6 +581,9 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
           {(section==='overdue'||section==='rented')&&(
             <button onClick={()=>setDamageAssessDress(d)} style={{padding:'6px 10px',borderRadius:6,border:`1px solid ${C.red}`,background:C.redBg,color:C.red,fontSize:11,fontWeight:600,cursor:'pointer'}}>⚠ Damage</button>
           )}
+          {section==='overdue'&&(
+            <button onClick={()=>handleChargeLaterFee(d)} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${C.amber}`,background:C.amberBg,color:C.amber,fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>💰 Charge late fee</button>
+          )}
           {section==='overdue'&&clientPhone&&(
             <button onClick={()=>{if(/Mobi|Android/i.test(navigator.userAgent))window.location.href=`tel:${clientPhone}`;else{navigator.clipboard.writeText(clientPhone);toast('Phone copied: '+clientPhone);}}} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,fontSize:11,cursor:'pointer'}}>📞 Call</button>
           )}
@@ -600,6 +629,9 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
         <div style={{display:'flex',gap:6,flexShrink:0,flexWrap:'wrap',justifyContent:'flex-end'}}>
           <button onClick={()=>setReturnDress(d)} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${over?'var(--color-danger)':'var(--color-success)'}`,background:'transparent',color:over?'var(--color-danger)':'var(--color-success)',fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>✅ Return clean</button>
           <button onClick={e=>{e.stopPropagation();setDamageAssessDress(d);}} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${C.red}`,background:C.redBg,color:C.red,fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>⚠ Damage</button>
+          {over&&(
+            <button onClick={()=>handleChargeLaterFee(d)} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${C.amber}`,background:C.amberBg,color:C.amber,fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>💰 Charge fee</button>
+          )}
           {over&&clientPhone&&(
             <button onClick={()=>{if(/Mobi|Android/i.test(navigator.userAgent))window.location.href=`tel:${clientPhone}`;else{navigator.clipboard.writeText(clientPhone);toast('Phone copied');}}} style={{padding:'6px 10px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,fontSize:11,cursor:'pointer'}}>📞</button>
           )}
@@ -723,7 +755,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
           </div>
           {/* Step 1 — Select dress */}
           {step===1&&(<>
-            <div style={{flex:1,overflowY:'auto',padding:'14px 24px'}}>
+            <div style={{flex:1,overflowY:'auto',padding:'14px 24px',boxShadow:'inset 0 -8px 8px -8px rgba(0,0,0,0.15)'}}>
               <div style={{display:'flex',gap:6,marginBottom:10}}>
                 <input value={s1Query} onChange={e=>setS1Query(e.target.value)} placeholder="Search name, color, size…" autoFocus style={{...inputSt,flex:1,margin:0}}/>
                 <select value={s1Cat} onChange={e=>setS1Cat(e.target.value)} style={{...inputSt,margin:0,width:'auto'}}>
@@ -757,7 +789,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
           </>)}
           {/* Step 2 — Link to event */}
           {step===2&&(<>
-            <div style={{flex:1,overflowY:'auto',padding:'14px 24px'}}>
+            <div style={{flex:1,overflowY:'auto',padding:'14px 24px',boxShadow:'inset 0 -8px 8px -8px rgba(0,0,0,0.15)'}}>
               {selDress&&<div style={{background:C.ivory,borderRadius:8,padding:'8px 12px',display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
                 <GownSilhouette color={selDress.color} size={20}/>
                 <div style={{flex:1}}><div style={{fontSize:12,fontWeight:500,color:C.ink}}>{selDress.name}</div><div style={{fontSize:10,color:C.gray}}>#{selDress.sku} · {selDress.color} · Sz {selDress.size}</div></div>
@@ -816,7 +848,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
           </>)}
           {/* Step 3 — Pricing */}
           {step===3&&(<>
-            <div style={{flex:1,overflowY:'auto',padding:'14px 24px',display:'flex',flexDirection:'column',gap:12}}>
+            <div style={{flex:1,overflowY:'auto',padding:'14px 24px',display:'flex',flexDirection:'column',gap:12,boxShadow:'inset 0 -8px 8px -8px rgba(0,0,0,0.15)'}}>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                 <div style={{background:C.ivory,borderRadius:8,padding:'10px 12px'}}>
                   <div style={{fontSize:9,fontWeight:700,color:C.gray,letterSpacing:'0.06em',marginBottom:4}}>DRESS</div>
@@ -842,7 +874,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
                 <div style={{display:'flex',justifyContent:'space-between',fontSize:12}}><span style={{color:C.gray}}>Security deposit</span><span style={{fontWeight:500}}>{fmt(Number(dep)||0)}</span></div>
                 <div style={{borderTop:`1px solid ${C.border}`,paddingTop:5,display:'flex',justifyContent:'space-between',fontSize:13,fontWeight:700}}><span>Total due</span><span style={{color:C.rosa}}>{fmt((Number(fee)||0)+(Number(dep)||0))}</span></div>
               </div>
-              <div><div style={LBL}>Notes (optional)</div><textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2} placeholder="Alterations needed, special instructions…" style={{...inputSt,resize:'vertical'}}/></div>
+              <div><div style={LBL}>Notes (optional)</div><textarea value={notes} onChange={e=>setNotes(e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} rows={2} placeholder="Alterations needed, special instructions…" style={{...inputSt,resize:'vertical'}}/></div>
             </div>
             <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
               <GhostBtn label="← Back" onClick={()=>setStep(2)}/>
@@ -851,7 +883,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
           </>)}
           {/* Step 4 — Confirm */}
           {step===4&&(<>
-            <div style={{flex:1,overflowY:'auto',padding:'14px 24px',display:'flex',flexDirection:'column',gap:12}}>
+            <div style={{flex:1,overflowY:'auto',padding:'14px 24px',display:'flex',flexDirection:'column',gap:12,boxShadow:'inset 0 -8px 8px -8px rgba(0,0,0,0.15)'}}>
               <div style={{textAlign:'center',padding:'8px 0'}}>
                 <div style={{margin:'0 auto 10px'}}><GownSilhouette color={selDress?.color} size={44}/></div>
                 <div style={{fontSize:15,fontWeight:600,color:C.ink}}>{selDress?.name}</div>
@@ -1175,7 +1207,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
             {/* Notes */}
             <div>
               <div style={{fontSize:11,fontWeight:600,color:C.gray,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>Work notes</div>
-              <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="e.g. Take in waist 1.5 inches. Hem to floor." rows={3} style={{...inputSt,margin:0,fontSize:12,resize:'vertical',height:72}}/>
+              <textarea value={notes} onChange={e=>setNotes(e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder="e.g. Take in waist 1.5 inches. Hem to floor." rows={3} style={{...inputSt,margin:0,fontSize:12,resize:'vertical',height:72}}/>
             </div>
             {/* Quoted price */}
             <div>
@@ -1382,7 +1414,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
                 </div>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8}}>
                   {similarDresses.map(d=>(
-                    <div key={d.id} onClick={()=>{setShowSimilar(false);setSimilarDresses([]);setSimilarForDress(null);setDetailDress(d);}}
+                    <div key={d.id} onClick={()=>{setShowSimilar(false);setSimilarForDress(null);setDetailDress(d);}}
                       style={{background:C.white,borderRadius:8,padding:'10px 12px',cursor:'pointer',border:`1px solid ${C.border}`,transition:'border-color 0.15s'}}
                       onMouseEnter={e=>e.currentTarget.style.borderColor=C.rosa}
                       onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
@@ -1393,7 +1425,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
                     </div>
                   ))}
                 </div>
-                <button onClick={()=>{setShowSimilar(false);setSimilarDresses([]);setSimilarForDress(null);}} style={{marginTop:10,fontSize:11,color:C.gray,background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Dismiss</button>
+                <button onClick={()=>{setShowSimilar(false);setSimilarForDress(null);}} style={{marginTop:10,fontSize:11,color:C.gray,background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Dismiss</button>
               </div>
             </div>
           )}
@@ -1735,7 +1767,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
             </div>
             <div>
               <div style={LBL}>Notes</div>
-              <textarea rows={2} placeholder="Details about the work done…" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} style={{...inputSt,margin:0,resize:'vertical'}}/>
+              <textarea rows={2} placeholder="Details about the work done…" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} style={{...inputSt,margin:0,resize:'vertical'}}/>
             </div>
             <div style={{display:'flex',gap:8}}>
               <button onClick={handleSave} disabled={saving} style={{flex:1,padding:'8px',borderRadius:8,background:C.rosa,color:C.white,border:'none',cursor:'pointer',fontSize:12,fontWeight:600,opacity:saving?0.7:1}}>{saving?'Saving…':'Save entry'}</button>
@@ -2018,9 +2050,26 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
         />
       )}
       {qrOpen&&<QRScanModal onClose={()=>setQrOpen(false)}/>}
-      {detailDress&&<DetailPanel dress={detailDress} onClose={()=>{setDetailDress(null);setShowSimilar(false);setSimilarDresses([]);setSimilarForDress(null);}}/>}
+      {detailDress&&<DetailPanel dress={detailDress} onClose={()=>{setDetailDress(null);setShowSimilar(false);setSimilarForDress(null);}}/>}
       {historyDress&&<ItemHistoryModal dress={historyDress} onClose={()=>setHistoryDress(null)}/>}
       {showAddDress&&<AddDressModal onClose={()=>setShowAddDress(false)} onCreate={async(data)=>{const res=await createDress(data);if(!res?.error){setShowAddDress(false);toast('Dress added ✓');}return res;}}/>}
+      {/* Late fee inline confirm modal (Task 1) */}
+      {lateFeeConfirm&&(
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1010,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+          <div style={{background:C.white,borderRadius:14,width:360,padding:24,boxShadow:'0 20px 60px rgba(0,0,0,0.18)',textAlign:'center'}}>
+            <div style={{fontSize:28,marginBottom:10}}>💰</div>
+            <div style={{fontSize:15,fontWeight:600,color:C.ink,marginBottom:6}}>Charge late return fee?</div>
+            <div style={{fontSize:13,color:C.gray,marginBottom:4}}>
+              {fmt(lateFeeConfirm.feeAmount)} for {lateFeeConfirm.daysLate} day{lateFeeConfirm.daysLate!==1?'s':''} late
+            </div>
+            <div style={{fontSize:12,color:C.gray,marginBottom:20}}>{lateFeeConfirm.item.name} — {lateFeeConfirm.item.client?.name||lateFeeConfirm.item.client||'Client'}</div>
+            <div style={{display:'flex',gap:8,justifyContent:'center'}}>
+              <button onClick={()=>setLateFeeConfirm(null)} style={{flex:1,padding:'9px 0',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,cursor:'pointer',fontSize:13}}>No</button>
+              <button onClick={confirmChargeLaterFee} style={{flex:1,padding:'9px 0',borderRadius:8,border:`1px solid ${C.amber}`,background:C.amber,color:C.white,cursor:'pointer',fontSize:13,fontWeight:600}}>Yes, charge {fmt(lateFeeConfirm.feeAmount)}</button>
+            </div>
+          </div>
+        </div>
+      )}
       {damageAssessDress&&(
         <DamageAssessmentModal
           dress={damageAssessDress}

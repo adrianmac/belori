@@ -114,13 +114,21 @@ function JobTimer({ job, logTimeEntry }) {
 const WorkItemsPicker = ({value, onChange}) => (
   <div style={{background:C.ivory,padding:16,borderRadius:12,border:`1px solid ${C.border}`}}>
     <div style={{...LBL,marginBottom:12,textTransform:'uppercase',letterSpacing:'0.06em'}}>Work items (select all that apply)</div>
-    <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
-      {ALL_WORK_ITEMS.map(w=>(
-        <button key={w} type="button" onClick={()=>onChange(value.includes(w)?value.filter(x=>x!==w):[...value,w])}
-          style={{padding:'6px 14px',borderRadius:999,border:`1.5px solid ${value.includes(w)?C.rosa:C.border}`,background:value.includes(w)?C.rosaPale:C.white,color:value.includes(w)?C.rosa:C.gray,cursor:'pointer',fontSize:13,fontWeight:value.includes(w)?600:500,transition:'all 0.1s'}}>
-          {w}{WORK_HINTS[w]&&<span style={{color:value.includes(w)?C.rosaLight:'#D1D5DB',marginLeft:6,fontSize:11,fontWeight:400}}>{WORK_HINTS[w]}</span>}
-        </button>
-      ))}
+    <div style={{display:'flex',flexWrap:'wrap',gap:8}} role="group" aria-label="Work items">
+      {ALL_WORK_ITEMS.map(w=>{
+        const selected=value.includes(w);
+        const toggle=()=>onChange(selected?value.filter(x=>x!==w):[...value,w]);
+        return(
+          <button key={w} type="button"
+            onClick={toggle}
+            onKeyDown={e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();toggle();}}}
+            tabIndex={0}
+            aria-pressed={selected}
+            style={{padding:'6px 14px',borderRadius:999,border:`1.5px solid ${selected?C.rosa:C.border}`,background:selected?C.rosaPale:C.white,color:selected?C.rosa:C.gray,cursor:'pointer',fontSize:13,fontWeight:selected?600:500,transition:'all 0.1s'}}>
+            {w}{WORK_HINTS[w]&&<span style={{color:selected?C.rosaLight:'#D1D5DB',marginLeft:6,fontSize:11,fontWeight:400}}>{WORK_HINTS[w]}</span>}
+          </button>
+        );
+      })}
     </div>
   </div>
 );
@@ -256,24 +264,25 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
             <div style={{fontWeight:600,fontSize:18,color:C.ink,marginBottom:4}}>New alteration job</div>
             <div style={{fontSize:13,color:C.gray}}>Enter garment details, work items, and measurements.</div>
           </div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:24,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button onClick={onClose} aria-label="Close" title="Close" style={{background:'none',border:'none',fontSize:24,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         {/* Body */}
         <div style={{flex:1,overflowY:'auto',padding:30,display:'flex',flexDirection:'column',gap:20}}>
           {/* Client — required */}
           <div>
-            <div style={{...LBL,marginBottom:8,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <label htmlFor="alteration-field-client" style={{...LBL,marginBottom:8,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
               <span>Client <span style={{color:'var(--color-danger)'}}>*</span></span>
               {!showNewClient&&createClient&&(
                 <button type="button" onClick={()=>setShowNewClient(true)}
+                  aria-label="Add new client" title="Add new client"
                   style={{background:'none',border:'none',color:C.rosa,fontSize:12,fontWeight:600,cursor:'pointer',padding:0}}>
                   ➕ New client
                 </button>
               )}
-            </div>
+            </label>
             {showNewClient
               ? <InlineNewClient onCreate={createClient} onDone={handleNewClientDone}/>
-              : <select value={clientId} onChange={e=>setClientId(e.target.value)}
+              : <select id="alteration-field-client" value={clientId} onChange={e=>setClientId(e.target.value)}
                   style={{...inputSt,padding:'12px 14px',borderRadius:10,cursor:'pointer',border:`1px solid ${!clientId&&err?'var(--color-danger)':C.border}`}}>
                   <option value="">Select a client…</option>
                   {clientsList.map(c=><option key={c.id} value={c.id}>{c.name}{c.phone?` · ${c.phone}`:''}</option>)}
@@ -291,8 +300,8 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
           </div>
           {/* Garment description */}
           <div>
-            <div style={{...LBL,marginBottom:8}}>Garment description <span style={{color:'var(--color-danger)'}}>*</span></div>
-            <input value={garmentDesc} onChange={e=>setGarmentDesc(e.target.value)}
+            <label htmlFor="alteration-field-garment" style={{...LBL,marginBottom:8}}>Garment description <span style={{color:'var(--color-danger)'}}>*</span></label>
+            <input id="alteration-field-garment" value={garmentDesc} onChange={e=>setGarmentDesc(e.target.value)}
               placeholder={garmentType==='boutique'?'e.g. Bridal gown #BB-047 · Ivory A-line':"e.g. Client's own bridesmaid dress (×4)"}
               style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
           </div>
@@ -300,8 +309,8 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
           <WorkItemsPicker value={workItems} onChange={setWorkItems}/>
           {/* Work notes */}
           <div>
-            <div style={{...LBL,marginBottom:8}}>Work notes (optional)</div>
-            <textarea value={workNotes} onChange={e=>setWorkNotes(e.target.value)} rows={2}
+            <label htmlFor="alteration-field-worknotes" style={{...LBL,marginBottom:8,display:'block'}}>Work notes (optional)</label>
+            <textarea id="alteration-field-worknotes" value={workNotes} onChange={e=>setWorkNotes(e.target.value)} rows={2}
               placeholder='e.g. Take in waist 1.5 inches. Hem to floor with 1" clearance in heels.'
               style={{...inputSt,padding:'12px 14px',borderRadius:10,resize:'vertical'}}/>
           </div>
@@ -310,27 +319,27 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
           {/* Seamstress + Price + Deadline */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
             <div>
-              <div style={{...LBL,marginBottom:8}}>Seamstress</div>
-              <select value={seamstressId} onChange={e=>setSeamstressId(e.target.value)} style={{...inputSt,padding:'12px 14px',borderRadius:10,cursor:'pointer'}}>
+              <label htmlFor="alteration-field-seamstress" style={{...LBL,marginBottom:8,display:'block'}}>Seamstress</label>
+              <select id="alteration-field-seamstress" value={seamstressId} onChange={e=>setSeamstressId(e.target.value)} style={{...inputSt,padding:'12px 14px',borderRadius:10,cursor:'pointer'}}>
                 <option value="">Unassigned</option>
                 {seamstresses.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
             <div>
-              <div style={{...LBL,marginBottom:8}}>Quoted price ($) <span style={{color:'var(--color-danger)'}}>*</span></div>
-              <input type="number" value={quotedPrice} onChange={e=>setQuotedPrice(e.target.value)}
+              <label htmlFor="alteration-field-price" style={{...LBL,marginBottom:8,display:'block'}}>Quoted price ($) <span style={{color:'var(--color-danger)'}}>*</span></label>
+              <input id="alteration-field-price" type="number" value={quotedPrice} onChange={e=>setQuotedPrice(e.target.value)}
                 placeholder="280" style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
             </div>
             <div>
-              <div style={{...LBL,marginBottom:8}}>Deadline</div>
-              <input type="date" value={deadline} onChange={e=>setDeadline(e.target.value)}
+              <label htmlFor="alteration-field-deadline" style={{...LBL,marginBottom:8,display:'block'}}>Deadline</label>
+              <input id="alteration-field-deadline" type="date" value={deadline} onChange={e=>setDeadline(e.target.value)}
                 style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
             </div>
           </div>
           {/* Internal notes */}
           <div>
-            <div style={{...LBL,marginBottom:8}}>Internal notes (optional)</div>
-            <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2}
+            <label htmlFor="alteration-field-notes" style={{...LBL,marginBottom:8,display:'block'}}>Internal notes (optional)</label>
+            <textarea id="alteration-field-notes" value={notes} onChange={e=>setNotes(e.target.value)} rows={2}
               placeholder="Any additional notes for the team..."
               style={{...inputSt,padding:'12px 14px',borderRadius:10,resize:'vertical'}}/>
           </div>
@@ -482,7 +491,7 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
               <div style={{fontWeight:600,fontSize:18,color:C.ink,marginBottom:2}}>Edit alteration job</div>
               <div style={{fontSize:13,color:C.gray}}>{job.garment}</div>
             </div>
-            <button onClick={onClose} style={{background:'none',border:'none',fontSize:24,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+            <button onClick={onClose} aria-label="Close" title="Close" style={{background:'none',border:'none',fontSize:24,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
           </div>
           {/* Tabs */}
           <div style={{display:'flex',gap:0}}>
@@ -503,8 +512,8 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
           {activeSection==='details'&&<>
             {/* Client */}
             <div>
-              <div style={{...LBL,marginBottom:8}}>Client <span style={{color:'var(--color-danger)'}}>*</span></div>
-              <select value={clientId} onChange={e=>setClientId(e.target.value)}
+              <label htmlFor="edit-alteration-client" style={{...LBL,marginBottom:8,display:'block'}}>Client <span style={{color:'var(--color-danger)'}}>*</span></label>
+              <select id="edit-alteration-client" value={clientId} onChange={e=>setClientId(e.target.value)}
                 style={{...inputSt,padding:'12px 14px',borderRadius:10,cursor:'pointer'}}>
                 <option value="">Select a client…</option>
                 {(clients||[]).map(c=><option key={c.id} value={c.id}>{c.name}{c.phone?` · ${c.phone}`:''}</option>)}
@@ -512,8 +521,8 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
             </div>
             {/* Garment */}
             <div>
-              <div style={{...LBL,marginBottom:8}}>Garment description <span style={{color:'var(--color-danger)'}}>*</span></div>
-              <input value={garmentDesc} onChange={e=>setGarmentDesc(e.target.value)}
+              <label htmlFor="edit-alteration-garment" style={{...LBL,marginBottom:8,display:'block'}}>Garment description <span style={{color:'var(--color-danger)'}}>*</span></label>
+              <input id="edit-alteration-garment" value={garmentDesc} onChange={e=>setGarmentDesc(e.target.value)}
                 placeholder="e.g. Bridal gown #BB-047 · Ivory A-line"
                 style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
             </div>
@@ -522,28 +531,28 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
             {/* Seamstress + Price + Deadline */}
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
               <div>
-                <div style={{...LBL,marginBottom:8}}>Seamstress</div>
-                <select value={seamstressId} onChange={e=>setSeamstressId(e.target.value)}
+                <label htmlFor="edit-alteration-seamstress" style={{...LBL,marginBottom:8,display:'block'}}>Seamstress</label>
+                <select id="edit-alteration-seamstress" value={seamstressId} onChange={e=>setSeamstressId(e.target.value)}
                   style={{...inputSt,padding:'12px 14px',borderRadius:10,cursor:'pointer'}}>
                   <option value="">Unassigned</option>
                   {seamstresses.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div>
-                <div style={{...LBL,marginBottom:8}}>Price ($)</div>
-                <input type="number" value={quotedPrice} onChange={e=>setQuotedPrice(e.target.value)}
+                <label htmlFor="edit-alteration-price" style={{...LBL,marginBottom:8,display:'block'}}>Price ($)</label>
+                <input id="edit-alteration-price" type="number" value={quotedPrice} onChange={e=>setQuotedPrice(e.target.value)}
                   placeholder="280" style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
               </div>
               <div>
-                <div style={{...LBL,marginBottom:8}}>Deadline</div>
-                <input type="date" value={deadline} onChange={e=>setDeadline(e.target.value)}
+                <label htmlFor="edit-alteration-deadline" style={{...LBL,marginBottom:8,display:'block'}}>Deadline</label>
+                <input id="edit-alteration-deadline" type="date" value={deadline} onChange={e=>setDeadline(e.target.value)}
                   style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
               </div>
             </div>
             {/* Notes */}
             <div>
-              <div style={{...LBL,marginBottom:8}}>Notes</div>
-              <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={3}
+              <label htmlFor="edit-alteration-notes" style={{...LBL,marginBottom:8,display:'block'}}>Notes</label>
+              <textarea id="edit-alteration-notes" value={notes} onChange={e=>setNotes(e.target.value)} rows={3}
                 placeholder="Work instructions, client preferences, team notes…"
                 style={{...inputSt,padding:'12px 14px',borderRadius:10,resize:'vertical'}}/>
             </div>
@@ -555,15 +564,15 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
             </div>
             <MeasurementsSection value={measurements} onChange={setMeasurements}/>
             <div>
-              <div style={{...LBL,marginBottom:8}}>Measurement notes</div>
-              <textarea value={measurements.notes||''} onChange={e=>setMeasurements(m=>({...m,notes:e.target.value}))} rows={3}
+              <label htmlFor="edit-alteration-meas-notes" style={{...LBL,marginBottom:8,display:'block'}}>Measurement notes</label>
+              <textarea id="edit-alteration-meas-notes" value={measurements.notes||''} onChange={e=>setMeasurements(m=>({...m,notes:e.target.value}))} rows={3}
                 placeholder="e.g. Tried on 4/2 with ivory heels (3in). Needs 1.5in taken in at waist. Hem at floor length."
                 style={{...inputSt,padding:'12px 14px',borderRadius:10,resize:'vertical'}}/>
             </div>
           </>}
 
           {activeSection==='status'&&<>
-            <div style={{...LBL,marginBottom:8}}>Job status</div>
+            <div id="edit-alteration-status-label" style={{...LBL,marginBottom:8}}>Job status</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               {STATUS_OPTS.map(opt=>(
                 <button key={opt.id} type="button" onClick={()=>setStatus(opt.id)}
@@ -592,6 +601,7 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
                     <div style={{position:'relative',display:'inline-block'}}>
                       <img src={url} alt={`${label} alteration`} style={{width:'100%',maxWidth:240,height:180,objectFit:'cover',borderRadius:10,border:`1px solid ${C.border}`,display:'block'}}/>
                       <button onClick={()=>removePhoto(slot)}
+                        aria-label="Delete photo" title="Delete photo"
                         style={{position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.6)',color:'#fff',border:'none',borderRadius:'50%',width:24,height:24,cursor:'pointer',fontSize:14,lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>
                         ×
                       </button>
@@ -793,7 +803,7 @@ const MyJobsSidebar = ({ jobs, staff, onOpenJob }) => {
         <button
           onClick={e => { e.stopPropagation(); setCollapsed(false); }}
           style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: C.gray, padding: 0 }}
-          title="Expand My Jobs"
+          aria-label="Expand My Jobs" title="Expand My Jobs"
         >›</button>
         {myJobs.length > 0 && (
           <span style={{
@@ -835,7 +845,7 @@ const MyJobsSidebar = ({ jobs, staff, onOpenJob }) => {
         <button
           onClick={() => setCollapsed(true)}
           style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: C.gray, padding: 0, lineHeight: 1 }}
-          title="Collapse"
+          aria-label="Collapse" title="Collapse"
         >‹</button>
       </div>
 
@@ -1334,7 +1344,7 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
               <div style={{fontSize:13,fontWeight:600,color:C.ink}}>Job marked complete!</div>
               <div style={{fontSize:12,color:C.gray,marginTop:2}}>Notify {notifyPrompt.client||'the client'} that their {notifyPrompt.garment||'alterations'} are ready?</div>
             </div>
-            <button onClick={()=>setNotifyPrompt(null)} style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:16,lineHeight:1,padding:0,flexShrink:0}}>×</button>
+            <button onClick={()=>setNotifyPrompt(null)} aria-label="Close" title="Close" style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:16,lineHeight:1,padding:0,flexShrink:0}}>×</button>
           </div>
           <div style={{background:C.grayBg,borderRadius:8,padding:'8px 10px',fontSize:11,color:C.gray,fontFamily:'monospace',lineHeight:1.5}}>
             {`"Hi! Your ${notifyPrompt.garment||'garment'} alterations are ready for pickup. Please contact us to schedule your appointment. 💕"`}

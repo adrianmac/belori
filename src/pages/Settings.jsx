@@ -154,6 +154,7 @@ const CurrencySelector = () => {
 // ─── KIOSK MODE CARD (Display tab) ───────────────────────────────────────────
 const KioskModeCard = () => {
   const { boutique } = useAuth();
+  const toast = useToast();
   const [pin, setPin] = useState(() => sessionStorage.getItem('belori_kiosk_pin') || '1234');
   const [pinEdit, setPinEdit] = useState('');
   const [editing, setEditing] = useState(false);
@@ -188,7 +189,7 @@ const KioskModeCard = () => {
             {kioskUrl}
           </span>
           <button
-            onClick={() => navigator.clipboard.writeText(kioskUrl).catch(()=>{})}
+            onClick={async () => { try { await navigator.clipboard.writeText(kioskUrl); toast('Copied!', 'success'); } catch { toast('Could not copy — please copy manually', 'warn'); } }}
             style={{
               padding:'6px 12px',borderRadius:7,border:`1px solid ${C.border}`,
               background:C.white,color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer',flexShrink:0,
@@ -236,7 +237,7 @@ const KioskModeCard = () => {
               {catalogKioskUrl}
             </span>
             <button
-              onClick={() => navigator.clipboard.writeText(catalogKioskUrl).catch(()=>{})}
+              onClick={async () => { try { await navigator.clipboard.writeText(catalogKioskUrl); toast('Copied!', 'success'); } catch { toast('Could not copy — please copy manually', 'warn'); } }}
               style={{
                 padding:'6px 12px',borderRadius:7,border:`1px solid ${C.border}`,
                 background:C.white,color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer',flexShrink:0,
@@ -706,7 +707,7 @@ const InviteStaffModal = ({onClose, sendInvite, toast, boutique}) => {
                 <div style={{...LBL,marginBottom:6}}>Share this link with {email}</div>
                 <div style={{display:'flex',gap:8}}>
                   <input readOnly value={inviteLink} style={{...inputSt,fontSize:11,color:C.gray,flex:1}}/>
-                  <button onClick={()=>{navigator.clipboard.writeText(inviteLink);toast('Copied!');}}
+                  <button onClick={async()=>{ try { await navigator.clipboard.writeText(inviteLink); toast('Copied!', 'success'); } catch { toast('Could not copy — please copy manually', 'warn'); } }}
                     style={{padding:'0 14px',borderRadius:7,border:`1px solid ${C.border}`,background:C.grayBg,cursor:'pointer',fontSize:12,color:C.ink,whiteSpace:'nowrap',flexShrink:0}}>
                     Copy
                   </button>
@@ -1105,8 +1106,13 @@ const EmbedWidgetSection = ({ boutiqueId }) => {
     ? `<script src="${origin}/embed.js" data-boutique-id="${boutiqueId || 'YOUR_BOUTIQUE_ID'}" data-button-text="${btnText.trim()}"><\/script>`
     : `<script src="${origin}/embed.js" data-boutique-id="${boutiqueId || 'YOUR_BOUTIQUE_ID'}"><\/script>`;
 
-  const copySnippet = () => {
-    navigator.clipboard.writeText(snippet).then(() => toast('Snippet copied!'));
+  const copySnippet = async () => {
+    try {
+      await navigator.clipboard.writeText(snippet);
+      toast('Snippet copied!', 'success');
+    } catch {
+      toast('Could not copy — please copy manually', 'warn');
+    }
   };
 
   return (
@@ -2307,8 +2313,8 @@ const Settings = ({boutique, initialTab, setScreen}) => {
                     {`${window.location.origin}/lead/${boutique?.id}`}
                   </div>
                   <button
-                    onClick={()=>{
-                      navigator.clipboard.writeText(`${window.location.origin}/lead/${boutique?.id}`).then(()=>toast('Lead form URL copied ✓'));
+                    onClick={async()=>{
+                      try { await navigator.clipboard.writeText(`${window.location.origin}/lead/${boutique?.id}`); toast('Lead form URL copied ✓', 'success'); } catch { toast('Could not copy — please copy manually', 'warn'); }
                     }}
                     style={{padding:'8px 14px',borderRadius:7,border:`1px solid ${C.border}`,background:C.white,fontSize:12,fontWeight:500,color:C.ink,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0,minHeight:'unset',minWidth:'unset',transition:'border-color 0.15s'}}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor=C.rosa;e.currentTarget.style.color=C.rosa;}}
@@ -2329,9 +2335,8 @@ const Settings = ({boutique, initialTab, setScreen}) => {
                     style={{flex:1,...inputSt,fontSize:11,color:C.gray,background:C.ivory}}
                   />
                   <button
-                    onClick={()=>{
-                      navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-feed?boutique_id=${boutique?.id}`)
-                      toast('Calendar URL copied!')
+                    onClick={async()=>{
+                      try { await navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-feed?boutique_id=${boutique?.id}`); toast('Calendar URL copied!', 'success'); } catch { toast('Could not copy — please copy manually', 'warn'); }
                     }}
                     style={{padding:'8px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:C.white,cursor:'pointer',fontSize:12,color:C.gray,whiteSpace:'nowrap',minHeight:'unset',minWidth:'unset',transition:'border-color 0.15s'}}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor=C.rosa;e.currentTarget.style.color=C.rosa;}}
@@ -3762,11 +3767,17 @@ const STATUS_CFG = {
 
 // NOTE: defined here (after STATUS_CFG) so it's available to BookingRequestsTab
 const BookingPageCard = ({ boutique }) => {
+  const toast = useToast();
   const [copied, setCopied] = useState(false);
   const bookingUrl = boutique?.slug ? `${window.location.origin}/book/${boutique.slug}` : null;
-  const copyUrl = () => {
+  const copyUrl = async () => {
     if (!bookingUrl) return;
-    navigator.clipboard.writeText(bookingUrl);
+    try {
+      await navigator.clipboard.writeText(bookingUrl);
+      toast('Copied!', 'success');
+    } catch {
+      toast('Could not copy — please copy manually', 'warn');
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

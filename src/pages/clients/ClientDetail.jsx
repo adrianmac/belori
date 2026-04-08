@@ -204,6 +204,13 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
   const [showDirectSMS,setShowDirectSMS]=useState(false);
   const [editContact,setEditContact]=useState(false);
   const [contactDraft,setContactDraft]=useState({phone:cl.phone||'',email:cl.email||'',language_preference:cl.language_preference||'en',partner_name:cl.partner_name||'',emergency_contact:cl.emergency_contact||'',birthday:cl.birthday||'',anniversary:cl.anniversary||'',birth_date:cl.birth_date||'',anniversary_date:cl.anniversary_date||''});
+  // Warn on browser navigation when contact form is open
+  useEffect(() => {
+    if (!editContact) return;
+    const handler = e => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [editContact]);
   const [showAdjustPts,setShowAdjustPts]=useState(false);
   const [adjPts,setAdjPts]=useState({type:'add',points:'',reason:''});
   const [showRedeemModal,setShowRedeemModal]=useState(false);
@@ -474,6 +481,12 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
           </button>
         ))}
       </div>
+      {editContact&&(
+        <div style={{background:'#FFFBEB',borderBottom:`1px solid #FDE68A`,padding:'8px 16px',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
+          <span style={{fontSize:12,color:'#92400E',flex:1}}>⚠️ You have unsaved changes in the contact form</span>
+          <button onClick={()=>{setEditContact(false);setContactDraft({phone:cl.phone||'',email:cl.email||'',language_preference:cl.language_preference||'en',partner_name:cl.partner_name||'',emergency_contact:cl.emergency_contact||'',birthday:cl.birthday||'',anniversary:cl.anniversary||'',birth_date:cl.birth_date||'',anniversary_date:cl.anniversary_date||''});}} style={{fontSize:11,padding:'3px 10px',borderRadius:6,border:'1px solid #D97706',background:'#FEF3C7',color:'#92400E',cursor:'pointer',fontWeight:500,flexShrink:0}}>Discard</button>
+        </div>
+      )}
       {tab==='overview'&&(
         <div className="page-scroll" style={{flex:1,overflowY:'auto',padding:20}}>
           <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:16}}>
@@ -543,13 +556,22 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                     return(
                       <div key={pref.key} style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                         <span style={{fontSize:12,color:C.ink}}>{pref.icon} {pref.label}</span>
-                        <button onClick={()=>updateClient(cl.id,{comm_prefs:{...(cl.comm_prefs||{}),[pref.key]:!optedOut}})}
+                        <button
+                          role="switch"
+                          aria-checked={!optedOut}
+                          onClick={()=>updateClient(cl.id,{comm_prefs:{...(cl.comm_prefs||{}),[pref.key]:!optedOut}})}
                           style={{fontSize:11,padding:'3px 10px',borderRadius:12,border:`1px solid ${optedOut?'#EF4444':C.border}`,background:optedOut?'#FEE2E2':C.rosaPale,color:optedOut?'#991B1B':C.rosa,cursor:'pointer',fontWeight:500}}>
                           {optedOut?'Opted out':'Active'}
                         </button>
                       </div>
                     );
                   })}
+                  {cl.comm_prefs?.preferredContactTime&&(
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:4,borderTop:`1px solid ${C.border}`}}>
+                      <span style={{fontSize:12,color:C.gray}}>⏰ Best time to reach</span>
+                      <span style={{fontSize:12,fontWeight:500,color:C.ink}}>{{morning:'Morning (8am–12pm)',afternoon:'Afternoon (12pm–5pm)',evening:'Evening (5pm–8pm)',weekends:'Weekends only'}[cl.comm_prefs.preferredContactTime]||cl.comm_prefs.preferredContactTime}</span>
+                    </div>
+                  )}
                   {cl.language_preference&&(
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:4,borderTop:`1px solid ${C.border}`}}>
                       <span style={{fontSize:12,color:C.gray}}>Language</span>
@@ -635,18 +657,32 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                   <div style={{padding:'4px 0'}}>
                     {(showAllTxns?loyaltyTxns:loyaltyTxns.slice(0,10)).map(tx=>{
                       const isEarn=(tx.type==='earn'||(!tx.type&&tx.delta>0));
-                      const isRedeem=tx.type==='redeem';
+                      const isRedeem=tx.type==='redeem'||(tx.delta<0&&!tx.type);
+                      const isClaimed=isRedeem&&(tx.reason||'').includes('[CLAIMED]');
                       const icon=isRedeem?'🎁':isEarn?'⭐':tx.type==='expire'?'⏰':'✏️';
                       const deltaColor=tx.delta>0?'var(--color-success)':'var(--color-danger)';
                       const sign=tx.delta>0?'+':'';
+                      const displayReason=(tx.reason||'Points transaction').replace(' [CLAIMED]','');
                       return(
                         <div key={tx.id} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',borderBottom:`1px solid ${C.border}`}}>
                           <span style={{fontSize:14,flexShrink:0}}>{icon}</span>
                           <div style={{flex:1,minWidth:0}}>
-                            <div style={{fontSize:12,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{tx.reason||'Points transaction'}</div>
+                            <div style={{display:'flex',alignItems:'center',gap:5,flexWrap:'wrap'}}>
+                              <span style={{fontSize:12,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{displayReason}</span>
+                              {isRedeem&&(
+                                isClaimed
+                                  ? <span style={{fontSize:9,padding:'1px 6px',borderRadius:999,background:'var(--bg-success,#DCFCE7)',color:'var(--color-success,#15803D)',fontWeight:600,flexShrink:0,border:'1px solid var(--color-success,#15803D)33'}}>Claimed</span>
+                                  : <span style={{fontSize:9,padding:'1px 6px',borderRadius:999,background:'#FEF3C7',color:'#B45309',fontWeight:600,flexShrink:0,border:'1px solid #F59E0B33'}}>Pending</span>
+                              )}
+                            </div>
                             <div style={{fontSize:10,color:C.gray,marginTop:1}}>{tx.created_at?new Date(tx.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''}</div>
                           </div>
-                          <span style={{fontSize:12,fontWeight:600,color:deltaColor,flexShrink:0}}>{sign}{tx.delta?.toLocaleString()} pts</span>
+                          <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
+                            {isRedeem&&!isClaimed&&(
+                              <button onClick={async()=>{await supabase.from('loyalty_transactions').update({reason:(tx.reason||'Points transaction')+' [CLAIMED]'}).eq('id',tx.id);refetchTxns();toast('Marked as claimed ✓');}} style={{fontSize:10,padding:'2px 8px',borderRadius:6,border:'1px solid var(--color-success,#15803D)',background:'var(--bg-success,#DCFCE7)',color:'var(--color-success,#15803D)',cursor:'pointer',fontWeight:500,whiteSpace:'nowrap'}}>Mark claimed</button>
+                            )}
+                            <span style={{fontSize:12,fontWeight:600,color:deltaColor}}>{sign}{tx.delta?.toLocaleString()} pts</span>
+                          </div>
                         </div>
                       );
                     })}
@@ -1234,11 +1270,29 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                 const val=commPrefs[pref.key];
                 return(<div key={pref.key} style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                   <span style={{fontSize:12,color:C.ink}}>{pref.label}</span>
-                  <div onClick={()=>setCommPrefs(p=>({...p,[pref.key]:!p[pref.key]}))} style={{width:36,height:20,borderRadius:10,background:val?C.rosa:C.border,cursor:'pointer',position:'relative',transition:'background 0.2s',flexShrink:0}}>
+                  <button
+                    role="switch"
+                    aria-checked={!!val}
+                    onClick={()=>setCommPrefs(p=>({...p,[pref.key]:!p[pref.key]}))}
+                    style={{width:36,height:20,borderRadius:10,background:val?C.rosa:C.border,cursor:'pointer',position:'relative',transition:'background 0.2s',flexShrink:0,border:'none',padding:0}}>
                     <div style={{position:'absolute',top:3,left:val?18:3,width:14,height:14,borderRadius:'50%',background:'#fff',transition:'left 0.2s'}}/>
-                  </div>
+                  </button>
                 </div>);
               })}
+              {/* Preferred contact time */}
+              <div style={{paddingTop:6,borderTop:`1px solid ${C.border}`}}>
+                <div style={{fontSize:12,color:C.ink,marginBottom:6}}>Preferred contact time</div>
+                <select
+                  value={commPrefs.preferredContactTime||''}
+                  onChange={e=>setCommPrefs(p=>({...p,preferredContactTime:e.target.value}))}
+                  style={{width:'100%',padding:'6px 8px',borderRadius:7,border:`1px solid ${C.border}`,fontSize:12,background:'#fff',color:C.ink,outline:'none',fontFamily:'inherit'}}>
+                  <option value="">No preference</option>
+                  <option value="morning">Morning (8am–12pm)</option>
+                  <option value="afternoon">Afternoon (12pm–5pm)</option>
+                  <option value="evening">Evening (5pm–8pm)</option>
+                  <option value="weekends">Weekends only</option>
+                </select>
+              </div>
               <div style={{display:'flex',justifyContent:'flex-end',marginTop:4}}>
                 <PrimaryBtn label={commSaving?'Saving…':'Save preferences'} colorScheme="success" style={{fontSize:11,padding:'5px 12px'}} onClick={async()=>{setCommSaving(true);await updateClient(cl.id,{comm_prefs:commPrefs});setCommSaving(false);toast('Preferences saved ✓');}}/>
               </div>
@@ -1298,6 +1352,8 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                 <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:6}}>
                   <span style={{fontSize:11,color:C.gray}}>{prefOptOut?'Opted out':'Subscribed'}</span>
                   <button
+                    role="switch"
+                    aria-checked={!prefOptOut}
                     onClick={handleToggleSmsOptOut}
                     disabled={optOutSaving}
                     title={prefOptOut?'Mark as subscribed':'Mark as opted out'}

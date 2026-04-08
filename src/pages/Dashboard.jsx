@@ -882,7 +882,7 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
       if (count > 0) {
         toast(`${count} event${count !== 1 ? 's' : ''} marked completed automatically`);
       }
-    }).catch(() => {});
+    }).catch(e => console.error('[Belori] Auto-progress failed:', e));
   }, [authBoutique?.id, events?.length, autoProgressDone]);
   const overdueTotal = payments.filter(p=>p.status==='overdue').reduce((s,p)=>s+p.amount,0);
   const rentedCount = inventory.filter(d=>['rented','reserved','picked_up'].includes(d.status)).length;

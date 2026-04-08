@@ -5,7 +5,7 @@ import { HOW_FOUND_LABELS } from '../../pages/clients/clientConfigs';
 
 const NewClientModal = ({ onClose, createClient, onSuccess }) => {
   const toast = useToast();
-  const [newCl, setNewCl] = useState({ firstName: '', lastName: '', phone: '', email: '', partner: '', language: 'en', howFound: '', birthday: '', anniversary: '' });
+  const [newCl, setNewCl] = useState({ firstName: '', lastName: '', phone: '', email: '', partner: '', language: 'en', howFound: '', referredBy: '', birthday: '', anniversary: '' });
   const [saving, setSaving] = useState(false);
 
   const handleNew = async () => {
@@ -20,7 +20,7 @@ const NewClientModal = ({ onClose, createClient, onSuccess }) => {
       email: newCl.email.trim() || null,
       partner_name: newCl.partner.trim() || null,
       language_preference: newCl.language || null,
-      referred_by: newCl.howFound.trim() || null,
+      referred_by: newCl.referredBy.trim() || newCl.howFound.trim() || null,
       birthday: newCl.birthday || null,
       anniversary: newCl.anniversary || null,
     });
@@ -59,6 +59,7 @@ const NewClientModal = ({ onClose, createClient, onSuccess }) => {
             <div><div style={{...LBL}}>Preferred language</div><select value={newCl.language} onChange={e=>setNewCl(n=>({...n,language:e.target.value}))} style={{...inputSt}}><option value="en">English</option><option value="es">Spanish</option><option value="both">Both</option></select></div>
             <div><div style={{...LBL}}>How found us</div><select value={newCl.howFound} onChange={e=>setNewCl(n=>({...n,howFound:e.target.value}))} style={{...inputSt}}><option value="">Select…</option>{Object.entries(HOW_FOUND_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
           </div>
+          <div><div style={{...LBL}}>Referred by <span style={{fontWeight:400,color:'#9CA3AF'}}>(optional — person's name)</span></div><input value={newCl.referredBy} onChange={e=>setNewCl(n=>({...n,referredBy:e.target.value}))} placeholder="e.g. Maria Lopez" style={{...inputSt}}/></div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
             <div><div style={{...LBL}}>Birthday <span style={{fontWeight:400,color:'#9CA3AF'}}>(optional)</span></div><input value={newCl.birthday} onChange={e=>setNewCl(n=>({...n,birthday:e.target.value}))} type="date" style={{...inputSt}}/></div>
             <div><div style={{...LBL}}>Anniversary <span style={{fontWeight:400,color:'#9CA3AF'}}>(optional)</span></div><input value={newCl.anniversary} onChange={e=>setNewCl(n=>({...n,anniversary:e.target.value}))} type="date" style={{...inputSt}}/></div>

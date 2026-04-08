@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { C, fmt, pct, EVT_TYPES } from '../lib/colors';
 import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, StatusDot,
-  SvcTag, useToast, inputSt, LBL, EmptyState } from '../lib/ui.jsx';
+  SvcTag, useToast, inputSt, LBL, EmptyState, SkeletonList } from '../lib/ui.jsx';
+import ConfirmModal from '../components/ConfirmModal';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -656,6 +657,7 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
   const [tipEventId, setTipEventId] = useState(null);
   const [tipAmount, setTipAmount] = useState('');
   const [tipSaving, setTipSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState({ open: false, milestoneId: null });
 
   const filtered = tab === 'all' ? allPayments : allPayments.filter(p => p.status === tab);
   const totalOverdue = allPayments.filter(p => p.status === 'overdue').reduce((s, p) => s + p.amount, 0);
@@ -968,7 +970,10 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
           </div>
         );
       })()}
-      {tab !== 'aging' && <div className="page-scroll" style={{flex:1,overflowY:'auto',padding:20}}>
+      {tab !== 'aging' && !livePayments && (
+        <div style={{padding:20}}><SkeletonList count={5}/></div>
+      )}
+      {tab !== 'aging' && livePayments && <div className="page-scroll" style={{flex:1,overflowY:'auto',padding:20}}>
         <Card style={{overflowX:'auto'}}>
           <table className="pay-table" style={{width:'100%',borderCollapse:'collapse',fontSize:13,minWidth:620}}>
             <thead><tr style={{background:C.ivory}}>
@@ -1064,10 +1069,7 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
                       </button>
                     )}
                     {myRole === 'owner' && deleteMilestone && (
-                      <button className="btn-sm" onClick={()=>{
-                        if(window.confirm(`Delete "${p.label}" (${fmt(p.amount)})? This cannot be undone.`))
-                          deleteMilestone(p.id).then(({error})=>{if(error)toast('Failed to delete','error');else toast('Milestone deleted');});
-                      }} title="Delete milestone" style={{padding:'4px 8px',borderRadius:6,border:`1px solid #FECACA`,background:'#FFF5F5',color:'#DC2626',fontSize:11,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                      <button className="btn-sm" onClick={()=>setConfirmDelete({ open: true, milestoneId: p.id })} title="Delete milestone" style={{padding:'4px 8px',borderRadius:6,border:`1px solid #FECACA`,background:'#FFF5F5',color:'#DC2626',fontSize:11,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
                         <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
                     )}
@@ -1089,6 +1091,21 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
           onClose={()=>setReminderPayment(null)}
         />
       )}
+      <ConfirmModal
+        open={confirmDelete.open}
+        title="Delete milestone"
+        message="This cannot be undone."
+        confirmLabel="Delete"
+        danger
+        onConfirm={async () => {
+          const id = confirmDelete.milestoneId;
+          setConfirmDelete({ open: false, milestoneId: null });
+          const { error } = await deleteMilestone(id);
+          if (error) { toast(`Failed to delete: ${error.message}`, 'error'); return; }
+          toast('Milestone deleted');
+        }}
+        onCancel={() => setConfirmDelete({ open: false, milestoneId: null })}
+      />
       {showPlanModal && (
         <PaymentPlanModal
           events={events}

@@ -219,7 +219,7 @@ const AddItemModal = ({onClose,onCreate,boutique}) => {
       <div style={{background:C.white,borderRadius:16,width:500,maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'20px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div style={{fontSize:16,fontWeight:600,color:C.ink}}>Add inventory item</div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',lineHeight:1}}>×</button>
+          <button onClick={onClose} aria-label="Close" title="Close" style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:'20px 24px'}}>
 
@@ -242,7 +242,7 @@ const AddItemModal = ({onClose,onCreate,boutique}) => {
           {capturedPhotoUrl&&!imagePreview&&(
             <div style={{position:'relative',marginBottom:10}}>
               <img src={capturedPhotoUrl} alt="captured" style={{width:'100%',maxHeight:160,objectFit:'cover',borderRadius:10,border:`1px solid ${C.border}`,display:'block'}}/>
-              <button onClick={()=>setCapturedPhotoUrl(null)} style={{position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.55)',border:'none',borderRadius:'50%',width:26,height:26,color:'#fff',cursor:'pointer',fontSize:15,lineHeight:'26px',textAlign:'center'}}>×</button>
+              <button onClick={()=>setCapturedPhotoUrl(null)} aria-label="Remove photo" title="Remove photo" style={{position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.55)',border:'none',borderRadius:'50%',width:26,height:26,color:'#fff',cursor:'pointer',fontSize:15,lineHeight:'26px',textAlign:'center'}}>×</button>
               <div style={{position:'absolute',bottom:8,left:8,background:'rgba(0,0,0,0.55)',borderRadius:6,padding:'2px 8px',fontSize:10,color:'#fff'}}>📸 Live capture</div>
             </div>
           )}
@@ -251,15 +251,15 @@ const AddItemModal = ({onClose,onCreate,boutique}) => {
           {!capturedPhotoUrl&&(imagePreview?(
             <div style={{position:'relative',marginBottom:16}}>
               <img src={imagePreview} alt="preview" style={{width:'100%',maxHeight:160,objectFit:'cover',borderRadius:10,border:`1px solid ${C.border}`,display:'block'}}/>
-              <button onClick={()=>{setImageFile(null);setImagePreview(null);}} style={{position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.55)',border:'none',borderRadius:'50%',width:26,height:26,color:'#fff',cursor:'pointer',fontSize:15,lineHeight:'26px',textAlign:'center'}}>×</button>
+              <button onClick={()=>{setImageFile(null);setImagePreview(null);}} aria-label="Remove image" title="Remove image" style={{position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.55)',border:'none',borderRadius:'50%',width:26,height:26,color:'#fff',cursor:'pointer',fontSize:15,lineHeight:'26px',textAlign:'center'}}>×</button>
             </div>
           ):(
             <div style={{marginBottom:16,display:'flex',gap:8}}>
-              <button onClick={()=>cameraRef.current.click()} style={{flex:1,padding:'10px',borderRadius:10,border:`1.5px solid ${C.border}`,background:C.white,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+              <button onClick={()=>cameraRef.current.click()} aria-label="Take photo with camera" title="Take photo with camera" style={{flex:1,padding:'10px',borderRadius:10,border:`1.5px solid ${C.border}`,background:C.white,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
                 <span style={{fontSize:18}}>📂</span>
                 <span style={{fontSize:11,color:C.gray,fontWeight:500}}>Camera (file)</span>
               </button>
-              <button onClick={()=>galleryRef.current.click()} style={{flex:1,padding:'10px',borderRadius:10,border:`1.5px solid ${C.border}`,background:C.white,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+              <button onClick={()=>galleryRef.current.click()} aria-label="Upload image from file" title="Upload image from file" style={{flex:1,padding:'10px',borderRadius:10,border:`1.5px solid ${C.border}`,background:C.white,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
                 <span style={{fontSize:18}}>🖼️</span>
                 <span style={{fontSize:11,color:C.gray,fontWeight:500}}>Upload file</span>
               </button>
@@ -347,7 +347,9 @@ const AddItemModal = ({onClose,onCreate,boutique}) => {
             ))}
           </div>
           <div style={LBL}>Notes (optional)</div>
-          <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Any details about this item…" style={{...inputSt,minHeight:56,resize:'vertical'}}/>
+          <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Any details about this item…"
+            onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}}
+            style={{...inputSt,minHeight:56,resize:'vertical'}}/>
           {err&&<div style={{fontSize:12,color:C.red,marginTop:8}}>{err}</div>}
         </div>
         <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',gap:8,justifyContent:'flex-end'}}>
@@ -431,7 +433,7 @@ const EditItemModal = ({item, onClose, onUpdate}) => {
       <div style={{background:'white',borderRadius:16,width:500,maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'20px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div style={{fontWeight:600,fontSize:16,color:C.ink}}>Edit item</div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',lineHeight:1}}>×</button>
+          <button onClick={onClose} aria-label="Close" title="Close" style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:'20px 24px'}}>
 
@@ -443,18 +445,18 @@ const EditItemModal = ({item, onClose, onUpdate}) => {
             <div style={{position:'relative',marginBottom:16}}>
               <img src={imagePreview} alt="preview" style={{width:'100%',maxHeight:160,objectFit:'cover',borderRadius:10,border:`1px solid ${C.border}`,display:'block'}}/>
               <div style={{position:'absolute',bottom:8,left:8,display:'flex',gap:6}}>
-                <button onClick={()=>cameraRef.current.click()} style={{padding:'4px 10px',borderRadius:6,background:'rgba(0,0,0,0.55)',border:'none',color:'#fff',fontSize:11,cursor:'pointer'}}>📷 Retake</button>
-                <button onClick={()=>galleryRef.current.click()} style={{padding:'4px 10px',borderRadius:6,background:'rgba(0,0,0,0.55)',border:'none',color:'#fff',fontSize:11,cursor:'pointer'}}>🖼️ Replace</button>
+                <button onClick={()=>cameraRef.current.click()} aria-label="Retake photo" title="Retake photo" style={{padding:'4px 10px',borderRadius:6,background:'rgba(0,0,0,0.55)',border:'none',color:'#fff',fontSize:11,cursor:'pointer'}}>📷 Retake</button>
+                <button onClick={()=>galleryRef.current.click()} aria-label="Replace with uploaded file" title="Replace with uploaded file" style={{padding:'4px 10px',borderRadius:6,background:'rgba(0,0,0,0.55)',border:'none',color:'#fff',fontSize:11,cursor:'pointer'}}>🖼️ Replace</button>
               </div>
-              <button onClick={()=>{setImageFile(null);setImagePreview(null);}} style={{position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.55)',border:'none',borderRadius:'50%',width:26,height:26,color:'#fff',cursor:'pointer',fontSize:15,lineHeight:'26px',textAlign:'center'}}>×</button>
+              <button onClick={()=>{setImageFile(null);setImagePreview(null);}} aria-label="Remove image" title="Remove image" style={{position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.55)',border:'none',borderRadius:'50%',width:26,height:26,color:'#fff',cursor:'pointer',fontSize:15,lineHeight:'26px',textAlign:'center'}}>×</button>
             </div>
           ):(
             <div style={{marginBottom:16,display:'flex',gap:8}}>
-              <button onClick={()=>cameraRef.current.click()} style={{flex:1,padding:'14px 10px',borderRadius:10,border:`2px dashed ${C.border}`,background:C.ivory,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:5}}>
+              <button onClick={()=>cameraRef.current.click()} aria-label="Take photo with camera" title="Take photo with camera" style={{flex:1,padding:'14px 10px',borderRadius:10,border:`2px dashed ${C.border}`,background:C.ivory,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:5}}>
                 <span style={{fontSize:22}}>📷</span>
                 <span style={{fontSize:11,color:C.gray,fontWeight:500}}>Take photo</span>
               </button>
-              <button onClick={()=>galleryRef.current.click()} style={{flex:1,padding:'14px 10px',borderRadius:10,border:`2px dashed ${C.border}`,background:C.ivory,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:5}}>
+              <button onClick={()=>galleryRef.current.click()} aria-label="Upload image from file" title="Upload image from file" style={{flex:1,padding:'14px 10px',borderRadius:10,border:`2px dashed ${C.border}`,background:C.ivory,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:5}}>
                 <span style={{fontSize:22}}>🖼️</span>
                 <span style={{fontSize:11,color:C.gray,fontWeight:500}}>Upload file</span>
               </button>
@@ -527,7 +529,9 @@ const EditItemModal = ({item, onClose, onUpdate}) => {
             ))}
           </div>
           <div style={LBL}>Notes</div>
-          <textarea value={notes} onChange={e=>setNotes(e.target.value)} style={{...inputSt,minHeight:56,resize:'vertical'}}/>
+          <textarea value={notes} onChange={e=>setNotes(e.target.value)}
+            onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}}
+            style={{...inputSt,minHeight:56,resize:'vertical'}}/>
           {err&&<div style={{fontSize:12,color:C.red,marginTop:8,background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7}}>{err}</div>}
         </div>
         <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',gap:8,justifyContent:'flex-end'}}>
@@ -581,7 +585,7 @@ const ItemDetailPanel = ({ item: d, SC, catIcon, onClose, onEdit, onQR, onRent, 
                 </div>
           }
           {/* Close button */}
-          <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>×</button>
+          <button onClick={onClose} aria-label="Close panel" title="Close panel" style={{ position: 'absolute', top: 12, right: 12, width: 30, height: 30, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', border: 'none', color: '#fff', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>×</button>
           {/* Status badge */}
           <div style={{ position: 'absolute', bottom: 12, left: 12 }}>
             <span style={{ padding: '4px 10px', borderRadius: 999, background: s.bg, color: s.col, fontSize: 11, fontWeight: 600 }}>{s.label}</span>
@@ -686,13 +690,13 @@ const ItemDetailPanel = ({ item: d, SC, catIcon, onClose, onEdit, onQR, onRent, 
 
         {/* Action footer */}
         <div style={{ padding: '12px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8, flexShrink: 0 }}>
-          <button onClick={() => onEdit(d)} style={{ flex: 1, padding: '9px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'transparent', color: C.gray, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>✏ Edit</button>
-          <button onClick={() => onQR(d)} style={{ padding: '9px 14px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'transparent', color: C.gray, fontSize: 12, cursor: 'pointer' }}>QR</button>
+          <button onClick={() => onEdit(d)} aria-label="Edit item" title="Edit item" style={{ flex: 1, padding: '9px', minHeight: 44, borderRadius: 8, border: `1px solid ${C.border}`, background: 'transparent', color: C.gray, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>✏ Edit</button>
+          <button onClick={() => onQR(d)} aria-label="Show QR code" title="Show QR code" style={{ padding: '9px 14px', minHeight: 44, minWidth: 44, borderRadius: 8, border: `1px solid ${C.border}`, background: 'transparent', color: C.gray, fontSize: 12, cursor: 'pointer' }}>QR</button>
           {isGown && d.status === 'available' && (
-            <button onClick={() => onRent(d)} style={{ flex: 1, padding: '9px', borderRadius: 8, border: 'none', background: C.rosa, color: C.white, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Rent dress →</button>
+            <button onClick={() => onRent(d)} style={{ flex: 1, padding: '9px', minHeight: 44, borderRadius: 8, border: 'none', background: C.rosa, color: C.white, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Rent dress →</button>
           )}
           {isGown && DRESS_TRANSITIONS[d.status]?.next && (
-            <button onClick={() => onLifecycle(d)} style={{ flex: 1, padding: '9px', borderRadius: 8, border: 'none', background: C.rosaPale, color: C.rosa, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>{DRESS_TRANSITIONS[d.status].label}</button>
+            <button onClick={() => onLifecycle(d)} style={{ flex: 1, padding: '9px', minHeight: 44, borderRadius: 8, border: 'none', background: C.rosaPale, color: C.rosa, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>{DRESS_TRANSITIONS[d.status].label}</button>
           )}
         </div>
       </div>
@@ -1044,8 +1048,8 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
             </div>
           ):<div style={{position:'absolute',top:8,left:8}}><Badge text={d.sku} bg="rgba(0,0,0,0.45)" color="#fff"/></div>}
           <div style={{position:'absolute',top:8,right:8}}><Badge text={s.label} bg={s.bg} color={s.col}/></div>
-          {!bulkMode&&<><button onClick={e=>{e.stopPropagation();setQrDress(d);}} style={{position:'absolute',bottom:8,right:8,background:'rgba(255,255,255,0.9)',border:`1px solid ${C.border}`,borderRadius:6,padding:'3px 7px',fontSize:10,cursor:'pointer',color:C.gray}}>QR</button>
-          <button onClick={e=>{e.stopPropagation();setEditItem(d);}} style={{position:'absolute',bottom:8,left:8,background:'rgba(255,255,255,0.9)',border:`1px solid ${C.border}`,borderRadius:6,padding:'3px 7px',fontSize:10,cursor:'pointer',color:C.gray}}>✏ Edit</button></>}
+          {!bulkMode&&<><button onClick={e=>{e.stopPropagation();setQrDress(d);}} aria-label="Show QR code" title="Show QR code" style={{position:'absolute',bottom:8,right:8,background:'rgba(255,255,255,0.9)',border:`1px solid ${C.border}`,borderRadius:6,padding:'3px 7px',fontSize:10,cursor:'pointer',color:C.gray}}>QR</button>
+          <button onClick={e=>{e.stopPropagation();setEditItem(d);}} aria-label="Edit item" title="Edit item" style={{position:'absolute',bottom:8,left:8,background:'rgba(255,255,255,0.9)',border:`1px solid ${C.border}`,borderRadius:6,padding:'3px 7px',fontSize:10,cursor:'pointer',color:C.gray}}>✏ Edit</button></>}
         </div>
         <div style={{padding:'10px 12px'}}>
           <div style={{fontSize:13,fontWeight:500,color:C.ink,marginBottom:2}}>{d.name}</div>
@@ -1179,7 +1183,7 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
             <div style={{fontSize:11,color:'#92400E',marginTop:1}}>{lowStockItems.slice(0,3).map(i=>i.name).join(', ')}{lowStockItems.length>3?` +${lowStockItems.length-3} more`:''}</div>
           </div>
           <button onClick={()=>{setLowStockFilter(true);setLowStockBannerDismissed(true);}} style={{padding:'4px 12px',borderRadius:6,border:'1px solid #FCD34D',background:'#FDE68A',color:'#92400E',fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>Filter →</button>
-          <button onClick={()=>setLowStockBannerDismissed(true)} style={{background:'none',border:'none',fontSize:16,color:'#92400E',cursor:'pointer',lineHeight:1,padding:'0 2px'}}>×</button>
+          <button onClick={()=>setLowStockBannerDismissed(true)} aria-label="Dismiss low stock alert" title="Dismiss low stock alert" style={{background:'none',border:'none',fontSize:16,color:'#92400E',cursor:'pointer',lineHeight:1,padding:'0 2px'}}>×</button>
         </div>
       )}
 
@@ -1202,7 +1206,7 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
           <span style={{fontSize:15,lineHeight:1}}>⚠</span>
           <span style={{fontSize:12,fontWeight:600,color:'#92400E',flex:1}}>{lowStockCount} item{lowStockCount!==1?'s':''} need restocking</span>
           <button onClick={()=>{setLowStockFilter(true);setLowStockBannerDismissed(true);}} style={{padding:'4px 12px',borderRadius:6,border:`1px solid #FCD34D`,background:'#FDE68A',color:'#92400E',fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>Filter by low stock →</button>
-          <button onClick={()=>setLowStockBannerDismissed(true)} style={{background:'none',border:'none',fontSize:16,color:'#92400E',cursor:'pointer',lineHeight:1,padding:'0 2px'}}>×</button>
+          <button onClick={()=>setLowStockBannerDismissed(true)} aria-label="Dismiss low stock alert" title="Dismiss low stock alert" style={{background:'none',border:'none',fontSize:16,color:'#92400E',cursor:'pointer',lineHeight:1,padding:'0 2px'}}>×</button>
         </div>
       )}
 
@@ -1224,18 +1228,18 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
           <option value="overdue">Overdue</option>
           <option value="low_stock">Low stock</option>
         </select>
-        <button onClick={()=>{setLowStockFilter(f=>!f);setLowStockBannerDismissed(true);}} style={{padding:'6px 12px',borderRadius:6,border:`1.5px solid ${lowStockFilter?'#DC2626':'#FCA5A5'}`,background:lowStockFilter?'#FEE2E2':'#FEF2F2',color:lowStockFilter?'#DC2626':'#B91C1C',fontSize:11,fontWeight:600,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
+        <button onClick={()=>{setLowStockFilter(f=>!f);setLowStockBannerDismissed(true);}} style={{padding:'6px 12px',minHeight:44,borderRadius:6,border:`1.5px solid ${lowStockFilter?'#DC2626':'#FCA5A5'}`,background:lowStockFilter?'#FEE2E2':'#FEF2F2',color:lowStockFilter?'#DC2626':'#B91C1C',fontSize:11,fontWeight:600,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
           {lowStockFilter?'✕ Clear':'⚠ Low stock'}{lowStockCount>0&&!lowStockFilter?` (${lowStockCount})`:''}
         </button>
         <div style={{display:'flex',border:`1px solid ${C.border}`,borderRadius:6,overflow:'hidden',flexShrink:0}}>
-          {[['grid','▦ Grid'],['list','☰ List'],['bycat','⊞ Category']].map(([v,lbl])=>(
-            <button key={v} onClick={()=>setView(v)} style={{padding:'6px 12px',border:'none',background:view===v?C.rosaPale:'transparent',color:view===v?C.rosa:C.gray,cursor:'pointer',fontSize:11,fontWeight:view===v?600:400,borderRight:v!=='bycat'?`1px solid ${C.border}`:'none'}}>
+          {[['grid','▦ Grid','Grid view'],['list','☰ List','List view'],['bycat','⊞ Category','Category view']].map(([v,lbl,ariaLbl])=>(
+            <button key={v} onClick={()=>setView(v)} aria-label={ariaLbl} title={ariaLbl} aria-pressed={view===v} style={{padding:'6px 12px',minHeight:44,minWidth:44,border:'none',background:view===v?C.rosaPale:'transparent',color:view===v?C.rosa:C.gray,cursor:'pointer',fontSize:11,fontWeight:view===v?600:400,borderRight:v!=='bycat'?`1px solid ${C.border}`:'none'}}>
               {lbl}
             </button>
           ))}
         </div>
         <button onClick={()=>{setBulkMode(b=>!b);setSelectedIds(new Set());setBulkStatus('');}}
-          style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${bulkMode?C.rosa:C.border}`,background:bulkMode?C.rosaPale:'transparent',color:bulkMode?C.rosa:C.gray,fontSize:11,fontWeight:bulkMode?600:400,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
+          style={{padding:'6px 12px',minHeight:44,borderRadius:6,border:`1px solid ${bulkMode?C.rosa:C.border}`,background:bulkMode?C.rosaPale:'transparent',color:bulkMode?C.rosa:C.gray,fontSize:11,fontWeight:bulkMode?600:400,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
           {bulkMode?'✕ Cancel':'⊡ Select'}
         </button>
       </div>

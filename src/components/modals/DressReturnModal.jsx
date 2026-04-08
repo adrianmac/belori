@@ -23,6 +23,8 @@ export const DressReturnModal = ({ dress, onClose, onUpdate }) => {
   const [step, setStep] = useState(2);
   const [condition, setCondition] = useState(defaultCondition);
   const [returnNotes, setReturnNotes] = useState('');
+  const [damageDescription, setDamageDescription] = useState('');
+  const [repairCost, setRepairCost] = useState('');
   const [damageFee, setDamageFee] = useState(0);
   const [lateFeeWaive, setLateFeeWaive] = useState(false);
   const [payMethod, setPayMethod] = useState('cash');
@@ -111,8 +113,39 @@ export const DressReturnModal = ({ dress, onClose, onUpdate }) => {
             )}
             <div>
               <div style={LBL}>Return notes{condition === 'needs_repair' ? ' (required)' : conditionDegraded ? ' (recommended)' : ' (optional)'}</div>
-              <textarea value={returnNotes} onChange={e => setReturnNotes(e.target.value)} rows={2} placeholder="Describe any issues, damage, or wear…" style={{ ...inputSt, resize: 'vertical' }} />
+              <textarea value={returnNotes} onChange={e => setReturnNotes(e.target.value)} onInput={e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} rows={2} placeholder="Describe any issues, damage, or wear…" style={{ ...inputSt, resize: 'vertical' }} />
             </div>
+            {/* Task 2: Extra damage fields when condition is needs_repair or fair */}
+            {(condition === 'needs_repair' || condition === 'fair') && (
+              <div style={{ background: '#FFF8F8', border: '1px solid #FCA5A5', borderRadius: 10, padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#B91C1C', letterSpacing: '0.06em' }}>DAMAGE ASSESSMENT</div>
+                <div>
+                  <div style={LBL}>Damage description</div>
+                  <textarea
+                    value={damageDescription}
+                    onChange={e => setDamageDescription(e.target.value)}
+                    onInput={e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+                    rows={2}
+                    placeholder="e.g. Torn hem on left side, missing button at waist…"
+                    style={{ ...inputSt, resize: 'vertical', borderColor: '#FCA5A5' }}
+                  />
+                </div>
+                <div>
+                  <div style={LBL}>Estimated repair cost ($)</div>
+                  <input
+                    type="number"
+                    min="0"
+                    value={repairCost}
+                    onChange={e => { setRepairCost(e.target.value); setDamageFee(Math.max(0, Number(e.target.value))); }}
+                    placeholder="0.00"
+                    style={{ ...inputSt, borderColor: '#FCA5A5' }}
+                  />
+                </div>
+                <div style={{ fontSize: 11, color: '#B91C1C', fontStyle: 'italic' }}>
+                  A damage note will be appended to this dress's records upon confirmation.
+                </div>
+              </div>
+            )}
             {condition === 'needs_repair' && !returnNotes.trim() && <div style={{ fontSize: 11, color: 'var(--color-danger)' }}>Please describe the damage before continuing</div>}
           </div>
         )}
@@ -169,10 +202,17 @@ export const DressReturnModal = ({ dress, onClose, onUpdate }) => {
               <GhostBtn label="← Back" onClick={() => setStep(2)} />
               <PrimaryBtn label={saving ? 'Saving…' : 'Confirm return'} colorScheme="success" onClick={async () => {
                 setSaving(true);
+                // Build damage note to append to dress notes
+                let notesValue = returnNotes.trim() || null;
+                if ((condition === 'needs_repair' || condition === 'fair') && damageDescription.trim()) {
+                  const dateStr = new Date().toISOString().split('T')[0];
+                  const dmgNote = `[DAMAGE ${dateStr}] ${damageDescription.trim()}${repairCost ? ` - Est. repair: $${parseFloat(repairCost).toFixed(2)}` : ''}`;
+                  notesValue = notesValue ? `${notesValue}\n${dmgNote}` : dmgNote;
+                }
                 await onUpdate(dress.id, {
                   status: 'returned',
                   condition,
-                  notes: returnNotes.trim() || null,
+                  notes: notesValue,
                   return_date_confirmed: new Date().toISOString().slice(0, 10),
                   damageFee,
                   lateFee,

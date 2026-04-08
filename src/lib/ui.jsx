@@ -1,4 +1,4 @@
-import React, { useState, useCallback, createContext, useContext } from "react";
+import React, { useState, useCallback, useEffect, useRef, createContext, useContext } from "react";
 import { C, SVC_LABELS, SVC_COLORS, EVT_TYPES, pct } from "./colors";
 import { getCountdownConfig } from "./urgency";
 import { useLayoutMode } from "../hooks/useLayoutMode.jsx";
@@ -280,6 +280,55 @@ export const Topbar = ({title,subtitle,actions}) => {
     </div>
   );
 };
+// ─── SCROLL SHADOW ─────────────────────────────────────────────────────────
+export function ScrollShadow({ children, maxHeight, style }) {
+  const ref = useRef(null);
+  const [showTop, setShowTop] = useState(false);
+  const [showBottom, setShowBottom] = useState(false);
+
+  const check = () => {
+    const el = ref.current;
+    if (!el) return;
+    setShowTop(el.scrollTop > 8);
+    setShowBottom(el.scrollTop < el.scrollHeight - el.clientHeight - 8);
+  };
+
+  useEffect(() => { check(); }, []);
+
+  return (
+    <div style={{ position: 'relative', ...style }}>
+      {showTop && (
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: 16,
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.08), transparent)',
+          zIndex: 1, pointerEvents: 'none'
+        }}/>
+      )}
+      <div ref={ref} onScroll={check} style={{ overflowY: 'auto', maxHeight }}>
+        {children}
+      </div>
+      {showBottom && (
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 16,
+          background: 'linear-gradient(to top, rgba(0,0,0,0.08), transparent)',
+          zIndex: 1, pointerEvents: 'none'
+        }}/>
+      )}
+    </div>
+  );
+}
+
+// ─── AUTO-RESIZE HOOK ──────────────────────────────────────────────────────
+export function useAutoResize(ref) {
+  const resize = useCallback(() => {
+    if (!ref.current) return;
+    ref.current.style.height = 'auto';
+    ref.current.style.height = ref.current.scrollHeight + 'px';
+  }, [ref]);
+  useEffect(() => { resize(); }, [resize]);
+  return resize;
+}
+
 export const AlertBanner = ({msg,action,onAction}) => {
   const { isTablet } = useLayoutMode();
   return (

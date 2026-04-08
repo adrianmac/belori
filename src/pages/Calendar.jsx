@@ -476,10 +476,11 @@ export default function Calendar({ events = [], setScreen, setSelectedEvent, sta
                   const displayName = getApptDisplayName(a, clientByEventId);
                   const standalone = isStandalone(a);
                   const label = APPT_TYPE_LABEL[a.type] || a.type;
+                  const noteTitle = a.note ? `\nNote: ${a.note}` : '';
                   return (
                     <div
                       key={a.id}
-                      title={`${isNoShow ? '⚠️ No-show — ' : ''}${label}${displayName ? ` — ${displayName}` : ''}${standalone ? ' (walk-in)' : ''}`}
+                      title={`${isNoShow ? '⚠️ No-show — ' : ''}${label}${displayName ? ` — ${displayName}` : ''}${standalone ? ' (walk-in)' : ''}${noteTitle}`}
                       style={{
                         fontSize: 10,
                         fontWeight: 500,
@@ -495,9 +496,15 @@ export default function Calendar({ events = [], setScreen, setSelectedEvent, sta
                         lineHeight: '16px',
                         textDecoration: isNoShow ? 'line-through' : 'none',
                         opacity: isNoShow ? 0.8 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
                       }}
                     >
-                      {isNoShow ? '⚠️ ' : (standalone ? '🚶 ' : '')}{displayName || label}
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                        {isNoShow ? '⚠️ ' : (standalone ? '🚶 ' : '')}{displayName || label}
+                      </span>
+                      {a.note && <span style={{ flexShrink: 0, fontSize: 9, opacity: 0.8 }}>📝</span>}
                     </div>
                   );
                 })}
@@ -700,7 +707,7 @@ export default function Calendar({ events = [], setScreen, setSelectedEvent, sta
                   const apptContent = (
                     <div
                       onClick={() => !standalone && a.event && navigateToEvent(a.event)}
-                      title={`${formatTime(a.time)} — ${APPT_TYPE_LABEL[a.type] || a.type}${displayName ? ` · ${displayName}` : ''}${standalone ? ' (walk-in)' : ''} · Drag to reschedule`}
+                      title={`${formatTime(a.time)} — ${APPT_TYPE_LABEL[a.type] || a.type}${displayName ? ` · ${displayName}` : ''}${standalone ? ' (walk-in)' : ''}${a.note ? `\nNote: ${a.note}` : ''} · Drag to reschedule`}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -717,12 +724,18 @@ export default function Calendar({ events = [], setScreen, setSelectedEvent, sta
                     >
                       <div style={{ fontSize: 10, fontWeight: 600, color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {standalone ? '🚶 ' : ''}{displayName || APPT_TYPE_LABEL[a.type] || a.type}
+                        {a.note && <span style={{ fontSize: 9, marginLeft: 3, opacity: 0.8 }}>📝</span>}
                       </div>
                       <div style={{ fontSize: 9, color: C.gray, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {formatTime(a.time)}{` · ${APPT_TYPE_LABEL[a.type] || a.type}`}
                       </div>
                       {a.status === 'confirmed' && (
                         <div style={{ fontSize: 8, color: '#16A34A', fontWeight: 700, marginTop: 1 }}>✓ confirmed</div>
+                      )}
+                      {a.note && (
+                        <div style={{ fontSize: 9, color: C.gray, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontStyle: 'italic', marginTop: 1 }}>
+                          {a.note}
+                        </div>
                       )}
                     </div>
                   );
@@ -879,7 +892,7 @@ export default function Calendar({ events = [], setScreen, setSelectedEvent, sta
                               <div
                                 key={a.id}
                                 onClick={() => !standalone && a.event && navigateToEvent(a.event)}
-                                title={`${formatTime(a.time)} — ${APPT_TYPE_LABEL[a.type] || a.type}${displayName ? ` · ${displayName}` : ''}${standalone ? ' (walk-in)' : ''}`}
+                                title={`${formatTime(a.time)} — ${APPT_TYPE_LABEL[a.type] || a.type}${displayName ? ` · ${displayName}` : ''}${standalone ? ' (walk-in)' : ''}${a.note ? `\nNote: ${a.note}` : ''}`}
                                 style={{
                                   background: standalone ? '#FFFBEB' : color + '20',
                                   borderLeft: `3px solid ${color}`,
@@ -892,10 +905,16 @@ export default function Calendar({ events = [], setScreen, setSelectedEvent, sta
                               >
                                 <div style={{ fontSize: 10, fontWeight: 600, color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                   {standalone ? '🚶 ' : ''}{displayName || APPT_TYPE_LABEL[a.type] || a.type}
+                                  {a.note && <span style={{ fontSize: 9, marginLeft: 3, opacity: 0.8 }}>📝</span>}
                                 </div>
                                 <div style={{ fontSize: 10, color: C.gray, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                   {formatTime(a.time)}{` · ${APPT_TYPE_LABEL[a.type] || a.type}`}
                                 </div>
+                                {a.note && (
+                                  <div style={{ fontSize: 9, color: C.gray, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontStyle: 'italic', marginTop: 1 }}>
+                                    {a.note}
+                                  </div>
+                                )}
                               </div>
                             );
                           })}

@@ -1140,8 +1140,12 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
     if (emailSent) {
       toast(`Receipt sent to ${clientEmail}`);
     } else {
-      await navigator.clipboard.writeText(receiptUrl).catch(()=>{});
-      toast('Receipt link copied — email not configured yet. Log recorded.');
+      try {
+        await navigator.clipboard.writeText(receiptUrl);
+        toast('Receipt link copied — email not configured yet. Log recorded.');
+      } catch {
+        toast('Could not copy — please copy manually', 'warn');
+      }
     }
   }
 
@@ -1187,17 +1191,26 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
         headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
       });
       if (error || !data?.url) { toast('Could not generate link', 'error'); return; }
-      await navigator.clipboard.writeText(data.url);
+      try {
+        await navigator.clipboard.writeText(data.url);
+        toast('Payment link created & copied to clipboard ✓');
+      } catch {
+        toast('Could not copy — please copy manually', 'warn');
+      }
       setCopiedPayLinkId(m.id);
       setTimeout(() => setCopiedPayLinkId(null), 2000);
-      toast('Payment link created & copied to clipboard ✓');
       await refetchEvent();
     } catch { toast('Could not generate link', 'error'); }
   };
 
-  const copyContractLink = (c) => {
+  const copyContractLink = async (c) => {
     const link = `${window.location.origin}/sign/${c.sign_token}`;
-    navigator.clipboard.writeText(link);
+    try {
+      await navigator.clipboard.writeText(link);
+      toast('Contract link copied ✓', 'success');
+    } catch {
+      toast('Could not copy — please copy manually', 'warn');
+    }
     setCopiedContractId(c.id);
     setTimeout(()=>setCopiedContractId(null),2000);
   };
@@ -1309,9 +1322,9 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${title.replace(/\s+/g,'-').toLowerCase()}.ics`;a.click();URL.revokeObjectURL(a.href);
                     toast('Calendar file downloaded ✓');
                   }},
-                  { label:'🔗 Copy event link',      action:()=>{navigator.clipboard.writeText(window.location.href).then(()=>toast('Internal link copied ✓'));} },
-                  { label:'🪪 Copy client portal',   action:()=>{if(!liveEvent?.portal_token){toast('Portal link not available','error');return;}navigator.clipboard.writeText(`${window.location.origin}/portal/${liveEvent.portal_token}`).then(()=>toast('Portal link copied!'));} },
-                  { label:'📝 Copy questionnaire',   action:()=>{if(!liveEvent?.portal_token){toast('Portal link not available','error');return;}navigator.clipboard.writeText(`${window.location.origin}/questionnaire/${liveEvent.portal_token}`).then(()=>toast('Questionnaire link copied!'));} },
+                  { label:'🔗 Copy event link',      action:async()=>{ try { await navigator.clipboard.writeText(window.location.href); toast('Internal link copied ✓'); } catch { toast('Could not copy — please copy manually','warn'); } } },
+                  { label:'🪪 Copy client portal',   action:async()=>{ if(!liveEvent?.portal_token){toast('Portal link not available','error');return;} try { await navigator.clipboard.writeText(`${window.location.origin}/portal/${liveEvent.portal_token}`); toast('Portal link copied!'); } catch { toast('Could not copy — please copy manually','warn'); } } },
+                  { label:'📝 Copy questionnaire',   action:async()=>{ if(!liveEvent?.portal_token){toast('Portal link not available','error');return;} try { await navigator.clipboard.writeText(`${window.location.origin}/questionnaire/${liveEvent.portal_token}`); toast('Questionnaire link copied!'); } catch { toast('Could not copy — please copy manually','warn'); } } },
                   ...(myRole==='owner'&&deleteEvent ? [{ label:'🗑️ Delete event', action:()=>setShowDeleteConfirm(true), danger:true }] : []),
                 ].map((item,i)=>(
                   <button key={i} onClick={()=>{item.action();setShowOverflow(false);}}
@@ -1943,9 +1956,13 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
               <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',flexShrink:0}}>
                 <button
                   onClick={async()=>{
-                    await navigator.clipboard.writeText(aiContractText);
-                    setAiContractCopied(true);
-                    setTimeout(()=>setAiContractCopied(false),2000);
+                    try {
+                      await navigator.clipboard.writeText(aiContractText);
+                      setAiContractCopied(true);
+                      setTimeout(()=>setAiContractCopied(false),2000);
+                    } catch {
+                      toast('Could not copy — please copy manually','warn');
+                    }
                   }}
                   style={{padding:'7px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:aiContractCopied?C.greenBg:C.white,color:aiContractCopied?C.green:C.gray,fontSize:12,cursor:'pointer',fontWeight:500,minHeight:'unset'}}
                 >{aiContractCopied?'Copied ✓':'Copy to clipboard'}</button>

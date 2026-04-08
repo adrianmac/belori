@@ -160,7 +160,7 @@ const BulkMessageModal = ({ clients, boutiqueName, boutiqueId, onClose }) => {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-      <div style={{ background: '#fff', borderRadius: 16, width: 620, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.18)', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', borderRadius: 16, maxWidth: '90vw', width: 620, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.18)', overflow: 'hidden' }}>
 
         {/* Header */}
         <div style={{ padding: '18px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
@@ -587,21 +587,27 @@ const BulkSmsModal = ({ clients, boutiqueName, boutiqueId, onClose, toast }) => 
     if (!message.trim() || !eligible.length) return;
     if (requiresConfirmation && !confirmed) return;
     setSending(true);
-    let ok = 0;
+    const results = [];
     for (const cl of eligible) {
       const msg = message.replace(/\{\{name\}\}/g, cl.name||'there').replace(/\{\{boutique\}\}/g, boutiqueName||'us');
       const { error } = await supabase.functions.invoke('send-sms', { body: { client_id: cl.id, message: msg } });
-      if (!error) {
+      const success = !error;
+      if (success) {
         await supabase.from('client_interactions').insert({
           boutique_id: boutiqueId, client_id: cl.id, type: 'sms_blast',
           title: 'Bulk SMS sent', body: msg, occurred_at: new Date().toISOString(), is_editable: false,
         });
-        ok++;
       }
+      results.push({ name: cl.name, success });
       // Rate limiting: small delay between sends
       await new Promise(r => setTimeout(r, 100));
     }
-    toast(`SMS sent to ${ok} of ${eligible.length} clients ✓`);
+    const sentCount = results.filter(r => r.success).length;
+    const failedClients = results.filter(r => !r.success).map(r => r.name);
+    toast(`SMS sent to ${sentCount} of ${results.length} client${results.length !== 1 ? 's' : ''} ✓`);
+    if (failedClients.length > 0) {
+      toast(`Failed: ${failedClients.join(', ')}`, 'warn');
+    }
     onClose();
   };
 
@@ -747,8 +753,15 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
     if(autoSelect){sessionStorage.removeItem('belori_select_client');const cl=liveClients.find(c=>c.id===autoSelect);if(cl)setSelCl(cl);}
   },[liveClients]);
 
+  // Debounced search value (300ms)
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
   // Reset pagination when search or filter changes
-  useEffect(() => { setPage(1); }, [search, filter, tierFilter, sortCol, sortDir]);
+  useEffect(() => { setPage(1); }, [debouncedSearch, filter, tierFilter, sortCol, sortDir]);
 
   // Bulk selection helpers
   const anyBulkSelected = bulkSelected.size > 0;
@@ -801,8 +814,8 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
   };
 
   const filtered = rawClients.filter(cl => {
-    if (search) {
-      const q = search.toLowerCase();
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
       const name = (cl.name || `${cl.firstName || ''} ${cl.lastName || ''}`).toLowerCase();
       if (!name.includes(q) && !(cl.phone || '').includes(q)) return false;
     }
