@@ -59,6 +59,7 @@ const PromoCodesPage   = lazy(() => import('./PromoCodesPage'));
 const FunnelPage       = lazy(() => import('./FunnelPage'));
 const MyTasksPage      = lazy(() => import('./MyTasksPage'));
 const HelpPage         = lazy(() => import('./HelpPage'));
+const ActivityFeed     = lazy(() => import('./ActivityFeed'));
 
 // ─── Brand color helpers ─────────────────────────────────────────────────
 function hexToPale(hex) {
@@ -385,6 +386,7 @@ export default function NovelApp() {
       case 'roadmap':       return <RoadmapPage />;
       case 'sms_inbox':     return <SmsInboxPage />;
       case 'help':          return <Suspense fallback={<PageLoading/>}><HelpPage /></Suspense>;
+      case 'activity_feed': return <Suspense fallback={<PageLoading/>}><ActivityFeed setScreen={goScreen}/></Suspense>;
       default:              return <Dashboard setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} payments={payments} inventory={inventory} boutique={boutique} clients={clients} staff={staff}/>;
     }
   };

@@ -25,6 +25,7 @@ import EventTasksCard from './event-detail/EventTasksCard';
 import StaffNotesCard from './event-detail/StaffNotesCard';
 import ContractsCard from './event-detail/ContractsCard';
 import EventRunsheet from './event-detail/EventRunsheet';
+import EventVendorsCard from './event-detail/EventVendorsCard';
 import { useBridalParty } from '../hooks/useBridalParty';
 import { useEventFiles } from '../hooks/useEventFiles';
 import { useGuests } from '../hooks/useGuests';
@@ -474,6 +475,16 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
     const currentStaffMember = staff.find(s => s.user_id === session?.user?.id);
     const doneByName = currentStaffMember?.name || myRole || 'Staff';
     toggleLiveTask(tasks[i].id, !tasks[i].done, doneByName);
+  };
+  const markAllAlertsDone = async () => {
+    const alertTasks = tasks.filter(t => t.alert && !t.done);
+    if (!alertTasks.length) return;
+    const currentStaffMember = staff.find(s => s.user_id === session?.user?.id);
+    const doneByName = currentStaffMember?.name || myRole || 'Staff';
+    for (const t of alertTasks) {
+      await toggleLiveTask(t.id, true, doneByName);
+    }
+    toast(`${alertTasks.length} alert task${alertTasks.length!==1?'s':''} marked done`);
   };
   const [note,setNote]=useState('');
   const [showPrint,setShowPrint]=useState(false);
@@ -1548,6 +1559,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
             { key: 'guests', label: `👥 Guests${guestListData.length > 0 ? ` (${guestListData.length})` : ''}` },
             { key: 'notes', label: '📝 Notes' },
             { key: 'files', label: '📎 Files' },
+            { key: 'vendors', label: '🤝 Vendors' },
             // planning tab hidden until Wedding Planner add-on ships
           ].map(tab => (
             <button key={tab.key} onClick={()=>setCoordTab(tab.key)} style={{flexShrink:0,padding:'12px 14px',border:'none',background:'none',color:coordTab===tab.key?C.rosa:C.gray,fontSize:12,fontWeight:coordTab===tab.key?600:400,cursor:'pointer',whiteSpace:'nowrap',borderBottom:coordTab===tab.key?`2px solid ${C.rosa}`:'2px solid transparent',marginBottom:-1,display:'flex',alignItems:'center',gap:5}}>
@@ -1738,6 +1750,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                 setShowAddTask={setShowAddTask}
                 toggleTask={toggleTask}
                 addTask={addTask}
+                markAllAlertsDone={markAllAlertsDone}
                 ev={ev}
                 staff={staff}
               />
@@ -1823,6 +1836,11 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
             <FilesPanel files={files} filesLoading={filesLoading} uploadFile={uploadFile} deleteFile={deleteFile} getPublicUrl={getPublicUrl} formatBytes={formatBytes} getFileIcon={getFileIcon} toast={toast} />
           )}
 
+          {/* VENDORS TAB */}
+          {coordTab === 'vendors' && (
+            <EventVendorsCard eventId={eventId}/>
+          )}
+
         </div>{/* end coordinator tab panels */}
 
         </>)}{/* end coordinator role */}
@@ -1834,7 +1852,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
       {/* ── AI CONTRACT DRAFT MODAL ── */}
       {showAIContractModal&&(
         <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1010,padding:16}}>
-          <div style={{background:C.white,borderRadius:16,width:'100%',maxWidth:640,maxHeight:'88vh',display:'flex',flexDirection:'column',boxShadow:'0 24px 60px rgba(0,0,0,0.2)'}}>
+          <div style={{background:C.white,borderRadius:16,width:'100%',maxWidth:640,maxHeight:'88dvh',display:'flex',flexDirection:'column',boxShadow:'0 24px 60px rgba(0,0,0,0.2)'}}>
             <div style={{padding:'16px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <div>
                 <div style={{fontSize:16,fontWeight:600,color:C.ink}}>🤖 AI Contract Draft</div>
@@ -2005,7 +2023,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
       {/* ── ADD ALTERATION MODAL ── */}
       {showAddAlt&&(
         <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-          <div style={{background:C.white,borderRadius:16,width:440,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+          <div style={{background:C.white,borderRadius:16,width:440,maxHeight:'88dvh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
             <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Add alteration job</span>
               <button onClick={()=>setShowAddAlt(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
@@ -2148,7 +2166,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
       {/* ── EDIT INSPIRATION MODAL ── */}
       {showEditInspiration&&(
         <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-          <div style={{background:C.white,borderRadius:16,width:460,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+          <div style={{background:C.white,borderRadius:16,width:460,maxHeight:'88dvh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
             <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Vision & inspiration</span>
               <button onClick={()=>setShowEditInspiration(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
@@ -2198,7 +2216,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
       {/* ── EDIT EVENT MODAL ── */}
       {showEditEvent&&(
         <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-          <div style={{background:C.white,borderRadius:16,width:460,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+          <div style={{background:C.white,borderRadius:16,width:460,maxHeight:'88dvh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
             <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Edit event details</span>
               <button onClick={()=>setShowEditEvent(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
@@ -2347,7 +2365,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
       {/* ── EMAIL COMPOSER ── */}
       {showEmailComposer && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-          <div style={{background:C.white,borderRadius:16,width:'100%',maxWidth:520,boxShadow:'0 20px 60px rgba(0,0,0,0.2)',display:'flex',flexDirection:'column',maxHeight:'90vh'}}>
+          <div style={{background:C.white,borderRadius:16,width:'100%',maxWidth:520,boxShadow:'0 20px 60px rgba(0,0,0,0.2)',display:'flex',flexDirection:'column',maxHeight:'90dvh'}}>
             {/* Header */}
             <div style={{padding:'16px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <span style={{fontSize:15,fontWeight:600,color:C.ink}}>✉️ Email client</span>

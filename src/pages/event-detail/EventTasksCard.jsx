@@ -17,6 +17,7 @@ const EventTasksCard = ({
   setShowAddTask,
   toggleTask,
   addTask,
+  markAllAlertsDone,
   ev,
   staff = [],
 }) => {
@@ -164,6 +165,13 @@ const EventTasksCard = ({
                 </div>
               )}
             </div>
+          )}
+          {markAllAlertsDone && tasks.filter(t=>t.alert&&!t.done).length>0 && (
+            <button
+              onClick={markAllAlertsDone}
+              style={{padding:'4px 10px',borderRadius:7,border:`1px solid ${C.border}`,background:C.white,color:C.gray,fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>
+              ✓ All alerts done
+            </button>
           )}
           <button onClick={() => setShowAddTask(true)} className="card-header-action">+ Add task</button>
         </div>

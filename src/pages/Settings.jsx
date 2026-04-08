@@ -2658,7 +2658,8 @@ const Settings = ({boutique, initialTab, setScreen}) => {
                 <span style={{fontFamily:'monospace',background:C.grayBg,padding:'1px 5px',borderRadius:4,fontSize:11}}>{'{name}'}</span>&nbsp;
                 <span style={{fontFamily:'monospace',background:C.grayBg,padding:'1px 5px',borderRadius:4,fontSize:11}}>{'{amount}'}</span>&nbsp;
                 <span style={{fontFamily:'monospace',background:C.grayBg,padding:'1px 5px',borderRadius:4,fontSize:11}}>{'{days}'}</span>&nbsp;
-                <span style={{fontFamily:'monospace',background:C.grayBg,padding:'1px 5px',borderRadius:4,fontSize:11}}>{'{boutique_name}'}</span>
+                <span style={{fontFamily:'monospace',background:C.grayBg,padding:'1px 5px',borderRadius:4,fontSize:11}}>{'{boutique_name}'}</span>&nbsp;
+                <span style={{fontFamily:'monospace',background:C.grayBg,padding:'1px 5px',borderRadius:4,fontSize:11}}>{'{return_date}'}</span>
               </div>
               <div style={{padding:'8px 16px 8px',display:'flex',flexDirection:'column',gap:16}}>
                 {[
@@ -2675,6 +2676,36 @@ const Settings = ({boutique, initialTab, setScreen}) => {
                       style={{...inputSt,resize:'vertical',width:'100%',boxSizing:'border-box',fontFamily:'inherit',lineHeight:1.5}}
                     />
                     <div style={{fontSize:11,color:C.gray,marginTop:3}}>{tmpl.hint}</div>
+                    {(smsTemplates[tmpl.key]||'').trim() && (
+                      <div style={{marginTop:8,background:'#F0FDF4',border:'1px solid #BBF7D0',borderRadius:8,padding:'10px 12px'}}>
+                        <div style={{fontSize:10,fontWeight:600,color:'#065F46',marginBottom:4,letterSpacing:'0.05em',textTransform:'uppercase'}}>Preview</div>
+                        <div style={{fontSize:13,color:'#065F46',lineHeight:1.5,fontFamily:'monospace'}}>
+                          {(smsTemplates[tmpl.key]||'')
+                            .replace(/\{name\}/g,'María García')
+                            .replace(/\{amount\}/g,'$450.00')
+                            .replace(/\{days\}/g,'3')
+                            .replace(/\{boutique_name\}/g,boutique?.name||'Your Boutique')
+                            .replace(/\{return_date\}/g,'April 12')
+                            .replace(/\{event_date\}/g,'May 15')
+                            .replace(/\{event_type\}/g,'Wedding')
+                            .replace(/\{balance\}/g,'$1,200.00')
+                          }
+                        </div>
+                        <div style={{fontSize:10,color:'#059669',marginTop:6}}>
+                          {(smsTemplates[tmpl.key]||'')
+                            .replace(/\{name\}/g,'María García')
+                            .replace(/\{amount\}/g,'$450.00')
+                            .replace(/\{days\}/g,'3')
+                            .replace(/\{boutique_name\}/g,boutique?.name||'Your Boutique')
+                            .replace(/\{return_date\}/g,'April 12')
+                            .replace(/\{event_date\}/g,'May 15')
+                            .replace(/\{event_type\}/g,'Wedding')
+                            .replace(/\{balance\}/g,'$1,200.00')
+                            .length
+                          } chars · SMS rates apply over 160 chars
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

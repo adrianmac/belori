@@ -1203,6 +1203,66 @@ export default function Calendar({ events = [], setScreen, setSelectedEvent, sta
     </button>
   );
 
+  const downloadBulkIcs = () => {
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Belori//Boutique Calendar//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:Belori Events',
+      'X-WR-TIMEZONE:America/Chicago',
+    ];
+
+    const fmt4 = (s) => s ? s.replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;') : '';
+    const dtStamp = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
+
+    (events || []).forEach(ev => {
+      if (!ev.event_date) return;
+      const uid = `event-${ev.id}@belori`;
+      const dtStart = ev.event_date.replace(/-/g, '') + 'T120000Z';
+      const dtEnd = ev.event_date.replace(/-/g, '') + 'T230000Z';
+      const summary = `${ev.client || 'Event'} ${ev.type === 'wedding' ? 'Wedding' : 'Quinceañera'}`;
+      lines.push('BEGIN:VEVENT');
+      lines.push(`UID:${uid}`);
+      lines.push(`DTSTAMP:${dtStamp}`);
+      lines.push(`DTSTART;VALUE=DATE:${ev.event_date.replace(/-/g, '')}`);
+      lines.push(`SUMMARY:${fmt4(summary)}`);
+      if (ev.venue) lines.push(`LOCATION:${fmt4(ev.venue)}`);
+      if (ev.status) lines.push(`STATUS:${ev.status === 'cancelled' ? 'CANCELLED' : 'CONFIRMED'}`);
+      lines.push('END:VEVENT');
+
+      // Add appointments for this event
+      (ev.appointments || []).forEach(appt => {
+        if (!appt.date) return;
+        const apptUid = `appt-${appt.id}@belori`;
+        const apptLabel = appt.type ? appt.type.replace(/_/g, ' ') : 'Appointment';
+        const timeStr = appt.time ? appt.time.replace(':', '').slice(0, 4) + '00' : '100000';
+        const apptDt = appt.date.replace(/-/g, '') + 'T' + timeStr + 'Z';
+        const apptEnd = appt.date.replace(/-/g, '') + 'T' + (String(parseInt(timeStr.slice(0,2)) + 1).padStart(2,'0')) + timeStr.slice(2,4) + '00Z';
+        lines.push('BEGIN:VEVENT');
+        lines.push(`UID:${apptUid}`);
+        lines.push(`DTSTAMP:${dtStamp}`);
+        lines.push(`DTSTART:${apptDt}`);
+        lines.push(`DTEND:${apptEnd}`);
+        lines.push(`SUMMARY:${fmt4(apptLabel + ' — ' + (ev.client || 'Client'))}`);
+        if (appt.note) lines.push(`DESCRIPTION:${fmt4(appt.note)}`);
+        lines.push('END:VEVENT');
+      });
+    });
+
+    lines.push('END:VCALENDAR');
+    const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'belori-calendar.ics';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Topbar title="Calendar" subtitle="Events and appointments at a glance" />
@@ -1295,6 +1355,7 @@ export default function Calendar({ events = [], setScreen, setSelectedEvent, sta
           >
             📅 Subscribe
           </button>
+          <GhostBtn label="⬇ .ics" onClick={downloadBulkIcs} style={{fontSize:12,padding:'5px 10px'}}/>
           <GhostBtn label="+ New Appointment" onClick={() => setShowStandaloneAppt(true)} />
           {todayWalkins.length > 0 && (
             <div style={{

@@ -33,6 +33,7 @@ function buildNavStructure(badges = {}, modules = {}, t = (k) => k) {
     { id: 'staff_calendar',label: t('nav_staff_calendar'), icon: 'calendar' },
     { id: 'payments',      label: t('nav_payments'),   icon: 'payments',
       ...(badges.payments  ? { badge: badges.payments, badgeColor: 'var(--color-danger)' } : {}) },
+    { id: 'activity_feed', label: 'Activity',           icon: 'activity' },
     { id: 'settings',      label: t('nav_settings'),   icon: 'settings' },
   ].filter(Boolean);
 
