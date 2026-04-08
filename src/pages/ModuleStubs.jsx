@@ -1296,9 +1296,9 @@ export const AccountingScreen = ({ payments = [], events = [] }) => {
   const [exporting, setExporting] = React.useState(false);
 
   // Financial calculations
-  const totalCollected = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount), 0);
-  const totalPending = payments.filter(p => p.status !== 'paid').reduce((sum, p) => sum + Number(p.amount), 0);
-  const overdue = payments.filter(p => p.status !== 'paid' && new Date(p.due_date) < new Date()).reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalCollected = React.useMemo(() => payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount), 0), [payments]);
+  const totalPending = React.useMemo(() => payments.filter(p => p.status !== 'paid').reduce((sum, p) => sum + Number(p.amount), 0), [payments]);
+  const overdue = React.useMemo(() => payments.filter(p => p.status !== 'paid' && new Date(p.due_date) < new Date()).reduce((sum, p) => sum + Number(p.amount), 0), [payments]);
 
   const handleExportCSV = () => {
     setExporting(true);

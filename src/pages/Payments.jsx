@@ -639,9 +639,9 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showQuickPay, setShowQuickPay] = useState(false);
 
-  const filtered = tab === 'all' ? allPayments : allPayments.filter(p => p.status === tab);
-  const totalOverdue = allPayments.filter(p => p.status === 'overdue').reduce((s, p) => s + p.amount, 0);
-  const totalPending = allPayments.filter(p => p.status === 'pending').reduce((s, p) => s + p.amount, 0);
+  const filtered = useMemo(() => tab === 'all' ? allPayments : allPayments.filter(p => p.status === tab), [tab, allPayments]);
+  const totalOverdue = useMemo(() => allPayments.filter(p => p.status === 'overdue').reduce((s, p) => s + p.amount, 0), [allPayments]);
+  const totalPending = useMemo(() => allPayments.filter(p => p.status === 'pending').reduce((s, p) => s + p.amount, 0), [allPayments]);
 
   const toggleSelect = (id) => setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const toggleAll = () => {
