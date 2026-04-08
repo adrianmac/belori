@@ -914,6 +914,8 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
   const [selectedJobs,setSelectedJobs]=useState(new Set());
   const [bulkWorking,setBulkWorking]=useState(false);
   const toast=useToast();
+  const { boutique } = useAuth();
+  const [notifyPrompt,setNotifyPrompt]=useState(null);
 
   // Auto-open new job modal from dashboard hint
   useEffect(()=>{
@@ -958,11 +960,17 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
   const handleDragEnd=(e)=>{if(e.target)e.target.style.opacity='1';setDraggedJob(null);};
   const handleDragOver=(e)=>{e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.style.background=C.grayBg;};
   const handleDragLeave=(e)=>{e.currentTarget.style.background='transparent';};
-  const handleDrop=async(e,targetStatus)=>{e.preventDefault();e.currentTarget.style.background='transparent';if(draggedJob&&draggedJob.status!==targetStatus){await updateJob?.(draggedJob.id,{status:targetStatus});}};
+  const handleDrop=async(e,targetStatus)=>{e.preventDefault();e.currentTarget.style.background='transparent';if(draggedJob&&draggedJob.status!==targetStatus){await updateJob?.(draggedJob.id,{status:targetStatus});if(targetStatus==='complete')setNotifyPrompt(draggedJob);}};
 
   const handleUpdate=async(id,updates)=>{
     const {error}=await (updateJob?.(id,updates)||Promise.resolve({error:null}));
+    if(!error&&updates.status==='complete'){const job=data.find(j=>j.id===id);if(job)setNotifyPrompt(job);}
     return {error};
+  };
+
+  const handleStatusAdvance=async(job,nextStatus)=>{
+    await updateJob?.(job.id,{status:nextStatus});
+    if(nextStatus==='complete')setNotifyPrompt(job);
   };
 
   const toggleJobSelect=(id,e)=>{
@@ -1194,7 +1202,7 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
                         <div style={{marginTop:10,display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
                           {/* Move to next status button */}
                           {nextStatus&&job.status!=='cancelled'&&(
-                            <button onClick={e=>{e.stopPropagation();updateJob?.(job.id,{status:nextStatus});}}
+                            <button onClick={e=>{e.stopPropagation();handleStatusAdvance(job,nextStatus);}}
                               style={{flex:1,background:C.ivory,border:`1px solid ${C.border}`,padding:'5px 8px',color:C.gray,fontSize:10,fontWeight:600,cursor:'pointer',borderRadius:8,textAlign:'left',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',transition:'all 0.15s'}}
                               title={`Move to ${nextLabel}`}
                               onMouseEnter={e=>{e.currentTarget.style.background='#F0FDF4';e.currentTarget.style.borderColor='var(--color-success)';e.currentTarget.style.color='var(--color-success)';}}
@@ -1315,6 +1323,33 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
       <MyJobsSidebar jobs={data} staff={staff||[]} onOpenJob={setEditJob}/>
       </div>{/* end main content flex row */}
 
+      {notifyPrompt&&(
+        <div style={{position:'fixed',bottom:24,right:24,zIndex:1100,background:C.white,borderRadius:14,padding:'16px 20px',boxShadow:'0 8px 32px rgba(0,0,0,0.15)',border:`1px solid ${C.border}`,maxWidth:340,display:'flex',flexDirection:'column',gap:10}}>
+          <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
+            <span style={{fontSize:20}}>✂️</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:600,color:C.ink}}>Job marked complete!</div>
+              <div style={{fontSize:12,color:C.gray,marginTop:2}}>Notify {notifyPrompt.client||'the client'} that their {notifyPrompt.garment||'alterations'} are ready?</div>
+            </div>
+            <button onClick={()=>setNotifyPrompt(null)} style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:16,lineHeight:1,padding:0,flexShrink:0}}>×</button>
+          </div>
+          <div style={{background:C.grayBg,borderRadius:8,padding:'8px 10px',fontSize:11,color:C.gray,fontFamily:'monospace',lineHeight:1.5}}>
+            {`"Hi! Your ${notifyPrompt.garment||'garment'} alterations are ready for pickup. Please contact us to schedule your appointment. 💕"`}
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button onClick={()=>setNotifyPrompt(null)} style={{flex:1,padding:'7px 0',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,fontSize:12,cursor:'pointer'}}>Skip</button>
+            <button onClick={async()=>{
+              const msg=`Hi! Your ${notifyPrompt.garment||'garment'} alterations are ready for pickup. Please contact us to schedule your appointment. 💕`;
+              try{await navigator.clipboard.writeText(msg);}catch{}
+              if(notifyPrompt.client_id&&boutique?.id){
+                await supabase.from('client_interactions').insert({boutique_id:boutique.id,client_id:notifyPrompt.client_id,type:'sms',title:'Alterations ready — pickup notification sent',body:msg,occurred_at:new Date().toISOString(),is_editable:false,author_name:'Staff'});
+              }
+              toast('Message copied to clipboard ✓');
+              setNotifyPrompt(null);
+            }} style={{flex:1,padding:'7px 0',borderRadius:8,border:'none',background:C.rosa,color:C.white,fontSize:12,fontWeight:500,cursor:'pointer'}}>📋 Copy SMS</button>
+          </div>
+        </div>
+      )}
       {newJobOpen&&<NewAlterationModal staff={staff||[]} clients={clients||[]} createClient={createClient} onClose={()=>setNewJobOpen(false)}
         onCreate={async p=>{const r=createJob?await createJob(p):{error:{message:'No createJob'}};return r;}}/>}
 

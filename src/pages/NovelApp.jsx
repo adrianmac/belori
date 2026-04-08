@@ -344,7 +344,7 @@ export default function NovelApp() {
     // Gate every non-dashboard screen by role permissions
     if (screen !== 'dashboard' && !canAccess(myRole, screen)) return <AccessDenied />;
     switch(screen){
-      case 'dashboard':     return <Dashboard setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} payments={payments} inventory={inventory} boutique={boutique} clients={clients} staff={staff} focusMode={focusMode} onToggleFocus={toggleFocus}/>;
+      case 'dashboard':     return <Dashboard setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} payments={payments} inventory={inventory} boutique={boutique} clients={clients} staff={staff} alterations={alterations} focusMode={focusMode} onToggleFocus={toggleFocus}/>;
       case 'my_tasks':      return <Suspense fallback={<PageLoading/>}><MyTasksPage setScreen={goScreen} setSelectedEvent={setSelectedEvent}/></Suspense>;
       case 'events':        return <EventsList setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} createEvent={createEvent} duplicateEvent={duplicateEvent} clients={clients} inventory={inventory} alterations={alterations}/>;
       case 'event_detail':  return <EventDetail eventId={selectedEvent} setScreen={goScreen} setSelectedEvent={setSelectedEvent} allEvents={events} updateEvent={updateEvent} deleteEvent={deleteEvent} markPaid={markPaid} createMilestone={createMilestone} deleteMilestone={deleteMilestone} createJob={createJob} updateJob={updateJob} updateClient={updateClient} updateDress={updateDress} staff={staff} inventory={inventory} logRefund={logRefund} logTip={logTip} refunds={refunds}/>;
@@ -388,7 +388,7 @@ export default function NovelApp() {
       case 'sms_inbox':     return <SmsInboxPage />;
       case 'help':          return <Suspense fallback={<PageLoading/>}><HelpPage /></Suspense>;
       case 'activity_feed': return <Suspense fallback={<PageLoading/>}><ActivityFeed setScreen={goScreen}/></Suspense>;
-      default:              return <Dashboard setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} payments={payments} inventory={inventory} boutique={boutique} clients={clients} staff={staff}/>;
+      default:              return <Dashboard setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} payments={payments} inventory={inventory} boutique={boutique} clients={clients} staff={staff} alterations={alterations}/>;
     }
   };
 

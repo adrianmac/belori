@@ -778,6 +778,17 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
       .then(({data})=>setContracts(data||[]));
   },[liveEvent?.id]);
 
+  // Track this event in recently viewed (for Dashboard widget)
+  useEffect(() => {
+    if (!liveEvent?.id) return;
+    try {
+      const recent = JSON.parse(localStorage.getItem('belori_recent') || '[]');
+      const entry = { type: 'event', id: liveEvent.id, name: liveEvent.client, sub: liveEvent.type + ' · ' + (liveEvent.event_date || '') };
+      const filtered = recent.filter(r => !(r.type === 'event' && r.id === liveEvent.id));
+      localStorage.setItem('belori_recent', JSON.stringify([entry, ...filtered].slice(0, 10)));
+    } catch {}
+  }, [liveEvent?.id]);
+
   // Load questionnaire submission for this event
   const [questionnaire, setQuestionnaire] = useState(null)
   useEffect(() => {

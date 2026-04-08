@@ -729,6 +729,16 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
   const [showTagModal, setShowTagModal] = useState(false);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 50;
+  const [newClientId, setNewClientId] = useState(null);
+  const [showBookEvent, setShowBookEvent] = useState(false);
+
+  // Auto-dismiss "book event" prompt after 8 seconds
+  useEffect(() => {
+    if (!showBookEvent) return;
+    const t = setTimeout(() => setShowBookEvent(false), 8000);
+    return () => clearTimeout(t);
+  }, [showBookEvent]);
+
   // Auto-select client from global search or open new modal from onboarding checklist
   useEffect(()=>{
     const autoOpen=sessionStorage.getItem('belori_autoopen');
@@ -1263,6 +1273,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
         <NewClientModal
           onClose={() => setShowNew(false)}
           createClient={createClient}
+          onSuccess={savedClient => { setNewClientId(savedClient.id); setShowBookEvent(true); }}
         />
       )}
       {showImport && (
@@ -1360,6 +1371,23 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
           onClose={() => { setShowTagModal(false); clearBulkSelection(); }}
           toast={toast}
         />
+      )}
+      {/* Book event follow-up prompt */}
+      {showBookEvent && (
+        <div style={{position:'fixed',bottom:24,right:24,zIndex:1100,background:C.white,borderRadius:14,padding:'16px 20px',boxShadow:'0 8px 32px rgba(0,0,0,0.15)',border:`1px solid ${C.border}`,maxWidth:320,display:'flex',flexDirection:'column',gap:10}}>
+          <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
+            <span style={{fontSize:20}}>🎉</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:600,color:C.ink}}>Client added!</div>
+              <div style={{fontSize:12,color:C.gray,marginTop:2}}>Ready to book their first event?</div>
+            </div>
+            <button onClick={()=>setShowBookEvent(false)} style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:16,lineHeight:1,padding:0,flexShrink:0}}>×</button>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button onClick={()=>setShowBookEvent(false)} style={{flex:1,padding:'7px 0',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,fontSize:12,cursor:'pointer'}}>Not now</button>
+            <button onClick={()=>{setShowBookEvent(false);if(setScreen)setScreen('events');sessionStorage.setItem('belori_autoopen','new_event');}} style={{flex:1,padding:'7px 0',borderRadius:8,border:'none',background:C.rosa,color:C.white,fontSize:12,fontWeight:500,cursor:'pointer'}}>Book event →</button>
+          </div>
+        </div>
       )}
       {/* Floating bulk action bar */}
       {anyBulkSelected && (

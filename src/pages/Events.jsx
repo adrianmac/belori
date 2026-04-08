@@ -1885,7 +1885,7 @@ const EventsList = ({setScreen,setSelectedEvent,events,createEvent,duplicateEven
         </div>
       )}
 
-      {showNew&&<CreateEventModal onClose={()=>{setShowNew(false);setNewEventDate('');}} onSave={createEvent||((p)=>Promise.resolve({}))} clients={clients} inventory={inventory} defaultDate={newEventDate}/>}
+      {showNew&&<CreateEventModal onClose={()=>{setShowNew(false);setNewEventDate('');}} onSave={async(payload)=>{const result=await(createEvent||((p)=>Promise.resolve({})))(payload);setShowNew(false);setNewEventDate('');if(result?.data?.id&&setSelectedEvent&&setScreen){setSelectedEvent(result.data.id);setScreen('event_detail');}return result;}} clients={clients} inventory={inventory} defaultDate={newEventDate}/>}
 
       {/* Bulk action bar (list only) */}
       {anySelected&&view==='list'&&(

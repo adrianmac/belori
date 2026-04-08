@@ -112,6 +112,76 @@ const NewAppointmentModal = ({events, staff, onClose, onSaved}) => {
   );
 };
 
+// ─── DAILY BRIEFING BANNER ───────────────────────────────────────────────────
+function DailyBriefingBanner({ appointments, payments, events }) {
+  const [dismissed, setDismissed] = React.useState(() => {
+    const stored = sessionStorage.getItem('belori_daily_brief');
+    return stored === new Date().toDateString();
+  });
+
+  if (dismissed) return null;
+
+  const todayAppts = (appointments || []).length;
+  const overdueCount = (payments || []).filter(p => p.status === 'overdue').length;
+  const today = new Date();
+  const todayStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const hour = today.getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  const dismiss = () => {
+    sessionStorage.setItem('belori_daily_brief', new Date().toDateString());
+    setDismissed(true);
+  };
+
+  return (
+    <div style={{ background: `linear-gradient(135deg, ${C.rosaPale} 0%, #EDE9FE 100%)`, borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 4, border: `1px solid ${C.border}` }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{greeting} 👋</div>
+        <div style={{ fontSize: 12, color: C.gray, marginTop: 2 }}>{todayStr}</div>
+        <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
+          {todayAppts > 0 && <span style={{ fontSize: 12, color: C.rosa, fontWeight: 500 }}>📅 {todayAppts} appointment{todayAppts !== 1 ? 's' : ''} today</span>}
+          {overdueCount > 0 && <span style={{ fontSize: 12, color: '#DC2626', fontWeight: 500 }}>⚠️ {overdueCount} overdue payment{overdueCount !== 1 ? 's' : ''}</span>}
+          {todayAppts === 0 && overdueCount === 0 && <span style={{ fontSize: 12, color: '#10B981', fontWeight: 500 }}>✅ Clear day — no urgent items</span>}
+        </div>
+      </div>
+      <button onClick={dismiss} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1, padding: 4, flexShrink: 0 }}>×</button>
+    </div>
+  );
+}
+
+// ─── RECENTLY VIEWED ─────────────────────────────────────────────────────────
+function RecentlyViewedCard({ setScreen, setSelectedEvent }) {
+  const items = React.useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('belori_recent') || '[]').slice(0, 5); } catch { return []; }
+  }, []);
+
+  if (!items.length) return null;
+
+  return (
+    <Card>
+      <CardHead title="Recently viewed" sub="Jump back in"/>
+      <div style={{ padding: '0 16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {items.map((item, i) => (
+          <button key={i} onClick={() => {
+            if (item.type === 'event') { setSelectedEvent(item.id); setScreen('event_detail'); }
+            else if (item.type === 'client') setScreen('clients');
+          }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+            onMouseEnter={e => e.currentTarget.style.background = C.rosaPale}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            <span style={{ fontSize: 16 }}>{item.type === 'event' ? '📅' : '👤'}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 500, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+              <div style={{ fontSize: 11, color: C.gray }}>{item.sub}</div>
+            </div>
+            <span style={{ fontSize: 11, color: C.gray, flexShrink: 0 }}>→</span>
+          </button>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 // ─── ONBOARDING CHECKLIST ─────────────────────────────────────────────────────
 const OnboardingChecklist = ({events, clients, staff, inventory, payments, appointments, setScreen}) => {
   const { boutique } = useAuth();
@@ -209,7 +279,7 @@ const OnboardingChecklist = ({events, clients, staff, inventory, payments, appoi
 };
 
 // ─── AI INSIGHTS PANEL ───────────────────────────────────────────────────────
-function buildRuleInsights({ payments, events, inventory, clients }) {
+function buildRuleInsights({ payments, events, inventory, clients, alterations }) {
   const now = new Date();
   const insights = [];
 
@@ -315,6 +385,60 @@ function buildRuleInsights({ payments, events, inventory, clients }) {
     });
   }
 
+  // Events missing critical appointments
+  const upcoming60 = new Date(now.getTime() + 60*24*60*60*1000);
+  const missingAppts = (events || []).filter(e => {
+    if (!e.event_date || e.status === 'completed' || e.status === 'cancelled') return false;
+    const d = new Date(e.event_date + 'T12:00:00');
+    if (d < now || d > upcoming60) return false;
+    const appts = e.appointments || [];
+    const types = new Set(appts.map(a => a.type));
+    return !types.has('measurement') && !types.has('final_fitting');
+  });
+  if (missingAppts.length > 0) {
+    insights.push({
+      severity: 'amber',
+      icon: '📐',
+      message: `${missingAppts.length} upcoming event${missingAppts.length!==1?'s':''} missing fitting appointments`,
+      action: 'View events',
+      screen: 'events',
+    });
+  }
+
+  // Active events with no payment milestones
+  const noMilestones = (events || []).filter(e =>
+    e.status === 'active' &&
+    e.event_date &&
+    new Date(e.event_date + 'T12:00:00') > now &&
+    (!e.milestones || e.milestones.length === 0) &&
+    Number(e.total || 0) > 0
+  );
+  if (noMilestones.length > 0) {
+    insights.push({
+      severity: 'blue',
+      icon: '🧾',
+      message: `${noMilestones.length} event${noMilestones.length!==1?'s':''} with no payment milestones set up`,
+      action: 'View events',
+      screen: 'events',
+    });
+  }
+
+  // Overdue alterations
+  const overdueAlts = (alterations || []).filter(a =>
+    !['complete','cancelled'].includes(a.status) &&
+    a.deadline &&
+    a.deadline < today
+  );
+  if (overdueAlts.length > 0) {
+    insights.push({
+      severity: 'red',
+      icon: '✂️',
+      message: `${overdueAlts.length} alteration${overdueAlts.length!==1?'s':''} past deadline`,
+      action: 'View alterations',
+      screen: 'alterations',
+    });
+  }
+
   // Sort: red first, then amber, then blue, then purple, then green
   const order = { red: 0, amber: 1, blue: 2, purple: 3, green: 4 };
   insights.sort((a, b) => (order[a.severity] ?? 9) - (order[b.severity] ?? 9));
@@ -329,8 +453,8 @@ const INSIGHT_STYLE = {
   purple: { border: '#7C3AED', bg: '#F5F3FF',  text: '#5B21B6' },
 };
 
-const AIInsightsPanel = ({ payments, events, inventory, clients, setScreen }) => {
-  const insights = buildRuleInsights({ payments, events, inventory, clients });
+const AIInsightsPanel = ({ payments, events, inventory, clients, alterations, setScreen }) => {
+  const insights = buildRuleInsights({ payments, events, inventory, clients, alterations });
   if (insights.length === 0) return null;
 
   return (
@@ -668,7 +792,7 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, staff, onToggleFo
   );
 };
 
-const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,boutique,clients,staff}) => {
+const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,boutique,clients,staff,alterations}) => {
   const { boutique: authBoutique } = useAuth();
   const { appointments: todayAppts, reload: reloadAppts } = useAppointmentsToday();
   const [showNewAppt, setShowNewAppt] = useState(false);
@@ -809,6 +933,7 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
         onAction={()=>{setSelectedEvent(alert.event.id);setScreen('event_detail');}}
       />}
       <div className="page-scroll" style={{flex:1,minHeight:0,overflowY:'auto',padding:isTablet?16:20,display:'flex',flexDirection:'column',gap:isTablet?12:16}}>
+        <DailyBriefingBanner appointments={todayAppts} payments={payments} events={events}/>
         <OnboardingChecklist events={events} clients={clients} staff={staff} inventory={inventory} payments={payments} appointments={todayAppts} setScreen={setScreen}/>
 
         {/* Churn alert widget */}
@@ -872,8 +997,12 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
           events={events}
           inventory={inventory}
           clients={clients}
+          alterations={alterations}
           setScreen={setScreen}
         />
+
+        {/* Recently Viewed */}
+        <RecentlyViewedCard setScreen={setScreen} setSelectedEvent={setSelectedEvent}/>
 
         {/* Revenue Forecast Panel */}
         <RevenueForecastPanel payments={payments}/>

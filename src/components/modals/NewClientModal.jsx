@@ -3,7 +3,7 @@ import { C } from '../../lib/colors';
 import { PrimaryBtn, GhostBtn, inputSt, LBL, useToast } from '../../lib/ui.jsx';
 import { HOW_FOUND_LABELS } from '../../pages/clients/clientConfigs';
 
-const NewClientModal = ({ onClose, createClient }) => {
+const NewClientModal = ({ onClose, createClient, onSuccess }) => {
   const toast = useToast();
   const [newCl, setNewCl] = useState({ firstName: '', lastName: '', phone: '', email: '', partner: '', language: 'en', howFound: '', birthday: '', anniversary: '' });
   const [saving, setSaving] = useState(false);
@@ -14,7 +14,7 @@ const NewClientModal = ({ onClose, createClient }) => {
     if (!newCl.phone.trim()) { toast('Phone number is required', 'warn'); return; }
 
     setSaving(true);
-    const { error } = await createClient({
+    const { data, error } = await createClient({
       name: `${newCl.firstName.trim()} ${newCl.lastName.trim()}`,
       phone: newCl.phone.trim(),
       email: newCl.email.trim() || null,
@@ -29,6 +29,7 @@ const NewClientModal = ({ onClose, createClient }) => {
     if (!error) {
       toast('Client added');
       onClose();
+      if (onSuccess && data) onSuccess(data);
     } else {
       toast('Failed to add client', 'warn');
     }

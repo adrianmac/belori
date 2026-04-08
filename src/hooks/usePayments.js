@@ -175,19 +175,41 @@ export function usePayments() {
     } else {
       await fetchPayments()
 
-      // Update event running paid total
+      // Sync the event's paid field by summing all paid milestones
       if (payment?.event_id) {
-        const { data: event } = await supabase
-          .from('events')
-          .select('paid')
-          .eq('id', payment.event_id)
-          .single()
-        if (event) {
-          await supabase
+        const milestoneEventId = payment.event_id
+
+        const { data: allMilestones } = await supabase
+          .from('payment_milestones')
+          .select('amount, status, paid_date')
+          .eq('event_id', milestoneEventId)
+          .eq('boutique_id', boutique.id)
+
+        if (allMilestones) {
+          const newPaid = allMilestones
+            .filter(m => m.status === 'paid')
+            .reduce((sum, m) => sum + Number(m.amount || 0), 0)
+
+          const { data: evData } = await supabase
             .from('events')
-            .update({ paid: Number(event.paid) + payment.amount })
-            .eq('id', payment.event_id)
+            .select('id, total, event_date, status')
+            .eq('id', milestoneEventId)
             .eq('boutique_id', boutique.id)
+            .single()
+
+          if (evData) {
+            const updatePayload = { paid: newPaid }
+            const isPast = evData.event_date && new Date(evData.event_date + 'T23:59:59') < new Date()
+            const isFullyPaid = newPaid >= Number(evData.total || 0) && Number(evData.total || 0) > 0
+            if (isPast && isFullyPaid && evData.status === 'active') {
+              updatePayload.status = 'completed'
+            }
+            await supabase
+              .from('events')
+              .update(updatePayload)
+              .eq('id', milestoneEventId)
+              .eq('boutique_id', boutique.id)
+          }
         }
       }
 

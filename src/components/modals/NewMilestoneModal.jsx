@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { C } from '../../lib/colors';
+import { C, fmt } from '../../lib/colors';
 import { PrimaryBtn, GhostBtn, useToast, inputSt, LBL } from '../../lib/ui.jsx';
 
 const NewMilestoneModal = ({ liveEvent, createMilestone, onClose }) => {
@@ -47,6 +47,24 @@ const NewMilestoneModal = ({ liveEvent, createMilestone, onClose }) => {
             <div style={{ ...LBL }}>Label</div>
             <input value={newMs.label} onChange={e => setNewMs(m => ({ ...m, label: e.target.value }))} placeholder="e.g. Final balance" style={{ ...inputSt }} />
           </div>
+          {(() => {
+            const remaining = Number(liveEvent?.total || 0) - Number(liveEvent?.paid || 0);
+            return remaining > 0 ? (
+              <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <span style={{ fontSize: 12, color: '#1E40AF' }}>Remaining balance: <strong>{fmt(remaining)}</strong></span>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button type="button" onClick={() => setNewMs(m => ({ ...m, amount: String(remaining.toFixed(2)) }))}
+                    style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '1px solid #BFDBFE', background: '#DBEAFE', color: '#1E40AF', cursor: 'pointer', fontWeight: 500 }}>
+                    Full balance
+                  </button>
+                  <button type="button" onClick={() => setNewMs(m => ({ ...m, amount: String((remaining / 2).toFixed(2)) }))}
+                    style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '1px solid #BFDBFE', background: '#DBEAFE', color: '#1E40AF', cursor: 'pointer', fontWeight: 500 }}>
+                    Split in half
+                  </button>
+                </div>
+              </div>
+            ) : null;
+          })()}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <div style={{ ...LBL }}>Amount ($)</div>
