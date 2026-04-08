@@ -1,0 +1,3 @@
+## 2026-04-08 - [Missing useMemo for Derived Lists]
+**Learning:** Found several complex derived arrays and computed statistics that were being recalculated on every render in components where many other states change (like `Payments.jsx` and `ModuleStubs.jsx`). Missing memoization causes unneeded map, reduce, and filter operations to execute continuously on data arrays that could be hundreds of items long.
+**Action:** Always verify if expensive or moderately expensive loops/reductions inside React component bodies are wrapped in `useMemo`, especially on pages that use tabs or tables that might trigger frequent re-renders.
