@@ -471,7 +471,7 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
             <div style={{ fontSize: 11, color: C.gray }}>{ROLE_LABELS[myRole] || 'Staff'}</div>
           </div>
           {/* Bell icon */}
-          <button onClick={onAlerts} title="Alerts"
+          <button aria-label="Alerts" onClick={onAlerts} title="Alerts"
             style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: alertCount > 0 ? 'var(--brand-primary, #C9697A)' : C.gray, padding: '4px', minHeight: 'unset', minWidth: 'unset', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
             {alertCount > 0 && <span style={{ position: 'absolute', top: 0, right: 0, width: 14, height: 14, borderRadius: '50%', background: '#DC2626', color: '#fff', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{alertCount > 9 ? '9+' : alertCount}</span>}
