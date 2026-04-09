@@ -99,7 +99,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
   const [guests,setGuests]=useState('');
   const [coordId,setCoordId]=useState('');
   const [autoAssigning,setAutoAssigning]=useState(false);
-  // Step 2 — Inspiration & vision
+  // Step 4 — Inspiration & vision
   const [inspoColors,setInspoColors]=useState([]);
   const [inspoStyles,setInspoStyles]=useState([]);
   const [visionNotes,setVisionNotes]=useState('');
@@ -107,11 +107,10 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
   const [quinceDamas,setQuinceDamas]=useState('');
   const [quinceChamb,setQuinceChamb]=useState('');
   const [quinceWaltz,setQuinceWaltz]=useState('');
-  // Step 3 — Services & payment
+  // Step 2 — Services
   const [selectedPkgId,setSelectedPkgId]=useState(null);
   const [selectedChecklistId,setSelectedChecklistId]=useState('');
   const [svcs,setSvcs]=useState(['dress_rental','alterations','planning','decoration']);
-  const [total,setTotal]=useState('');
   const [milestones,setMilestones]=useState([]);
   const [dressId,setDressId]=useState('');
   const [dressMode,setDressMode]=useState('now');
@@ -120,7 +119,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
   const [altItems,setAltItems]=useState([]);
   const [altPrice,setAltPrice]=useState('');
   const [floralType,setFloralType]=useState('');
-  // AI task suggestions (Step 3)
+  // AI task suggestions
   const [aiSuggestedTasks,setAiSuggestedTasks]=useState([]);
   const [aiTasksLoading,setAiTasksLoading]=useState(false);
   const [aiTasksChecked,setAiTasksChecked]=useState({});
@@ -129,10 +128,14 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
   const [suggestedTasks,setSuggestedTasks]=useState([]);
   const [selectedTasks,setSelectedTasks]=useState(new Set());
   const [tasksGenerated,setTasksGenerated]=useState(false);
-  // AI price suggestion (Step 3)
-  const [aiPriceSuggestion,setAiPriceSuggestion]=useState(null); // {suggested_price, reasoning, confidence}
+  // Step 3 — Pricing / Quote builder
+  const [lineItems,setLineItems]=useState([]);
+  const [discount,setDiscount]=useState({type:'fixed',value:''});
+  const [quoteExpiry,setQuoteExpiry]=useState(()=>{const d=new Date();d.setDate(d.getDate()+30);return d.toISOString().split('T')[0];});
+  // AI price suggestion state
   const [aiPriceLoading,setAiPriceLoading]=useState(false);
-  // Step 4 — Venue & inventory
+  const [aiPriceSuggestion,setAiPriceSuggestion]=useState(null);
+  // Step 5 — Venue & inventory
   const [vp,setVpRaw]=useState({tableCount:'',tableShape:'round',roundTables:'',rectTables:'',sweetheart:false,sweetheartSize:'small',chairSource:'venue',chairCount:'',chairStyle:'',clothSource:'venue',clothColor:'',clothStyle:'plain',coverSource:'venue',coverColor:'',sashes:false,sashColor:'',sashStyle:'satin',centerpieces:false,cpStyle:'',cpQty:'',arch:false,archType:'',archPlacement:'',notes:''});
   const sv=(k,v)=>setVpRaw(s=>({...s,[k]:v}));
 
@@ -144,20 +147,35 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
   const seamstresses=staff.filter(s=>['seamstress','owner','Seamstress','Owner'].includes(s.role));
   const coordinators=staff.filter(s=>['owner','coordinator','Owner','Coordinator'].includes(s.role));
   const milestoneSum=milestones.reduce((s,m)=>s+Number(m.amount||0),0);
-  const mismatch=!!total&&Math.abs(milestoneSum-Number(total))>1;
+  // Computed quote totals
+  const subtotal=lineItems.reduce((s,li)=>s+(Number(li.qty)||1)*(Number(li.unitPrice)||0),0);
+  const discountAmt=discount.type==='percent'?subtotal*(Number(discount.value)||0)/100:Math.min(Number(discount.value)||0,subtotal);
+  const computedTotal=Math.max(0,subtotal-discountAmt);
+  const mismatch=milestones.length>0&&Math.abs(milestoneSum-computedTotal)>1;
   const dateWarn=evDate&&Math.ceil((new Date(evDate+'T12:00:00')-new Date())/86400000)<30?'⚠ Event coming up soon — schedule services right away.':null;
   const hasDeco=svcs.includes('decoration');
-  const stepList=[1,2,3,...(hasDeco?[4]:[]),5];
+  const stepList=[1,2,3,4,...(hasDeco?[5]:[]),6];
   const totalSteps=stepList.length;
   const stepIdx=stepList.indexOf(step);
-  const STEP_LABELS={1:'Client & event details',2:'Inspiration & vision',3:'Services & payment',4:'Venue & inventory needs',5:'Review & confirm'};
+  const STEP_LABELS={1:'Client & event details',2:'Services',3:'Pricing & quote',4:'Inspiration & vision',5:'Venue & inventory needs',6:'Review & confirm'};
 
   // Effects
   useEffect(()=>{if(clientName)setEvName(clientName);},[clientId,newCl.name,evType]);
   useEffect(()=>{setSvcs(TYPE_DEFAULT_SVCS[evType]||['planning','decoration']);setFloralType('');setSelectedPkgId(null);},[evType]);
-  useEffect(()=>{if(total&&evDate&&Number(total)>0)setMilestones(genMilestones(evType,svcs,Number(total),evDate));},[total,evDate,evType]);
+  // Line items auto-sync from selected services
+  const SVC_DEFAULT_LABELS={dress_rental:'Dress rental',alterations:'Alterations & tailoring',decoration:'Decoration & florals',photography:'Photography & video',dj:'DJ / Music',planning:'Event planning'};
   useEffect(()=>{
-    if(!total||!evDate||!milestones.length)return;
+    setLineItems(prev=>{
+      const kept=prev.filter(li=>!li._svc||svcs.includes(li._svc));
+      const existingSvcKeys=kept.filter(li=>li._svc).map(li=>li._svc);
+      const toAdd=svcs.filter(s=>!existingSvcKeys.includes(s));
+      const newLines=toAdd.map(s=>({id:Date.now()+Math.random(),_svc:s,description:SVC_DEFAULT_LABELS[s]||SVC_LABELS[s]||s,qty:1,unitPrice:''}));
+      return [...kept,...newLines];
+    });
+  },[svcs]);
+  useEffect(()=>{if(!computedTotal||!evDate||computedTotal<=0)return;setMilestones(genMilestones(evType,svcs,computedTotal,evDate));},[computedTotal,evDate,evType]);
+  useEffect(()=>{
+    if(!computedTotal||!evDate||!milestones.length)return;
     setMilestones(ms=>{
       const hd=svcs.includes('decoration'),has=ms.some(m=>m.label==='Decoration deposit');
       if(hd&&!has)return[...ms,{id:Date.now(),label:'Decoration deposit',amount:500,due:isoDate(addDays(new Date(evDate+'T12:00:00'),-30))}];
@@ -254,17 +272,20 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
     if(!coordId)return'Please assign a coordinator';
     return null;
   }
-  function v3(){
+  function v2(){
     if(!svcs.length)return'Select at least one service';
-    if(!total||Number(total)<=0)return'Please enter the contract amount';
-    if(svcs.includes('decoration')&&!floralType)return'Please select a floral arrangement type for decoration';
+    if(svcs.includes('decoration')&&!floralType)return'Select a floral arrangement type';
     return null;
   }
-  function v4(){if(hasDeco&&!vp.tableCount)return'Please enter the number of tables';return null;}
+  function v3(){
+    if(computedTotal<=0)return'Add at least one service with a price, or enter a custom line item';
+    return null;
+  }
+  function v5(){if(hasDeco&&!vp.tableCount)return'Please enter the number of tables';return null;}
 
   function goNext(){
     let e=null;
-    if(step===1)e=v1();else if(step===3)e=v3();else if(step===4)e=v4();
+    if(step===1)e=v1();else if(step===2)e=v2();else if(step===3)e=v3();else if(step===5)e=v5();
     if(e){setErr(e);return;}
     setErr('');
     const ni=stepIdx+1;if(ni<stepList.length)setStep(stepList[ni]);
@@ -275,7 +296,10 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
   async function confirm(){
     setSaving(true);
     const checkedAiTasks=aiSuggestedTasks.filter((_,i)=>aiTasksChecked[i]);
-    const{error,data:createdEvent}=await onSave({client_id:newMode?null:clientId,isNewClient:newMode,newClientData:newMode?newCl:null,type:evType,event_name:evName,event_date:evDate,venue,guests:Number(guests)||0,coordinator_id:coordId||null,total:Number(total)||0,paid:0,status:'active',services:svcs,milestones,dress_id:dressMode==='now'?dressId:null,alterationData:svcs.includes('alterations')?{seamstress_id:altStaff,garment:altDesc,items:altItems,price:Number(altPrice)||0}:null,inspiration_colors:inspoColors,inspiration_styles:inspoStyles,inspiration_notes:visionNotes||null,quince_theme:quinceTheme||null,quince_waltz_song:quinceWaltz||null,quince_cort_size_damas:quinceDamas?Number(quinceDamas):null,quince_cort_size_chambelanes:quinceChamb?Number(quinceChamb):null,venue_plan:hasDeco?vp:null,package_id:selectedPkgId||null,aiTasks:checkedAiTasks.length>0?checkedAiTasks:undefined});
+    const{error,data:createdEvent}=await onSave({client_id:newMode?null:clientId,isNewClient:newMode,newClientData:newMode?newCl:null,type:evType,event_name:evName,event_date:evDate,venue,guests:Number(guests)||0,coordinator_id:coordId||null,total:computedTotal,paid:0,status:'active',services:svcs,milestones,dress_id:dressMode==='now'?dressId:null,alterationData:svcs.includes('alterations')?{seamstress_id:altStaff,garment:altDesc,items:altItems,price:Number(altPrice)||0}:null,inspiration_colors:inspoColors,inspiration_styles:inspoStyles,inspiration_notes:visionNotes||null,quince_theme:quinceTheme||null,quince_waltz_song:quinceWaltz||null,quince_cort_size_damas:quinceDamas?Number(quinceDamas):null,quince_cort_size_chambelanes:quinceChamb?Number(quinceChamb):null,venue_plan:hasDeco?vp:null,package_id:selectedPkgId||null,aiTasks:checkedAiTasks.length>0?checkedAiTasks:undefined});
+    if(!error&&createdEvent?.id){
+      await supabase.from('quotes').insert({boutique_id:boutique.id,event_id:createdEvent.id,client_name:clientName,event_type:evType,event_date:evDate,venue:venue||null,expires_at:quoteExpiry||null,line_items:lineItems.map(li=>({description:li.description,qty:Number(li.qty)||1,unit_price:Number(li.unitPrice)||0})),milestones:milestones.map(m=>({label:m.label,amount:Number(m.amount)||0,due_date:m.due})),discount_type:discount.type,discount_value:Number(discount.value)||0,total:computedTotal,status:'draft'}).catch(()=>{});
+    }
     if(!error&&createdEvent?.id&&selectedChecklistId){
       const tmpl=checklistTemplates.find(t=>t.id===selectedChecklistId);
       if(tmpl?.items?.length){
@@ -411,8 +435,323 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
           </div>
         )}
 
-        {/* ══════ STEP 2 — Inspiration & Vision ══════ */}
+        {/* ══════ STEP 2 — Services ══════ */}
         {step===2&&(
+          <div style={{flex:1,overflowY:'auto',padding:'20px 24px',display:'flex',flexDirection:'column',gap:20}}>
+
+            {/* ── Services with inline config ── */}
+            <div>
+              <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:4}}>
+                <div style={LBL}>Services</div>
+                <span style={{fontSize:11,color:C.gray}}>Tap to toggle · details expand when included</span>
+              </div>
+              {[['dress_rental','👗','Dress rental','Reserve a gown from inventory'],['alterations','✂️','Alterations','Hem, bustle, seamstress work'],['decoration','🌸','Decoration','Setup, florals, venue styling'],['photography','📷','Photography','Photo & video coverage'],['dj','🎵','DJ / Music','Sound system & entertainment']]
+                .filter(([id])=>(TYPE_SVCS[evType]||Object.keys(SVC_LABELS)).includes(id))
+                .map(([id,icon,lbl,desc])=>{
+                  const isOn=svcs.includes(id);
+                  const expandBorder=`2px solid ${C.rosa}`;
+                  return (
+                    <div key={id} style={{marginBottom:8}}>
+                      <button onClick={()=>toggleSvc(id)} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'11px 14px',borderRadius:isOn?'10px 10px 0 0':10,border:`2px solid ${isOn?C.rosa:C.border}`,background:isOn?C.rosaPale:C.white,cursor:'pointer',textAlign:'left',transition:'all 0.15s',minHeight:'unset'}}>
+                        <span style={{fontSize:18,flexShrink:0,opacity:isOn?1:0.5}}>{icon}</span>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13,fontWeight:500,color:isOn?C.rosa:C.ink}}>{lbl}</div>
+                          <div style={{fontSize:11,color:C.gray,marginTop:1}}>{desc}</div>
+                        </div>
+                        <div style={{width:20,height:20,borderRadius:'50%',background:isOn?C.rosa:C.white,border:`2px solid ${isOn?C.rosa:C.border}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'all 0.15s'}}>
+                          {isOn&&<span style={{color:'#fff',fontSize:11,fontWeight:700,lineHeight:1}}>✓</span>}
+                        </div>
+                      </button>
+                      {isOn&&id==='dress_rental'&&(
+                        <div style={{border:expandBorder,borderTop:'none',borderRadius:'0 0 10px 10px',padding:'12px 14px',background:'rgba(253,245,246,0.6)',display:'flex',flexDirection:'column',gap:8}}>
+                          <div style={{fontSize:11,color:C.rosa,fontWeight:500}}>Dress reservation</div>
+                          <div style={{display:'flex',gap:6}}>
+                            {[['now','Reserve now'],['later','Reserve later']].map(([v,l])=>(
+                              <button key={v} onClick={()=>setDressMode(v)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${dressMode===v?C.rosa:C.border}`,background:dressMode===v?C.rosaPale:'transparent',color:dressMode===v?C.rosa:C.gray,cursor:'pointer',fontSize:12,minHeight:'unset'}}>{l}</button>
+                            ))}
+                          </div>
+                          {dressMode==='now'?(availDresses.length===0
+                            ?<div style={{fontSize:12,color:'var(--color-warning)'}}>No {evType==='wedding'?'bridal':'quinceañera'} gowns available — a task will be created to reserve later.</div>
+                            :<select value={dressId} onChange={e=>setDressId(e.target.value)} style={inputSt}>
+                              <option value="">Select available dress…</option>
+                              {availDresses.map(d=><option key={d.id} value={d.id}>#{d.sku} · {d.name} · Size {d.size} · {d.color} · {fmt(d.price)}/rental</option>)}
+                            </select>
+                          ):<div style={{fontSize:12,color:C.gray,padding:'6px 0'}}>✓ Task auto-created: "Reserve dress for {clientName||'client'}"</div>}
+                        </div>
+                      )}
+                      {isOn&&id==='alterations'&&(
+                        <div style={{border:expandBorder,borderTop:'none',borderRadius:'0 0 10px 10px',padding:'12px 14px',background:'rgba(253,245,246,0.6)',display:'flex',flexDirection:'column',gap:8}}>
+                          <div style={{fontSize:11,color:C.rosa,fontWeight:500}}>Alteration details <span style={{color:C.gray,fontWeight:400}}>(all optional — can fill in later)</span></div>
+                          <select value={altStaff} onChange={e=>setAltStaff(e.target.value)} style={inputSt}>
+                            <option value="">Assign seamstress…</option>
+                            {seamstresses.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+                          </select>
+                          <input value={altDesc} onChange={e=>setAltDesc(e.target.value)} placeholder="Garment (e.g. Bridal gown + 2 bridesmaid dresses)" style={inputSt}/>
+                          <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                            {['Hem','Bustle','Waist take-in','Let out waist','Custom beading','Sleeves','Other'].map(item=>(
+                              <button key={item} onClick={()=>setAltItems(ai=>ai.includes(item)?ai.filter(x=>x!==item):[...ai,item])} style={chip(altItems.includes(item))}>{item}</button>
+                            ))}
+                          </div>
+                          <input type="number" value={altPrice} onChange={e=>setAltPrice(e.target.value)} placeholder="Estimated price ($)" style={inputSt}/>
+                        </div>
+                      )}
+                      {isOn&&id==='decoration'&&(
+                        <div style={{border:expandBorder,borderTop:'none',borderRadius:'0 0 10px 10px',padding:'12px 14px',background:'rgba(253,245,246,0.6)',display:'flex',flexDirection:'column',gap:8}}>
+                          <div style={{fontSize:11,color:C.rosa,fontWeight:500}}>Floral arrangement <span style={{color:C.gray,fontWeight:400}}>· affects deposit amount</span></div>
+                          {[['real','🌸 Real flowers','Natural blooms, seasonal · Deposit $800'],['silk','🎀 Silk / artificial','Always available, no wilt · Deposit $500']].map(([v,l,d])=>(
+                            <button key={v} onClick={()=>setFloralType(v)} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:8,border:`1.5px solid ${floralType===v?C.rosa:C.border}`,background:floralType===v?C.rosaPale:C.white,cursor:'pointer',textAlign:'left',transition:'all 0.15s',minHeight:'unset'}}>
+                              <div style={{width:14,height:14,borderRadius:'50%',border:`2px solid ${floralType===v?C.rosa:C.borderDark}`,background:floralType===v?C.rosa:'transparent',flexShrink:0,transition:'all 0.15s'}}/>
+                              <div>
+                                <div style={{fontSize:12,fontWeight:floralType===v?500:400,color:floralType===v?C.rosa:C.ink}}>{l}</div>
+                                <div style={{fontSize:10,color:C.gray,marginTop:1}}>{d}</div>
+                              </div>
+                            </button>
+                          ))}
+                          {!floralType&&<div style={{fontSize:11,color:C.amber}}>⚠ Select a floral type to confirm the deposit amount</div>}
+                          <div style={{padding:'7px 10px',background:'var(--bg-warning)',borderRadius:6,fontSize:11,color:'var(--color-warning)'}}>
+                            Venue & linen details collected in step 5
+                          </div>
+                          {inspoColors.length>0&&(
+                            <div style={{padding:'7px 10px',background:'var(--bg-primary)',borderRadius:6,fontSize:11,color:'var(--color-primary)'}}>
+                              {inspoColors.map(c=>c.label).join(', ')} palette detected — matching linens will be suggested
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              }
+              {/* Wedding Planner — locked add-on teaser */}
+              <div style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'11px 14px',borderRadius:10,border:`2px dashed ${C.border}`,background:C.grayBg,opacity:0.8}}>
+                <span style={{fontSize:18,flexShrink:0,opacity:0.4}}>📋</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:500,color:C.gray}}>Wedding Planner</div>
+                  <div style={{fontSize:11,color:C.gray,marginTop:1}}>Full timeline, vendors & run-of-show — coming soon</div>
+                </div>
+                <span style={{fontSize:10,fontWeight:600,padding:'2px 8px',borderRadius:999,background:'#F3F4F6',color:C.gray,whiteSpace:'nowrap',letterSpacing:'0.03em'}}>Add-on</span>
+              </div>
+            </div>
+
+            {/* ── Package picker + Checklist ── */}
+            {(()=>{
+              const pkgs=allPackages.filter(p=>p.active&&(p.event_type==='both'||p.event_type===evType));
+              const clTmpls=checklistTemplates.filter(t=>t.event_type==='both'||t.event_type===evType);
+              if(!pkgs.length&&!clTmpls.length) return null;
+              return (
+                <div style={{padding:14,borderRadius:10,border:`1px solid ${C.border}`,background:C.grayBg,display:'flex',flexDirection:'column',gap:12}}>
+                  <div style={{fontSize:11,fontWeight:600,color:C.gray,letterSpacing:'0.05em',textTransform:'uppercase'}}>Optional</div>
+                  {pkgs.length>0&&(
+                    <div>
+                      <div style={{fontSize:12,color:C.inkMid,marginBottom:8,fontWeight:500}}>Start from a package</div>
+                      <div style={{display:'flex',gap:8,overflowX:'auto',paddingBottom:4,scrollbarWidth:'none'}}>
+                        {pkgs.map(pkg=>{
+                          const sel=selectedPkgId===pkg.id;
+                          return (
+                            <button key={pkg.id} onClick={()=>{
+                              if(sel){setSelectedPkgId(null);}
+                              else{setSelectedPkgId(pkg.id);setSvcs(pkg.services||[]);setFloralType('');}
+                            }} style={{flexShrink:0,padding:'10px 14px',borderRadius:10,border:`2px solid ${sel?C.rosa:C.border}`,background:sel?C.rosaPale:C.white,cursor:'pointer',textAlign:'left',minWidth:150,maxWidth:190,transition:'all 0.15s',minHeight:'unset'}}>
+                              <div style={{fontSize:12,fontWeight:600,color:sel?C.rosa:C.ink,marginBottom:2}}>{pkg.name}</div>
+                              <div style={{fontSize:13,fontWeight:700,color:sel?C.rosa:'#16a34a',marginBottom:5}}>{fmt(pkg.base_price)}</div>
+                              <div style={{display:'flex',gap:3,flexWrap:'wrap'}}>
+                                {(pkg.services||[]).map(s=><span key={s} style={{fontSize:10,padding:'2px 5px',borderRadius:999,background:sel?'rgba(201,105,122,0.15)':C.border,color:sel?C.rosa:C.gray}}>{SVC_LABELS[s]||s}</span>)}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {selectedPkgId&&<div style={{fontSize:11,color:C.rosa,marginTop:4}}>✓ Package applied — services pre-filled</div>}
+                    </div>
+                  )}
+                  {clTmpls.length>0&&(
+                    <div>
+                      <div style={{fontSize:12,color:C.inkMid,marginBottom:6,fontWeight:500}}>Checklist template</div>
+                      <select value={selectedChecklistId} onChange={e=>setSelectedChecklistId(e.target.value)} style={inputSt}>
+                        <option value="">None — skip</option>
+                        {clTmpls.map(t=>(
+                          <option key={t.id} value={t.id}>{t.name} ({(t.items||[]).length} items)</option>
+                        ))}
+                      </select>
+                      {selectedChecklistId&&<div style={{fontSize:11,color:C.rosa,marginTop:4}}>✓ Checklist tasks will be added on creation</div>}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* ══════ STEP 3 — Pricing & Quote ══════ */}
+        {step===3&&(
+          <div style={{flex:1,overflowY:'auto',padding:'20px 24px',display:'flex',flexDirection:'column',gap:20}}>
+
+            {/* Quote expiry */}
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{flex:1}}>
+                <div style={LBL}>Quote valid until</div>
+                <input type="date" value={quoteExpiry} onChange={e=>setQuoteExpiry(e.target.value)} style={inputSt}/>
+              </div>
+            </div>
+
+            {/* Line items table */}
+            <div>
+              <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:8}}>
+                <div style={LBL}>Services & pricing</div>
+                <span style={{fontSize:11,color:C.gray}}>Edit descriptions and enter prices for each service</span>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 60px 110px 28px',gap:5,marginBottom:4}}>
+                <span style={{fontSize:11,color:C.gray,fontWeight:600}}>Description</span>
+                <span style={{fontSize:11,color:C.gray,fontWeight:600}}>Qty</span>
+                <span style={{fontSize:11,color:C.gray,fontWeight:600}}>Unit price</span>
+                <span/>
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:5}}>
+                {lineItems.map((li,i)=>(
+                  <div key={li.id} style={{display:'grid',gridTemplateColumns:'1fr 60px 110px 28px',gap:5,alignItems:'center'}}>
+                    <div style={{position:'relative'}}>
+                      <input
+                        value={li.description}
+                        onChange={e=>setLineItems(prev=>prev.map((x,j)=>j===i?{...x,description:e.target.value}:x))}
+                        placeholder="Description…"
+                        style={{...inputSt,fontSize:12,paddingLeft:li._svc?22:undefined}}
+                      />
+                      {li._svc&&(
+                        <span style={{position:'absolute',left:7,top:'50%',transform:'translateY(-50%)',fontSize:11}}>
+                          {li._svc==='dress_rental'?'👗':li._svc==='alterations'?'✂️':li._svc==='decoration'?'🌸':li._svc==='photography'?'📷':li._svc==='dj'?'🎵':'•'}
+                        </span>
+                      )}
+                    </div>
+                    <input type="number" value={li.qty} min="1" onChange={e=>setLineItems(prev=>prev.map((x,j)=>j===i?{...x,qty:e.target.value}:x))} style={{...inputSt,fontSize:12}}/>
+                    <input type="number" value={li.unitPrice} placeholder="0.00" min="0" step="0.01" onChange={e=>setLineItems(prev=>prev.map((x,j)=>j===i?{...x,unitPrice:e.target.value}:x))} style={{...inputSt,fontSize:12}}/>
+                    <button onClick={()=>setLineItems(prev=>prev.filter((_,j)=>j!==i))} disabled={lineItems.length<=1} aria-label="Remove line" style={{background:'none',border:'none',color:C.gray,cursor:'pointer',fontSize:16,padding:0,minHeight:'unset',minWidth:'unset',opacity:lineItems.length<=1?0.3:1}}>×</button>
+                  </div>
+                ))}
+              </div>
+              <button onClick={()=>setLineItems(prev=>[...prev,{id:Date.now(),description:'',qty:1,unitPrice:''}])} style={{marginTop:8,fontSize:12,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0,minHeight:'unset'}}>+ Add custom line item</button>
+            </div>
+
+            {/* Totals */}
+            <div style={{borderTop:`1px solid ${C.border}`,paddingTop:14}}>
+              {/* Discount */}
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+                <span style={{fontSize:12,color:C.gray,flex:1}}>Discount</span>
+                <div style={{display:'flex',gap:4}}>
+                  {[['fixed','$'],['percent','%']].map(([v,l])=>(
+                    <button key={v} onClick={()=>setDiscount(d=>({...d,type:v}))}
+                      style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${discount.type===v?C.rosa:C.border}`,background:discount.type===v?C.rosaPale:C.white,color:discount.type===v?C.rosa:C.gray,cursor:'pointer',fontSize:12,minHeight:'unset'}}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+                <input type="number" value={discount.value} onChange={e=>setDiscount(d=>({...d,value:e.target.value}))} placeholder="0" min="0" style={{...inputSt,width:90,fontSize:12}}/>
+              </div>
+              {/* Summary */}
+              <div style={{display:'flex',flexDirection:'column',gap:4,background:C.grayBg,borderRadius:8,padding:'10px 14px'}}>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:C.gray}}>
+                  <span>Subtotal</span><span>{fmt(subtotal)}</span>
+                </div>
+                {discountAmt>0&&(
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:C.amber}}>
+                    <span>Discount{discount.type==='percent'?` (${discount.value}%)`:''}</span>
+                    <span>− {fmt(discountAmt)}</span>
+                  </div>
+                )}
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:15,fontWeight:700,color:C.ink,borderTop:`1px solid ${C.border}`,paddingTop:6,marginTop:4}}>
+                  <span>Total</span><span>{fmt(computedTotal)}</span>
+                </div>
+              </div>
+              {/* AI price suggestion */}
+              {boutique?.plan&&['pro','enterprise'].includes(boutique.plan)&&(
+                <button type="button" onClick={getAIPriceSuggestion} disabled={aiPriceLoading||!svcs.length}
+                  style={{marginTop:10,fontSize:11,padding:'4px 12px',borderRadius:6,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,cursor:'pointer',fontWeight:500,minHeight:'unset',opacity:aiPriceLoading||!svcs.length?0.6:1}}>
+                  {aiPriceLoading?'✨ Thinking…':'✨ AI price suggestion'}
+                </button>
+              )}
+              {aiPriceSuggestion&&(
+                <div style={{marginTop:8,padding:'12px 14px',borderRadius:10,border:`1px solid ${C.rosa}`,background:C.rosaPale,display:'flex',flexDirection:'column',gap:6}}>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+                    <span style={{fontSize:20,fontWeight:600,color:C.ink}}>${aiPriceSuggestion.suggested_price?.toLocaleString()}</span>
+                    <span style={{fontSize:11,padding:'2px 8px',borderRadius:999,background:{high:'#D1FAE5',medium:'#FEF3C7',low:'#FEE2E2'}[aiPriceSuggestion.confidence]||C.grayBg,color:{high:'#065F46',medium:'#92400E',low:'#991B1B'}[aiPriceSuggestion.confidence]||C.gray,fontWeight:600}}>{aiPriceSuggestion.confidence}</span>
+                  </div>
+                  <div style={{fontSize:12,color:C.inkMid}}>{aiPriceSuggestion.reasoning}</div>
+                  <div style={{display:'flex',gap:6}}>
+                    <button onClick={()=>{
+                      const suggested=aiPriceSuggestion.suggested_price;
+                      const n=lineItems.length;
+                      if(n===1){setLineItems(prev=>prev.map((li,i)=>i===0?{...li,unitPrice:String(suggested)}:li));}
+                      else{const perItem=Math.round(suggested/n);setLineItems(prev=>prev.map(li=>({...li,unitPrice:String(perItem)})));}
+                      setAiPriceSuggestion(null);
+                    }} style={{fontSize:12,padding:'5px 12px',borderRadius:7,border:'none',background:C.rosa,color:C.white,cursor:'pointer',fontWeight:600,minHeight:'unset'}}>Apply →</button>
+                    <button onClick={()=>setAiPriceSuggestion(null)} style={{fontSize:12,padding:'5px 10px',borderRadius:7,border:`1px solid ${C.border}`,background:C.white,color:C.gray,cursor:'pointer',minHeight:'unset'}}>Dismiss</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Payment milestones */}
+            {milestones.length>0&&(
+              <div>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+                  <div style={{fontSize:12,color:C.gray,fontWeight:500}}>Payment milestones</div>
+                  <button onClick={()=>setMilestones(genMilestones(evType,svcs,computedTotal,evDate))}
+                    style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer',minHeight:'unset'}}>↺ Recalculate</button>
+                </div>
+                {mismatch&&<div style={{fontSize:12,color:C.amber,background:C.amberBg,padding:'6px 10px',borderRadius:6,marginBottom:8}}>Milestones total {fmt(milestoneSum)} — should equal {fmt(computedTotal)}</div>}
+                <div style={{display:'flex',flexDirection:'column',gap:5}}>
+                  {milestones.map((m,i)=>(
+                    <div key={m.id||i} style={{display:'grid',gridTemplateColumns:'1fr 90px 130px 28px',gap:5,alignItems:'center'}}>
+                      <input value={m.label} onChange={e=>setMs(i,'label',e.target.value)} style={{...inputSt,fontSize:12}}/>
+                      <input type="number" value={m.amount} onChange={e=>setMs(i,'amount',e.target.value)} placeholder="$0" style={{...inputSt,fontSize:12}}/>
+                      <input type="date" value={m.due} onChange={e=>setMs(i,'due',e.target.value)} style={{...inputSt,fontSize:12}}/>
+                      <button onClick={()=>setMilestones(ms=>ms.filter((_,j)=>j!==i))} disabled={milestones.length<=1}
+                        style={{background:'none',border:'none',color:C.gray,cursor:'pointer',fontSize:16,padding:0,minHeight:'unset',minWidth:'unset',opacity:milestones.length<=1?0.3:1}}>×</button>
+                    </div>
+                  ))}
+                  <button onClick={()=>setMilestones(ms=>[...ms,{id:Date.now(),label:'',amount:'',due:''}])}
+                    style={{alignSelf:'flex-start',fontSize:12,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0,minHeight:'unset'}}>+ Add milestone</button>
+                </div>
+              </div>
+            )}
+            {computedTotal>0&&milestones.length===0&&evDate&&(
+              <button onClick={()=>setMilestones(genMilestones(evType,svcs,computedTotal,evDate))}
+                style={{alignSelf:'flex-start',fontSize:12,color:C.rosa,background:C.rosaPale,border:`1px solid ${C.rosa}`,borderRadius:8,padding:'6px 14px',cursor:'pointer',fontWeight:500,minHeight:'unset'}}>
+                Generate payment milestones
+              </button>
+            )}
+
+            {/* Smart task checklist */}
+            <div style={{marginTop:4,borderTop:`1px solid ${C.border}`,paddingTop:16}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:600,color:C.ink}}>✨ Smart Checklist</div>
+                  <div style={{fontSize:11,color:C.gray,marginTop:1}}>Auto-generated tasks based on your services</div>
+                </div>
+                {!tasksGenerated
+                  ?<button onClick={generateSmartTasks} style={{fontSize:12,padding:'6px 14px',borderRadius:8,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,cursor:'pointer',fontWeight:500,minHeight:'unset'}}>Generate tasks</button>
+                  :<button onClick={()=>{setTasksGenerated(false);setSuggestedTasks([]);}} style={{fontSize:11,color:C.gray,background:'none',border:'none',cursor:'pointer',minHeight:'unset'}}>Reset</button>
+                }
+              </div>
+              {tasksGenerated&&suggestedTasks.length>0&&(
+                <div style={{display:'flex',flexDirection:'column',gap:4,maxHeight:200,overflowY:'auto'}}>
+                  {suggestedTasks.map((task,i)=>(
+                    <label key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,background:selectedTasks.has(i)?C.rosaPale:'transparent',border:`1px solid ${selectedTasks.has(i)?C.petal:C.border}`,cursor:'pointer'}}>
+                      <input type="checkbox" checked={selectedTasks.has(i)} onChange={e=>{
+                        setSelectedTasks(prev=>{const n=new Set(prev);e.target.checked?n.add(i):n.delete(i);return n;});
+                      }} style={{accentColor:C.rosa,flexShrink:0}}/>
+                      <span style={{fontSize:12,color:C.ink,flex:1}}>{task.text}</span>
+                      {task.alert&&<span style={{fontSize:9,padding:'2px 6px',borderRadius:999,background:C.redBg,color:C.red,fontWeight:600}}>ALERT</span>}
+                    </label>
+                  ))}
+                  <div style={{fontSize:11,color:C.gray,paddingTop:4}}>{selectedTasks.size} of {suggestedTasks.length} tasks selected</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ══════ STEP 4 — Inspiration & Vision ══════ */}
+        {step===4&&(
           <div style={{flex:1,overflowY:'auto',padding:'20px 24px',display:'flex',flexDirection:'column',gap:16}}>
             <div style={{fontSize:13,color:C.inkMid}}>Tell us about {clientName||'the client'}'s vision</div>
             <div style={{fontSize:11,color:C.gray,marginTop:-10}}>This helps your team stay aligned on the look and feel of the event.</div>
@@ -476,235 +815,8 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
           </div>
         )}
 
-        {/* ══════ STEP 3 — Services & Payment ══════ */}
-        {step===3&&(
-          <div style={{flex:1,overflowY:'auto',padding:'20px 24px',display:'flex',flexDirection:'column',gap:20}}>
-
-            {/* ── Section A: Services with inline config ── */}
-            <div>
-              <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:4}}>
-                <div style={LBL}>Services</div>
-                <span style={{fontSize:11,color:C.gray}}>Tap to toggle · details expand when included</span>
-              </div>
-              {[['dress_rental','👗','Dress rental','Reserve a gown from inventory'],['alterations','✂️','Alterations','Hem, bustle, seamstress work'],['decoration','🌸','Decoration','Setup, florals, venue styling'],['photography','📷','Photography','Photo & video coverage'],['dj','🎵','DJ / Music','Sound system & entertainment']]
-                .filter(([id])=>(TYPE_SVCS[evType]||Object.keys(SVC_LABELS)).includes(id))
-                .map(([id,icon,lbl,desc])=>{
-                  const isOn=svcs.includes(id);
-                  const expandBorder=`2px solid ${C.rosa}`;
-                  return (
-                    <div key={id} style={{marginBottom:8}}>
-                      {/* Toggle row */}
-                      <button onClick={()=>toggleSvc(id)} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'11px 14px',borderRadius:isOn?'10px 10px 0 0':10,border:`2px solid ${isOn?C.rosa:C.border}`,background:isOn?C.rosaPale:C.white,cursor:'pointer',textAlign:'left',transition:'all 0.15s',minHeight:'unset'}}>
-                        <span style={{fontSize:18,flexShrink:0,opacity:isOn?1:0.5}}>{icon}</span>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:13,fontWeight:500,color:isOn?C.rosa:C.ink}}>{lbl}</div>
-                          <div style={{fontSize:11,color:C.gray,marginTop:1}}>{desc}</div>
-                        </div>
-                        <div style={{width:20,height:20,borderRadius:'50%',background:isOn?C.rosa:C.white,border:`2px solid ${isOn?C.rosa:C.border}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'all 0.15s'}}>
-                          {isOn&&<span style={{color:'#fff',fontSize:11,fontWeight:700,lineHeight:1}}>✓</span>}
-                        </div>
-                      </button>
-                      {/* Inline config — Dress rental */}
-                      {isOn&&id==='dress_rental'&&(
-                        <div style={{border:expandBorder,borderTop:'none',borderRadius:'0 0 10px 10px',padding:'12px 14px',background:'rgba(253,245,246,0.6)',display:'flex',flexDirection:'column',gap:8}}>
-                          <div style={{fontSize:11,color:C.rosa,fontWeight:500}}>Dress reservation</div>
-                          <div style={{display:'flex',gap:6}}>
-                            {[['now','Reserve now'],['later','Reserve later']].map(([v,l])=>(
-                              <button key={v} onClick={()=>setDressMode(v)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${dressMode===v?C.rosa:C.border}`,background:dressMode===v?C.rosaPale:'transparent',color:dressMode===v?C.rosa:C.gray,cursor:'pointer',fontSize:12,minHeight:'unset'}}>{l}</button>
-                            ))}
-                          </div>
-                          {dressMode==='now'?(availDresses.length===0
-                            ?<div style={{fontSize:12,color:'var(--color-warning)'}}>No {evType==='wedding'?'bridal':'quinceañera'} gowns available — a task will be created to reserve later.</div>
-                            :<select value={dressId} onChange={e=>setDressId(e.target.value)} style={inputSt}>
-                              <option value="">Select available dress…</option>
-                              {availDresses.map(d=><option key={d.id} value={d.id}>#{d.sku} · {d.name} · Size {d.size} · {d.color} · {fmt(d.price)}/rental</option>)}
-                            </select>
-                          ):<div style={{fontSize:12,color:C.gray,padding:'6px 0'}}>✓ Task auto-created: "Reserve dress for {clientName||'client'}"</div>}
-                        </div>
-                      )}
-                      {/* Inline config — Alterations */}
-                      {isOn&&id==='alterations'&&(
-                        <div style={{border:expandBorder,borderTop:'none',borderRadius:'0 0 10px 10px',padding:'12px 14px',background:'rgba(253,245,246,0.6)',display:'flex',flexDirection:'column',gap:8}}>
-                          <div style={{fontSize:11,color:C.rosa,fontWeight:500}}>Alteration details <span style={{color:C.gray,fontWeight:400}}>(all optional — can fill in later)</span></div>
-                          <select value={altStaff} onChange={e=>setAltStaff(e.target.value)} style={inputSt}>
-                            <option value="">Assign seamstress…</option>
-                            {seamstresses.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
-                          </select>
-                          <input value={altDesc} onChange={e=>setAltDesc(e.target.value)} placeholder="Garment (e.g. Bridal gown + 2 bridesmaid dresses)" style={inputSt}/>
-                          <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-                            {['Hem','Bustle','Waist take-in','Let out waist','Custom beading','Sleeves','Other'].map(item=>(
-                              <button key={item} onClick={()=>setAltItems(ai=>ai.includes(item)?ai.filter(x=>x!==item):[...ai,item])} style={chip(altItems.includes(item))}>{item}</button>
-                            ))}
-                          </div>
-                          <input type="number" value={altPrice} onChange={e=>setAltPrice(e.target.value)} placeholder="Estimated price ($)" style={inputSt}/>
-                        </div>
-                      )}
-                      {/* Inline config — Decoration */}
-                      {isOn&&id==='decoration'&&(
-                        <div style={{border:expandBorder,borderTop:'none',borderRadius:'0 0 10px 10px',padding:'12px 14px',background:'rgba(253,245,246,0.6)',display:'flex',flexDirection:'column',gap:8}}>
-                          <div style={{fontSize:11,color:C.rosa,fontWeight:500}}>Floral arrangement <span style={{color:C.gray,fontWeight:400}}>· affects deposit amount</span></div>
-                          {[['real','🌸 Real flowers','Natural blooms, seasonal · Deposit $800'],['silk','🎀 Silk / artificial','Always available, no wilt · Deposit $500']].map(([v,l,d])=>(
-                            <button key={v} onClick={()=>setFloralType(v)} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:8,border:`1.5px solid ${floralType===v?C.rosa:C.border}`,background:floralType===v?C.rosaPale:C.white,cursor:'pointer',textAlign:'left',transition:'all 0.15s',minHeight:'unset'}}>
-                              <div style={{width:14,height:14,borderRadius:'50%',border:`2px solid ${floralType===v?C.rosa:C.borderDark}`,background:floralType===v?C.rosa:'transparent',flexShrink:0,transition:'all 0.15s'}}/>
-                              <div>
-                                <div style={{fontSize:12,fontWeight:floralType===v?500:400,color:floralType===v?C.rosa:C.ink}}>{l}</div>
-                                <div style={{fontSize:10,color:C.gray,marginTop:1}}>{d}</div>
-                              </div>
-                            </button>
-                          ))}
-                          {!floralType&&<div style={{fontSize:11,color:C.amber}}>⚠ Select a floral type to confirm the deposit amount</div>}
-                          <div style={{padding:'7px 10px',background:'var(--bg-warning)',borderRadius:6,fontSize:11,color:'var(--color-warning)'}}>
-                            Venue & linen details collected in the next step
-                          </div>
-                          {inspoColors.length>0&&(
-                            <div style={{padding:'7px 10px',background:'var(--bg-primary)',borderRadius:6,fontSize:11,color:'var(--color-primary)'}}>
-                              {inspoColors.map(c=>c.label).join(', ')} palette detected — matching linens will be suggested
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-              }
-              {/* Wedding Planner — locked add-on teaser */}
-              <div style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'11px 14px',borderRadius:10,border:`2px dashed ${C.border}`,background:C.grayBg,opacity:0.8}}>
-                <span style={{fontSize:18,flexShrink:0,opacity:0.4}}>📋</span>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:500,color:C.gray}}>Wedding Planner</div>
-                  <div style={{fontSize:11,color:C.gray,marginTop:1}}>Full timeline, vendors & run-of-show — coming soon</div>
-                </div>
-                <span style={{fontSize:10,fontWeight:600,padding:'2px 8px',borderRadius:999,background:'#F3F4F6',color:C.gray,whiteSpace:'nowrap',letterSpacing:'0.03em'}}>Add-on</span>
-              </div>
-            </div>
-
-            {/* ── Divider ── */}
-            <div style={{height:1,background:C.border}}/>
-
-            {/* ── Section B: Payment ── */}
-            <div style={{display:'flex',flexDirection:'column',gap:14}}>
-              <div style={LBL}>Payment</div>
-              <div>
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
-                  <div style={{fontSize:12,color:C.gray}}>Contract total ($) *</div>
-                  {boutique?.plan&&['pro','enterprise'].includes(boutique.plan)&&(
-                    <button type="button" onClick={getAIPriceSuggestion} disabled={aiPriceLoading||!svcs.length}
-                      style={{fontSize:11,padding:'3px 10px',borderRadius:6,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,cursor:'pointer',fontWeight:500,minHeight:'unset',opacity:aiPriceLoading||!svcs.length?0.6:1,whiteSpace:'nowrap'}}>
-                      {aiPriceLoading?'✨ Thinking…':'✨ Suggest price'}
-                    </button>
-                  )}
-                </div>
-                <input type="number" value={total} onChange={e=>{setTotal(e.target.value);setAiPriceSuggestion(null);}} placeholder="0.00" style={inputSt}/>
-                {aiPriceSuggestion&&(
-                  <div style={{marginTop:8,padding:'12px 14px',borderRadius:10,border:`1px solid ${C.rosa}`,background:C.rosaPale,display:'flex',flexDirection:'column',gap:6}}>
-                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
-                      <span style={{fontSize:22,fontWeight:600,color:C.ink}}>${aiPriceSuggestion.suggested_price.toLocaleString()}</span>
-                      <span style={{fontSize:11,padding:'2px 8px',borderRadius:999,background:{high:'#D1FAE5',medium:'#FEF3C7',low:'#FEE2E2'}[aiPriceSuggestion.confidence]||C.grayBg,color:{high:'#065F46',medium:'#92400E',low:'#991B1B'}[aiPriceSuggestion.confidence]||C.gray,fontWeight:600,textTransform:'capitalize'}}>{aiPriceSuggestion.confidence} confidence</span>
-                    </div>
-                    <div style={{fontSize:12,color:C.inkMid,lineHeight:1.4}}>{aiPriceSuggestion.reasoning}</div>
-                    <div style={{display:'flex',gap:6,marginTop:2}}>
-                      <button onClick={()=>{setTotal(String(aiPriceSuggestion.suggested_price));setAiPriceSuggestion(null);}} style={{fontSize:12,padding:'5px 12px',borderRadius:7,border:'none',background:C.rosa,color:C.white,cursor:'pointer',fontWeight:600,minHeight:'unset'}}>Use this price →</button>
-                      <button onClick={()=>setAiPriceSuggestion(null)} style={{fontSize:12,padding:'5px 10px',borderRadius:7,border:`1px solid ${C.border}`,background:C.white,color:C.gray,cursor:'pointer',minHeight:'unset'}}>Dismiss</button>
-                    </div>
-                  </div>
-                )}
-              </div>
-              {milestones.length>0&&(
-                <div>
-                  <div style={{fontSize:12,color:C.gray,marginBottom:8}}>Payment milestones</div>
-                  {mismatch&&<div style={{fontSize:12,color:C.amber,background:C.amberBg,padding:'6px 10px',borderRadius:6,marginBottom:8}}>Milestones total {fmt(milestoneSum)} — should equal {fmt(Number(total))}</div>}
-                  <div style={{display:'flex',flexDirection:'column',gap:5}}>
-                    {milestones.map((m,i)=>(
-                      <div key={m.id||i} style={{display:'grid',gridTemplateColumns:'1fr 90px 130px 28px',gap:5,alignItems:'center'}}>
-                        <input value={m.label} onChange={e=>setMs(i,'label',e.target.value)} style={{...inputSt,fontSize:12}}/>
-                        <input type="number" value={m.amount} onChange={e=>setMs(i,'amount',e.target.value)} placeholder="$0" style={{...inputSt,fontSize:12}}/>
-                        <input type="date" value={m.due} onChange={e=>setMs(i,'due',e.target.value)} style={{...inputSt,fontSize:12}}/>
-                        <button onClick={()=>setMilestones(ms=>ms.filter((_,j)=>j!==i))} disabled={milestones.length<=1} style={{background:'none',border:'none',color:C.gray,cursor:'pointer',fontSize:16,padding:0,minHeight:'unset',minWidth:'unset',opacity:milestones.length<=1?0.3:1}}>×</button>
-                      </div>
-                    ))}
-                    <button onClick={()=>setMilestones(ms=>[...ms,{id:Date.now(),label:'',amount:'',due:''}])} style={{alignSelf:'flex-start',fontSize:12,color:'var(--color-primary)',background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0,minHeight:'unset'}}>+ Add milestone</button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ── Optional: Package picker + Checklist (at bottom) ── */}
-            {(()=>{
-              const pkgs=allPackages.filter(p=>p.active&&(p.event_type==='both'||p.event_type===evType));
-              const clTmpls=checklistTemplates.filter(t=>t.event_type==='both'||t.event_type===evType);
-              if(!pkgs.length&&!clTmpls.length) return null;
-              return (
-                <div style={{padding:14,borderRadius:10,border:`1px solid ${C.border}`,background:C.grayBg,display:'flex',flexDirection:'column',gap:12}}>
-                  <div style={{fontSize:11,fontWeight:600,color:C.gray,letterSpacing:'0.05em',textTransform:'uppercase'}}>Optional</div>
-                  {pkgs.length>0&&(
-                    <div>
-                      <div style={{fontSize:12,color:C.inkMid,marginBottom:8,fontWeight:500}}>Start from a package</div>
-                      <div style={{display:'flex',gap:8,overflowX:'auto',paddingBottom:4,scrollbarWidth:'none'}}>
-                        {pkgs.map(pkg=>{
-                          const sel=selectedPkgId===pkg.id;
-                          return (
-                            <button key={pkg.id} onClick={()=>{
-                              if(sel){setSelectedPkgId(null);}
-                              else{setSelectedPkgId(pkg.id);setSvcs(pkg.services||[]);setTotal(String(pkg.base_price||''));setFloralType('');}
-                            }} style={{flexShrink:0,padding:'10px 14px',borderRadius:10,border:`2px solid ${sel?C.rosa:C.border}`,background:sel?C.rosaPale:C.white,cursor:'pointer',textAlign:'left',minWidth:150,maxWidth:190,transition:'all 0.15s',minHeight:'unset'}}>
-                              <div style={{fontSize:12,fontWeight:600,color:sel?C.rosa:C.ink,marginBottom:2}}>{pkg.name}</div>
-                              <div style={{fontSize:13,fontWeight:700,color:sel?C.rosa:'#16a34a',marginBottom:5}}>{fmt(pkg.base_price)}</div>
-                              <div style={{display:'flex',gap:3,flexWrap:'wrap'}}>
-                                {(pkg.services||[]).map(s=><span key={s} style={{fontSize:10,padding:'2px 5px',borderRadius:999,background:sel?'rgba(201,105,122,0.15)':C.border,color:sel?C.rosa:C.gray}}>{SVC_LABELS[s]||s}</span>)}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {selectedPkgId&&<div style={{fontSize:11,color:C.rosa,marginTop:4}}>✓ Package applied — services and price pre-filled</div>}
-                    </div>
-                  )}
-                  {clTmpls.length>0&&(
-                    <div>
-                      <div style={{fontSize:12,color:C.inkMid,marginBottom:6,fontWeight:500}}>Checklist template</div>
-                      <select value={selectedChecklistId} onChange={e=>setSelectedChecklistId(e.target.value)} style={inputSt}>
-                        <option value="">None — skip</option>
-                        {clTmpls.map(t=>(
-                          <option key={t.id} value={t.id}>{t.name} ({(t.items||[]).length} items)</option>
-                        ))}
-                      </select>
-                      {selectedChecklistId&&<div style={{fontSize:11,color:C.rosa,marginTop:4}}>✓ Checklist tasks will be added on creation</div>}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* ── Smart task checklist ── */}
-            <div style={{marginTop:4,borderTop:`1px solid ${C.border}`,paddingTop:16}}>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-                <div>
-                  <div style={{fontSize:13,fontWeight:600,color:C.ink}}>✨ Smart Checklist</div>
-                  <div style={{fontSize:11,color:C.gray,marginTop:1}}>Auto-generated tasks based on your services</div>
-                </div>
-                {!tasksGenerated&&<button onClick={generateSmartTasks} style={{fontSize:12,padding:'6px 14px',borderRadius:8,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,cursor:'pointer',fontWeight:500,minHeight:'unset'}}>Generate tasks</button>}
-                {tasksGenerated&&<button onClick={()=>{setTasksGenerated(false);setSuggestedTasks([]);}} style={{fontSize:11,color:C.gray,background:'none',border:'none',cursor:'pointer',minHeight:'unset'}}>Reset</button>}
-              </div>
-              {tasksGenerated&&suggestedTasks.length>0&&(
-                <div style={{display:'flex',flexDirection:'column',gap:4,maxHeight:220,overflowY:'auto'}}>
-                  {suggestedTasks.map((task,i)=>(
-                    <label key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,background:selectedTasks.has(i)?C.rosaPale:'transparent',border:`1px solid ${selectedTasks.has(i)?C.petal:C.border}`,cursor:'pointer',transition:'all 0.1s'}}>
-                      <input type="checkbox" checked={selectedTasks.has(i)} onChange={e=>{
-                        setSelectedTasks(prev=>{const n=new Set(prev);e.target.checked?n.add(i):n.delete(i);return n;});
-                      }} style={{accentColor:C.rosa,flexShrink:0}}/>
-                      <span style={{fontSize:12,color:C.ink,flex:1}}>{task.text}</span>
-                      {task.alert&&<span style={{fontSize:9,padding:'2px 6px',borderRadius:999,background:C.redBg,color:C.red,fontWeight:600}}>ALERT</span>}
-                    </label>
-                  ))}
-                  <div style={{fontSize:11,color:C.gray,paddingTop:4}}>{selectedTasks.size} of {suggestedTasks.length} tasks selected</div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ══════ STEP 4 — Venue & Inventory Needs ══════ */}
-        {step===4&&(
+        {/* ══════ STEP 5 — Venue & Inventory Needs ══════ */}
+        {step===5&&(
           <div style={{flex:1,overflowY:'auto',padding:'20px 24px',display:'flex',flexDirection:'column',gap:14}}>
             <div style={{fontSize:13,color:C.inkMid}}>Let's figure out what you'll need</div>
             <div style={{fontSize:11,color:C.gray,marginTop:-8}}>Answer a few questions about the venue and we'll calculate exactly how many items to pull from inventory.</div>
@@ -871,8 +983,8 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
           </div>
         )}
 
-        {/* ══════ STEP 5 — Review & Confirm ══════ */}
-        {step===5&&(
+        {/* ══════ STEP 6 — Review & Confirm ══════ */}
+        {step===6&&(
           <div style={{flex:1,overflowY:'auto',padding:'20px 24px',display:'flex',flexDirection:'column',gap:12}}>
             {[
               ['CLIENT',<>{newMode?newCl.name:selClient?.name}{(newMode?newCl.phone:selClient?.phone)&&<div style={{fontSize:12,color:C.gray}}>{newMode?newCl.phone:selClient?.phone}</div>}{(newMode?newCl.email:selClient?.email)&&<div style={{fontSize:12,color:C.gray}}>{newMode?newCl.email:selClient?.email}</div>}</>],
@@ -911,10 +1023,27 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
               <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{svcs.map(s=><SvcTag key={s} svc={s}/>)}</div>
             </div>
 
-            {/* Contract value */}
+            {/* Quote summary */}
             <div style={{background:C.ivory,borderRadius:10,padding:14}}>
-              <div style={{fontSize:10,fontWeight:600,color:C.gray,letterSpacing:'0.08em',marginBottom:8}}>CONTRACT VALUE</div>
-              <span style={{fontSize:18,fontWeight:500,color:C.ink}}>{fmt(Number(total))}</span>
+              <div style={{fontSize:10,fontWeight:600,color:C.gray,letterSpacing:'0.08em',marginBottom:8}}>QUOTE SUMMARY</div>
+              {lineItems.filter(li=>li.description).map((li,i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:4}}>
+                  <span style={{color:C.ink}}>{li.description}{Number(li.qty)>1?` × ${li.qty}`:''}</span>
+                  <span style={{color:C.gray}}>{fmt((Number(li.qty)||1)*(Number(li.unitPrice)||0))}</span>
+                </div>
+              ))}
+              {discountAmt>0&&(
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:C.amber,marginTop:4,paddingTop:4,borderTop:`1px solid ${C.border}`}}>
+                  <span>Discount{discount.type==='percent'?` (${discount.value}%)`:''}</span>
+                  <span>− {fmt(discountAmt)}</span>
+                </div>
+              )}
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:15,fontWeight:700,color:C.ink,borderTop:`1px solid ${C.border}`,paddingTop:8,marginTop:4}}>
+                <span>Total</span><span>{fmt(computedTotal)}</span>
+              </div>
+              {quoteExpiry&&(
+                <div style={{fontSize:11,color:C.gray,marginTop:6}}>Quote valid until {new Date(quoteExpiry+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+              )}
             </div>
 
             {/* Venue & linen plan */}
@@ -940,7 +1069,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                     <span style={{color:C.gray}}>{fmt(Number(m.amount))} · {m.due?new Date(m.due+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):''}</span>
                   </div>
                 ))}
-                {mismatch&&<div style={{fontSize:11,color:C.amber,marginTop:6}}>⚠ Milestones total {fmt(milestoneSum)} vs {fmt(Number(total))} — adjust after creation.</div>}
+                {mismatch&&<div style={{fontSize:11,color:C.amber,marginTop:6}}>⚠ Milestones total {fmt(milestoneSum)} vs {fmt(computedTotal)} — adjust after creation.</div>}
               </div>
             )}
             {svcs.includes('dress_rental')&&(
@@ -977,7 +1106,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
         {/* Footer */}
         <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',gap:8,flexShrink:0}}>
           <GhostBtn label={step===1?'Cancel':'← Back'} onClick={()=>step===1?onClose():goBack()}/>
-          {!isLast?<PrimaryBtn label="Continue →" onClick={goNext}/>:<PrimaryBtn label={saving?'Creating…':'Create event & generate contract'} colorScheme="success" onClick={confirm}/>}
+          {!isLast?<PrimaryBtn label="Continue →" onClick={goNext}/>:<PrimaryBtn label={saving?'Creating…':'Create event & save quote'} colorScheme="success" onClick={confirm}/>}
         </div>
       </div>
     </div>
