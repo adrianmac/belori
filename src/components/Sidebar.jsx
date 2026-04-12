@@ -152,7 +152,7 @@ const BoutiqueSwitcher = ({ boutique, boutiques = [], onSwitch }) => {
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(o => !o)}
+      <button onClick={() => setOpen(o => !o)} aria-expanded={open} aria-label="Toggle boutique selector"
         style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 1 }}>
         <div style={{ fontSize: 14, fontWeight: 500, color: C.ink }}>Belori</div>
         <div style={{ fontSize: 11, color: 'var(--brand-primary, #C9697A)', display: 'flex', alignItems: 'center', gap: 3, maxWidth: 130 }}>
@@ -366,7 +366,7 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
 
       {/* Search bar */}
       <div style={{ padding: '8px 10px', borderBottom: `1px solid ${C.border}` }}>
-        <button onClick={onSearch}
+        <button onClick={onSearch} aria-label="Search"
           style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', padding: '7px 10px', borderRadius: 8, border: `1px solid ${C.border}`, background: C.ivory, cursor: 'pointer', color: C.gray, fontSize: 12, minHeight: 'unset', minWidth: 'unset', transition: 'all 0.15s' }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = C.rosa; e.currentTarget.style.color = C.rosa; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.gray; }}>
@@ -432,8 +432,7 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
       {/* Footer */}
       <div style={{ padding: '10px 12px', borderTop: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {/* Focus Mode toggle */}
-        <button
-          onClick={toggleFocus}
+        <button onClick={toggleFocus} aria-pressed={focusMode}
           title={focusMode ? 'Exit Focus Mode' : 'Enter Focus Mode — show only core workflows'}
           style={{
             display: 'flex', alignItems: 'center', gap: 7,
@@ -471,12 +470,12 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
             <div style={{ fontSize: 11, color: C.gray }}>{ROLE_LABELS[myRole] || 'Staff'}</div>
           </div>
           {/* Bell icon */}
-          <button onClick={onAlerts} title="Alerts"
+          <button onClick={onAlerts} title="Alerts" aria-label="View Alerts"
             style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: alertCount > 0 ? 'var(--brand-primary, #C9697A)' : C.gray, padding: '4px', minHeight: 'unset', minWidth: 'unset', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
             {alertCount > 0 && <span style={{ position: 'absolute', top: 0, right: 0, width: 14, height: 14, borderRadius: '50%', background: '#DC2626', color: '#fff', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{alertCount > 9 ? '9+' : alertCount}</span>}
           </button>
-          <span onClick={onSignOut} title="Sign out" style={{ cursor: 'pointer', color: C.gray, fontSize: 11 }}>↩</span>
+          <button onClick={onSignOut} title="Sign out" aria-label="Sign out" style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: C.gray, fontSize: 11 }}>↩</button>
         </div>
       </div>
     </div>
@@ -561,7 +560,7 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
           );
         })}
         {/* More button */}
-        <button onClick={() => setShowMore(s => !s)}
+        <button onClick={() => setShowMore(s => !s)} aria-expanded={showMore} aria-label={showMore ? "Show fewer modules" : "Show more modules"}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
             color: (moreActive || showMore) ? 'var(--brand-primary, #C9697A)' : '#9CA3AF', fontSize: 9, fontWeight: (moreActive || showMore) ? 600 : 400,
             cursor: 'pointer', flex: 1, height: 60, padding: '0', transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent' }}>

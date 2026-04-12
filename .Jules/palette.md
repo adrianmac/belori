@@ -1,0 +1,3 @@
+## 2024-05-20 - Adding semantic buttons and ARIA labels to Sidebar and Modals
+**Learning:** Found multiple instances where interactive elements were built using `<span>` tags (e.g. Sign Out), failing keyboard navigation, and missing `aria-label` attributes for icon-only buttons like the Close `x` in Modals. Changing the `<span>` to a proper `<button>` with unstyled CSS ensures proper keyboard accessibility while retaining the visual design. Modals close buttons should always use an explicit ARIA label.
+**Action:** In future UX improvements, default to proper semantic tags (`<button>`) with unstyled CSS over making generic tags clickable. Add `aria-label` and aria states (`aria-expanded`, `aria-pressed`) to icon-only interactive elements.
