@@ -149,7 +149,7 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
             <span style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>New appointment</span>
             <span style={{
               marginLeft: 8, fontSize: 10, padding: '2px 7px', borderRadius: 999,
-              background: C.rosaPale, color: C.rosa, fontWeight: 500,
+              background: C.rosaPale, color: C.rosaText, fontWeight: 500,
             }}>Standalone</span>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
@@ -188,7 +188,7 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
             <div style={{ ...LBL, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Client *</span>
               {(selectedClient || isWalkIn) && (
-                <button onClick={clearClient} style={{ fontSize: 11, color: C.rosa, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}>
+                <button onClick={clearClient} style={{ fontSize: 11, color: C.rosaText, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}>
                   Clear
                 </button>
               )}
@@ -208,7 +208,7 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
                 }}
               />
               {selectedClient && (
-                <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: C.rosa }}>✓</span>
+                <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: C.rosaText }}>✓</span>
               )}
               {isWalkIn && (
                 <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: C.champagne, fontWeight: 600 }}>Walk-in</span>
@@ -239,7 +239,7 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
                   >
                     <div style={{
                       width: 28, height: 28, borderRadius: '50%', background: C.rosaPale,
-                      color: C.rosa, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: C.rosaText, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 11, fontWeight: 600, flexShrink: 0,
                     }}>
                       {(c.name || '?').slice(0, 2).toUpperCase()}

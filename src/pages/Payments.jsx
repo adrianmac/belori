@@ -47,7 +47,7 @@ const ReminderModal = ({ payment, boutiqueName, boutique, logReminder, onClose }
       <div style={{background:C.white,borderRadius:16,width:460,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
         <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Send payment reminder</span>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
         </div>
         <div style={{padding:20,display:'flex',flexDirection:'column',gap:16}}>
           {/* Client info */}
@@ -57,8 +57,8 @@ const ReminderModal = ({ payment, boutiqueName, boutique, logReminder, onClose }
               <div style={{fontSize:12,color:C.gray,marginTop:2}}>{payment.event}</div>
             </div>
             <div style={{textAlign:'right'}}>
-              <div style={{fontSize:13,fontWeight:600,color:'var(--color-danger)'}}>{fmt(payment.amount)}</div>
-              <div style={{fontSize:11,color:'var(--color-danger)',marginTop:2}}>
+              <div style={{fontSize:13,fontWeight:600,color:'var(--text-danger)'}}>{fmt(payment.amount)}</div>
+              <div style={{fontSize:11,color:'var(--text-danger)',marginTop:2}}>
                 {daysLate > 0 ? `${daysLate} day${daysLate!==1?'s':''} overdue` : `Due ${payment.due}`}
               </div>
             </div>
@@ -68,7 +68,7 @@ const ReminderModal = ({ payment, boutiqueName, boutique, logReminder, onClose }
           {payment.clientPhone && (
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <span style={{fontSize:11,color:C.gray}}>Phone:</span>
-              <a href={`tel:${payment.clientPhone}`} style={{fontSize:13,fontWeight:500,color:C.rosa,textDecoration:'none'}}>{payment.clientPhone}</a>
+              <a href={`tel:${payment.clientPhone}`} style={{fontSize:13,fontWeight:500,color:C.rosaText,textDecoration:'none'}}>{payment.clientPhone}</a>
             </div>
           )}
 
@@ -229,7 +229,7 @@ const PaymentPlanModal = ({ events, payments: allPayments, createMilestone, onCl
             <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Create Payment Plan</span>
             <span style={{fontSize:12,color:C.gray,marginLeft:10}}>Step {step} of 2</span>
           </div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
         </div>
 
         <div style={{flex:1,overflowY:'auto',padding:20,display:'flex',flexDirection:'column',gap:16}}>
@@ -237,8 +237,8 @@ const PaymentPlanModal = ({ events, payments: allPayments, createMilestone, onCl
             <>
               {/* Event selector */}
               <div>
-                <div style={LBL}>Event</div>
-                <select value={selectedEventId} onChange={e => { setSelectedEventId(e.target.value); setDepositAmount(''); }}
+                <label htmlFor="pay-event" style={LBL}>Event</label>
+                <select id="pay-event" value={selectedEventId} onChange={e => { setSelectedEventId(e.target.value); setDepositAmount(''); }}
                   style={{...inputSt}}>
                   <option value="">Select an event…</option>
                   {eventOptions.map(opt => (
@@ -257,7 +257,7 @@ const PaymentPlanModal = ({ events, payments: allPayments, createMilestone, onCl
                   ].map(s => (
                     <div key={s.label} style={{background:C.ivory,borderRadius:8,padding:'10px 12px'}}>
                       <div style={{fontSize:10,color:C.gray}}>{s.label}</div>
-                      <div style={{fontSize:16,fontWeight:s.bold?600:400,color:s.bold?C.rosa:C.ink,marginTop:2}}>{s.val}</div>
+                      <div style={{fontSize:16,fontWeight:s.bold?600:400,color:s.bold?C.rosaText:C.ink,marginTop:2}}>{s.val}</div>
                     </div>
                   ))}
                 </div>
@@ -265,8 +265,9 @@ const PaymentPlanModal = ({ events, payments: allPayments, createMilestone, onCl
 
               {/* Deposit amount */}
               <div>
-                <div style={LBL}>Deposit amount</div>
+                <label htmlFor="pay-deposit-amount" style={LBL}>Deposit amount</label>
                 <input
+                  id="pay-deposit-amount"
                   type="number" min="0" step="0.01"
                   placeholder={`${fmt(effectiveDeposit)} (30% default)`}
                   value={depositAmount}
@@ -277,12 +278,12 @@ const PaymentPlanModal = ({ events, payments: allPayments, createMilestone, onCl
 
               {/* Installment count */}
               <div>
-                <div style={LBL}>Number of installments</div>
-                <div style={{display:'flex',gap:6}}>
+                <div id="pay-installments-label" style={LBL}>Number of installments</div>
+                <div role="group" aria-labelledby="pay-installments-label" style={{display:'flex',gap:6}}>
                   {INSTALLMENT_OPTIONS.map(n => (
                     <button key={n} onClick={() => setInstallmentCount(n)}
                       style={{flex:1,padding:'8px 0',borderRadius:8,border:`1.5px solid ${installmentCount===n?C.rosa:C.border}`,
-                        background:installmentCount===n?C.rosaPale:C.white,color:installmentCount===n?C.rosa:C.gray,
+                        background:installmentCount===n?C.rosaPale:C.white,color:installmentCount===n?C.rosaText:C.gray,
                         fontSize:13,fontWeight:installmentCount===n?600:400,cursor:'pointer'}}>
                       {n}
                     </button>
@@ -292,12 +293,12 @@ const PaymentPlanModal = ({ events, payments: allPayments, createMilestone, onCl
 
               {/* Frequency */}
               <div>
-                <div style={LBL}>Frequency</div>
-                <div style={{display:'flex',gap:6}}>
+                <div id="pay-frequency-label" style={LBL}>Frequency</div>
+                <div role="group" aria-labelledby="pay-frequency-label" style={{display:'flex',gap:6}}>
                   {FREQ_OPTIONS.map(f => (
                     <button key={f.days} onClick={() => setFreqDays(f.days)}
                       style={{flex:1,padding:'8px 0',borderRadius:8,border:`1.5px solid ${freqDays===f.days?C.rosa:C.border}`,
-                        background:freqDays===f.days?C.rosaPale:C.white,color:freqDays===f.days?C.rosa:C.gray,
+                        background:freqDays===f.days?C.rosaPale:C.white,color:freqDays===f.days?C.rosaText:C.gray,
                         fontSize:12,fontWeight:freqDays===f.days?600:400,cursor:'pointer'}}>
                       {f.label}
                     </button>
@@ -307,8 +308,8 @@ const PaymentPlanModal = ({ events, payments: allPayments, createMilestone, onCl
 
               {/* Start date */}
               <div>
-                <div style={LBL}>First payment date</div>
-                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={inputSt}/>
+                <label htmlFor="pay-start-date" style={LBL}>First payment date</label>
+                <input id="pay-start-date" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={inputSt}/>
               </div>
             </>
           )}
@@ -319,7 +320,7 @@ const PaymentPlanModal = ({ events, payments: allPayments, createMilestone, onCl
 
               {/* Rounding warning */}
               {roundingDiff > 0.01 && (
-                <div style={{padding:'10px 14px',background:C.amberBg,borderRadius:8,fontSize:12,color:C.amber}}>
+                <div style={{padding:'10px 14px',background:C.amberBg,borderRadius:8,fontSize:12,color:C.warningText}}>
                   Rounding difference of {fmt(roundingDiff)} — auto-adjusted in the final payment.
                 </div>
               )}
@@ -349,7 +350,7 @@ const PaymentPlanModal = ({ events, payments: allPayments, createMilestone, onCl
                   <tfoot>
                     <tr style={{background:C.ivory,borderTop:`2px solid ${C.border}`}}>
                       <td colSpan={3} style={{padding:'9px 12px',fontSize:12,fontWeight:600,color:C.ink}}>Total</td>
-                      <td style={{padding:'9px 12px',fontWeight:700,color:C.rosa}}>{fmt(planTotal)}</td>
+                      <td style={{padding:'9px 12px',fontWeight:700,color:C.rosaText}}>{fmt(planTotal)}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -494,7 +495,7 @@ const QuickPayModal = ({ payments: allPayments, boutique, onClose, onSuccess }) 
         {/* Header */}
         <div style={{padding:'16px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
           <span style={{fontWeight:600,fontSize:15,color:C.ink}}>⚡ Quick Pay</span>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'0 2px'}}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
         </div>
 
         {/* Body */}
@@ -502,8 +503,9 @@ const QuickPayModal = ({ payments: allPayments, boutique, onClose, onSuccess }) 
 
           {/* Client search */}
           <div style={{position:'relative'}}>
-            <div style={LBL}>Client</div>
+            <label htmlFor="pay-client-search" style={LBL}>Client</label>
             <input
+              id="pay-client-search"
               value={clientSearch}
               onChange={e => { setClientSearch(e.target.value); setShowDropdown(true); setSelectedClient(null); setSelectedMilestone(null); setAmount(''); }}
               onFocus={() => setShowDropdown(true)}
@@ -531,13 +533,13 @@ const QuickPayModal = ({ payments: allPayments, boutique, onClose, onSuccess }) 
           {/* Milestone selector */}
           {selectedClient && (
             <div>
-              <div style={LBL}>Milestone</div>
+              <div id="pay-milestone-label" style={LBL}>Milestone</div>
               {clientMilestones.length === 0 ? (
                 <div style={{padding:'10px 12px',background:C.grayBg,borderRadius:8,fontSize:13,color:C.gray}}>
                   No open milestones for this client.
                 </div>
               ) : (
-                <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                <div role="group" aria-labelledby="pay-milestone-label" style={{display:'flex',flexDirection:'column',gap:6}}>
                   {clientMilestones.map(m => (
                     <div
                       key={m.id}
@@ -566,8 +568,9 @@ const QuickPayModal = ({ payments: allPayments, boutique, onClose, onSuccess }) 
 
           {/* Amount */}
           <div>
-            <div style={LBL}>Amount</div>
+            <label htmlFor="pay-amount" style={LBL}>Amount</label>
             <input
+              id="pay-amount"
               type="number"
               inputMode="decimal"
               step="0.01"
@@ -581,8 +584,8 @@ const QuickPayModal = ({ payments: allPayments, boutique, onClose, onSuccess }) 
 
           {/* Payment method */}
           <div>
-            <div style={LBL}>Payment method</div>
-            <select value={method} onChange={e => setMethod(e.target.value)} style={inputSt}>
+            <label htmlFor="pay-method" style={LBL}>Payment method</label>
+            <select id="pay-method" value={method} onChange={e => setMethod(e.target.value)} style={inputSt}>
               {PAYMENT_METHODS.map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
@@ -591,8 +594,9 @@ const QuickPayModal = ({ payments: allPayments, boutique, onClose, onSuccess }) 
 
           {/* Date */}
           <div>
-            <div style={LBL}>Date</div>
+            <label htmlFor="pay-date" style={LBL}>Date</label>
             <input
+              id="pay-date"
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
@@ -602,8 +606,9 @@ const QuickPayModal = ({ payments: allPayments, boutique, onClose, onSuccess }) 
 
           {/* Note */}
           <div>
-            <div style={LBL}>Note (optional)</div>
+            <label htmlFor="pay-note" style={LBL}>Note (optional)</label>
             <input
+              id="pay-note"
               type="text"
               placeholder="e.g. check #1042"
               value={note}
@@ -641,7 +646,7 @@ const downloadInvoice = (eventId, clientName) => {
 };
 
 // ─── PAYMENTS ──────────────────────────────────────────────────────────────
-const Payments = ({payments: livePayments, markPaid, logReminder, deleteMilestone, createMilestone, setScreen, setSelectedEvent, events}) => {
+const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminder, deleteMilestone, createMilestone, setScreen, setSelectedEvent, events}) => {
   const toast = useToast();
   const { boutique, myRole } = useAuth();
   const allPayments = livePayments;
@@ -777,9 +782,9 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
       />
       <div className="stat-grid" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,padding:'16px 20px',background:C.white,borderBottom:`1px solid ${C.border}`}}>
         {[
-          {label:'Outstanding balance', val:fmt(totalPending),          col:'var(--color-warning)'},
-          {label:'Overdue',             val:fmt(totalOverdue),          col:'var(--color-danger)'},
-          {label:'Overdue clients',     val:`${allPayments.filter(p=>p.status==='overdue').length}`, col:'var(--color-danger)'},
+          {label:'Outstanding balance', val:fmt(totalPending),          col:'var(--text-warning)'},
+          {label:'Overdue',             val:fmt(totalOverdue),          col:'var(--text-danger)'},
+          {label:'Overdue clients',     val:`${allPayments.filter(p=>p.status==='overdue').length}`, col:'var(--text-danger)'},
           {label:'Upcoming (30 days)',  val:`${allPayments.filter(p=>p.status==='pending').length}`, col:C.gray},
         ].map((s, i) => (
           <div key={i} style={{background:C.ivory,borderRadius:8,padding:'10px 14px'}}>
@@ -791,14 +796,14 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
       <div style={{display:'flex',gap:8,padding:'10px 20px',background:C.white,borderBottom:`1px solid ${C.border}`,alignItems:'center',flexWrap:'wrap',position:'sticky',top:0,zIndex:10}}>
         {['all','overdue','pending','paid','aging'].map(t => (
           <button key={t} onClick={()=>setTab(t)}
-            style={{fontSize:12,padding:'5px 14px',borderRadius:999,border:`1px solid ${tab===t?C.rosa:C.border}`,background:tab===t?C.rosaPale:'transparent',color:tab===t?C.rosa:C.gray,cursor:'pointer',textTransform:'capitalize'}}>
+            style={{fontSize:12,padding:'5px 14px',borderRadius:999,border:`1px solid ${tab===t?C.rosa:C.border}`,background:tab===t?C.rosaPale:'transparent',color:tab===t?C.rosaText:C.gray,cursor:'pointer',textTransform:'capitalize'}}>
             {t === 'all' ? 'All payments' : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
         {allPayments.some(p => p.status === 'overdue') && (
           <button
             onClick={selectAllOverdue}
-            style={{marginLeft:'auto',fontSize:12,padding:'5px 14px',borderRadius:999,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,cursor:'pointer',fontWeight:500,whiteSpace:'nowrap'}}>
+            style={{marginLeft:'auto',fontSize:12,padding:'5px 14px',borderRadius:999,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,cursor:'pointer',fontWeight:500,whiteSpace:'nowrap'}}>
             Select all overdue
           </button>
         )}
@@ -833,9 +838,9 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
         const bucket3 = overdueMilestones.filter(p => { const d = Math.ceil((today - new Date(p.due_date)) / 86400000); return d > 60; });
         if (!overdueMilestones.length) return null;
         const buckets = [
-          { label: '1–30 days', count: bucket1.length, amount: bucket1.reduce((s, p) => s + Number(p.amount || 0), 0), col: 'var(--color-warning)', bg: 'var(--bg-warning)' },
-          { label: '31–60 days', count: bucket2.length, amount: bucket2.reduce((s, p) => s + Number(p.amount || 0), 0), col: '#B45309', bg: '#FEF3C7' },
-          { label: '60+ days', count: bucket3.length, amount: bucket3.reduce((s, p) => s + Number(p.amount || 0), 0), col: 'var(--color-danger)', bg: 'var(--bg-danger)' },
+          { label: '1–30 days', count: bucket1.length, amount: bucket1.reduce((s, p) => s + Number(p.amount || 0), 0), col: 'var(--text-warning)', bg: 'var(--bg-warning)' },
+          { label: '31–60 days', count: bucket2.length, amount: bucket2.reduce((s, p) => s + Number(p.amount || 0), 0), col: '#92400E', bg: '#FEF3C7' },
+          { label: '60+ days', count: bucket3.length, amount: bucket3.reduce((s, p) => s + Number(p.amount || 0), 0), col: 'var(--text-danger)', bg: 'var(--bg-danger)' },
         ];
         return (
           <div style={{padding:'12px 20px',background:C.white,borderBottom:`1px solid ${C.border}`}}>
@@ -956,7 +961,7 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
                           {p._days > 0 && (
                             <button
                               onClick={() => setReminderPayment(p)}
-                              style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,fontSize:11,cursor:'pointer',fontWeight:500,whiteSpace:'nowrap'}}>
+                              style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,fontSize:11,cursor:'pointer',fontWeight:500,whiteSpace:'nowrap'}}>
                               {p.last_reminded_at ? '↩ Re-remind' : 'Send reminder'}
                             </button>
                           )}
@@ -970,10 +975,10 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
           </div>
         );
       })()}
-      {tab !== 'aging' && !livePayments && (
+      {tab !== 'aging' && paymentsLoading && !livePayments?.length && (
         <div style={{padding:20}}><SkeletonList count={5}/></div>
       )}
-      {tab !== 'aging' && livePayments && <div className="page-scroll" style={{flex:1,overflowY:'auto',padding:20}}>
+      {tab !== 'aging' && !(paymentsLoading && !livePayments?.length) && <div className="page-scroll" style={{flex:1,overflowY:'auto',padding:20}}>
         <Card style={{overflowX:'auto'}}>
           <table className="pay-table" style={{width:'100%',borderCollapse:'collapse',fontSize:13,minWidth:620}}>
             <thead><tr style={{background:C.ivory}}>
@@ -1016,7 +1021,7 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
                   <div style={{display:'flex',alignItems:'center',gap:6}}>
                     <span style={{fontWeight:500,color:C.ink}}>{p.client}</span>
                     {isPlan && (
-                      <span style={{fontSize:9,padding:'2px 6px',borderRadius:999,background:C.rosaPale,color:C.rosa,fontWeight:600,whiteSpace:'nowrap'}}>
+                      <span style={{fontSize:9,padding:'2px 6px',borderRadius:999,background:C.rosaPale,color:C.rosaText,fontWeight:600,whiteSpace:'nowrap'}}>
                         Payment Plan
                       </span>
                     )}
@@ -1039,16 +1044,16 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
                   )}
                 </td>
                 <td className="col-label"  style={{padding:'var(--row-padding)',color:C.ink}}>{p.label}</td>
-                <td className="col-due"    style={{padding:'var(--row-padding)',color:p.status==='overdue'?'var(--color-danger)':C.gray}}>
-                  {p.due}{p.daysLate ? <span style={{color:'var(--color-danger)'}}> · {p.daysLate}d late</span> : null}
+                <td className="col-due"    style={{padding:'var(--row-padding)',color:p.status==='overdue'?'var(--text-danger)':C.gray}}>
+                  {p.due}{p.daysLate ? <span style={{color:'var(--text-danger)'}}> · {p.daysLate}d late</span> : null}
                 </td>
-                <td className="col-amount" style={{padding:'var(--row-padding)',fontWeight:500,color:p.status==='overdue'?'var(--color-danger)':C.ink}}>{fmt(p.amount)}</td>
+                <td className="col-amount" style={{padding:'var(--row-padding)',fontWeight:500,color:p.status==='overdue'?'var(--text-danger)':C.ink}}>{fmt(p.amount)}</td>
                 <td className="col-action" style={{padding:'var(--row-padding)'}}>
                   <div style={{display:'flex',gap:6,alignItems:'center'}}>
                     {p.status === 'overdue' && (
                       <button className="btn-sm"
                         onClick={()=>setReminderPayment(p)}
-                        style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,fontSize:11,cursor:'pointer',fontWeight:500,display:'flex',alignItems:'center',gap:4}}>
+                        style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,fontSize:11,cursor:'pointer',fontWeight:500,display:'flex',alignItems:'center',gap:4}}>
                         {p.last_reminded_at ? '↩ Re-remind' : 'Send reminder'}
                       </button>
                     )}
@@ -1059,7 +1064,7 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
                         Mark paid
                       </button>
                     )}
-                    {p.status === 'paid' && <span style={{fontSize:11,color:'var(--color-success)',fontWeight:500}}>✓ Paid</span>}
+                    {p.status === 'paid' && <span style={{fontSize:11,color:'var(--text-success)',fontWeight:500}}>✓ Paid</span>}
                     {isFirstForEvent && p.event_id && (
                       <button className="btn-sm"
                         onClick={e=>{e.stopPropagation();setTipEventId(p.event_id);setTipAmount('');setShowTipModal(true);}}
@@ -1127,13 +1132,13 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
           <div style={{background:C.white,borderRadius:16,width:340,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
             <div style={{padding:'16px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Add gratuity / tip</span>
-              <button onClick={()=>setShowTipModal(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray}}>×</button>
+              <button onClick={()=>setShowTipModal(false)} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
             </div>
             <div style={{padding:20,display:'flex',flexDirection:'column',gap:12}}>
               <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
                 {[10,15,20,25,50,100].map(amt=>(
                   <button key={amt} onClick={()=>setTipAmount(String(amt))}
-                    style={{padding:'6px 14px',borderRadius:8,border:`1px solid ${tipAmount===String(amt)?C.rosa:C.border}`,background:tipAmount===String(amt)?C.rosaPale:C.white,color:tipAmount===String(amt)?C.rosa:C.ink,cursor:'pointer',fontSize:13,fontWeight:tipAmount===String(amt)?600:400}}>
+                    style={{padding:'6px 14px',borderRadius:8,border:`1px solid ${tipAmount===String(amt)?C.rosa:C.border}`,background:tipAmount===String(amt)?C.rosaPale:C.white,color:tipAmount===String(amt)?C.rosaText:C.ink,cursor:'pointer',fontSize:13,fontWeight:tipAmount===String(amt)?600:400}}>
                     ${amt}
                   </button>
                 ))}
@@ -1167,7 +1172,7 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
       {/* Floating bulk action bar */}
       {selected.size > 0 && (
         <div style={{position:'fixed',bottom:16,left:'50%',transform:'translateX(-50%)',zIndex:200,background:C.white,borderRadius:999,boxShadow:'0 4px 24px rgba(0,0,0,0.18)',padding:'10px 18px',display:'flex',alignItems:'center',gap:10,maxWidth:600,border:`1px solid ${C.border}`}}>
-          <span style={{fontSize:13,fontWeight:600,color:C.rosa,whiteSpace:'nowrap'}}>✓ {selected.size} selected</span>
+          <span style={{fontSize:13,fontWeight:600,color:C.rosaText,whiteSpace:'nowrap'}}>✓ {selected.size} selected</span>
           <button onClick={bulkMarkPaid} disabled={bulkWorking}
             style={{padding:'6px 14px',borderRadius:999,border:'none',background:C.green,color:'#fff',fontSize:12,fontWeight:500,cursor:'pointer',opacity:bulkWorking?0.7:1,whiteSpace:'nowrap'}}>
             Mark paid
@@ -1182,8 +1187,8 @@ const Payments = ({payments: livePayments, markPaid, logReminder, deleteMileston
             style={{padding:'6px 14px',borderRadius:999,border:`1px solid ${C.border}`,background:C.grayBg,color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>
             Export CSV
           </button>
-          <button onClick={()=>setSelected(new Set())}
-            style={{padding:'6px 10px',borderRadius:999,border:'none',background:'none',color:C.gray,fontSize:18,cursor:'pointer',lineHeight:1,marginLeft:4}}>
+          <button onClick={()=>setSelected(new Set())} aria-label="Clear selection"
+            style={{padding:'6px 10px',borderRadius:999,border:'none',background:'none',color:C.gray,fontSize:18,cursor:'pointer',lineHeight:1,marginLeft:4,minHeight:32,minWidth:32}}>
             ×
           </button>
         </div>

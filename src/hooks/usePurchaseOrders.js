@@ -19,7 +19,7 @@ export function usePurchaseOrders() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'purchase_orders', filter: 'boutique_id=eq.' + boutique.id }, () => fetchAll())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'purchase_order_items', filter: 'boutique_id=eq.' + boutique.id }, () => fetchAll())
       .subscribe()
-    return () => supabase.removeChannel(channel)
+    return () => { channel.unsubscribe(); supabase.removeChannel(channel); }
   }, [boutique?.id])
 
   async function fetchAll() {
@@ -128,41 +128,53 @@ export function usePurchaseOrders() {
   async function receivePO(poId, receivedItems) {
     if (!boutique) return { error: new Error('Not authenticated') }
 
-    // Update each item's quantity_received
-    for (const { itemId, quantityReceived } of receivedItems) {
-      await supabase
-        .from('purchase_order_items')
-        .update({ quantity_received: Number(quantityReceived) || 0 })
-        .eq('id', itemId)
-        .eq('boutique_id', boutique.id)
-    }
+    // Batch-update all item quantity_received in parallel
+    await Promise.all(
+      receivedItems.map(({ itemId, quantityReceived }) =>
+        supabase
+          .from('purchase_order_items')
+          .update({ quantity_received: Number(quantityReceived) || 0 })
+          .eq('id', itemId)
+          .eq('boutique_id', boutique.id)
+      )
+    )
 
     // Update inventory stock for items that have an inventory_id
     const po = pos.find(p => p.id === poId)
     if (po) {
-      for (const { itemId, quantityReceived } of receivedItems) {
-        const poItem = po.items.find(i => i.id === itemId)
-        if (poItem?.inventory_id && Number(quantityReceived) > 0) {
-          // Fetch current stock values
-          const { data: invItem } = await supabase
-            .from('inventory')
-            .select('currentStock, availQty')
-            .eq('id', poItem.inventory_id)
-            .eq('boutique_id', boutique.id)
-            .single()
-          if (invItem) {
-            const delta = Number(quantityReceived) - Number(poItem.quantity_received || 0)
-            if (delta > 0) {
-              await supabase
+      // Collect inventory_ids with their deltas upfront, then batch-fetch
+      const invUpdates = receivedItems
+        .map(({ itemId, quantityReceived }) => {
+          const poItem = po.items.find(i => i.id === itemId)
+          if (!poItem?.inventory_id || Number(quantityReceived) <= 0) return null
+          const delta = Number(quantityReceived) - Number(poItem.quantity_received || 0)
+          return delta > 0 ? { inventory_id: poItem.inventory_id, delta } : null
+        })
+        .filter(Boolean)
+
+      if (invUpdates.length > 0) {
+        const invIds = invUpdates.map(u => u.inventory_id)
+        const { data: invItems } = await supabase
+          .from('inventory')
+          .select('id, currentStock, availQty')
+          .in('id', invIds)
+          .eq('boutique_id', boutique.id)
+
+        if (invItems?.length) {
+          await Promise.all(
+            invUpdates.map(({ inventory_id, delta }) => {
+              const invItem = invItems.find(i => i.id === inventory_id)
+              if (!invItem) return Promise.resolve()
+              return supabase
                 .from('inventory')
                 .update({
                   currentStock: (invItem.currentStock || 0) + delta,
                   availQty: (invItem.availQty || 0) + delta,
                 })
-                .eq('id', poItem.inventory_id)
+                .eq('id', inventory_id)
                 .eq('boutique_id', boutique.id)
-            }
-          }
+            })
+          )
         }
       }
     }

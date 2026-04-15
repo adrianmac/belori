@@ -99,7 +99,7 @@ const ResultRow = ({ result, isSelected, onHover, onClick }) => {
       {/* Icon / Avatar */}
       <div style={{ width: 34, height: 34, borderRadius: 9, background: isSelected ? C.rosa + '22' : C.ivory, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         {type === 'Client' ? (
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: isSelected ? C.rosa + '33' : C.rosaPale, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: C.rosa }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: isSelected ? C.rosa + '33' : C.rosaPale, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: C.rosaText }}>
             {initials(label)}
           </div>
         ) : (
@@ -117,7 +117,7 @@ const ResultRow = ({ result, isSelected, onHover, onClick }) => {
       {extra}
 
       {/* Type chip */}
-      <span style={{ fontSize: 10, color: isSelected ? C.rosa : C.gray, background: isSelected ? C.white : C.grayBg, borderRadius: 4, padding: '2px 7px', flexShrink: 0, fontWeight: 500, marginLeft: 4 }}>
+      <span style={{ fontSize: 10, color: isSelected ? C.rosaText : C.gray, background: isSelected ? C.white : C.grayBg, borderRadius: 4, padding: '2px 7px', flexShrink: 0, fontWeight: 500, marginLeft: 4 }}>
         {type}
       </span>
     </div>

@@ -33,7 +33,7 @@ const AlterationsCard = ({
               const active = alteration.status === s;
               return (
                 <div key={s} style={{background:active ? C.rosaPale : C.white, padding:'8px 4px', textAlign:'center'}}>
-                  <div style={{fontSize:10,color:active ? C.rosa : C.gray, fontWeight:active ? 500 : 400, lineHeight:1.3}}>{label}</div>
+                  <div style={{fontSize:10,color:active ? C.rosaText : C.gray, fontWeight:active ? 500 : 400, lineHeight:1.3}}>{label}</div>
                   {active && (
                     <div style={{marginTop:4,background:C.white,border:`1px solid ${C.border}`,borderRadius:5,padding:'3px 5px',fontSize:10,color:C.ink}}>
                       {ev.client?.split(' ')[0] || 'Client'}
@@ -58,7 +58,7 @@ const AlterationsCard = ({
                 price: String(alteration.price || '')
               });
               setShowEditAlt(true);
-            }} style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>Edit job</button>
+            }} style={{fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>Edit job</button>
           </div>
           
           <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
@@ -68,7 +68,7 @@ const AlterationsCard = ({
       ) : (
         <div style={{padding:'20px 16px',textAlign:'center',fontSize:12,color:C.gray}}>
           No alteration jobs yet.<br/>
-          <span onClick={() => setShowAddAlt(true)} style={{color:C.rosa,cursor:'pointer',fontWeight:500}}>+ Create alteration job →</span>
+          <span onClick={() => setShowAddAlt(true)} style={{color:C.rosaText,cursor:'pointer',fontWeight:500}}>+ Create alteration job →</span>
         </div>
       )}
     </Card>

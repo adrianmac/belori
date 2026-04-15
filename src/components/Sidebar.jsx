@@ -4,8 +4,10 @@ import { icons, Avatar } from '../lib/ui.jsx';
 import { useModules } from '../hooks/useModules.jsx';
 import { canAccess, ROLE_LABELS } from '../lib/permissions.js';
 import { useI18n } from '../lib/i18n/index.jsx';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 // Nav items shown in Focus Mode (core workflow only)
-const FOCUS_IDS = new Set(['dashboard', 'events', 'inventory', 'alterations', 'clients']);
+const FOCUS_IDS = new Set(['dashboard', 'events', 'inventory', 'alterations', 'clients', 'schedule']);
 
 // ─── NAV STRUCTURE ──────────────────────────────────────────────────────────
 // Returns { topLevel, sections, allFlat }
@@ -14,7 +16,6 @@ const FOCUS_IDS = new Set(['dashboard', 'events', 'inventory', 'alterations', 'c
 // allFlat: all nav items (no dividers) — used by IconRail
 function buildNavStructure(badges = {}, modules = {}, t = (k) => k) {
   const en = (k) => modules[k] === true;
-  const enDefault = (k) => modules[k] !== false;
 
   // ── Always-visible top-level items ──────────────────────────────────────
   const topLevel = [
@@ -23,23 +24,25 @@ function buildNavStructure(badges = {}, modules = {}, t = (k) => k) {
     { id: 'events',        label: t('nav_events'),     icon: 'events',   core: true,
       ...(badges.events    ? { badge: badges.events }    : {}),
       ...(badges.tasks     ? { tasksBadge: badges.tasks } : {}) },
-    enDefault('dress_rental') && { id: 'inventory',   label: 'Dress rentals',          icon: 'rentals',    core: true },
-    enDefault('alterations')  && { id: 'alterations', label: t('nav_alterations'),     icon: 'alterations', core: true,
+    en('dress_rental') && { id: 'inventory',   label: 'Dress rentals',          icon: 'rentals',    core: true },
+    en('alterations')  && { id: 'alterations', label: t('nav_alterations'),     icon: 'alterations', core: true,
       ...(badges.alterations ? { badge: badges.alterations, badgeColor: 'var(--color-danger)' } : {}) },
     // ── Secondary items ──
     { id: 'clients',       label: t('nav_clients'),    icon: 'clients' },
     { id: 'my_tasks',      label: 'My Tasks',          icon: 'mytasks',
       ...(badges.myTasks ? { badge: badges.myTasks, badgeColor: 'var(--color-danger)' } : {}) },
-    { id: 'staff_calendar',label: t('nav_staff_calendar'), icon: 'calendar' },
+    { id: 'schedule',      label: 'Schedule',               icon: 'calendar' },
     { id: 'payments',      label: t('nav_payments'),   icon: 'payments',
       ...(badges.payments  ? { badge: badges.payments, badgeColor: 'var(--color-danger)' } : {}) },
     { id: 'activity_feed', label: 'Activity',           icon: 'activity' },
+    { id: 'billing',       label: 'Billing',            icon: 'payments',
+      ...(badges.invoices ? { badge: badges.invoices, badgeColor: '#DC2626' } : {}) },
     { id: 'settings',      label: t('nav_settings'),   icon: 'settings' },
   ].filter(Boolean);
 
   // ── Collapsible: Operations ──────────────────────────────────────────────
   const opsItems = [
-    enDefault('decoration') && { id: 'inv_full',     label: t('nav_inventory'),   icon: 'inventory',
+    en('decoration') && { id: 'inv_full',     label: t('nav_inventory'),   icon: 'inventory',
       ...(badges.inv_full ? { badge: badges.inv_full, badgeColor: '#D97706' } : {}) },
     // alterations is now a top-level core workflow item — not listed here
     en('vendors')            && { id: 'vendors',      label: t('nav_vendors'),     icon: 'vendors' },
@@ -62,7 +65,7 @@ function buildNavStructure(badges = {}, modules = {}, t = (k) => k) {
     { id: 'commissions',       label: 'Commissions',                               icon: 'commissions' },
     en('online_payments')    && { id: 'online_pay',   label: 'Payment links',      icon: 'paylinks' },
     { id: 'promo_codes',       label: 'Promo Codes',                               icon: 'promo' },
-    { id: 'quote_builder',     label: 'Quotes',                                    icon: 'quote' },
+    // quote_builder removed — Quotes are now inside the Billing screen (tab 2)
     en('reports')            && { id: 'reports',      label: t('nav_reports'),     icon: 'reports' },
     en('accounting')         && { id: 'accounting',   label: 'Accounting',         icon: 'accounting' },
   ].filter(Boolean);
@@ -192,15 +195,20 @@ const NavItem = ({ item, active, onClick, indented = false }) => {
   const isCoreInactive = item.core && !active;
   const isCoreActive   = item.core && active;
   return (
-  <div
+  <button
+    type="button"
     onClick={onClick}
+    onKeyDown={e => { if (e.key === ' ') { e.preventDefault(); onClick?.(); } }}
+    aria-current={active ? 'page' : undefined}
     style={{
       display: 'flex', alignItems: 'center', gap: 8,
+      width: '100%', textAlign: 'left',
       // Shift padding-left to accommodate the left border for core items without shifting text
       paddingTop: 8, paddingBottom: 8,
       paddingRight: indented ? 10 : 10,
       paddingLeft: item.core ? (indented ? 17 : 7) : (indented ? 20 : 10),
       borderRadius: 8, cursor: 'pointer', marginBottom: 1,
+      border: 'none',
       background: active
         ? 'var(--brand-pale, #FDF5F6)'
         : isCoreInactive
@@ -211,7 +219,7 @@ const NavItem = ({ item, active, onClick, indented = false }) => {
         : isCoreInactive
           ? `3px solid rgba(201,105,122,0.35)`
           : '3px solid transparent',
-      color: active ? 'var(--brand-primary, #C9697A)' : C.gray,
+      color: active ? C.rosaText : C.gray,
       fontWeight: active ? 500 : 400,
       fontSize: 'var(--text-body)',
       minHeight: 'var(--nav-item-height)',
@@ -236,9 +244,9 @@ const NavItem = ({ item, active, onClick, indented = false }) => {
     )}
     {item.badge && (
       <span style={{ fontSize: 'var(--text-badge)', padding: '1px 6px', borderRadius: 999,
-        background: item.badgeColor || 'var(--bg-accent)', color: item.badgeColor ? C.white : 'var(--color-accent)', fontWeight: 500 }}>{item.badge}</span>
+        background: item.badgeColor || 'var(--bg-accent)', color: item.badgeColor ? C.white : 'var(--text-accent)', fontWeight: 500 }}>{item.badge}</span>
     )}
-  </div>
+  </button>
   );
 };
 
@@ -249,11 +257,16 @@ const CollapsibleSection = ({ sectionKey, label, items, screen, setScreen, open,
   return (
     <div style={{ marginBottom: 2 }}>
       {/* Section header */}
-      <div
+      <button
+        type="button"
         onClick={onToggle}
+        aria-expanded={open}
+        aria-controls={`nav-section-${sectionKey}`}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          width: '100%', textAlign: 'left',
           paddingTop: 8, paddingBottom: 4, paddingLeft: 10, paddingRight: 10,
+          border: 'none', background: 'none',
           cursor: 'pointer', userSelect: 'none',
         }}
       >
@@ -272,11 +285,11 @@ const CollapsibleSection = ({ sectionKey, label, items, screen, setScreen, open,
         }}>
           ▶
         </span>
-      </div>
+      </button>
 
       {/* Section items */}
       {open && (
-        <div>
+        <div id={`nav-section-${sectionKey}`}>
           {items.map(item => (
             <NavItem
               key={item.id}
@@ -297,6 +310,16 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
   const { isEnabled } = useModules();
   const { t } = useI18n();
   const toggleFocus = onToggleFocus;
+  const [outstandingInvoices, setOutstandingInvoices] = useState(0);
+  useEffect(() => {
+    if (!boutique?.id) return;
+    supabase.from('invoices')
+      .select('id', { count: 'exact', head: true })
+      .eq('boutique_id', boutique.id)
+      .in('status', ['sent', 'partially_paid'])
+      .then(({ count }) => setOutstandingInvoices(count || 0));
+  }, [boutique?.id]);
+  const mergedBadges = { ...badges, invoices: outstandingInvoices || undefined };
 
   const modules = {
     alterations: isEnabled('alterations'), dress_rental: isEnabled('dress_rental'),
@@ -313,7 +336,7 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
     reports: isEnabled('reports'), purchase_orders: isEnabled('purchase_orders'),
   };
 
-  const rawStructure = buildNavStructure(badges, modules, t);
+  const rawStructure = buildNavStructure(mergedBadges, modules, t);
   const { topLevel, sections } = filterStructureByRole(rawStructure, myRole);
 
   // Section open/closed state
@@ -386,7 +409,7 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
       )}
 
       {/* Nav */}
-      <nav style={{ padding: 8, flex: 1, overflowY: 'auto' }}>
+      <nav aria-label="Main navigation" style={{ padding: 8, flex: 1, overflowY: 'auto' }}>
         {/* In focus mode: show only 5 core items; otherwise show full top-level */}
         {(focusMode ? topLevel.filter(item => FOCUS_IDS.has(item.id)) : topLevel).map(item => (
           <NavItem
@@ -472,11 +495,12 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
           </div>
           {/* Bell icon */}
           <button onClick={onAlerts} title="Alerts"
+            aria-label={alertCount > 0 ? `Alerts — ${alertCount} unread` : 'Alerts'}
             style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: alertCount > 0 ? 'var(--brand-primary, #C9697A)' : C.gray, padding: '4px', minHeight: 'unset', minWidth: 'unset', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-            {alertCount > 0 && <span style={{ position: 'absolute', top: 0, right: 0, width: 14, height: 14, borderRadius: '50%', background: '#DC2626', color: '#fff', fontSize: 8, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{alertCount > 9 ? '9+' : alertCount}</span>}
+            {alertCount > 0 && <span style={{ position: 'absolute', top: 0, right: 0, width: 16, height: 16, borderRadius: '50%', background: '#DC2626', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{alertCount > 9 ? '9+' : alertCount}</span>}
           </button>
-          <span onClick={onSignOut} title="Sign out" style={{ cursor: 'pointer', color: C.gray, fontSize: 11 }}>↩</span>
+          <button type="button" onClick={onSignOut} title="Sign out" aria-label="Sign out" style={{ cursor: 'pointer', color: C.gray, fontSize: 11, border: 'none', background: 'none', padding: 0 }}><span aria-hidden="true">↩</span></button>
         </div>
       </div>
     </div>
@@ -548,12 +572,12 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
           return (
             <button key={item.id} onClick={() => { setShowMore(false); setScreen(item.id); }}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
-                color: active ? 'var(--brand-primary, #C9697A)' : '#9CA3AF', fontSize: 9, fontWeight: active ? 600 : 400, cursor: 'pointer', flex: 1,
+                color: active ? 'var(--brand-primary, #C9697A)' : '#9CA3AF', fontSize: 10, fontWeight: active ? 600 : 400, cursor: 'pointer', flex: 1,
                 height: 60, padding: '0', transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent', position: 'relative' }}>
               <span style={{ fontSize: 20, lineHeight: 1, opacity: active ? 1 : 0.55, transition: 'opacity 0.15s' }}>{icons[item.icon]}</span>
               <span style={{ maxWidth: 56, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
               {item.badge > 0 && (
-                <span style={{ position: 'absolute', top: 6, right: 'calc(50% - 16px)', minWidth: 16, height: 16, borderRadius: 8, fontSize: 9, fontWeight: 700,
+                <span style={{ position: 'absolute', top: 6, right: 'calc(50% - 16px)', minWidth: 16, height: 16, borderRadius: 8, fontSize: 10, fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px',
                   background: item.badgeColor || C.rosa, color: C.white }}>{item.badge > 99 ? '99+' : item.badge}</span>
               )}
@@ -563,7 +587,7 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
         {/* More button */}
         <button onClick={() => setShowMore(s => !s)}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
-            color: (moreActive || showMore) ? 'var(--brand-primary, #C9697A)' : '#9CA3AF', fontSize: 9, fontWeight: (moreActive || showMore) ? 600 : 400,
+            color: (moreActive || showMore) ? 'var(--brand-primary, #C9697A)' : '#9CA3AF', fontSize: 10, fontWeight: (moreActive || showMore) ? 600 : 400,
             cursor: 'pointer', flex: 1, height: 60, padding: '0', transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent' }}>
           <span style={{ fontSize: 20, lineHeight: 1, opacity: (moreActive || showMore) ? 1 : 0.55, transition: 'opacity 0.15s', display:'flex', alignItems:'center', justifyContent:'center', width:22, height:22 }}>
             <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/></svg>
@@ -617,21 +641,21 @@ const IconRail = ({ screen, setScreen, onSignOut, boutique, boutiques = [], onSw
                 gap: 4, padding: '10px 4px', borderRadius: 12, cursor: 'pointer', width: '100%',
                 position: 'relative', transition: 'all 0.14s', border: 'none',
                 background: active ? 'var(--brand-pale, #FDF5F6)' : 'transparent',
-                color: active ? 'var(--brand-primary, #C9697A)' : '#9CA3AF',
+                color: active ? C.rosaText : '#9CA3AF',
                 minHeight: 'unset', minWidth: 'unset' }}>
               <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {icons[item.icon]}
               </span>
-              <span style={{ fontSize: 9, color: active ? 'var(--brand-primary, #C9697A)' : '#9CA3AF', textAlign: 'center', lineHeight: 1.2, fontWeight: active ? 500 : 400 }}>
+              <span style={{ fontSize: 10, color: active ? C.rosaText : '#9CA3AF', textAlign: 'center', lineHeight: 1.2, fontWeight: active ? 500 : 400 }}>
                 {item.label}
               </span>
               {item.tasksBadge && (
-                <span style={{ position: 'absolute', top: 6, left: 5, minWidth: 17, height: 17, borderRadius: 9, fontSize: 9, fontWeight: 500,
+                <span style={{ position: 'absolute', top: 6, left: 5, minWidth: 17, height: 17, borderRadius: 9, fontSize: 10, fontWeight: 500,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px',
                   background: '#DC2626', color: C.white }} title="Alert tasks">{item.tasksBadge}</span>
               )}
               {item.badge && (
-                <span style={{ position: 'absolute', top: 6, right: 5, minWidth: 17, height: 17, borderRadius: 9, fontSize: 9, fontWeight: 500,
+                <span style={{ position: 'absolute', top: 6, right: 5, minWidth: 17, height: 17, borderRadius: 9, fontSize: 10, fontWeight: 500,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px',
                   background: item.badgeColor || C.purple, color: C.white }}>{item.badge}</span>
               )}
@@ -650,17 +674,17 @@ const IconRail = ({ screen, setScreen, onSignOut, boutique, boutiques = [], onSw
                 style={{ width: 32, height: 32, borderRadius: '50%', border: `2px solid ${b.id === boutique?.id ? C.rosa : C.border}`,
                   background: b.id === boutique?.id ? C.rosaPale : C.ivory,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 10, fontWeight: 500, color: b.id === boutique?.id ? C.rosa : C.gray, cursor: 'pointer' }}>
+                  fontSize: 10, fontWeight: 500, color: b.id === boutique?.id ? C.rosaText : C.gray, cursor: 'pointer' }}>
                 {(b.name || 'B').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
               </button>
             ))}
           </div>
         )}
-        <div onClick={onSignOut} title="Sign out"
+        <button type="button" onClick={onSignOut} title="Sign out"
           style={{ width: 40, height: 40, borderRadius: '50%', background: C.rosaPale, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, fontWeight: 500, color: C.rosa, cursor: 'pointer' }}>
+            fontSize: 13, fontWeight: 500, color: C.rosaText, cursor: 'pointer', border: 'none' }}>
           {(boutique?.name || 'B').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-        </div>
+        </button>
       </div>
     </div>
   );

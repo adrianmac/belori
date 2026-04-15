@@ -94,9 +94,9 @@ export default function EventRunsheet({ ev, appointments = [], tasks = [], miles
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
             {[
               { label: 'Contract value', val: fmt(ev.total), color: C.ink },
-              { label: 'Collected', val: fmt(ev.paid), color: 'var(--color-success)' },
-              { label: 'Remaining', val: fmt(ev.total - ev.paid), color: ev.total - ev.paid > 0 ? 'var(--color-danger)' : 'var(--color-success)' },
-              { label: 'Open tasks', val: String(openTasks.length), color: openTasks.length > 0 ? 'var(--color-warning)' : 'var(--color-success)' },
+              { label: 'Collected', val: fmt(ev.paid), color: 'var(--text-success)' },
+              { label: 'Remaining', val: fmt(ev.total - ev.paid), color: ev.total - ev.paid > 0 ? 'var(--text-danger)' : 'var(--text-success)' },
+              { label: 'Open tasks', val: String(openTasks.length), color: openTasks.length > 0 ? 'var(--text-warning)' : 'var(--text-success)' },
             ].map(s => (
               <div key={s.label} style={{ background: C.ivory, borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
                 <div style={{ fontSize: 16, fontWeight: 600, color: s.color }}>{s.val}</div>
@@ -140,13 +140,14 @@ export default function EventRunsheet({ ev, appointments = [], tasks = [], miles
             <Section title="💳 Payment schedule">
               {milestones.map(m => {
                 const col = m.status === 'paid' ? 'var(--color-success)' : m.status === 'overdue' ? 'var(--color-danger)' : C.gray
+                const textCol = m.status === 'paid' ? 'var(--text-success)' : m.status === 'overdue' ? 'var(--text-danger)' : C.gray
                 const dueStr = m.due_date ? new Date(m.due_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
                 return (
                   <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: `1px solid ${C.border}` }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: col, flexShrink: 0 }} />
                     <div style={{ flex: 1, fontSize: 12, color: C.ink }}>{m.label}</div>
-                    <div style={{ fontSize: 11, color: col }}>{m.status === 'paid' ? 'Paid ✓' : `Due ${dueStr}`}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: col }}>{fmt(m.amount)}</div>
+                    <div style={{ fontSize: 11, color: textCol }}>{m.status === 'paid' ? 'Paid ✓' : `Due ${dueStr}`}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: textCol }}>{fmt(m.amount)}</div>
                   </div>
                 )
               })}
@@ -212,7 +213,7 @@ export default function EventRunsheet({ ev, appointments = [], tasks = [], miles
                 <div key={a.id} style={{ display: 'flex', gap: 12, padding: '6px 0', borderBottom: `1px solid ${C.border}`, opacity: 0.6 }}>
                   <div style={{ fontSize: 12, fontWeight: 500, color: C.ink, flex: 1 }}>{a.type?.replace(/_/g, ' ')}</div>
                   <div style={{ fontSize: 11, color: C.gray }}>{fmtDate(a.date)}</div>
-                  <div style={{ fontSize: 11, color: 'var(--color-success)' }}>✓</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-success)' }}>✓</div>
                 </div>
               ))}
             </Section>

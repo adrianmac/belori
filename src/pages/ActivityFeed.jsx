@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 
 const TYPE_CONFIG = {
   // client_interactions types
-  call:           { icon: '📞', label: 'Call logged',         color: C.rosa },
+  call:           { icon: '📞', label: 'Call logged',         color: C.rosaText },
   note:           { icon: '📝', label: 'Note added',          color: '#6366F1' },
   email:          { icon: '✉️',  label: 'Email sent',          color: '#3B82F6' },
   sms:            { icon: '💬', label: 'SMS sent',            color: '#10B981' },
@@ -14,7 +14,7 @@ const TYPE_CONFIG = {
   payment:        { icon: '💰', label: 'Payment logged',      color: '#10B981' },
   rating:         { icon: '⭐', label: 'Rating received',     color: '#F59E0B' },
   pipeline_move:  { icon: '🔀', label: 'Pipeline moved',      color: '#8B5CF6' },
-  loyalty:        { icon: '🎁', label: 'Loyalty points',      color: C.rosa },
+  loyalty:        { icon: '🎁', label: 'Loyalty points',      color: C.rosaText },
   system:         { icon: '🔔', label: 'System event',        color: C.gray },
 };
 
@@ -120,7 +120,7 @@ export default function ActivityFeed({ setScreen }) {
               fontSize: 12, padding: '4px 12px', borderRadius: 20,
               border: `1px solid ${filter === f.key ? C.rosa : C.border}`,
               background: filter === f.key ? C.rosaPale : C.white,
-              color: filter === f.key ? C.rosa : C.inkMid,
+              color: filter === f.key ? C.rosaText : C.inkMid,
               cursor: 'pointer', fontWeight: filter === f.key ? 600 : 400,
               transition: 'all 0.15s',
             }}
@@ -171,7 +171,7 @@ export default function ActivityFeed({ setScreen }) {
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 13, fontWeight: 500, color: C.ink }}>{item.title || c.label}</span>
                       {clientName && (
-                        <span style={{ fontSize: 12, color: C.rosa, fontWeight: 500 }}>· {clientName}</span>
+                        <span style={{ fontSize: 12, color: C.rosaText, fontWeight: 500 }}>· {clientName}</span>
                       )}
                     </div>
                     {item.body && (
@@ -186,7 +186,7 @@ export default function ActivityFeed({ setScreen }) {
                         <span style={{ fontSize: 11, color: C.gray }}>{item.author_name}</span>
                       )}
                       {item.points_awarded > 0 && (
-                        <span style={{ fontSize: 11, color: C.rosa }}>+{item.points_awarded} pts</span>
+                        <span style={{ fontSize: 11, color: C.rosaText }}>+{item.points_awarded} pts</span>
                       )}
                     </div>
                   </div>

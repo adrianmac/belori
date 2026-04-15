@@ -75,7 +75,7 @@ export default function UpgradeModal({ onClose, feature, minPlan = 'pro' }) {
         {/* CTA */}
         <div style={{padding:'0 28px 24px',display:'flex',gap:10}}>
           <button
-            onClick={() => { window.open('https://novela-olive.vercel.app/?upgrade=' + selectedPlan, '_blank'); onClose() }}
+            onClick={() => { window.open((import.meta.env.VITE_APP_URL || 'https://belori.app') + '/?upgrade=' + selectedPlan, '_blank'); onClose() }}
             style={{flex:1,padding:'12px',background:'linear-gradient(135deg,#667EEA,#764BA2)',color:'#fff',border:'none',borderRadius:12,fontSize:14,fontWeight:700,cursor:'pointer'}}>
             Upgrade to {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} →
           </button>

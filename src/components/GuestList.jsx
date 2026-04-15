@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { C } from '../lib/colors'
-import { inputSt } from '../lib/ui.jsx'
+import { inputSt, ConfirmModal } from '../lib/ui.jsx'
 import { useGuests } from '../hooks/useGuests'
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -9,7 +9,7 @@ const RSVP_META = {
   invited:   { label: 'Invited',   bg: '#F3F4F6', color: '#6B7280' },
   confirmed: { label: 'Confirmed', bg: C.greenBg,  color: C.green  },
   declined:  { label: 'Declined',  bg: C.redBg,    color: C.red    },
-  maybe:     { label: 'Maybe',     bg: C.amberBg,  color: C.amber  },
+  maybe:     { label: 'Maybe',     bg: C.amberBg,  color: C.warningText  },
 }
 const MEAL_OPTIONS = ['none', 'chicken', 'fish', 'vegetarian', 'vegan', 'kids']
 const MEAL_LABELS  = { none: 'None', chicken: 'Chicken', fish: 'Fish', vegetarian: 'Vegetarian', vegan: 'Vegan', kids: 'Kids' }
@@ -136,6 +136,7 @@ export default function GuestList({ eventId }) {
   const [editGuest, setEditGuest]   = useState(null)   // guest object to edit
   const [selected, setSelected]     = useState(new Set())
   const [bulkSaving, setBulkSaving] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(null) // guest id | null
 
   // ── Derived stats ──
   const totalHeads = useMemo(() => guests.reduce((sum, g) => sum + 1 + (g.plus_ones || 0), 0), [guests])
@@ -174,10 +175,12 @@ export default function GuestList({ eventId }) {
     setEditGuest(null)
   }
 
-  async function handleDelete(id) {
-    if (!window.confirm('Remove this guest?')) return
-    await deleteGuest(id)
-    setSelected(prev => { const s = new Set(prev); s.delete(id); return s })
+  const handleDelete = (id) => setDeleteConfirm(id)
+  async function confirmDeleteGuest() {
+    if (!deleteConfirm) return
+    await deleteGuest(deleteConfirm)
+    setSelected(prev => { const s = new Set(prev); s.delete(deleteConfirm); return s })
+    setDeleteConfirm(null)
   }
 
   async function handleBulkRsvp(status) {
@@ -245,7 +248,7 @@ export default function GuestList({ eventId }) {
         <Chip icon="👥" label="Total" count={totalHeads} />
         <Chip icon="✅" label="Confirmed" count={confirmed.reduce((s, g) => s + 1 + (g.plus_ones || 0), 0)} color={C.green} bg={C.greenBg} />
         <Chip icon="❌" label="Declined" count={declined.reduce((s, g) => s + 1 + (g.plus_ones || 0), 0)} color={C.red} bg={C.redBg} />
-        <Chip icon="⏳" label="Pending" count={pending.reduce((s, g) => s + 1 + (g.plus_ones || 0), 0)} color={C.amber} bg={C.amberBg} />
+        <Chip icon="⏳" label="Pending" count={pending.reduce((s, g) => s + 1 + (g.plus_ones || 0), 0)} color={C.warningText} bg={C.amberBg} />
       </div>
 
       {/* ── Meal breakdown ── */}
@@ -275,7 +278,7 @@ export default function GuestList({ eventId }) {
               onClick={() => setRsvpFilter(opt)}
               style={{
                 padding: '5px 12px', borderRadius: 20, border: `1.5px solid ${rsvpFilter === opt ? C.rosa : C.border}`,
-                background: rsvpFilter === opt ? C.rosaPale : C.white, color: rsvpFilter === opt ? C.rosa : C.gray,
+                background: rsvpFilter === opt ? C.rosaPale : C.white, color: rsvpFilter === opt ? C.rosaText : C.gray,
                 fontSize: 11, fontWeight: rsvpFilter === opt ? 600 : 400, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >{opt === 'All' ? 'All' : (RSVP_META[opt]?.label || opt)}</button>
@@ -381,6 +384,10 @@ export default function GuestList({ eventId }) {
       {/* ── Modals ── */}
       {showModal && <GuestModal onSave={handleCreate} onClose={() => setShowModal(false)} />}
       {editGuest  && <GuestModal initial={editGuest} onSave={handleEdit} onClose={() => setEditGuest(null)} />}
+      {deleteConfirm && (
+        <ConfirmModal title="Remove this guest?" confirmLabel="Remove"
+          onConfirm={confirmDeleteGuest} onCancel={() => setDeleteConfirm(null)} />
+      )}
     </div>
   )
 }

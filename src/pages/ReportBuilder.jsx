@@ -453,7 +453,7 @@ export default function ReportBuilder() {
                       padding: '8px 16px', borderRadius: 8,
                       border: `2px solid ${source === key ? C.rosa : C.border}`,
                       background: source === key ? C.rosaPale : C.white,
-                      color: source === key ? C.rosa : C.ink,
+                      color: source === key ? C.rosaText : C.ink,
                       fontSize: 13, fontWeight: source === key ? 600 : 400,
                       cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
                       transition: 'border-color 0.12s',
@@ -481,7 +481,7 @@ export default function ReportBuilder() {
                         border: `1px solid ${checked ? C.rosa : C.border}`,
                         background: checked ? C.rosaPale : C.grayBg,
                         cursor: 'pointer', fontSize: 13, fontWeight: checked ? 500 : 400,
-                        color: checked ? C.rosa : C.ink,
+                        color: checked ? C.rosaText : C.ink,
                         userSelect: 'none',
                         transition: 'border-color 0.12s, background 0.12s',
                       }}

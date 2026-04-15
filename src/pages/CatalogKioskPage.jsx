@@ -166,7 +166,7 @@ function RequestSheet({ item, boutiqueId, onClose }) {
 
                 <div style={{ display:'flex',gap:8 }}>
                   {['Morning','Afternoon','Evening'].map(t=>(
-                    <button key={t} className="ck-btn" onClick={()=>setTimeSlot(t)} style={{ flex:1,padding:'12px 6px',borderRadius:12,border:`1.5px solid ${timeSlot===t?C.rosa:'rgba(255,255,255,0.12)'}`,background:timeSlot===t?C.rosa+'22':'rgba(255,255,255,0.05)',color:timeSlot===t?C.rosa:'rgba(255,255,255,0.6)',fontSize:13,fontWeight:600,cursor:'pointer',touchAction:'manipulation' }}>
+                    <button key={t} className="ck-btn" onClick={()=>setTimeSlot(t)} style={{ flex:1,padding:'12px 6px',borderRadius:12,border:`1.5px solid ${timeSlot===t?C.rosa:'rgba(255,255,255,0.12)'}`,background:timeSlot===t?C.rosa+'22':'rgba(255,255,255,0.05)',color:timeSlot===t?C.rosaText:'rgba(255,255,255,0.6)',fontSize:13,fontWeight:600,cursor:'pointer',touchAction:'manipulation' }}>
                       {t==='Morning'?'🌅':t==='Afternoon'?'☀️':'🌙'} {t}
                     </button>
                   ))}

@@ -3,15 +3,15 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { logInventoryAudit } from './useInventoryAudit'
 
-export function useInventory() {
+export function useInventory({ enabled = true } = {}) {
   const { boutique } = useAuth()
   const [inventory, setInventory] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!boutique) return
+    if (!boutique || !enabled) return
     fetchInventory()
-  }, [boutique?.id])
+  }, [boutique?.id, enabled])
 
   async function fetchInventory() {
     setLoading(true)
@@ -81,7 +81,7 @@ export function useInventory() {
           prev_status: prevStatus,
           new_status: newStatus,
           user_name: boutique?.name || 'Staff',
-          client_name: updates.client_id ? null : null, // client_name resolved in callers if needed
+          client_name: updates.client_name || null,
         })
       } else if (Object.keys(updates).length > 0) {
         // Non-status update (metadata edit)

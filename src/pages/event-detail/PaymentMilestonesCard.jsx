@@ -6,7 +6,7 @@ import { C, fmt } from '../../lib/colors';
 import { Card, useToast } from '../../lib/ui.jsx';
 
 // ─── PAYMENT PLAN MODAL ───────────────────────────────────────────────────────
-const PaymentPlanModal = ({ ev, milestones, createMilestone, boutique, onClose }) => {
+const PaymentPlanModal = ({ ev, milestones, createMilestones, boutique, onClose }) => {
   const toast = useToast();
   const today = new Date().toISOString().split('T')[0];
   const defaultFinal = ev?.event_date
@@ -94,16 +94,15 @@ const PaymentPlanModal = ({ ev, milestones, createMilestone, boutique, onClose }
     }
     setGenerating(true);
     try {
-      for (const m of plan) {
-        await createMilestone({
-          event_id: ev.id,
-          boutique_id: boutique.id,
-          label: m.label,
-          amount: m.amount,
-          due_date: m.due_date,
-          status: 'pending',
-        });
-      }
+      const { error } = await createMilestones(plan.map(m => ({
+        event_id: ev.id,
+        boutique_id: boutique.id,
+        label: m.label,
+        amount: m.amount,
+        due_date: m.due_date,
+        status: 'pending',
+      })));
+      if (error) throw error;
       toast(`${plan.length} milestone${plan.length !== 1 ? 's' : ''} created`);
       onClose();
     } catch (err) {
@@ -217,7 +216,7 @@ const PaymentPlanModal = ({ ev, milestones, createMilestone, boutique, onClose }
               <div style={{ fontWeight: 600, fontSize: 11, color: C.gray, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Preview</div>
               {plan.map((m, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', borderBottom: i < plan.length - 1 ? `1px solid ${C.border}` : 'none' }}>
-                  <span style={{ color: C.rosa, fontSize: 10 }}>●</span>
+                  <span style={{ color: C.rosaText, fontSize: 10 }}>●</span>
                   <span style={{ flex: 1, color: C.ink, fontWeight: i === 0 || i === plan.length - 1 ? 600 : 400 }}>{m.label}</span>
                   <span style={{ color: C.ink, fontWeight: 500, minWidth: 70, textAlign: 'right' }}>{fmt(m.amount)}</span>
                   <span style={{ color: C.gray, fontSize: 11, minWidth: 90, textAlign: 'right' }}>Due {formatDateDisplay(m.due_date)}</span>
@@ -225,7 +224,7 @@ const PaymentPlanModal = ({ ev, milestones, createMilestone, boutique, onClose }
               ))}
               <div style={{ borderTop: `1px solid ${C.border}`, marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                 <span style={{ color: C.gray }}>Total</span>
-                <span style={{ fontWeight: 600, color: planTotalExact ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                <span style={{ fontWeight: 600, color: planTotalExact ? 'var(--text-success)' : 'var(--text-danger)' }}>
                   {fmt(planTotal)} {planTotalExact ? '✓' : `≠ ${fmt(totalNum)}`}
                 </span>
               </div>
@@ -499,129 +498,86 @@ const TipModal = ({ eventId, onLogTip, onClose }) => {
 };
 
 // ─── SORTABLE MILESTONE ROW ───────────────────────────────────────────────────
-const SortableMilestone = ({ m, i, total, onMarkPaid, onRemind, onGeneratePayLink, copiedPayLinkId, onLogRefund }) => {
-  const [hovered, setHovered] = useState(false);
+const SortableMilestone = ({ m, isLastInGroup, onMarkPaid, onRemind, onGeneratePayLink, copiedPayLinkId, onLogRefund }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: m.id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-  };
-
+  const dndStyle = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 };
   const ms = m.status || (m.paid_date ? 'paid' : 'pending');
   const dueStr = m.due_date ? new Date(m.due_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : (m.due || '');
   const paidStr = m.paid_date ? new Date(m.paid_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : (m.paidDate || '');
-  const dotCol = ms === 'paid' ? 'var(--color-success)' : ms === 'overdue' ? 'var(--color-danger)' : 'var(--color-warning)';
-
-  // Stripe dashboard link: prefer payment_link_id for direct link, else generic
+  const dotCol = ms === 'paid' ? 'var(--color-success)' : ms === 'overdue' ? 'var(--color-danger)' : C.rosa;
+  const textCol = ms === 'paid' ? 'var(--text-success)' : ms === 'overdue' ? 'var(--text-danger)' : C.ink;
   const stripeDashboardUrl = m.stripe_payment_link_id
     ? `https://dashboard.stripe.com/payment-links/${m.stripe_payment_link_id}`
     : 'https://dashboard.stripe.com/payment-links';
+
+  const pill = (bg, color, border) => ({
+    padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600,
+    background: bg, color, border: border || 'none', cursor: 'pointer',
+    lineHeight: 1.3, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center',
+  });
 
   return (
     <div
       ref={setNodeRef}
       style={{
-        ...style,
+        ...dndStyle,
         display: 'flex',
         alignItems: 'flex-start',
         gap: 10,
-        padding: '10px 16px',
-        borderBottom: i < total - 1 ? `1px solid ${C.border}` : 'none',
-        background: ms === 'overdue' ? '#FEF2F2' : undefined,
+        padding: '10px 14px',
+        borderBottom: !isLastInGroup ? `1px solid ${C.border}` : 'none',
       }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
-      {/* Drag handle */}
       <div
         {...attributes}
         {...listeners}
-        style={{
-          fontSize: 16,
-          color: hovered ? C.gray : 'transparent',
-          cursor: 'grab',
-          flexShrink: 0,
-          marginTop: 1,
-          lineHeight: 1,
-          userSelect: 'none',
-          transition: 'color 0.15s',
-        }}
+        style={{ color: C.border, cursor: 'grab', flexShrink: 0, marginTop: 3, fontSize: 14, userSelect: 'none' }}
         title="Drag to reorder"
-      >
-        ⠿
-      </div>
+      >⠿</div>
 
       <div style={{ width: 8, height: 8, borderRadius: '50%', background: dotCol, marginTop: 5, flexShrink: 0 }} />
 
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 12, fontWeight: 500, color: C.ink }}>{m.label}</div>
-        <div style={{ fontSize: 11, color: ms === 'overdue' ? 'var(--color-danger)' : C.gray, marginTop: 1 }}>
-          {ms === 'paid' ? `Paid ${paidStr}` : `Due ${dueStr}${m.daysLate ? ' — ' + m.daysLate + ' days overdue' : ''}`}
-        </div>
-      </div>
-
-      <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: ms === 'paid' ? 'var(--color-success)' : ms === 'overdue' ? 'var(--color-danger)' : C.ink }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: C.ink }}>{m.label}</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: textCol, flexShrink: 0 }}>
             {fmt(Number(m.amount))}
-          </div>
-          {/* Stripe dashboard link — shown when a payment link exists */}
-          {m.stripe_payment_link_url && (
-            <a
-              href={stripeDashboardUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontSize: 10, color: '#635BFF', textDecoration: 'none', fontWeight: 500 }}
-              title="View in Stripe dashboard"
-            >
-              ↗ Stripe
-            </a>
+          </span>
+        </div>
+        <div style={{ fontSize: 11, color: ms === 'overdue' ? 'var(--text-danger)' : C.gray, marginTop: 2 }}>
+          {ms === 'paid' ? `Paid ${paidStr}` : `Due ${dueStr}${m.daysLate ? ` · ${m.daysLate}d overdue` : ''}`}
+          {m.stripe_payment_link_url && ms !== 'paid' && (
+            <a href={stripeDashboardUrl} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 6, fontSize: 10, color: '#635BFF', textDecoration: 'none', fontWeight: 500 }} title="View in Stripe dashboard">↗ Stripe</a>
           )}
         </div>
-        {ms === 'overdue' && (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <span onClick={() => onMarkPaid(m)} style={{ fontSize: 11, color: 'var(--color-primary)', fontWeight: 500, cursor: 'pointer' }}>Mark paid</span>
-            <span onClick={() => onRemind(m)} style={{ fontSize: 11, color: C.gray, cursor: 'pointer' }}>Remind</span>
-            {m.stripe_payment_link_url
-              ? <a href={m.stripe_payment_link_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#15803D', fontWeight: 500, textDecoration: 'none' }}>💳 Pay online</a>
-              : onGeneratePayLink && <span onClick={() => onGeneratePayLink(m)} style={{ fontSize: 11, color: copiedPayLinkId === m.id ? '#065F46' : C.gray, fontWeight: copiedPayLinkId === m.id ? 500 : 400, cursor: 'pointer', background: copiedPayLinkId === m.id ? '#D1FAE5' : 'transparent', borderRadius: 4, padding: copiedPayLinkId === m.id ? '1px 5px' : 0, transition: 'all 0.15s' }}>{copiedPayLinkId === m.id ? '✓ Copied' : 'Generate link'}</span>}
+        {ms !== 'paid' && m.last_reminded_at && (
+          <div style={{ fontSize: 10, color: C.gray, marginTop: 1, fontStyle: 'italic' }}>
+            Reminded {new Date(m.last_reminded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </div>
         )}
-        {ms === 'pending' && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span onClick={() => onMarkPaid(m)} style={{ fontSize: 11, color: C.rosa, fontWeight: 500, cursor: 'pointer' }}>Mark paid</span>
+        <div style={{ display: 'flex', gap: 6, marginTop: 7, flexWrap: 'wrap' }}>
+          {ms === 'overdue' && <>
+            <button onClick={() => onMarkPaid(m)} style={pill(C.rosa, '#fff')}>✓ Mark paid</button>
+            <button onClick={() => onRemind(m)} style={pill('transparent', C.gray, `1px solid ${C.border}`)}>Remind</button>
             {m.stripe_payment_link_url
-              ? <a href={m.stripe_payment_link_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#15803D', fontWeight: 500, textDecoration: 'none' }}>💳 Pay online</a>
-              : onGeneratePayLink && <span onClick={() => onGeneratePayLink(m)} style={{ fontSize: 11, color: copiedPayLinkId === m.id ? '#065F46' : C.gray, fontWeight: copiedPayLinkId === m.id ? 500 : 400, cursor: 'pointer', background: copiedPayLinkId === m.id ? '#D1FAE5' : 'transparent', borderRadius: 4, padding: copiedPayLinkId === m.id ? '1px 5px' : 0, transition: 'all 0.15s' }}>{copiedPayLinkId === m.id ? '✓ Copied' : 'Generate link'}</span>}
-          </div>
-        )}
-        {ms === 'paid' && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={{ fontSize: 10, color: C.gray }}>✓ Paid</span>
+              ? <a href={m.stripe_payment_link_url} target="_blank" rel="noopener noreferrer" style={{ ...pill('#D1FAE5', '#065F46'), textDecoration: 'none' }}>💳 Pay online</a>
+              : onGeneratePayLink && <button onClick={() => onGeneratePayLink(m)} style={pill(copiedPayLinkId === m.id ? '#D1FAE5' : 'transparent', copiedPayLinkId === m.id ? '#065F46' : C.gray, `1px solid ${C.border}`)}>{copiedPayLinkId === m.id ? '✓ Copied' : 'Generate link'}</button>}
+          </>}
+          {ms === 'pending' && <>
+            <button onClick={() => onMarkPaid(m)} style={pill(C.rosa + '20', C.rosa, `1px solid ${C.rosa}60`)}>✓ Mark paid</button>
+            <button onClick={() => onRemind(m)} style={pill('transparent', C.gray, `1px solid ${C.border}`)}>Remind</button>
+            {m.stripe_payment_link_url
+              ? <a href={m.stripe_payment_link_url} target="_blank" rel="noopener noreferrer" style={{ ...pill('#D1FAE5', '#065F46'), textDecoration: 'none' }}>💳 Pay online</a>
+              : onGeneratePayLink && <button onClick={() => onGeneratePayLink(m)} style={pill('transparent', C.gray, `1px solid ${C.border}`)}>{copiedPayLinkId === m.id ? '✓ Copied' : 'Generate link'}</button>}
+          </>}
+          {ms === 'paid' && <>
             {m.stripe_payment_link_url && (
-              <a
-                href={stripeDashboardUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontSize: 10, color: '#635BFF', textDecoration: 'none' }}
-                title="View payment in Stripe"
-              >
-                View in Stripe
-              </a>
+              <a href={stripeDashboardUrl} target="_blank" rel="noopener noreferrer" style={{ ...pill('transparent', '#635BFF', '1px solid #635BFF40'), textDecoration: 'none' }}>↗ View in Stripe</a>
             )}
-            {onLogRefund && (
-              <span
-                onClick={() => onLogRefund(m)}
-                style={{ fontSize: 10, color: 'var(--color-danger, #DC2626)', cursor: 'pointer' }}
-                title="Log a refund for this milestone"
-              >
-                ↩ Refund
-              </span>
-            )}
-          </div>
-        )}
+            {onLogRefund && <button onClick={() => onLogRefund(m)} style={pill('transparent', 'var(--color-danger, #DC2626)', '1px solid #DC262640')}>↩ Refund</button>}
+          </>}
+        </div>
       </div>
     </div>
   );
@@ -638,6 +594,7 @@ const PaymentMilestonesCard = ({
   onGeneratePayLink,
   copiedPayLinkId,
   createMilestone,
+  createMilestones,
   boutique,
   onLogRefund: onLogRefundProp,
   onLogTip,
@@ -648,85 +605,114 @@ const PaymentMilestonesCard = ({
   const [showAutoPlan, setShowAutoPlan] = useState(false);
   const [refundingMilestone, setRefundingMilestone] = useState(null);
   const [showTipModal, setShowTipModal] = useState(false);
+  const [paidExpanded, setPaidExpanded] = useState(false);
 
-  // Filter refunds to this event
   const eventRefunds = (allRefunds || []).filter(r => r.event_id === ev.id);
   const totalRefunded = eventRefunds.reduce((s, r) => s + Number(r.amount), 0);
   const netCollected = Number(ev.paid) - totalRefunded;
 
-  const handleLogRefund = (m) => {
-    setRefundingMilestone(m);
-  };
+  const { sorted, overdueMilestones, upcomingMilestones, paidMilestones, sortedIds } = useMemo(() => {
+    const getStatus = m => m.status || (m.paid_date ? 'paid' : 'pending');
+    const statusOrder = { overdue: 0, pending: 1, paid: 2 };
+    const s = [...milestones].sort((a, b) => (statusOrder[getStatus(a)] ?? 9) - (statusOrder[getStatus(b)] ?? 9));
+    return {
+      sorted: s,
+      overdueMilestones: s.filter(m => getStatus(m) === 'overdue'),
+      upcomingMilestones: s.filter(m => getStatus(m) === 'pending'),
+      paidMilestones: s.filter(m => getStatus(m) === 'paid'),
+      sortedIds: s.map(m => m.id),
+    };
+  }, [milestones]);
+  const showPaidRows = paidMilestones.length <= 2 || paidExpanded;
+
+  const handleLogRefund = (m) => setRefundingMilestone(m);
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = milestones.findIndex(m => m.id === active.id);
-    const newIndex = milestones.findIndex(m => m.id === over.id);
-    const newOrder = arrayMove(milestones, oldIndex, newIndex);
-    onReorder?.(newOrder);
+    const oldIndex = sorted.findIndex(m => m.id === active.id);
+    const newIndex = sorted.findIndex(m => m.id === over.id);
+    onReorder?.(arrayMove(sorted, oldIndex, newIndex));
   };
 
-  const ids = milestones.map(m => m.id);
+  const SectionHeader = ({ label, count, color, onClick, expandLabel }) => (
+    <div
+      onClick={onClick}
+      style={{
+        padding: '5px 14px 4px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+        letterSpacing: '0.07em', color, background: C.grayBg, borderTop: `1px solid ${C.border}`,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        cursor: onClick ? 'pointer' : 'default',
+      }}
+    >
+      <span>{label} · {count}</span>
+      {expandLabel && <span style={{ fontSize: 10, fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: C.gray }}>{expandLabel}</span>}
+    </div>
+  );
 
   return (
     <>
       <Card>
         <div className="card-header">
-          <div className="card-header-title">
-            <span>💳 Payment milestones</span>
-            <span style={{ fontSize: 11, color: C.gray }}>{fmt(ev.paid)} of {fmt(ev.total)} collected</span>
-          </div>
+          <span style={{ fontWeight: 600, fontSize: 14, color: C.ink }}>Payment milestones</span>
           <div style={{ display: 'flex', gap: 6 }}>
             {createMilestone && boutique && (
-              <button
-                onClick={() => setShowAutoPlan(true)}
-                className="card-header-action"
-                style={{ fontSize: 11 }}
-                title="Auto-generate a payment plan"
-              >
-                ⚡ Auto-plan
-              </button>
+              <button onClick={() => setShowAutoPlan(true)} className="card-header-action" style={{ fontSize: 11 }} title="Auto-generate a payment plan">⚡ Auto-plan</button>
             )}
             <button onClick={onAddMilestone} className="card-header-action">+ Add</button>
           </div>
         </div>
 
-        {milestones.length > 0 ? (
+        {milestones.length === 0 ? (
+          <div style={{ padding: '28px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: 13, color: C.gray, marginBottom: 12 }}>No payment milestones yet</div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button onClick={onAddMilestone} style={{ padding: '7px 16px', background: C.rosa, color: '#fff', border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>+ Add milestone</button>
+              {createMilestone && boutique && (
+                <button onClick={() => setShowAutoPlan(true)} style={{ padding: '7px 16px', background: 'transparent', color: C.gray, border: `1px solid ${C.border}`, borderRadius: 7, fontSize: 13, cursor: 'pointer' }}>⚡ Auto-generate plan</button>
+              )}
+            </div>
+          </div>
+        ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              {milestones.map((m, i) => (
-                <SortableMilestone
-                  key={m.id}
-                  m={m}
-                  i={i}
-                  total={milestones.length}
-                  onMarkPaid={onMarkPaid}
-                  onRemind={onRemind}
-                  onGeneratePayLink={onGeneratePayLink}
-                  copiedPayLinkId={copiedPayLinkId}
-                  onLogRefund={logRefund ? handleLogRefund : undefined}
+            <SortableContext items={sortedIds} strategy={verticalListSortingStrategy}>
+              {overdueMilestones.length > 0 && <>
+                <SectionHeader label="Overdue" count={overdueMilestones.length} color="var(--color-danger, #DC2626)" />
+                {overdueMilestones.map((m, i) => (
+                  <SortableMilestone key={m.id} m={m} isLastInGroup={i === overdueMilestones.length - 1} onMarkPaid={onMarkPaid} onRemind={onRemind} onGeneratePayLink={onGeneratePayLink} copiedPayLinkId={copiedPayLinkId} onLogRefund={logRefund ? handleLogRefund : undefined} />
+                ))}
+              </>}
+              {upcomingMilestones.length > 0 && <>
+                <SectionHeader label="Upcoming" count={upcomingMilestones.length} color={C.gray} />
+                {upcomingMilestones.map((m, i) => (
+                  <SortableMilestone key={m.id} m={m} isLastInGroup={i === upcomingMilestones.length - 1} onMarkPaid={onMarkPaid} onRemind={onRemind} onGeneratePayLink={onGeneratePayLink} copiedPayLinkId={copiedPayLinkId} onLogRefund={logRefund ? handleLogRefund : undefined} />
+                ))}
+              </>}
+              {paidMilestones.length > 0 && <>
+                <SectionHeader
+                  label="Paid"
+                  count={paidMilestones.length}
+                  color="var(--color-success, #15803D)"
+                  onClick={paidMilestones.length > 2 ? () => setPaidExpanded(x => !x) : undefined}
+                  expandLabel={paidMilestones.length > 2 ? (paidExpanded ? '▲ Hide' : '▼ Show all') : undefined}
                 />
-              ))}
+                {showPaidRows && paidMilestones.map((m, i) => (
+                  <SortableMilestone key={m.id} m={m} isLastInGroup={i === paidMilestones.length - 1} onMarkPaid={onMarkPaid} onRemind={onRemind} onGeneratePayLink={onGeneratePayLink} copiedPayLinkId={copiedPayLinkId} onLogRefund={logRefund ? handleLogRefund : undefined} />
+                ))}
+              </>}
             </SortableContext>
           </DndContext>
-        ) : (
-          <div style={{ padding: 16, fontSize: 12, color: C.gray, textAlign: 'center' }}>No milestones configured.</div>
         )}
 
-        <div style={{ padding: '9px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11 }}>
-          <span style={{ color: C.gray }}>{milestones.length} milestones · {milestones.filter(m => m.status === 'paid').length} paid</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ padding: '9px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span style={{ color: C.gray, fontSize: 11 }}>{milestones.length} milestone{milestones.length !== 1 ? 's' : ''} · {paidMilestones.length} paid</span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {onLogTip && (
-              <span
-                onClick={() => setShowTipModal(true)}
-                style={{ fontSize: 11, color: 'var(--color-success, #15803D)', cursor: 'pointer', fontWeight: 500 }}
-                title="Log a gratuity or tip"
-              >
-                + Tip
-              </span>
+              <button onClick={() => setShowTipModal(true)} style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#D1FAE5', color: '#065F46', border: 'none', cursor: 'pointer' }}>+ Tip</button>
             )}
-            <span style={{ color: ev.overdue > 0 ? 'var(--color-danger)' : 'var(--color-success)', fontWeight: 500 }}>{ev.overdue > 0 ? `${fmt(ev.overdue)} still due` : 'Fully paid ✓'}</span>
+            <span style={{ fontSize: 11, fontWeight: 500, color: ev.overdue > 0 ? 'var(--text-danger)' : 'var(--text-success)' }}>
+              {ev.overdue > 0 ? `${fmt(ev.overdue)} overdue` : 'Fully paid ✓'}
+            </span>
           </div>
         </div>
         {totalRefunded > 0 && (
@@ -737,31 +723,14 @@ const PaymentMilestonesCard = ({
         )}
       </Card>
 
-      {showAutoPlan && createMilestone && boutique && (
-        <PaymentPlanModal
-          ev={ev}
-          milestones={milestones}
-          createMilestone={createMilestone}
-          boutique={boutique}
-          onClose={() => setShowAutoPlan(false)}
-        />
+      {showAutoPlan && createMilestones && boutique && (
+        <PaymentPlanModal ev={ev} milestones={milestones} createMilestones={createMilestones} boutique={boutique} onClose={() => setShowAutoPlan(false)} />
       )}
-
       {refundingMilestone && logRefund && (
-        <RefundModal
-          milestone={refundingMilestone}
-          eventId={ev.id}
-          logRefund={logRefund}
-          onClose={() => setRefundingMilestone(null)}
-        />
+        <RefundModal milestone={refundingMilestone} eventId={ev.id} logRefund={logRefund} onClose={() => setRefundingMilestone(null)} />
       )}
-
       {showTipModal && onLogTip && (
-        <TipModal
-          eventId={ev.id}
-          onLogTip={onLogTip}
-          onClose={() => setShowTipModal(false)}
-        />
+        <TipModal eventId={ev.id} onLogTip={onLogTip} onClose={() => setShowTipModal(false)} />
       )}
     </>
   );

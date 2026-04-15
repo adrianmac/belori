@@ -14,12 +14,12 @@ export const HistoryTab = ({ liveInventory, search, setSearch, historyFilter, se
       <div style={{background:C.white,border:`1px solid ${C.border}`,borderRadius:12,padding:16}}>
         <div style={{fontSize:11,color:C.gray,marginBottom:4}}>Active now</div>
         <div style={{fontSize:24,fontWeight:700,color:C.ink}}>{liveInventory.filter(d=>['rented','picked_up'].includes(d.status)).length}</div>
-        <div style={{fontSize:11,color:'var(--color-info)',marginTop:2}}>dresses currently out</div>
+        <div style={{fontSize:11,color:'var(--text-info)',marginTop:2}}>dresses currently out</div>
       </div>
       <div style={{background:C.white,border:`1px solid ${C.border}`,borderRadius:12,padding:16}}>
         <div style={{fontSize:11,color:C.gray,marginBottom:4}}>Reserved</div>
         <div style={{fontSize:24,fontWeight:700,color:C.ink}}>{liveInventory.filter(d=>d.status==='reserved').length}</div>
-        <div style={{fontSize:11,color:'var(--color-warning)',marginTop:2}}>upcoming pickups</div>
+        <div style={{fontSize:11,color:'var(--text-warning)',marginTop:2}}>upcoming pickups</div>
       </div>
     </div>
     {/* Filter bar */}
@@ -30,7 +30,7 @@ export const HistoryTab = ({ liveInventory, search, setSearch, historyFilter, se
       </div>
       <div style={{display:'flex',gap:4}}>
         {[['all','All time'],['month','This month'],['quarter','This quarter']].map(([id,l])=>(
-          <button key={id} onClick={()=>setHistoryFilter(id)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${historyFilter===id?C.rosa:C.border}`,background:historyFilter===id?C.rosaPale:'transparent',color:historyFilter===id?C.rosa:C.gray,fontSize:11,cursor:'pointer'}}>{l}</button>
+          <button key={id} onClick={()=>setHistoryFilter(id)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${historyFilter===id?C.rosa:C.border}`,background:historyFilter===id?C.rosaPale:'transparent',color:historyFilter===id?C.rosaText:C.gray,fontSize:11,cursor:'pointer'}}>{l}</button>
         ))}
       </div>
       <GhostBtn label="📥 Export CSV" onClick={()=>{
@@ -64,7 +64,7 @@ export const HistoryTab = ({ liveInventory, search, setSearch, historyFilter, se
                 <div style={{fontSize:11,color:C.gray,fontFamily:'monospace'}}>#{d.sku}</div>
               </td>
               <td style={{padding:'10px 14px',fontSize:12,color:C.ink}}>{d.client?.name||d.client||'—'}</td>
-              <td style={{padding:'10px 14px'}}><Badge text={d.status} bg={d.status==='returned'?C.grayBg:'var(--bg-info)'} color={d.status==='returned'?C.gray:'var(--color-info)'}/></td>
+              <td style={{padding:'10px 14px'}}><Badge text={d.status} bg={d.status==='returned'?C.grayBg:'var(--bg-info)'} color={d.status==='returned'?C.gray:'var(--text-info)'}/></td>
               <td style={{padding:'10px 14px',fontSize:12,color:C.gray}}>{d.return_date||'—'}</td>
               <td style={{padding:'10px 14px',fontSize:12,fontWeight:500,color:C.ink}}>{d.price?fmt(d.price):'—'}</td>
             </tr>

@@ -418,7 +418,7 @@ export default function HelpPage() {
   const tocItemStyle = (active) => ({
     display: 'flex', alignItems: 'center', gap: 8,
     padding: '7px 16px', cursor: 'pointer', fontSize: 13,
-    color: active ? C.rosa : C.inkLight,
+    color: active ? C.rosaText : C.inkLight,
     background: active ? C.rosaPale : 'transparent',
     fontWeight: active ? 500 : 400,
     borderRight: active ? `2px solid ${C.rosa}` : '2px solid transparent',
@@ -515,7 +515,7 @@ export default function HelpPage() {
           {filtered.map(s => (
             <div key={s.id} onClick={() => scrollTo(s.id)} style={{
               padding: '8px 20px', cursor: 'pointer', fontSize: 13,
-              color: activeId === s.id ? C.rosa : C.inkLight,
+              color: activeId === s.id ? C.rosaText : C.inkLight,
               background: activeId === s.id ? C.rosaPale : 'transparent',
             }}>
               <span style={{ marginRight: 8 }}>{s.emoji}</span>{s.title}
@@ -578,7 +578,7 @@ export default function HelpPage() {
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                         <div style={{
                           width: 20, height: 20, borderRadius: '50%',
-                          background: C.rosaPale, color: C.rosa,
+                          background: C.rosaPale, color: C.rosaText,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: 10, fontWeight: 600, flexShrink: 0, marginTop: 1,
                         }}>
@@ -643,7 +643,7 @@ export default function HelpPage() {
                         <div style={{ fontSize: 12, color: C.gray, lineHeight: 1.5 }}>
                           We respond within one business day. Send us a detailed description and we'll help you out.
                         </div>
-                        <div style={{ fontSize: 12, color: C.rosa, fontWeight: 500 }}>support@belori.app →</div>
+                        <div style={{ fontSize: 12, color: C.rosaText, fontWeight: 500 }}>support@belori.app →</div>
                       </div>
                     </a>
 
@@ -665,7 +665,7 @@ export default function HelpPage() {
                         <div style={{ fontSize: 12, color: C.gray, lineHeight: 1.5 }}>
                           Visit our website for release notes, feature announcements, and tutorials.
                         </div>
-                        <div style={{ fontSize: 12, color: C.rosa, fontWeight: 500 }}>belori.app →</div>
+                        <div style={{ fontSize: 12, color: C.rosaText, fontWeight: 500 }}>belori.app →</div>
                       </div>
                     </a>
 
@@ -687,7 +687,7 @@ export default function HelpPage() {
                         <div style={{ fontSize: 12, color: C.gray, lineHeight: 1.5 }}>
                           Have an idea that would make Belori better? We read every request.
                         </div>
-                        <div style={{ fontSize: 12, color: C.rosa, fontWeight: 500 }}>Send feedback →</div>
+                        <div style={{ fontSize: 12, color: C.rosaText, fontWeight: 500 }}>Send feedback →</div>
                       </div>
                     </a>
                   </div>

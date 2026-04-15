@@ -68,10 +68,10 @@ export const DressReturnModal = ({ dress, onClose, onUpdate }) => {
 
   return (
     <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ background: C.white, borderRadius: 16, width: 500, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+      <div role="dialog" aria-modal="true" aria-labelledby="dress-return-title" style={{ background: C.white, borderRadius: 16, width: 500, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
         <div style={{ padding: '18px 24px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 600, color: C.ink }}>Log return</div>
+            <div id="dress-return-title" style={{ fontSize: 16, fontWeight: 600, color: C.ink }}>Log return</div>
             <div style={{ fontSize: 12, color: C.gray, marginTop: 2 }}>Step {step - 1} of 2</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -98,30 +98,31 @@ export const DressReturnModal = ({ dress, onClose, onUpdate }) => {
               {condOpts.map(o => (
                 <button key={o.id} onClick={() => { setCondition(o.id); setDamageFee(o.suggestFee); }} style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 8, border: `1.5px solid ${condition === o.id ? C.rosa : C.border}`, background: condition === o.id ? C.rosaPale : 'transparent', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: condition === o.id ? C.rosa : C.ink }}>{o.label}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: condition === o.id ? C.rosaText : C.ink }}>{o.label}</div>
                     <div style={{ fontSize: 10, color: C.gray, marginTop: 2 }}>{o.desc}</div>
                   </div>
-                  {condition === o.id && <span style={{ fontSize: 14, color: C.rosa }}>✓</span>}
+                  {condition === o.id && <span style={{ fontSize: 14, color: C.rosaText }}>✓</span>}
                 </button>
               ))}
             </div>
             {conditionDegraded && (
-              <div style={{ fontSize: 12, color: 'var(--color-warning)', background: 'var(--bg-warning)', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--color-warning)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-warning)', background: 'var(--bg-warning)', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--color-warning)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                 <span style={{ flexShrink: 0 }}>⚠</span>
                 <span>Condition is worse than when rented out (<strong>{prevCondition.replace(/_/g, ' ')}</strong> → <strong>{condition.replace(/_/g, ' ')}</strong>). Please document the issue in the return notes.</span>
               </div>
             )}
             <div>
-              <div style={LBL}>Return notes{condition === 'needs_repair' ? ' (required)' : conditionDegraded ? ' (recommended)' : ' (optional)'}</div>
-              <textarea value={returnNotes} onChange={e => setReturnNotes(e.target.value)} onInput={e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} rows={2} placeholder="Describe any issues, damage, or wear…" style={{ ...inputSt, resize: 'vertical' }} />
+              <label htmlFor="return-dress-notes" style={LBL}>Return notes{condition === 'needs_repair' ? ' (required)' : conditionDegraded ? ' (recommended)' : ' (optional)'}</label>
+              <textarea id="return-dress-notes" value={returnNotes} onChange={e => setReturnNotes(e.target.value)} onInput={e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} rows={2} placeholder="Describe any issues, damage, or wear…" style={{ ...inputSt, resize: 'vertical' }} />
             </div>
             {/* Task 2: Extra damage fields when condition is needs_repair or fair */}
             {(condition === 'needs_repair' || condition === 'fair') && (
               <div style={{ background: '#FFF8F8', border: '1px solid #FCA5A5', borderRadius: 10, padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#B91C1C', letterSpacing: '0.06em' }}>DAMAGE ASSESSMENT</div>
                 <div>
-                  <div style={LBL}>Damage description</div>
+                  <label htmlFor="return-dress-damage-desc" style={LBL}>Damage description</label>
                   <textarea
+                    id="return-dress-damage-desc"
                     value={damageDescription}
                     onChange={e => setDamageDescription(e.target.value)}
                     onInput={e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
@@ -131,8 +132,9 @@ export const DressReturnModal = ({ dress, onClose, onUpdate }) => {
                   />
                 </div>
                 <div>
-                  <div style={LBL}>Estimated repair cost ($)</div>
+                  <label htmlFor="return-dress-repair-cost" style={LBL}>Estimated repair cost ($)</label>
                   <input
+                    id="return-dress-repair-cost"
                     type="number"
                     min="0"
                     value={repairCost}
@@ -146,7 +148,7 @@ export const DressReturnModal = ({ dress, onClose, onUpdate }) => {
                 </div>
               </div>
             )}
-            {condition === 'needs_repair' && !returnNotes.trim() && <div style={{ fontSize: 11, color: 'var(--color-danger)' }}>Please describe the damage before continuing</div>}
+            {condition === 'needs_repair' && !returnNotes.trim() && <div style={{ fontSize: 11, color: 'var(--text-danger)' }}>Please describe the damage before continuing</div>}
           </div>
         )}
 
@@ -155,29 +157,29 @@ export const DressReturnModal = ({ dress, onClose, onUpdate }) => {
             <div style={{ fontSize: 11, fontWeight: 600, color: C.gray, letterSpacing: '0.08em' }}>FINANCIAL SETTLEMENT</div>
             <div style={{ background: C.ivory, borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span style={{ color: C.gray }}>Rental fee</span><span style={{ color: C.ink, fontWeight: 500 }}>{fmt(dress.price || 0)}</span></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span style={{ color: C.gray }}>Deposit paid</span><span style={{ color: 'var(--color-success)' }}>-{fmt(dress.deposit || 0)}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span style={{ color: C.gray }}>Deposit paid</span><span style={{ color: 'var(--text-success)' }}>-{fmt(dress.deposit || 0)}</span></div>
               {late > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, alignItems: 'center' }}>
-                  <span style={{ color: 'var(--color-danger)' }}>Late fee ({late}d × ${LATE_FEE_PER_DAY})</span>
+                  <span style={{ color: 'var(--text-danger)' }}>Late fee ({late}d × ${LATE_FEE_PER_DAY})</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ color: 'var(--color-danger)', fontWeight: 500 }}>{lateFeeWaive ? <s>{fmt(late * LATE_FEE_PER_DAY)}</s> : fmt(lateFee)}</span>
-                    <button onClick={() => setLateFeeWaive(!lateFeeWaive)} style={{ fontSize: 10, color: C.rosa, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>{lateFeeWaive ? 'Apply' : 'Waive'}</button>
+                    <span style={{ color: 'var(--text-danger)', fontWeight: 500 }}>{lateFeeWaive ? <s>{fmt(late * LATE_FEE_PER_DAY)}</s> : fmt(lateFee)}</span>
+                    <button onClick={() => setLateFeeWaive(!lateFeeWaive)} style={{ fontSize: 10, color: C.rosaText, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>{lateFeeWaive ? 'Apply' : 'Waive'}</button>
                   </div>
                 </div>
               )}
-              {damageFee > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span style={{ color: 'var(--color-danger)' }}>Damage fee</span><span style={{ color: 'var(--color-danger)', fontWeight: 500 }}>{fmt(damageFee)}</span></div>}
+              {damageFee > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}><span style={{ color: 'var(--text-danger)' }}>Damage fee</span><span style={{ color: 'var(--text-danger)', fontWeight: 500 }}>{fmt(damageFee)}</span></div>}
               <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 6, display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 600 }}>
                 <span>Total due</span><span style={{ color: totalDue > 0 ? C.ink : 'var(--color-success)' }}>{totalDue > 0 ? fmt(totalDue) : '$0 (paid)'}</span>
               </div>
             </div>
             {condition === 'needs_repair' && (
-              <div><div style={LBL}>Damage fee ($)</div><input type="number" value={damageFee} onChange={e => setDamageFee(Math.max(0, Number(e.target.value)))} style={inputSt} /></div>
+              <div><label htmlFor="return-dress-damage-fee" style={LBL}>Damage fee ($)</label><input id="return-dress-damage-fee" type="number" value={damageFee} onChange={e => setDamageFee(Math.max(0, Number(e.target.value)))} style={inputSt} /></div>
             )}
             <div>
-              <div style={LBL}>Payment method</div>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div id="drm-pay-method-label" style={LBL}>Payment method</div>
+              <div role="group" aria-labelledby="drm-pay-method-label" style={{ display: 'flex', gap: 6 }}>
                 {['cash', 'card', 'zelle', 'other'].map(m => (
-                  <button key={m} onClick={() => setPayMethod(m)} style={{ flex: 1, padding: '7px 0', borderRadius: 7, border: `1.5px solid ${payMethod === m ? C.rosa : C.border}`, background: payMethod === m ? C.rosaPale : 'transparent', color: payMethod === m ? C.rosa : C.gray, cursor: 'pointer', fontSize: 12, fontWeight: payMethod === m ? 500 : 400, textTransform: 'capitalize' }}>{m}</button>
+                  <button key={m} onClick={() => setPayMethod(m)} style={{ flex: 1, padding: '7px 0', borderRadius: 7, border: `1.5px solid ${payMethod === m ? C.rosa : C.border}`, background: payMethod === m ? C.rosaPale : 'transparent', color: payMethod === m ? C.rosaText : C.gray, cursor: 'pointer', fontSize: 12, fontWeight: payMethod === m ? 500 : 400, textTransform: 'capitalize' }}>{m}</button>
                 ))}
               </div>
             </div>

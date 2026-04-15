@@ -285,7 +285,7 @@ function WeekView({ days, apptsByDate, staffMap, selectedStaff, onChipClick, ava
             {/* Day header */}
             <div style={{
               fontSize: 11, fontWeight: isToday ? 700 : 500,
-              color: isToday ? C.rosa : C.gray,
+              color: isToday ? C.rosaText : C.gray,
               marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4,
             }}>
               <span>{DAY_LABELS[(days.indexOf(day))]}</span>
@@ -301,7 +301,7 @@ function WeekView({ days, apptsByDate, staffMap, selectedStaff, onChipClick, ava
 
             {/* Availability badges */}
             {isBlockedOut && (
-              <div style={{ fontSize: 10, color: C.amber, fontWeight: 600, marginBottom: 4, background: C.amberBg, borderRadius: 4, padding: '1px 5px', display: 'inline-block' }}>
+              <div style={{ fontSize: 10, color: C.warningText, fontWeight: 600, marginBottom: 4, background: C.amberBg, borderRadius: 4, padding: '1px 5px', display: 'inline-block' }}>
                 Time off
               </div>
             )}
@@ -399,7 +399,7 @@ function MonthView({ cells, anchor, apptsByDate, staffMap, selectedStaff, onChip
               }}>{day.getDate()}</div>
 
               {isBlockedOut && (
-                <div style={{ fontSize: 9, color: C.amber, fontWeight: 600, background: C.amberBg, borderRadius: 3, padding: '1px 4px', display: 'block', marginBottom: 2 }}>
+                <div style={{ fontSize: 9, color: C.warningText, fontWeight: 600, background: C.amberBg, borderRadius: 3, padding: '1px 4px', display: 'block', marginBottom: 2 }}>
                   Time off
                 </div>
               )}
@@ -419,7 +419,7 @@ function MonthView({ cells, anchor, apptsByDate, staffMap, selectedStaff, onChip
                 />
               ))}
               {overflow > 0 && (
-                <div style={{ fontSize: 10, color: C.rosa, fontWeight: 600, paddingLeft: 2 }}>
+                <div style={{ fontSize: 10, color: C.rosaText, fontWeight: 600, paddingLeft: 2 }}>
                   +{overflow} more
                 </div>
               )}
@@ -524,7 +524,7 @@ function StaffPills({ staff, staffColors, selectedStaff, setSelectedStaff, appts
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function StaffCalendar() {
+export default function StaffCalendar({ hideTopbar }) {
   const { boutique } = useAuth()
 
   const [view, setView] = useState('week')
@@ -656,10 +656,10 @@ export default function StaffCalendar() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <Topbar
+      {!hideTopbar && <Topbar
         title="Staff Calendar"
         subtitle={loading ? 'Loading…' : `${totalVisible} appointment${totalVisible !== 1 ? 's' : ''}`}
-      />
+      />}
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '16px 20px', gap: 14 }}>
 

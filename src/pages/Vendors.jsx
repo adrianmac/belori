@@ -24,7 +24,7 @@ const CAT_COLORS = {
   photographer:   { bg: '#DBEAFE', color: '#1D4ED8' },
   dj:             { bg: '#EDE9FE', color: '#7C3AED' },
   caterer:        { bg: '#FEF3C7', color: '#B45309' },
-  venue:          { bg: C.rosaPale, color: C.rosa },
+  venue:          { bg: C.rosaPale, color: C.rosaText },
   seamstress:     { bg: '#FDF2F8', color: '#9D174D' },
   transportation: { bg: '#F0FDF4', color: '#166534' },
   decor:          { bg: '#FFF7ED', color: '#C2410C' },
@@ -381,14 +381,14 @@ function VendorPaymentsModal({ vendor, payments, events, logVendorPayment, onClo
               <div key={p.id} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-success)' }}>{fmt(Number(p.amount))}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-success)' }}>{fmt(Number(p.amount))}</span>
                     <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 999, background: C.grayBg, color: C.gray, fontWeight: 500 }}>
                       {PAYMENT_METHOD_LABELS[p.payment_method] || p.payment_method}
                     </span>
                   </div>
                   {p.description && <div style={{ fontSize: 12, color: C.ink, marginBottom: 2 }}>{p.description}</div>}
                   <div style={{ fontSize: 11, color: C.gray }}>{new Date(p.paid_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                  {p.receipt_url && <a href={p.receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: C.rosa, textDecoration: 'none', fontWeight: 500 }}>View receipt →</a>}
+                  {p.receipt_url && <a href={p.receipt_url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: C.rosaText, textDecoration: 'none', fontWeight: 500 }}>View receipt →</a>}
                 </div>
               </div>
             ))
@@ -437,7 +437,7 @@ function VendorCard({ vendor, onEdit, onDelete, onViewPayments, onViewPOs, payme
               {CAT_LABELS[vendor.category] || vendor.category}
             </span>
             {Number(vendor.total_paid) > 0 && (
-              <span style={{ fontSize: 11, color: 'var(--color-success)', fontWeight: 500 }}>
+              <span style={{ fontSize: 11, color: 'var(--text-success)', fontWeight: 500 }}>
                 {fmt(Number(vendor.total_paid))} paid
               </span>
             )}
@@ -502,7 +502,7 @@ function VendorCard({ vendor, onEdit, onDelete, onViewPayments, onViewPOs, payme
         {vendor.phone && (
           <div style={{ fontSize: 12, color: C.inkLight, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 11 }}>📞</span>
-            <a href={`tel:${vendor.phone}`} style={{ color: C.rosa, textDecoration: 'none', fontWeight: 500 }}>
+            <a href={`tel:${vendor.phone}`} style={{ color: C.rosaText, textDecoration: 'none', fontWeight: 500 }}>
               {vendor.phone}
             </a>
             {digits.length >= 10 && (
@@ -530,7 +530,7 @@ function VendorCard({ vendor, onEdit, onDelete, onViewPayments, onViewPOs, payme
         {websiteHref && (
           <div style={{ fontSize: 12, color: C.inkLight, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 11 }}>🌐</span>
-            <a href={websiteHref} target="_blank" rel="noreferrer" style={{ color: C.rosa, textDecoration: 'none', fontWeight: 500 }}>
+            <a href={websiteHref} target="_blank" rel="noreferrer" style={{ color: C.rosaText, textDecoration: 'none', fontWeight: 500 }}>
               Visit website
             </a>
           </div>
@@ -716,7 +716,7 @@ export default function Vendors({ goScreen }) {
                 padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500,
                 border: `1px solid ${catFilter === c.value ? C.rosa : C.border}`,
                 background: catFilter === c.value ? C.rosaPale : C.white,
-                color: catFilter === c.value ? C.rosa : C.gray,
+                color: catFilter === c.value ? C.rosaText : C.gray,
                 cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >{c.label}</button>

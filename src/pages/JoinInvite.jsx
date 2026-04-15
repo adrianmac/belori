@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 
 const C = {
-  rosa: '#C9697A', rosaPale: '#FDF5F6', rosaDeep: '#A84D5D',
+  rosa: '#C9697A', rosaPale: '#FDF5F6', rosaDeep: '#A84D5D', rosaText: '#8B3A4A',
   ink: '#1C1012', gray: '#6B7280', border: '#E5E7EB',
   white: '#FFFFFF', ivory: '#F8F4F0', red: '#B91C1C', redBg: '#FEE2E2',
   green: '#15803D', greenBg: '#DCFCE7', grayBg: '#F3F4F6',
@@ -117,7 +117,7 @@ export default function JoinInvite() {
         <div style={{ fontSize: 36, marginBottom: 12 }}>🔒</div>
         <div style={{ fontSize: 17, fontWeight: 600, color: C.ink, marginBottom: 8 }}>Invalid invite</div>
         <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.6 }}>{inviteError}</div>
-        <Link to="/login" style={{ display: 'inline-block', marginTop: 20, fontSize: 13, color: C.rosa, fontWeight: 500 }}>Go to login →</Link>
+        <Link to="/login" style={{ display: 'inline-block', marginTop: 20, fontSize: 13, color: C.rosaText, fontWeight: 500 }}>Go to login →</Link>
       </div>
     </Screen>
   )
@@ -135,7 +135,7 @@ export default function JoinInvite() {
         </div>
         <div style={{ fontSize: 12, color: C.gray, padding: '12px 16px', borderRadius: 8, background: C.grayBg }}>
           Didn't receive it? Check your spam folder, or{' '}
-          <button onClick={() => setMode('signup')} style={{ background: 'none', border: 'none', color: C.rosa, cursor: 'pointer', fontSize: 12, fontWeight: 500, padding: 0 }}>
+          <button onClick={() => setMode('signup')} style={{ background: 'none', border: 'none', color: C.rosaText, cursor: 'pointer', fontSize: 12, fontWeight: 500, padding: 0 }}>
             try again
           </button>.
         </div>
@@ -165,7 +165,7 @@ export default function JoinInvite() {
           <div style={{ display: 'flex', marginBottom: 20, borderRadius: 8, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
             {[['login', 'Sign in'], ['signup', 'Create account']].map(([m, label]) => (
               <button key={m} onClick={() => { setMode(m); setAuthError('') }}
-                style={{ flex: 1, padding: '8px', border: 'none', background: mode === m ? C.rosaPale : 'transparent', color: mode === m ? C.rosa : C.gray, fontSize: 13, fontWeight: mode === m ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s' }}>
+                style={{ flex: 1, padding: '8px', border: 'none', background: mode === m ? C.rosaPale : 'transparent', color: mode === m ? C.rosaText : C.gray, fontSize: 13, fontWeight: mode === m ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s' }}>
                 {label}
               </button>
             ))}
@@ -213,7 +213,7 @@ export default function JoinInvite() {
           <div style={{ textAlign: 'center', marginTop: 14, fontSize: 12, color: C.gray }}>
             Don't have an account?{' '}
             <button onClick={() => { setMode('signup'); setAuthError('') }}
-              style={{ background: 'none', border: 'none', color: C.rosa, cursor: 'pointer', fontSize: 12, fontWeight: 500, padding: 0 }}>
+              style={{ background: 'none', border: 'none', color: C.rosaText, cursor: 'pointer', fontSize: 12, fontWeight: 500, padding: 0 }}>
               Create one
             </button>
           </div>

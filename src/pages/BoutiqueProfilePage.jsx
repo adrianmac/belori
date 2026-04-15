@@ -8,6 +8,7 @@ const SERIF = '"Playfair Display", Georgia, serif'
 const C = {
   rosa:     '#C9697A',
   rosaPale: '#FDF2F4',
+  rosaText: '#8B3A4A',
   ink:      '#1C1012',
   gray:     '#6B7280',
   white:    '#FFFFFF',
@@ -90,7 +91,7 @@ export default function BoutiqueProfilePage() {
         <div style={{ fontSize: 48, fontFamily: SERIF, color: C.rosa, fontWeight: 400 }}>404</div>
         <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.ink }}>Boutique not found</h2>
         <p style={{ margin: 0, fontSize: 14, color: C.gray }}>This boutique page doesn't exist or has been removed.</p>
-        <a href="/" style={{ fontSize: 14, color: C.rosa, textDecoration: 'none', fontWeight: 500 }}>← Back to home</a>
+        <a href="/" style={{ fontSize: 14, color: C.rosaText, textDecoration: 'none', fontWeight: 500 }}>← Back to home</a>
       </div>
     )
   }
@@ -177,7 +178,7 @@ export default function BoutiqueProfilePage() {
           {bookingHref && (
             <a href={bookingHref} style={{
               display: 'inline-block', padding: '13px 32px',
-              background: C.white, color: C.rosa,
+              background: C.white, color: C.rosaText,
               borderRadius: 10, fontSize: 15, fontWeight: 700,
               textDecoration: 'none', letterSpacing: 0.3,
               boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
@@ -206,7 +207,7 @@ export default function BoutiqueProfilePage() {
               style={{
                 padding: '14px 20px', border: 'none', background: 'none',
                 fontSize: 14, fontWeight: activeTab === tab.id ? 600 : 400,
-                color: activeTab === tab.id ? C.rosa : C.gray,
+                color: activeTab === tab.id ? C.rosaText : C.gray,
                 borderBottom: activeTab === tab.id ? `2px solid ${C.rosa}` : '2px solid transparent',
                 cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: FONT,
                 transition: 'color 0.15s',
@@ -245,7 +246,7 @@ export default function BoutiqueProfilePage() {
                 ].map(item => (
                   <div key={item} style={{
                     padding: '6px 14px', borderRadius: 20,
-                    background: C.rosaPale, color: C.rosa,
+                    background: C.rosaPale, color: C.rosaText,
                     fontSize: 12, fontWeight: 500,
                   }}>
                     ✓ {item}
@@ -273,7 +274,7 @@ export default function BoutiqueProfilePage() {
 
             <div style={{ marginTop: 16, textAlign: 'center' }}>
               <button onClick={() => setActiveTab('services')} style={{
-                background: 'none', border: 'none', color: C.rosa, fontSize: 13,
+                background: 'none', border: 'none', color: C.rosaText, fontSize: 13,
                 fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
               }}>
                 View all services →
@@ -417,7 +418,7 @@ export default function BoutiqueProfilePage() {
                     style={{
                       display: 'inline-flex', alignItems: 'center', gap: 6,
                       padding: '9px 18px', borderRadius: 8, background: C.rosaPale,
-                      color: C.rosa, textDecoration: 'none', fontSize: 13, fontWeight: 600,
+                      color: C.rosaText, textDecoration: 'none', fontSize: 13, fontWeight: 600,
                     }}
                   >
                     🗺️ Open in Google Maps
@@ -450,7 +451,7 @@ export default function BoutiqueProfilePage() {
       }}>
         <div style={{ fontSize: 12, color: C.gray }}>
           Powered by{' '}
-          <a href="https://belori.app" target="_blank" rel="noopener noreferrer" style={{ color: C.rosa, textDecoration: 'none', fontWeight: 600 }}>
+          <a href="https://belori.app" target="_blank" rel="noopener noreferrer" style={{ color: C.rosaText, textDecoration: 'none', fontWeight: 600 }}>
             Belori
           </a>
           {' '}· Bridal boutique management platform

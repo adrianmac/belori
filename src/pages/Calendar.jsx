@@ -168,7 +168,7 @@ function formatDayHeading(dateStr) {
   return `${dayName}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
 }
 
-export default function Calendar({ events = [], setScreen, setSelectedEvent, staff = [], clients = [] }) {
+export default function Calendar({ events = [], setScreen, setSelectedEvent, staff = [], clients = [], hideTopbar }) {
   const { boutique } = useAuth();
   const toast = useToast();
   const [view, setView] = useState('month');
@@ -1382,7 +1382,7 @@ export default function Calendar({ events = [], setScreen, setSelectedEvent, sta
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <Topbar title="Calendar" subtitle="Events and appointments at a glance" />
+      {!hideTopbar && <Topbar title="Calendar" subtitle="Events and appointments at a glance" />}
 
       {/* Controls bar */}
       <div style={{

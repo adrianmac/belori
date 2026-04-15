@@ -236,7 +236,7 @@ const S = {
   typeName: (active) => ({
     fontSize: 15,
     fontWeight: 700,
-    color: active ? C.rosa : C.ink,
+    color: active ? C.rosaText : C.ink,
     marginBottom: 4,
   }),
   typeDesc: {
@@ -317,7 +317,7 @@ const S = {
   tdCode: {
     padding: '8px 12px',
     borderBottom: `1px solid ${C.border}`,
-    color: C.rosa,
+    color: C.rosaText,
     fontFamily: 'monospace',
     fontWeight: 600,
     fontSize: 13,
@@ -352,7 +352,7 @@ const S = {
   }),
   ghostBtn: {
     background: 'transparent',
-    color: C.rosa,
+    color: C.rosaText,
     border: `1px solid ${C.rosa}`,
     borderRadius: 8,
     padding: '10px 22px',
@@ -376,7 +376,7 @@ const S = {
     const map = {
       success: { background: C.greenBg, color: C.green,   border: `1px solid ${C.green}33` },
       error:   { background: C.redBg,   color: C.red,     border: `1px solid ${C.red}33`   },
-      warning: { background: C.amberBg, color: C.amber,   border: `1px solid ${C.amber}33` },
+      warning: { background: C.amberBg, color: C.warningText,   border: `1px solid ${C.amber}33` },
       info:    { background: C.blueBg,  color: C.blue,    border: `1px solid ${C.blue}33`  },
     }
     return {

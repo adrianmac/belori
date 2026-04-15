@@ -17,6 +17,7 @@ import { canAccess, defaultSettingsTab } from "../lib/permissions.js";
 import { useI18n } from "../lib/i18n/index.jsx";
 import Sidebar, { BottomNav, IconRail } from "../components/Sidebar.jsx";
 import QuickActionFAB from "../components/QuickActionFAB";
+import BugReportButton from "../components/BugReportButton";
 import OfflineIndicator from "../components/OfflineIndicator";
 import UpgradeModal from "../components/UpgradeModal";
 import PageErrorBoundary from "../components/PageErrorBoundary.jsx";
@@ -42,7 +43,6 @@ const Clients       = lazy(() => import("./Clients"));
 const Settings      = lazy(() => import("./Settings"));
 const QRCodesPage   = lazy(() => import("./QRCodesPage"));
 const Reports           = lazy(() => import("./Reports"));
-const WeddingPlanner    = lazy(() => import("./WeddingPlanner"));
 const DataExport    = lazy(() => import("./DataExport"));
 const Calendar      = lazy(() => import("./Calendar"));
 const StaffCalendar = lazy(() => import("./StaffCalendar"));
@@ -60,7 +60,14 @@ const PromoCodesPage   = lazy(() => import('./PromoCodesPage'));
 const FunnelPage       = lazy(() => import('./FunnelPage'));
 const MyTasksPage      = lazy(() => import('./MyTasksPage'));
 const HelpPage         = lazy(() => import('./HelpPage'));
-const ActivityFeed     = lazy(() => import('./ActivityFeed'));
+const ActivityFeed        = lazy(() => import('./ActivityFeed'));
+const ClientLookupScreen  = lazy(() => import('./ClientLookupScreen'));
+const BillingScreen       = lazy(() => import('./BillingScreen'));
+const InvoiceCreateScreen = lazy(() => import('./InvoiceCreateScreen'));
+const ConsultationScreen  = lazy(() => import('./ConsultationScreen'));
+const AppointmentsScreen  = lazy(() => import('./AppointmentsScreen'));
+const ScheduleScreen      = lazy(() => import('./ScheduleScreen'));
+const BugReportsAdmin     = lazy(() => import('./BugReportsAdmin'));
 
 // ─── Brand color helpers ─────────────────────────────────────────────────
 function hexToPale(hex) {
@@ -73,7 +80,7 @@ function hexToPale(hex) {
 }
 
 // ─── Wedding Planner Coming Soon screen ─────────────────────────────────────
-const WeddingPlannerComingSoon = ({ setScreen }) => (
+const WeddingPlannerComingSoon = ({ setScreen, selectedEvent }) => (
   <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'60px 24px',textAlign:'center',gap:24,background:'#FAFAFA'}}>
     <div style={{fontSize:56,lineHeight:1}}>💍</div>
     <div>
@@ -88,7 +95,7 @@ const WeddingPlannerComingSoon = ({ setScreen }) => (
       ))}
     </div>
     <span style={{fontSize:11,fontWeight:700,padding:'5px 16px',borderRadius:999,background:'#F3F4F6',color:'#9CA3AF',letterSpacing:'0.06em',textTransform:'uppercase'}}>Coming soon · Pro add-on</span>
-    <button onClick={()=>setScreen('event_detail')} style={{fontSize:13,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500,textDecoration:'underline'}}>← Back to event</button>
+    <button onClick={()=>setScreen(selectedEvent ? 'event_detail' : 'events')} style={{fontSize:13,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500,textDecoration:'underline'}}>{selectedEvent ? '← Back to event' : '← Back to events'}</button>
   </div>
 );
 
@@ -218,6 +225,13 @@ export default function NovelApp() {
   const { setLang } = useI18n();
   const [screen,setScreen]=useState('dashboard');
   const [selectedEvent,setSelectedEvent]=useState(null);
+  const [consultationProps,setConsultationProps]=useState({});
+
+  // Clear consultationProps whenever we navigate away from the consultation screen
+  // to prevent stale props from a previous event being shown on the next open
+  useEffect(() => {
+    if (screen !== 'consultation') setConsultationProps({});
+  }, [screen]);
   const { focusMode, toggle: toggleFocus } = useFocusMode();
   const [showSearch,setShowSearch]=useState(false);
   const [showAlerts,setShowAlerts]=useState(false);
@@ -244,6 +258,15 @@ export default function NovelApp() {
       @media (min-width: 769px) {
         .bottom-nav { display: none !important; }
       }
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: #C9697A !important;
+        box-shadow: 0 0 0 3px rgba(201, 105, 122, 0.20);
+      }
+      input:disabled, select:disabled, textarea:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
     `;
     document.head.appendChild(s);
   }, []);
@@ -265,16 +288,20 @@ export default function NovelApp() {
     }
   }, [boutique?.id, boutique?.language]);
 
+  // Legacy/renamed screen aliases — resolved here so render() never calls setState()
+  const SCREEN_ALIASES = { staff_calendar: 'schedule', appointments: 'schedule', invoices: 'billing' };
+
   // Wrap setScreen to intercept settings navigation hints + enforce permissions
   const goScreen = useCallback((s) => {
-    if (!canAccess(myRole, s)) return; // silently block unauthorised navigation
-    if(s==='settings'){
+    const resolved = SCREEN_ALIASES[s] ?? s; // resolve aliases before permission check
+    if (!canAccess(myRole, resolved)) return; // silently block unauthorised navigation
+    if(resolved==='settings'){
       const hint=sessionStorage.getItem('belori_autoopen');
       if(hint==='tab_packages'){sessionStorage.removeItem('belori_autoopen');setSettingsTab('packages');}
       else if(hint==='tab_billing'){sessionStorage.removeItem('belori_autoopen');setSettingsTab('billing');}
       else{setSettingsTab(defaultSettingsTab(myRole));}
     }
-    setScreen(s);
+    setScreen(resolved);
   },[myRole]);
 
   // ⌘K / Ctrl+K opens global search
@@ -314,16 +341,18 @@ export default function NovelApp() {
     return ()=>window.removeEventListener('keydown',handler);
   },[goScreen]);
 
-  const { events, createEvent, updateEvent, duplicateEvent, deleteEvent } = useEvents();
-  const { clients, createClient, updateClient, adjustLoyaltyPoints, redeemPoints, adjustPoints, mergeClients } = useClients();
-  const { inventory, updateDress, createDress } = useInventory();
-  const { alterations, createJob, updateJob, cancelJob, deleteJob, logTimeEntry } = useAlterations();
-  const { payments, refunds, markPaid, createMilestone, logReminder, deleteMilestone, logRefund, logTip } = usePayments();
+  const { isEnabled } = useModules();
+  const { events, loading: eventsLoading, createEvent, updateEvent, duplicateEvent, deleteEvent } = useEvents();
+  const { clients, loading: clientsLoading, createClient, updateClient, adjustLoyaltyPoints, redeemPoints, adjustPoints, mergeClients } = useClients();
+  const { inventory, updateDress, createDress } = useInventory({ enabled: isEnabled('dress_rental') });
+  const { alterations, createJob, updateJob, cancelJob, deleteJob, logTimeEntry } = useAlterations({ enabled: isEnabled('alterations') });
+  const { payments, loading: paymentsLoading, refunds, markPaid, createMilestone, createMilestones, logReminder, deleteMilestone, logRefund, logTip } = usePayments();
   const alertCount = useAlertCount({ events, payments, inventory });
   const alertTaskCount = useAlertTaskCount();
   const { getStaff } = useBoutique();
   const [staff,setStaff]=useState([]);
-  useEffect(()=>{getStaff&&getStaff().then(({data})=>{if(data?.length)setStaff(data);});},[]);
+  // Reload staff when boutique changes (e.g. multi-boutique switch) — fixes stale closure bug
+  useEffect(()=>{getStaff&&getStaff().then(({data})=>{if(data?.length)setStaff(data);});},[boutique?.id]);
 
   const sidebarBadges = React.useMemo(() => ({
     events: events?.filter(e=>e.status!=='completed'&&e.status!=='cancelled').length || 0,
@@ -337,8 +366,6 @@ export default function NovelApp() {
     tasks: 0,
     myTasks: alertTaskCount,
   }), [events, alterations, payments, inventory, alertTaskCount]);
-
-  const { isEnabled } = useModules();
   const en = (id) => isEnabled(id);
   const { locations, activeLocation, setActiveLocation } = useLocations();
 
@@ -348,16 +375,17 @@ export default function NovelApp() {
     switch(screen){
       case 'dashboard':     return <Dashboard setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} payments={payments} inventory={inventory} boutique={boutique} clients={clients} staff={staff} alterations={alterations} focusMode={focusMode} onToggleFocus={toggleFocus}/>;
       case 'my_tasks':      return <Suspense fallback={<PageLoading/>}><MyTasksPage setScreen={goScreen} setSelectedEvent={setSelectedEvent}/></Suspense>;
-      case 'events':        return <EventsList setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} createEvent={createEvent} duplicateEvent={duplicateEvent} clients={clients} inventory={inventory} alterations={alterations}/>;
-      case 'event_detail':  return <EventDetail eventId={selectedEvent} setScreen={goScreen} setSelectedEvent={setSelectedEvent} allEvents={events} updateEvent={updateEvent} deleteEvent={deleteEvent} markPaid={markPaid} createMilestone={createMilestone} deleteMilestone={deleteMilestone} createJob={createJob} updateJob={updateJob} updateClient={updateClient} updateDress={updateDress} staff={staff} inventory={inventory} logRefund={logRefund} logTip={logTip} refunds={refunds}/>;
-      case 'clients':       return <Clients setScreen={goScreen} setSelectedEvent={setSelectedEvent} clients={clients} createClient={createClient} updateClient={updateClient} adjustLoyaltyPoints={adjustLoyaltyPoints} redeemPoints={redeemPoints} adjustPoints={adjustPoints} mergeClients={mergeClients} inventory={inventory}/>;
+      case 'events':        return <EventsList setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} eventsLoading={eventsLoading} createEvent={createEvent} duplicateEvent={duplicateEvent} clients={clients} inventory={inventory} alterations={alterations}/>;
+      case 'event_detail':  return <EventDetail eventId={selectedEvent} setScreen={goScreen} setSelectedEvent={setSelectedEvent} allEvents={events} updateEvent={updateEvent} deleteEvent={deleteEvent} markPaid={markPaid} createMilestone={createMilestone} createMilestones={createMilestones} deleteMilestone={deleteMilestone} createJob={createJob} updateJob={updateJob} updateClient={updateClient} updateDress={updateDress} staff={staff} inventory={inventory} logRefund={logRefund} logTip={logTip} refunds={(refunds||[]).filter(r => r.event_id === selectedEvent)} setConsultationProps={setConsultationProps}/>;
+      case 'clients':       return <Clients setScreen={goScreen} setSelectedEvent={setSelectedEvent} clients={clients} clientsLoading={clientsLoading} createClient={createClient} updateClient={updateClient} adjustLoyaltyPoints={adjustLoyaltyPoints} redeemPoints={redeemPoints} adjustPoints={adjustPoints} mergeClients={mergeClients} inventory={inventory}/>;
       case 'alterations':   return en('alterations')    ? <Alterations alterations={alterations} staff={staff} clients={clients} createClient={createClient} createJob={createJob} updateJob={updateJob} cancelJob={cancelJob} deleteJob={deleteJob} logTimeEntry={logTimeEntry}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'inventory':     return en('dress_rental')   ? <DressRentals inventory={inventory} updateDress={updateDress} createDress={createDress} createJob={createJob} events={events} clients={clients} staff={staff} setScreen={goScreen} setSelectedEvent={setSelectedEvent}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'inv_full':      return en('decoration')     ? <Inventory inventory={inventory} updateDress={updateDress} createDress={createDress} events={events} updateEvent={updateEvent} clients={clients} setScreen={goScreen}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'qr_labels':     return <QRCodesPage setScreen={goScreen}/>;
+      case 'schedule':      return <Suspense fallback={<PageLoading/>}><ScheduleScreen setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} staff={staff} clients={clients}/></Suspense>;
       case 'calendar':      return <Calendar events={events} setScreen={goScreen} setSelectedEvent={setSelectedEvent} staff={staff} clients={clients}/>;
-      case 'staff_calendar': return <StaffCalendar />;
-      case 'payments':      return <Payments payments={payments} markPaid={markPaid} logReminder={logReminder} deleteMilestone={deleteMilestone} createMilestone={createMilestone} setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events}/>;
+      case 'staff_calendar': return null; // resolved to 'schedule' by goScreen alias
+      case 'payments':      return <Payments payments={payments} paymentsLoading={paymentsLoading} markPaid={markPaid} logReminder={logReminder} deleteMilestone={deleteMilestone} createMilestone={createMilestone} setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events}/>;
       case 'settings':      return <Settings boutique={boutique} initialTab={settingsTab} setScreen={goScreen}/>;
       case 'reports':       return en('reports')        ? <Reports payments={payments} events={events} clients={clients} goScreen={goScreen}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'report_builder': return en('reports')       ? <ReportBuilder /> : <Placeholder title="Module Disabled" icon="🔒"/>;
@@ -385,12 +413,20 @@ export default function NovelApp() {
       case 'bulk_import':   return <Suspense fallback={<PageLoading/>}><ImportPage /></Suspense>;
       case 'accounting':    return en('accounting')     ? <AccountingScreen payments={payments} events={events}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'purchase_orders': return en('purchase_orders') ? <PurchaseOrders goScreen={goScreen}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
-      case 'wedding_planner': return <WeddingPlannerComingSoon setScreen={goScreen}/>;
+      case 'wedding_planner': return <WeddingPlannerComingSoon setScreen={goScreen} selectedEvent={selectedEvent}/>;
+      case 'bug_reports':   return <Suspense fallback={<PageLoading/>}><BugReportsAdmin setScreen={goScreen}/></Suspense>;
       case 'roadmap':       return <RoadmapPage />;
       case 'sms_inbox':     return <SmsInboxPage />;
       case 'help':          return <Suspense fallback={<PageLoading/>}><HelpPage /></Suspense>;
-      case 'activity_feed': return <Suspense fallback={<PageLoading/>}><ActivityFeed setScreen={goScreen}/></Suspense>;
-      default:              return <Dashboard setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} payments={payments} inventory={inventory} boutique={boutique} clients={clients} staff={staff} alterations={alterations}/>;
+      case 'activity_feed':  return <Suspense fallback={<PageLoading/>}><ActivityFeed setScreen={goScreen}/></Suspense>;
+      case 'client_lookup':   return <Suspense fallback={<PageLoading/>}><ClientLookupScreen setScreen={goScreen}/></Suspense>;
+      case 'billing':         return <Suspense fallback={<PageLoading/>}><BillingScreen setScreen={goScreen}/></Suspense>;
+      case 'invoices':        return null; // resolved to 'billing' by goScreen alias
+      case 'invoice_create':  return <Suspense fallback={<PageLoading/>}><InvoiceCreateScreen setScreen={goScreen}/></Suspense>;
+      case 'invoice_detail':  return null; // detail is handled inline in BillingScreen; goScreen alias resolves if needed
+      case 'consultation':    return <Suspense fallback={<PageLoading/>}><ConsultationScreen {...consultationProps} setScreen={goScreen}/></Suspense>;
+      case 'appointments':   return null; // resolved to 'schedule' by goScreen alias
+      default:               return <Dashboard setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} payments={payments} inventory={inventory} boutique={boutique} clients={clients} staff={staff} alterations={alterations}/>;
     }
   };
 
@@ -404,9 +440,29 @@ export default function NovelApp() {
       '--brand-primary': boutique?.primary_color || '#C9697A',
       '--brand-pale': hexToPale(boutique?.primary_color || '#C9697A'),
     }}>
+      <a
+        href="#main-content"
+        onFocus={e => { e.currentTarget.style.top = '0'; e.currentTarget.style.left = '0'; }}
+        onBlur={e => { e.currentTarget.style.top = '-9999px'; e.currentTarget.style.left = '-9999px'; }}
+        style={{
+          position: 'absolute',
+          top: '-9999px',
+          left: '-9999px',
+          zIndex: 10000,
+          background: '#1C1012',
+          color: '#FFFFFF',
+          padding: '10px 20px',
+          borderRadius: '0 0 10px 0',
+          fontSize: 13,
+          fontWeight: 600,
+          textDecoration: 'none',
+        }}
+      >
+        Skip to main content
+      </a>
       <Sidebar screen={screen} setScreen={goScreen} boutique={boutique} boutiques={boutiques} onSwitchBoutique={switchBoutique} onSignOut={signOut} badges={sidebarBadges} onSearch={()=>setShowSearch(true)} alertCount={alertCount} onAlerts={()=>setShowAlerts(s=>!s)} myRole={myRole} focusMode={focusMode} onToggleFocus={toggleFocus} onShortcuts={()=>setShowShortcuts(s=>!s)}/>
       <IconRail screen={screen} setScreen={goScreen} onSignOut={signOut} boutique={boutique} boutiques={boutiques} onSwitchBoutique={switchBoutique} badges={sidebarBadges} onSearch={()=>setShowSearch(true)} myRole={myRole}/>
-      <div className="belori-main" style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',minHeight:0}}>
+      <div id="main-content" tabIndex={-1} className="belori-main" style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',minHeight:0}}>
         <TrialBanner setScreen={goScreen}/>
         {locations.length > 1 && (
           <div style={{display:'flex',alignItems:'center',gap:8,padding:'6px 20px',background:C.white,borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
@@ -429,12 +485,13 @@ export default function NovelApp() {
       {showSearch&&<GlobalSearch isOpen={showSearch} setScreen={goScreen} setSelectedEvent={setSelectedEvent} onClose={()=>setShowSearch(false)}/>}
       {showAlerts&&(
         <div style={{position:'fixed',bottom:68,left:8,right:8,maxWidth:352,zIndex:400}}>
-          <NotificationCenter events={events} payments={payments} inventory={inventory} setScreen={setScreen} setSelectedEvent={setSelectedEvent} onClose={()=>setShowAlerts(false)}/>
+          <NotificationCenter events={events} payments={payments} inventory={inventory} setScreen={goScreen} setSelectedEvent={setSelectedEvent} onClose={()=>setShowAlerts(false)}/>
         </div>
       )}
       {showShortcuts&&<KeyboardShortcutsModal onClose={()=>setShowShortcuts(false)}/>}
       {upgradeModal&&<UpgradeModal feature={upgradeModal.feature} minPlan={upgradeModal.minPlan} onClose={()=>setUpgradeModal(null)}/>}
       <QuickActionFAB setScreen={goScreen}/>
+      <BugReportButton currentScreen={screen}/>
     </div>
     </ToastProvider>
   );

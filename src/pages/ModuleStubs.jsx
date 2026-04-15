@@ -15,7 +15,7 @@ const Stub = ({ title, subtitle, icon, description, features = [], planBadge }) 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
             <div style={{ fontSize: 20, fontWeight: 600, color: C.ink }}>{title}</div>
             {planBadge && (
-              <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: C.rosaPale, color: C.rosa, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{planBadge}</span>
+              <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: C.rosaPale, color: C.rosaText, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{planBadge}</span>
             )}
           </div>
           <div style={{ fontSize: 14, color: C.gray, lineHeight: 1.6, marginBottom: 28 }}>{description}</div>
@@ -23,14 +23,14 @@ const Stub = ({ title, subtitle, icon, description, features = [], planBadge }) 
             <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: '16px 24px', textAlign: 'left', marginBottom: 28 }}>
               {features.map((f, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: i < features.length - 1 ? `1px solid ${C.border}` : 'none', fontSize: 13, color: C.ink }}>
-                  <span style={{ color: C.rosa, fontWeight: 600, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: C.rosaText, fontWeight: 600, flexShrink: 0 }}>✓</span>
                   {f}
                 </div>
               ))}
             </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.rosaPale, color: C.rosa, borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 500 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: C.rosaPale, color: C.rosaText, borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 500 }}>
               <span>🚧</span> Coming soon — this module is on the roadmap
             </div>
             <button
@@ -113,7 +113,7 @@ export const MeasurementsScreen = () => {
               : filtered.map(c => (
                 <div key={c.id} onClick={() => { setSelClient(c); setShowForm(false); }}
                   style={{ padding: '9px 12px', cursor: 'pointer', background: selClient?.id === c.id ? C.rosaPale : 'transparent', borderLeft: `3px solid ${selClient?.id === c.id ? C.rosa : 'transparent'}`, display: 'flex', alignItems: 'center', gap: 8, transition: 'background 0.12s' }}>
-                  <div style={{ width: 30, height: 30, borderRadius: '50%', background: C.rosaPale, color: C.rosa, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
+                  <div style={{ width: 30, height: 30, borderRadius: '50%', background: C.rosaPale, color: C.rosaText, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
                     {c.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
                   </div>
                   <div style={{ minWidth: 0 }}>
@@ -141,7 +141,7 @@ export const MeasurementsScreen = () => {
                   <div style={{ fontSize: 12, color: C.gray, marginTop: 2 }}>{measurements.length} record{measurements.length !== 1 ? 's' : ''} on file</div>
                 </div>
                 <button onClick={() => setShowForm(f => !f)}
-                  style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${C.rosa}`, background: showForm ? C.rosaPale : C.white, color: C.rosa, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+                  style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${C.rosa}`, background: showForm ? C.rosaPale : C.white, color: C.rosaText, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
                   {showForm ? '✕ Cancel' : '+ New record'}
                 </button>
               </div>
@@ -252,14 +252,14 @@ export const DressCatalogScreen = ({ inventory = [] }) => {
                   ) : (
                     <span style={{ fontSize: 48 }}>👗</span>
                   )}
-                  {d.status === 'rented' && <div style={{ position: 'absolute', top: 10, right: 10, background: 'var(--bg-warning)', color: 'var(--color-warning)', fontSize: 10, fontWeight: 600, padding: '4px 8px', borderRadius: 999 }}>RENTED</div>}
+                  {d.status === 'rented' && <div style={{ position: 'absolute', top: 10, right: 10, background: 'var(--bg-warning)', color: 'var(--text-warning)', fontSize: 10, fontWeight: 600, padding: '4px 8px', borderRadius: 999 }}>RENTED</div>}
                 </div>
                 <div style={{ padding: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: C.gray, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{d.brand || 'Unbranded'}</div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: 13, color: C.ink }}>{d.size || 'OS'}</div>
-                    {d.retail_price > 0 && <div style={{ fontSize: 14, fontWeight: 600, color: C.rosa }}>${(d.retail_price/100).toLocaleString('en-US',{minimumFractionDigits:2})}</div>}
+                    {d.retail_price > 0 && <div style={{ fontSize: 14, fontWeight: 600, color: C.rosaText }}>${(d.retail_price/100).toLocaleString('en-US',{minimumFractionDigits:2})}</div>}
                   </div>
                 </div>
               </div>
@@ -302,6 +302,7 @@ export const FBBeoScreen = () => {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [beoDeleteConfirm, setBeoDeleteConfirm] = useState(null); // beo id | null
 
   useEffect(() => {
     if (!boutique?.id) return;
@@ -343,10 +344,12 @@ export const FBBeoScreen = () => {
     setTimeout(() => { setSaved(false); setShowForm(false); }, 900);
   };
 
-  const del = async (id) => {
-    if (!window.confirm('Delete this BEO?')) return;
-    await supabase.from('fb_beo').delete().eq('id', id);
-    setBeos(bs => bs.filter(b => b.id !== id));
+  const del = (id) => setBeoDeleteConfirm(id);
+  const confirmDelBeo = async () => {
+    if (!beoDeleteConfirm) return;
+    await supabase.from('fb_beo').delete().eq('id', beoDeleteConfirm);
+    setBeos(bs => bs.filter(b => b.id !== beoDeleteConfirm));
+    setBeoDeleteConfirm(null);
   };
 
   const evLabel = (ev) => {
@@ -356,6 +359,7 @@ export const FBBeoScreen = () => {
   };
 
   return (
+    <>
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Topbar title="Food & Beverage / BEO" subtitle="Banquet event orders"
         actions={<button onClick={openNew} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: C.rosa, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>+ New BEO</button>}
@@ -494,7 +498,7 @@ export const FBBeoScreen = () => {
                       <div style={{ fontSize: 11, fontWeight: 600, color: C.gray, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Timeline</div>
                       {b.timeline.slice(0, 4).map((step, i) => (
                         <div key={i} style={{ fontSize: 12, color: C.ink, padding: '3px 0', borderBottom: i < Math.min(b.timeline.length, 4) - 1 ? `1px solid ${C.border}` : 'none', display: 'flex', gap: 8 }}>
-                          <span style={{ color: C.rosa, fontWeight: 500, flexShrink: 0 }}>{step.time}</span>
+                          <span style={{ color: C.rosaText, fontWeight: 500, flexShrink: 0 }}>{step.time}</span>
                           <span>{step.description}</span>
                         </div>
                       ))}
@@ -515,6 +519,24 @@ export const FBBeoScreen = () => {
         })}
       </div>
     </div>
+    {beoDeleteConfirm && (
+      <div role="presentation" onClick={e=>{if(e.target===e.currentTarget)setBeoDeleteConfirm(null);}}
+        style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
+        <div role="dialog" aria-modal="true" aria-labelledby="del-beo-title"
+          style={{background:'#fff',borderRadius:16,width:360,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+          <div style={{padding:'20px 20px 12px',textAlign:'center'}}>
+            <div style={{fontSize:26,marginBottom:8}}>🗑️</div>
+            <div id="del-beo-title" style={{fontSize:15,fontWeight:600,color:'#111',marginBottom:8}}>Delete this BEO?</div>
+            <div style={{fontSize:12,color:'var(--text-danger)',background:'var(--bg-danger)',borderRadius:8,padding:'8px 12px'}}>This cannot be undone.</div>
+          </div>
+          <div style={{padding:'12px 20px 20px',display:'flex',gap:8}}>
+            <button onClick={()=>setBeoDeleteConfirm(null)} style={{flex:1,padding:'9px 16px',borderRadius:8,border:'1px solid #e5e5e5',background:'#fff',color:'#666',fontSize:13,fontWeight:600,cursor:'pointer'}}>Cancel</button>
+            <button onClick={confirmDelBeo} style={{flex:1,padding:'9px 16px',borderRadius:8,border:'none',background:'var(--color-danger)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>Delete</button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 
@@ -598,7 +620,7 @@ export const FloorplanScreen = () => {
         {selEventId && (
           <>
             <span style={{ fontSize: 12, color: C.gray }}>{tables.length} tables · {totalSeats} seats</span>
-            <button onClick={() => setTables([])} style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid var(--color-danger)`, background: '#fff', color: 'var(--color-danger)', fontSize: 12, cursor: 'pointer', minHeight: 'unset', minWidth: 'unset', marginLeft: 'auto' }}>Clear all</button>
+            <button onClick={() => setTables([])} style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid var(--color-danger)`, background: '#fff', color: 'var(--text-danger)', fontSize: 12, cursor: 'pointer', minHeight: 'unset', minWidth: 'unset', marginLeft: 'auto' }}>Clear all</button>
             <button onClick={saveFloorplan} disabled={saving}
               style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: saved ? '#15803D' : C.rosa, color: '#fff', fontSize: 12, fontWeight: 500, cursor: 'pointer', minHeight: 'unset', minWidth: 'unset' }}>
               {saved ? '✓ Saved!' : saving ? 'Saving…' : 'Save layout'}
@@ -636,7 +658,7 @@ export const FloorplanScreen = () => {
                 <input value={selTable.label} onChange={e => { const lbl = e.target.value; setSelTable(s => ({ ...s, label: lbl })); setTables(ts => ts.map(t => t.id === selTable.id ? { ...t, label: lbl } : t)); }}
                   style={{ width: '100%', padding: '5px 7px', borderRadius: 6, border: `1px solid ${C.border}`, fontSize: 11, outline: 'none', boxSizing: 'border-box', marginBottom: 6 }} />
                 <button onClick={() => removeTable(selTable.id)}
-                  style={{ width: '100%', padding: '5px 0', borderRadius: 6, border: `1px solid var(--color-danger)`, background: '#fff', color: 'var(--color-danger)', fontSize: 11, cursor: 'pointer', minHeight: 'unset', minWidth: 'unset' }}>
+                  style={{ width: '100%', padding: '5px 0', borderRadius: 6, border: `1px solid var(--color-danger)`, background: '#fff', color: 'var(--text-danger)', fontSize: 11, cursor: 'pointer', minHeight: 'unset', minWidth: 'unset' }}>
                   🗑 Remove
                 </button>
               </div>
@@ -987,7 +1009,7 @@ export const POSScreen = () => {
                       borderRadius: 999,
                       border: `1.5px solid ${paymentMethod === m ? C.rosa : C.border}`,
                       background: paymentMethod === m ? C.rosaPale : C.white,
-                      color: paymentMethod === m ? C.rosa : C.gray,
+                      color: paymentMethod === m ? C.rosaText : C.gray,
                       fontSize: 13,
                       fontWeight: paymentMethod === m ? 600 : 400,
                       cursor: 'pointer',
@@ -1131,7 +1153,7 @@ export const StaffScheduleScreen = () => {
           <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M10 4L6 8l4 4" stroke={C.gray} strokeWidth="1.8" strokeLinecap="round"/></svg>
         </button>
         <button onClick={() => setWeekOffset(0)}
-          style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid ${weekOffset === 0 ? C.rosa : C.border}`, background: weekOffset === 0 ? C.rosaPale : C.white, color: weekOffset === 0 ? C.rosa : C.gray, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+          style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid ${weekOffset === 0 ? C.rosa : C.border}`, background: weekOffset === 0 ? C.rosaPale : C.white, color: weekOffset === 0 ? C.rosaText : C.gray, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
           This week
         </button>
         <button onClick={() => setWeekOffset(o => o + 1)}
@@ -1155,8 +1177,8 @@ export const StaffScheduleScreen = () => {
               const isToday = iso === today;
               return (
                 <div key={i} style={{ padding: '6px 8px', textAlign: 'center', borderRight: i < 6 ? `1px solid ${C.border}` : 'none', background: isToday ? C.rosaPale : 'transparent' }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: isToday ? C.rosa : C.gray, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{d.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: isToday ? C.rosa : C.ink, lineHeight: 1.2 }}>{d.getDate()}</div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: isToday ? C.rosaText : C.gray, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{d.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: isToday ? C.rosaText : C.ink, lineHeight: 1.2 }}>{d.getDate()}</div>
                 </div>
               );
             })}
@@ -1339,7 +1361,7 @@ export const AccountingScreen = ({ payments = [], events = [] }) => {
               <div style={{ fontSize: 32, fontWeight: 700, color: C.ink }}>${(totalPending/100).toLocaleString('en-US',{minimumFractionDigits:2})}</div>
             </div>
             <div style={{ background: C.white, padding: 24, borderRadius: 12, border: `1px solid ${C.border}`, borderLeft: `4px solid var(--color-danger)`, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-              <div style={{ fontSize: 13, color: 'var(--color-danger)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Overdue</div>
+              <div style={{ fontSize: 13, color: 'var(--text-danger)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Overdue</div>
               <div style={{ fontSize: 32, fontWeight: 700, color: C.ink }}>${(overdue/100).toLocaleString('en-US',{minimumFractionDigits:2})}</div>
             </div>
           </div>

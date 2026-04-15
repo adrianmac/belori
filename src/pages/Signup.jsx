@@ -5,7 +5,7 @@ import { sendInngestEvent } from '../lib/inngest'
 import { supabase } from '../lib/supabase'
 
 const C = {
-  rosa: '#C9697A', rosaHov: '#B85868', rosaPale: '#FDF5F6',
+  rosa: '#C9697A', rosaHov: '#B85868', rosaPale: '#FDF5F6', rosaText: '#8B3A4A',
   ink: '#1C1012', gray: '#6B7280', border: '#E5E7EB',
   white: '#FFFFFF', ivory: '#F8F4F0', red: '#B91C1C', redBg: '#FEE2E2',
   green: '#15803D', greenBg: '#DCFCE7',
@@ -84,24 +84,24 @@ export default function Signup() {
               </div>
             )}
             <div>
-              <label style={{ fontSize: 12, fontWeight: 500, color: C.ink, display: 'block', marginBottom: 6 }}>Boutique name</label>
+              <label htmlFor="signup-boutique" style={{ fontSize: 12, fontWeight: 500, color: C.ink, display: 'block', marginBottom: 6 }}>Boutique name</label>
               <input
-                type="text" value={boutiqueName} onChange={e => setBoutiqueName(e.target.value)} required
+                id="signup-boutique" type="text" value={boutiqueName} onChange={e => setBoutiqueName(e.target.value)} required autoComplete="organization"
                 placeholder="e.g. Bella Bridal & Events"
                 style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.ink, outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 500, color: C.ink, display: 'block', marginBottom: 6 }}>Email</label>
+              <label htmlFor="signup-email" style={{ fontSize: 12, fontWeight: 500, color: C.ink, display: 'block', marginBottom: 6 }}>Email</label>
               <input
-                type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                id="signup-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email"
                 style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.ink, outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 500, color: C.ink, display: 'block', marginBottom: 6 }}>Password</label>
+              <label htmlFor="signup-password" style={{ fontSize: 12, fontWeight: 500, color: C.ink, display: 'block', marginBottom: 6 }}>Password</label>
               <input
-                type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8}
+                id="signup-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete="new-password"
                 placeholder="At least 8 characters"
                 style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.ink, outline: 'none', boxSizing: 'border-box' }}
               />
@@ -114,7 +114,7 @@ export default function Signup() {
           </form>
           <div style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: C.gray }}>
             Already have an account?{' '}
-            <Link to="/login" style={{ color: C.rosa, fontWeight: 500, textDecoration: 'none' }}>Sign in</Link>
+            <Link to="/login" style={{ color: C.rosaText, fontWeight: 500, textDecoration: 'none' }}>Sign in</Link>
           </div>
         </div>
 

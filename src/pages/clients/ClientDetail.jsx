@@ -151,6 +151,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
   const openEditMeas=(m)=>{setMeasDraft({bust:m.bust??'',waist:m.waist??'',hips:m.hips??'',height:m.height??'',shoe_size:m.shoe_size||'',taken_by_name:m.taken_by_name||'',notes:m.notes||''});setEditingMeasId(m.id);setShowMeasForm(true);};
   const [showAllMeasOv,setShowAllMeasOv]=useState(false);
   const [showMeasModal,setShowMeasModal]=useState(false);
+  const [deleteMeasConfirm,setDeleteMeasConfirm]=useState(null); // meas id | null
   const [measModalSaving,setMeasModalSaving]=useState(false);
   const [measModalDraft,setMeasModalDraft]=useState(EMPTY_MEAS);
   const openAddMeas=()=>{setMeasDraft(EMPTY_MEAS);setEditingMeasId(null);setShowMeasForm(true);};
@@ -174,9 +175,11 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
     setMeasSaving(false);
     if(!error){cancelMeasForm();toast('Measurements saved');}else toast('Failed to save','warn');
   };
-  const handleDeleteMeas=async(id)=>{
-    if(!window.confirm('Delete this measurement record?'))return;
-    const{error}=await deleteMeasurement(id);
+  const handleDeleteMeas=(id)=>setDeleteMeasConfirm(id);
+  const confirmDeleteMeas=async()=>{
+    if(!deleteMeasConfirm)return;
+    const{error}=await deleteMeasurement(deleteMeasConfirm);
+    setDeleteMeasConfirm(null);
     if(!error)toast('Deleted');else toast('Failed to delete','warn');
   };
   const [smsInput,setSmsInput]=useState('');
@@ -474,10 +477,10 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
       </div>
       <div style={{display:'flex',borderBottom:`1px solid ${C.border}`,background:C.white,padding:'0 16px',flexShrink:0,overflowX:'auto'}}>
         {[['overview','Overview'],['measurements','📏 Measurements'],['timeline','Timeline'],['history','Event history'],['pipeline','Pipeline'],['tags','Tags & prefs'],['sms','💬 SMS']].map(([t,l])=>(
-          <button key={t} onClick={()=>setTab(t)} style={{padding:'13px 14px',fontSize:12,fontWeight:tab===t?500:400,color:tab===t?C.rosa:C.gray,border:'none',background:'transparent',cursor:'pointer',borderBottom:tab===t?`2px solid ${C.rosa}`:'2px solid transparent',whiteSpace:'nowrap',flexShrink:0}}>
+          <button key={t} onClick={()=>setTab(t)} style={{padding:'13px 14px',fontSize:12,fontWeight:tab===t?500:400,color:tab===t?C.rosaText:C.gray,border:'none',background:'transparent',cursor:'pointer',borderBottom:tab===t?`2px solid ${C.rosa}`:'2px solid transparent',whiteSpace:'nowrap',flexShrink:0}}>
             {l}
-            {t==='timeline'&&unifiedFeed.length>0&&<span style={{marginLeft:5,padding:'1px 5px',borderRadius:999,fontSize:10,background:C.rosaPale,color:C.rosa}}>{unifiedFeed.length}</span>}
-            {t==='overview'&&openTasks.length>0&&<span style={{marginLeft:5,padding:'1px 5px',borderRadius:999,fontSize:10,background:'var(--bg-warning)',color:'var(--color-warning)'}}>{openTasks.length}</span>}
+            {t==='timeline'&&unifiedFeed.length>0&&<span style={{marginLeft:5,padding:'1px 5px',borderRadius:999,fontSize:10,background:C.rosaPale,color:C.rosaText}}>{unifiedFeed.length}</span>}
+            {t==='overview'&&openTasks.length>0&&<span style={{marginLeft:5,padding:'1px 5px',borderRadius:999,fontSize:10,background:'var(--bg-warning)',color:'var(--text-warning)'}}>{openTasks.length}</span>}
           </button>
         ))}
       </div>
@@ -502,20 +505,20 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
               <Card>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:`1px solid ${C.border}`}}>
                   <span style={{fontSize:12,fontWeight:500,color:C.ink}}>Contact</span>
-                  <button onClick={()=>setEditContact(e=>!e)} style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>{editContact?'Cancel':'Edit'}</button>
+                  <button onClick={()=>setEditContact(e=>!e)} style={{fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>{editContact?'Cancel':'Edit'}</button>
                 </div>
                 {editContact?(
                   <div style={{padding:'12px 14px',display:'flex',flexDirection:'column',gap:8,background:C.rosaPale}}>
                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
-                      <div><div style={{...LBL}}>Phone</div><input value={contactDraft.phone} onChange={e=>setContactDraft(d=>({...d,phone:e.target.value}))} style={{...inputSt,fontSize:11,padding:'6px 8px'}}/></div>
-                      <div><div style={{...LBL}}>Email</div><input value={contactDraft.email} onChange={e=>setContactDraft(d=>({...d,email:e.target.value}))} style={{...inputSt,fontSize:11,padding:'6px 8px'}}/></div>
+                      <div><label htmlFor="cd-phone" style={LBL}>Phone</label><input id="cd-phone" value={contactDraft.phone} onChange={e=>setContactDraft(d=>({...d,phone:e.target.value}))} style={{...inputSt,fontSize:11,padding:'6px 8px'}}/></div>
+                      <div><label htmlFor="cd-email" style={LBL}>Email</label><input id="cd-email" value={contactDraft.email} onChange={e=>setContactDraft(d=>({...d,email:e.target.value}))} style={{...inputSt,fontSize:11,padding:'6px 8px'}}/></div>
                     </div>
-                    <div><div style={{...LBL}}>Partner</div><input value={contactDraft.partner_name} onChange={e=>setContactDraft(d=>({...d,partner_name:e.target.value}))} style={{...inputSt,fontSize:11,padding:'6px 8px'}}/></div>
-                    <div><div style={{...LBL}}>Language</div><select value={contactDraft.language_preference} onChange={e=>setContactDraft(d=>({...d,language_preference:e.target.value}))} style={{...inputSt,fontSize:11,padding:'6px 8px'}}><option value="en">English</option><option value="es">Spanish</option><option value="both">Both</option></select></div>
-                    <div><div style={{...LBL}}>Emergency contact</div><input value={contactDraft.emergency_contact} onChange={e=>setContactDraft(d=>({...d,emergency_contact:e.target.value}))} placeholder="Name & phone" style={{...inputSt,fontSize:11,padding:'6px 8px'}}/></div>
+                    <div><label htmlFor="cd-partner" style={LBL}>Partner</label><input id="cd-partner" value={contactDraft.partner_name} onChange={e=>setContactDraft(d=>({...d,partner_name:e.target.value}))} style={{...inputSt,fontSize:11,padding:'6px 8px'}}/></div>
+                    <div><label htmlFor="cd-lang" style={LBL}>Language</label><select id="cd-lang" value={contactDraft.language_preference} onChange={e=>setContactDraft(d=>({...d,language_preference:e.target.value}))} style={{...inputSt,fontSize:11,padding:'6px 8px'}}><option value="en">English</option><option value="es">Spanish</option><option value="both">Both</option></select></div>
+                    <div><label htmlFor="cd-emergency" style={LBL}>Emergency contact</label><input id="cd-emergency" value={contactDraft.emergency_contact} onChange={e=>setContactDraft(d=>({...d,emergency_contact:e.target.value}))} placeholder="Name & phone" style={{...inputSt,fontSize:11,padding:'6px 8px'}}/></div>
                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
-                      <div><div style={{...LBL}}>Birth Date</div><input type="date" value={contactDraft.birth_date||contactDraft.birthday} onChange={e=>setContactDraft(d=>({...d,birth_date:e.target.value,birthday:e.target.value}))} style={{...inputSt,fontSize:11,padding:'6px 8px'}}/></div>
-                      <div><div style={{...LBL}}>Anniversary Date</div><input type="date" value={contactDraft.anniversary_date||contactDraft.anniversary} onChange={e=>setContactDraft(d=>({...d,anniversary_date:e.target.value,anniversary:e.target.value}))} style={{...inputSt,fontSize:11,padding:'6px 8px'}}/></div>
+                      <div><label htmlFor="cd-bday" style={LBL}>Birth Date</label><input id="cd-bday" type="date" value={contactDraft.birth_date||contactDraft.birthday} onChange={e=>setContactDraft(d=>({...d,birth_date:e.target.value,birthday:e.target.value}))} style={{...inputSt,fontSize:11,padding:'6px 8px'}}/></div>
+                      <div><label htmlFor="cd-anniversary" style={LBL}>Anniversary Date</label><input id="cd-anniversary" type="date" value={contactDraft.anniversary_date||contactDraft.anniversary} onChange={e=>setContactDraft(d=>({...d,anniversary_date:e.target.value,anniversary:e.target.value}))} style={{...inputSt,fontSize:11,padding:'6px 8px'}}/></div>
                     </div>
                     <div style={{display:'flex',gap:6,justifyContent:'flex-end'}}><GhostBtn label="Cancel" colorScheme="danger" onClick={()=>setEditContact(false)} style={{fontSize:11,padding:'5px 10px'}}/><PrimaryBtn label="Save" colorScheme="success" onClick={saveContact} style={{fontSize:11,padding:'6px 12px'}}/></div>
                   </div>
@@ -527,14 +530,14 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                         <div style={{display:'flex',alignItems:'center',gap:6}}>
                           <span style={{fontWeight:500,color:C.ink}}>{v}</span>
                           {k==='Phone'&&cl.phone&&(
-                            <button onClick={()=>setShowDirectSMS(true)} title="Send SMS" style={{fontSize:11,padding:'2px 8px',borderRadius:8,border:`1px solid ${C.border}`,background:C.rosaPale,color:C.rosa,cursor:'pointer',fontWeight:500,flexShrink:0}}>💬 SMS</button>
+                            <button onClick={()=>setShowDirectSMS(true)} title="Send SMS" style={{fontSize:11,padding:'2px 8px',borderRadius:8,border:`1px solid ${C.border}`,background:C.rosaPale,color:C.rosaText,cursor:'pointer',fontWeight:500,flexShrink:0}}>💬 SMS</button>
                           )}
                         </div>
                       </div>
                     ))}
                     {(cl.no_show_count>0)&&(
                       <div style={{marginTop:6,display:'flex',justifyContent:'flex-end'}}>
-                        <span style={{padding:'3px 10px',borderRadius:999,fontSize:11,fontWeight:600,background:cl.no_show_count>=3?C.redBg:C.amberBg,color:cl.no_show_count>=3?C.red:C.amber,border:`1px solid ${cl.no_show_count>=3?C.red+'33':C.amber+'44'}`}}>
+                        <span style={{padding:'3px 10px',borderRadius:999,fontSize:11,fontWeight:600,background:cl.no_show_count>=3?C.redBg:C.amberBg,color:cl.no_show_count>=3?C.red:C.warningText,border:`1px solid ${cl.no_show_count>=3?C.red+'33':C.amber+'44'}`}}>
                           ⚠️ No-shows: {cl.no_show_count}
                         </span>
                       </div>
@@ -560,7 +563,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                           role="switch"
                           aria-checked={!optedOut}
                           onClick={()=>updateClient(cl.id,{comm_prefs:{...(cl.comm_prefs||{}),[pref.key]:!optedOut}})}
-                          style={{fontSize:11,padding:'3px 10px',borderRadius:12,border:`1px solid ${optedOut?'#EF4444':C.border}`,background:optedOut?'#FEE2E2':C.rosaPale,color:optedOut?'#991B1B':C.rosa,cursor:'pointer',fontWeight:500}}>
+                          style={{fontSize:11,padding:'3px 10px',borderRadius:12,border:`1px solid ${optedOut?'#EF4444':C.border}`,background:optedOut?'#FEE2E2':C.rosaPale,color:optedOut?'#991B1B':C.rosaText,cursor:'pointer',fontWeight:500}}>
                           {optedOut?'Opted out':'Active'}
                         </button>
                       </div>
@@ -598,7 +601,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                         <div style={{fontSize:10,color:C.gray}}>{points.toLocaleString()} pts</div>
                       </div>
                     </div>
-                    <button onClick={()=>setShowAdjustPts(true)} style={{fontSize:10,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>Adjust</button>
+                    <button onClick={()=>setShowAdjustPts(true)} style={{fontSize:10,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>Adjust</button>
                   </div>
                   {/* Progress bar */}
                   <div style={{height:6,background:C.border,borderRadius:3,overflow:'hidden',marginBottom:4}}>
@@ -634,7 +637,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                   {points>=500&&(
                     <div style={{marginTop:10,padding:'10px 12px',background:C.rosaPale,borderRadius:8,border:`1px solid ${C.rosa}22`}}>
                       <div style={{fontSize:11,color:C.gray,marginBottom:2}}>Redemption value</div>
-                      <div style={{fontSize:13,fontWeight:600,color:C.rosa,marginBottom:8}}>${(points/100).toFixed(2)} available</div>
+                      <div style={{fontSize:13,fontWeight:600,color:C.rosaText,marginBottom:8}}>${(points/100).toFixed(2)} available</div>
                       <div style={{display:'flex',gap:6}}>
                         <button onClick={()=>{setRedeemDraft({points:String(redeemablePoints),note:'',event_id:''});setShowRedeemModal(true);}} style={{flex:1,padding:'6px 0',borderRadius:7,border:`1px solid ${C.rosa}`,background:C.rosa,color:C.white,fontSize:11,cursor:'pointer',fontWeight:500}}>Redeem points</button>
                         <button onClick={()=>{setAdjustDraft({delta:'',note:''});setShowAdjustModal(true);}} style={{padding:'6px 10px',borderRadius:7,border:`1px solid ${C.border}`,background:C.white,color:C.gray,fontSize:11,cursor:'pointer',fontWeight:500}}>Adjust</button>
@@ -652,7 +655,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                 <Card>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:`1px solid ${C.border}`}}>
                     <span style={{fontSize:12,fontWeight:500,color:C.ink}}>Points history</span>
-                    {loyaltyTxns.length>10&&<button onClick={()=>setShowAllTxns(v=>!v)} style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer'}}>{showAllTxns?'Show less':'Show all'}</button>}
+                    {loyaltyTxns.length>10&&<button onClick={()=>setShowAllTxns(v=>!v)} style={{fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer'}}>{showAllTxns?'Show less':'Show all'}</button>}
                   </div>
                   <div style={{padding:'4px 0'}}>
                     {(showAllTxns?loyaltyTxns:loyaltyTxns.slice(0,10)).map(tx=>{
@@ -671,7 +674,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                               <span style={{fontSize:12,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{displayReason}</span>
                               {isRedeem&&(
                                 isClaimed
-                                  ? <span style={{fontSize:9,padding:'1px 6px',borderRadius:999,background:'var(--bg-success,#DCFCE7)',color:'var(--color-success,#15803D)',fontWeight:600,flexShrink:0,border:'1px solid var(--color-success,#15803D)33'}}>Claimed</span>
+                                  ? <span style={{fontSize:9,padding:'1px 6px',borderRadius:999,background:'var(--bg-success,#DCFCE7)',color:'var(--text-success,#065F46)',fontWeight:600,flexShrink:0,border:'1px solid var(--color-success,#15803D)33'}}>Claimed</span>
                                   : <span style={{fontSize:9,padding:'1px 6px',borderRadius:999,background:'#FEF3C7',color:'#B45309',fontWeight:600,flexShrink:0,border:'1px solid #F59E0B33'}}>Pending</span>
                               )}
                             </div>
@@ -679,7 +682,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                           </div>
                           <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
                             {isRedeem&&!isClaimed&&(
-                              <button onClick={async()=>{await supabase.from('loyalty_transactions').update({reason:(tx.reason||'Points transaction')+' [CLAIMED]'}).eq('id',tx.id);refetchTxns();toast('Marked as claimed ✓');}} style={{fontSize:10,padding:'2px 8px',borderRadius:6,border:'1px solid var(--color-success,#15803D)',background:'var(--bg-success,#DCFCE7)',color:'var(--color-success,#15803D)',cursor:'pointer',fontWeight:500,whiteSpace:'nowrap'}}>Mark claimed</button>
+                              <button onClick={async()=>{await supabase.from('loyalty_transactions').update({reason:(tx.reason||'Points transaction')+' [CLAIMED]'}).eq('id',tx.id);refetchTxns();toast('Marked as claimed ✓');}} style={{fontSize:10,padding:'2px 8px',borderRadius:6,border:'1px solid var(--color-success,#15803D)',background:'var(--bg-success,#DCFCE7)',color:'var(--text-success,#065F46)',cursor:'pointer',fontWeight:500,whiteSpace:'nowrap'}}>Mark claimed</button>
                             )}
                             <span style={{fontSize:12,fontWeight:600,color:deltaColor}}>{sign}{tx.delta?.toLocaleString()} pts</span>
                           </div>
@@ -694,7 +697,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
               <Card>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:`1px solid ${C.border}`}}>
                   <span style={{fontSize:12,fontWeight:500,color:C.ink}}>⭐ Satisfaction</span>
-                  <button onClick={()=>setShowLogRating(true)} style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Log rating</button>
+                  <button onClick={()=>setShowLogRating(true)} style={{fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Log rating</button>
                 </div>
                 <div style={{padding:'10px 14px'}}>
                   {npsData.length===0?(
@@ -706,7 +709,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                     return(
                       <>
                         <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
-                          <div style={{width:36,height:36,borderRadius:'50%',background:avg>=9?C.greenBg:avg>=7?C.amberBg:C.redBg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:700,color:avg>=9?C.green:avg>=7?C.amber:'#DC2626',flexShrink:0}}>{avg}</div>
+                          <div style={{width:36,height:36,borderRadius:'50%',background:avg>=9?C.greenBg:avg>=7?C.amberBg:C.redBg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:700,color:avg>=9?C.green:avg>=7?C.warningText:'#DC2626',flexShrink:0}}>{avg}</div>
                           <div style={{fontSize:12,color:C.gray}}>avg · {npsData.length} rating{npsData.length!==1?'s':''}</div>
                         </div>
                         <div style={{display:'flex',alignItems:'flex-start',gap:8,padding:'8px 10px',background:C.grayBg,borderRadius:8}}>
@@ -733,15 +736,15 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
               </div>
               <Card>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:`1px solid ${C.border}`}}>
-                  <span style={{fontSize:12,fontWeight:500,color:C.ink}}>Open tasks {openTasks.length>0&&<span style={{marginLeft:4,padding:'1px 5px',borderRadius:999,fontSize:10,background:'var(--bg-warning)',color:'var(--color-warning)'}}>{openTasks.length}</span>}</span>
-                  <button onClick={()=>setShowAddTask(true)} style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Add</button>
+                  <span style={{fontSize:12,fontWeight:500,color:C.ink}}>Open tasks {openTasks.length>0&&<span style={{marginLeft:4,padding:'1px 5px',borderRadius:999,fontSize:10,background:'var(--bg-warning)',color:'var(--text-warning)'}}>{openTasks.length}</span>}</span>
+                  <button onClick={()=>setShowAddTask(true)} style={{fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Add</button>
                 </div>
                 <div style={{padding:'8px 14px'}}>
                   {openTasks.length===0?(<div style={{fontSize:12,color:C.gray,textAlign:'center',padding:'8px 0'}}>No open tasks</div>):openTasks.map(t=>(
                     <div key={t.id} style={{display:'flex',alignItems:'flex-start',gap:8,padding:'7px 0',borderBottom:`1px solid ${C.border}`}}>
                       <button onClick={()=>toggleClientTask(t.id,true)} style={{width:16,height:16,borderRadius:3,border:`1.5px solid ${t.is_alert?'var(--color-danger)':C.border}`,background:C.white,cursor:'pointer',flexShrink:0,marginTop:2}}/>
                       <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:12,color:C.ink}}>{t.is_alert&&<span style={{color:'var(--color-danger)',marginRight:4}}>!</span>}{t.text}</div>
+                        <div style={{fontSize:12,color:C.ink}}>{t.is_alert&&<span style={{color:'var(--text-danger)',marginRight:4}}>!</span>}{t.text}</div>
                         <div style={{fontSize:10,color:C.gray,marginTop:1}}>{t.category}{t.due_date?` · Due ${new Date(t.due_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}`:''}</div>
                       </div>
                     </div>
@@ -752,7 +755,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                 <Card>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:`1px solid ${C.border}`}}>
                     <span style={{fontSize:12,fontWeight:500,color:C.ink}}>Recent activity</span>
-                    <button onClick={()=>setTab('timeline')} style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer'}}>View all →</button>
+                    <button onClick={()=>setTab('timeline')} style={{fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer'}}>View all →</button>
                   </div>
                   <div style={{padding:'8px 14px'}}>
                     {interactions.slice(0,3).map(i=>{
@@ -789,7 +792,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                   <Card>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:`1px solid ${C.border}`}}>
                       <span style={{fontSize:12,fontWeight:500,color:C.ink}}>📏 Measurements</span>
-                      <button onClick={openMeasModal} style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Take Measurements</button>
+                      <button onClick={openMeasModal} style={{fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Take Measurements</button>
                     </div>
                     <div style={{padding:'12px 14px'}}>
                       {latest?(
@@ -805,7 +808,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                           {sz&&(
                             <div style={{marginBottom:10,display:'flex',alignItems:'center',gap:6}}>
                               <span style={{fontSize:11,color:C.gray}}>Suggested size:</span>
-                              <span style={{padding:'2px 10px',borderRadius:999,fontSize:11,fontWeight:600,background:C.rosaPale,color:C.rosa,border:`1px solid ${C.rosa}22`}}>{sz}</span>
+                              <span style={{padding:'2px 10px',borderRadius:999,fontSize:11,fontWeight:600,background:C.rosaPale,color:C.rosaText,border:`1px solid ${C.rosa}22`}}>{sz}</span>
                             </div>
                           )}
                         </>
@@ -846,7 +849,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                               </table>
                             </div>
                             {measurements.length>5&&(
-                              <button onClick={()=>setShowAllMeasOv(v=>!v)} style={{marginTop:8,fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0}}>{showAllMeasOv?'Show less':'Show all '+measurements.length+' entries'}</button>
+                              <button onClick={()=>setShowAllMeasOv(v=>!v)} style={{marginTop:8,fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0}}>{showAllMeasOv?'Show less':'Show all '+measurements.length+' entries'}</button>
                             )}
                           </>
                         );
@@ -859,15 +862,15 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
               <Card>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:`1px solid ${C.border}`}}>
                   <span style={{fontSize:12,fontWeight:500,color:C.ink}}>👗 Dress Recommendations
-                    {dressRecs.length>0&&<span style={{marginLeft:6,padding:'1px 6px',borderRadius:999,fontSize:10,background:C.rosaPale,color:C.rosa}}>{dressRecs.length}</span>}
+                    {dressRecs.length>0&&<span style={{marginLeft:6,padding:'1px 6px',borderRadius:999,fontSize:10,background:C.rosaPale,color:C.rosaText}}>{dressRecs.length}</span>}
                   </span>
-                  <button onClick={()=>setScreen('inventory')} style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>View inventory →</button>
+                  <button onClick={()=>setScreen('inventory')} style={{fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>View inventory →</button>
                 </div>
                 <div style={{padding:'10px 14px'}}>
                   {!latestMeas?(
                     <div style={{fontSize:12,color:C.gray,textAlign:'center',padding:'12px 0'}}>
                       Add measurements to get personalized dress recommendations.
-                      <div style={{marginTop:8}}><button onClick={()=>setTab('measurements')} style={{fontSize:11,color:C.rosa,background:C.rosaPale,border:`1px solid ${C.rosa}22`,borderRadius:7,padding:'5px 12px',cursor:'pointer',fontWeight:500}}>+ Add measurements</button></div>
+                      <div style={{marginTop:8}}><button onClick={()=>setTab('measurements')} style={{fontSize:11,color:C.rosaText,background:C.rosaPale,border:`1px solid ${C.rosa}22`,borderRadius:7,padding:'5px 12px',cursor:'pointer',fontWeight:500}}>+ Add measurements</button></div>
                     </div>
                   ):dressRecs.length===0?(
                     <div style={{fontSize:12,color:C.gray,textAlign:'center',padding:'12px 0'}}>
@@ -887,13 +890,13 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                             </div>
                             <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
                               {dress.reasons.map((r,i)=>(
-                                <span key={i} style={{fontSize:10,padding:'2px 7px',borderRadius:999,background:C.rosaPale,color:C.rosa,fontWeight:500,border:`1px solid ${C.rosa}22`}}>{r}</span>
+                                <span key={i} style={{fontSize:10,padding:'2px 7px',borderRadius:999,background:C.rosaPale,color:C.rosaText,fontWeight:500,border:`1px solid ${C.rosa}22`}}>{r}</span>
                               ))}
                             </div>
                           </div>
                           <button
                             onClick={()=>setScreen('inventory')}
-                            style={{fontSize:11,padding:'5px 10px',borderRadius:7,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,cursor:'pointer',fontWeight:500,flexShrink:0,whiteSpace:'nowrap'}}
+                            style={{fontSize:11,padding:'5px 10px',borderRadius:7,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,cursor:'pointer',fontWeight:500,flexShrink:0,whiteSpace:'nowrap'}}
                           >Reserve</button>
                         </div>
                       ))}
@@ -917,21 +920,21 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
                 {MEAS_FIELDS.map(f=>(
                   <div key={f.key}>
-                    <div style={{...LBL}}>{f.label} <span style={{fontWeight:400,color:C.gray}}>(in)</span></div>
-                    <input type="number" step="0.1" value={measDraft[f.key]} onChange={e=>setMeasDraft(d=>({...d,[f.key]:e.target.value}))} placeholder="—" style={{...inputSt,fontSize:12}}/>
+                    <label htmlFor={`meas-inline-${f.key}`} style={LBL}>{f.label} <span style={{fontWeight:400,color:C.gray}}>(in)</span></label>
+                    <input id={`meas-inline-${f.key}`} type="number" step="0.1" value={measDraft[f.key]} onChange={e=>setMeasDraft(d=>({...d,[f.key]:e.target.value}))} placeholder="—" style={{...inputSt,fontSize:12}}/>
                   </div>
                 ))}
                 <div>
-                  <div style={{...LBL}}>Shoe size</div>
-                  <input value={measDraft.shoe_size} onChange={e=>setMeasDraft(d=>({...d,shoe_size:e.target.value}))} placeholder="e.g. 7.5" style={{...inputSt,fontSize:12}}/>
+                  <label htmlFor="meas-inline-shoe" style={LBL}>Shoe size</label>
+                  <input id="meas-inline-shoe" value={measDraft.shoe_size} onChange={e=>setMeasDraft(d=>({...d,shoe_size:e.target.value}))} placeholder="e.g. 7.5" style={{...inputSt,fontSize:12}}/>
                 </div>
                 <div>
-                  <div style={{...LBL}}>Taken by <span style={{fontWeight:400,color:C.gray}}>(optional)</span></div>
-                  <input value={measDraft.taken_by_name} onChange={e=>setMeasDraft(d=>({...d,taken_by_name:e.target.value}))} placeholder="Staff name" style={{...inputSt,fontSize:12}}/>
+                  <label htmlFor="meas-inline-takenby" style={LBL}>Taken by <span style={{fontWeight:400,color:C.gray}}>(optional)</span></label>
+                  <input id="meas-inline-takenby" value={measDraft.taken_by_name} onChange={e=>setMeasDraft(d=>({...d,taken_by_name:e.target.value}))} placeholder="Staff name" style={{...inputSt,fontSize:12}}/>
                 </div>
               </div>
-              <div style={{...LBL}}>Notes <span style={{fontWeight:400,color:C.gray}}>(optional)</span></div>
-              <textarea value={measDraft.notes} onChange={e=>setMeasDraft(d=>({...d,notes:e.target.value}))} placeholder="Any fitting notes…" rows={2} style={{...inputSt,resize:'vertical',fontSize:12,marginBottom:12,width:'100%',boxSizing:'border-box'}}/>
+              <label htmlFor="meas-inline-notes" style={LBL}>Notes <span style={{fontWeight:400,color:C.gray}}>(optional)</span></label>
+              <textarea id="meas-inline-notes" value={measDraft.notes} onChange={e=>setMeasDraft(d=>({...d,notes:e.target.value}))} placeholder="Any fitting notes…" rows={2} style={{...inputSt,resize:'vertical',fontSize:12,marginBottom:12,width:'100%',boxSizing:'border-box'}}/>
               <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
                 <GhostBtn label="Cancel" colorScheme="danger" onClick={cancelMeasForm} style={{fontSize:12}}/>
                 <PrimaryBtn label={measSaving?'Saving…':'Save'} colorScheme="success" onClick={handleSaveMeas} style={{fontSize:12}}/>
@@ -944,7 +947,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
             <div style={{textAlign:'center',padding:'48px 16px',color:C.gray}}>
               <div style={{fontSize:32,marginBottom:10}}>📏</div>
               <div style={{fontSize:13}}>No measurements recorded yet</div>
-              <button onClick={openAddMeas} style={{marginTop:12,fontSize:12,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Add the first one</button>
+              <button onClick={openAddMeas} style={{marginTop:12,fontSize:12,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Add the first one</button>
             </div>
           ):(
             <div style={{display:'flex',flexDirection:'column',gap:12}}>
@@ -994,7 +997,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
             {TL_FEED_FILTERS.map(f=>(
               <button key={f.id} onClick={()=>setTlFilter(f.id)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${C.border}`,background:tlFilter===f.id?C.ink:C.white,color:tlFilter===f.id?C.white:C.gray,fontSize:11,cursor:'pointer',fontWeight:500,whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:4}}>
                 {f.label}
-                {feedCounts[f.id]>0&&<span style={{padding:'0px 5px',borderRadius:999,fontSize:9,background:tlFilter===f.id?'rgba(255,255,255,0.25)':'var(--bg-warning,#FEF3C7)',color:tlFilter===f.id?C.white:'var(--color-warning,#B45309)',fontWeight:600,lineHeight:'16px'}}>{feedCounts[f.id]}</span>}
+                {feedCounts[f.id]>0&&<span style={{padding:'0px 5px',borderRadius:999,fontSize:9,background:tlFilter===f.id?'rgba(255,255,255,0.25)':'var(--bg-warning,#FEF3C7)',color:tlFilter===f.id?C.white:'var(--text-warning,#92400E)',fontWeight:600,lineHeight:'16px'}}>{feedCounts[f.id]}</span>}
               </button>
             ))}
             <button onClick={()=>setShowAddInt(v=>!v)} style={{marginLeft:'auto',padding:'5px 14px',borderRadius:999,background:showAddInt?C.gray:C.rosa,color:'#fff',border:'none',fontSize:11,cursor:'pointer',fontWeight:500,flexShrink:0}}>{showAddInt?'Cancel':'+ Log'}</button>
@@ -1044,7 +1047,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
           {/* ── Unified feed ── */}
           {filteredFeed.length===0?(
             <div style={{textAlign:'center',padding:'48px 16px',color:C.gray,fontSize:13}}>
-              {tlFilter==='all'?<>Nothing here yet.<br/><span onClick={()=>setShowAddInt(true)} style={{color:C.rosa,cursor:'pointer',fontWeight:500}}>Log the first interaction →</span></>:`No ${TL_FEED_FILTERS.find(f=>f.id===tlFilter)?.label.toLowerCase()||'items'} found.`}
+              {tlFilter==='all'?<>Nothing here yet.<br/><span onClick={()=>setShowAddInt(true)} style={{color:C.rosaText,cursor:'pointer',fontWeight:500}}>Log the first interaction →</span></>:`No ${TL_FEED_FILTERS.find(f=>f.id===tlFilter)?.label.toLowerCase()||'items'} found.`}
             </div>
           ):(
             <div style={{position:'relative',paddingLeft:4}}>
@@ -1090,7 +1093,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                         <div style={{flex:1,background:C.white,border:`1px solid ${isFailed?C.red:C.border}`,borderRadius:10,padding:'10px 12px',minWidth:0}}>
                           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
                             <div style={{display:'flex',alignItems:'center',gap:6}}>
-                              <span style={{fontSize:11,fontWeight:600,padding:'2px 7px',borderRadius:999,background:isOut?C.rosaPale:C.grayBg,color:isOut?C.rosa:C.gray,border:`1px solid ${isOut?C.petal:C.border}`}}>{isOut?'→ Sent':'← Received'}</span>
+                              <span style={{fontSize:11,fontWeight:600,padding:'2px 7px',borderRadius:999,background:isOut?C.rosaPale:C.grayBg,color:isOut?C.rosaText:C.gray,border:`1px solid ${isOut?C.petal:C.border}`}}>{isOut?'→ Sent':'← Received'}</span>
                               {isFailed&&<span style={{fontSize:10,fontWeight:600,padding:'2px 7px',borderRadius:999,background:C.redBg,color:C.red}}>Failed</span>}
                             </div>
                             <span style={{fontSize:10,color:C.gray,flexShrink:0,marginLeft:8}}>{fmtFeedDate(item.created_at)}</span>
@@ -1160,7 +1163,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
               </div>
             ))}
           </div>
-          {evList.length===0?(<div style={{textAlign:'center',padding:'32px 16px',color:C.gray,fontSize:13}}>No events yet.<br/><span onClick={()=>setScreen('events')} style={{color:C.rosa,cursor:'pointer',fontWeight:500}}>+ Create event →</span></div>
+          {evList.length===0?(<div style={{textAlign:'center',padding:'32px 16px',color:C.gray,fontSize:13}}>No events yet.<br/><span onClick={()=>setScreen('events')} style={{color:C.rosaText,cursor:'pointer',fontWeight:500}}>+ Create event →</span></div>
           ):evList.map((ev,idx)=>{
             const sc={active:{bg:C.amberBg,col:C.amber,txt:'Active'},complete:{bg:C.greenBg,col:C.green,txt:'Complete'},cancelled:{bg:C.grayBg,col:C.gray,txt:'Cancelled'},upcoming:{bg:C.blueBg,col:C.blue,txt:'Upcoming'}}[ev.status]||{bg:C.grayBg,col:C.gray,txt:ev.status||'Active'};
             const milestones=ev.milestones||ev.payment_milestones||[];
@@ -1175,7 +1178,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                   {ev.venue&&<div style={{fontSize:11,color:C.gray}}>{ev.venue}</div>}
                 </div>
                 <div style={{display:'flex',alignItems:'center',gap:12}}>
-                  <div style={{textAlign:'right'}}><div style={{fontSize:13,fontWeight:500,color:'var(--color-success)'}}>{fmt(ev.paid||0)}<span style={{fontSize:11,color:C.gray,fontWeight:400}}> / {fmt(ev.total||0)}</span></div><div style={{fontSize:10,color:C.gray}}>paid</div></div>
+                  <div style={{textAlign:'right'}}><div style={{fontSize:13,fontWeight:500,color:'var(--text-success)'}}>{fmt(ev.paid||0)}<span style={{fontSize:11,color:C.gray,fontWeight:400}}> / {fmt(ev.total||0)}</span></div><div style={{fontSize:10,color:C.gray}}>paid</div></div>
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{transform:isExp?'rotate(180deg)':'none',transition:'transform 0.2s',flexShrink:0}}><path d="M4 6l4 4 4-4" stroke={C.gray} strokeWidth="1.5" strokeLinecap="round"/></svg>
                 </div>
               </div>
@@ -1189,17 +1192,17 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                       <div style={{width:8,height:8,borderRadius:'50%',background:isPaid?'var(--color-success)':isOverdue?'var(--color-danger)':C.gray,flexShrink:0}}/>
                       <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,color:C.ink,fontWeight:500}}>{m.label}</div><div style={{fontSize:10,color:C.gray}}>{m.due_date?`Due ${new Date(m.due_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}`:''}{ isPaid&&m.paid_date?` · Paid ${new Date(m.paid_date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}`:''}</div></div>
                       <div style={{fontSize:13,fontWeight:500,color:isPaid?'var(--color-success)':C.ink}}>{fmt(m.amount)}</div>
-                      {!isPaid&&<button onClick={()=>{setShowMarkPaid(m);setPaidDraft({paid_date:new Date().toISOString().split('T')[0],payment_method:'cash',notes:''}); }} style={{fontSize:10,padding:'4px 8px',borderRadius:6,border:'1px solid var(--color-success)',background:'var(--bg-success)',color:'var(--color-success)',cursor:'pointer',fontWeight:500,whiteSpace:'nowrap'}}>Mark paid</button>}
+                      {!isPaid&&<button onClick={()=>{setShowMarkPaid(m);setPaidDraft({paid_date:new Date().toISOString().split('T')[0],payment_method:'cash',notes:''}); }} style={{fontSize:10,padding:'4px 8px',borderRadius:6,border:'1px solid var(--color-success)',background:'var(--bg-success)',color:'var(--text-success)',cursor:'pointer',fontWeight:500,whiteSpace:'nowrap'}}>Mark paid</button>}
                     </div>);
                   })}
                 </div>)}
                 <div style={{padding:'8px 16px',borderTop:milestones.length>0?'none':`1px solid ${C.border}`}}>
-                  <button onClick={()=>{if(ev.id)setSelectedEvent(ev.id);setScreen('event_detail');}} style={{fontSize:11,color:C.rosa,background:C.rosaPale,border:`1px solid ${C.rosa}`,borderRadius:6,padding:'5px 10px',cursor:'pointer',fontWeight:500}}>Open event →</button>
+                  <button onClick={()=>{if(ev.id)setSelectedEvent(ev.id);setScreen('event_detail');}} style={{fontSize:11,color:C.rosaText,background:C.rosaPale,border:`1px solid ${C.rosa}`,borderRadius:6,padding:'5px 10px',cursor:'pointer',fontWeight:500}}>Open event →</button>
                 </div>
               </>)}
             </div>);
           })}
-          <div style={{textAlign:'center',marginTop:8}}><button onClick={()=>setScreen('events')} style={{fontSize:12,color:C.rosa,background:C.rosaPale,border:`1px solid ${C.rosa}`,borderRadius:8,padding:'8px 16px',cursor:'pointer',fontWeight:500}}>+ Book another event</button></div>
+          <div style={{textAlign:'center',marginTop:8}}><button onClick={()=>setScreen('events')} style={{fontSize:12,color:C.rosaText,background:C.rosaPale,border:`1px solid ${C.rosa}`,borderRadius:8,padding:'8px 16px',cursor:'pointer',fontWeight:500}}>+ Book another event</button></div>
         </div>
       )}
       {tab==='pipeline'&&(
@@ -1220,8 +1223,8 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                     return(<div key={lead.id} style={{background:C.white,border:`1.5px solid ${isThis?C.rosa:C.border}`,borderRadius:7,padding:'7px 9px'}}>
                       <div style={{fontSize:11,fontWeight:500,color:C.ink,marginBottom:2}}>{lead.lead_name||'—'}</div>
                       {lead.event_type&&<div style={{fontSize:10,color:C.gray}}>{lead.event_type==='wedding'?'Wedding':'Quinceañera'}</div>}
-                      {lead.estimated_value>0&&<div style={{fontSize:10,color:'var(--color-success)',marginTop:1}}>{fmt(lead.estimated_value/100)}</div>}
-                      <div style={{fontSize:10,color:days>14?'var(--color-danger)':days>7?C.amber:C.gray,marginTop:3}}>{days===0?'Today':`${days}d ago`}</div>
+                      {lead.estimated_value>0&&<div style={{fontSize:10,color:'var(--text-success)',marginTop:1}}>{fmt(lead.estimated_value/100)}</div>}
+                      <div style={{fontSize:10,color:days>14?'var(--text-danger)':days>7?C.amber:C.gray,marginTop:3}}>{days===0?'Today':`${days}d ago`}</div>
                       <div style={{display:'flex',gap:3,marginTop:5,flexWrap:'wrap'}}>
                         {PIPELINE_STAGES.filter(s=>s.id!==stage.id&&!['won','lost'].includes(s.id)).slice(0,2).map(s=>(
                           <button key={s.id} onClick={()=>moveLead(lead.id,s.id)} style={{fontSize:9,padding:'2px 5px',borderRadius:3,border:`1px solid ${s.color}`,color:s.color,background:C.white,cursor:'pointer'}}>→ {s.label.split(' ')[0]}</button>
@@ -1249,7 +1252,7 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
           <Card>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderBottom:`1px solid ${C.border}`}}>
               <span style={{fontSize:12,fontWeight:500,color:C.ink}}>CRM Tags</span>
-              <button onClick={()=>setShowAddTag(true)} style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Create tag</button>
+              <button onClick={()=>setShowAddTag(true)} style={{fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Create tag</button>
             </div>
             <div style={{padding:'12px 14px'}}>
               {(tagDefs||[]).length===0?(<div style={{fontSize:12,color:C.gray}}>No tags yet. Click '+ Create tag' to add the first one.</div>):(
@@ -1302,11 +1305,11 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
             <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.border}`}}><span style={{fontSize:12,fontWeight:500,color:C.ink}}>Style preferences</span></div>
             <div style={{padding:'12px 14px',display:'flex',flexDirection:'column',gap:10}}>
               <div>
-                <div style={{...LBL}}>Themes</div>
-                <div style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:4}}>
+                <div id="pref-themes-label" style={LBL}>Themes</div>
+                <div role="group" aria-labelledby="pref-themes-label" style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:4}}>
                   {['Romantic','Classic','Boho','Glamorous','Modern','Vintage','Minimalist','Dramatic'].map(t=>{
                     const active=styleThemes.includes(t);
-                    return <button key={t} onClick={()=>setStyleThemes(prev=>active?prev.filter(x=>x!==t):[...prev,t])} style={{padding:'3px 10px',borderRadius:999,border:`1px solid ${active?C.rosa:C.border}`,background:active?C.rosaPale:C.white,color:active?C.rosa:C.gray,fontSize:11,cursor:'pointer'}}>{t}</button>;
+                    return <button key={t} onClick={()=>setStyleThemes(prev=>active?prev.filter(x=>x!==t):[...prev,t])} style={{padding:'3px 10px',borderRadius:999,border:`1px solid ${active?C.rosa:C.border}`,background:active?C.rosaPale:C.white,color:active?C.rosaText:C.gray,fontSize:11,cursor:'pointer'}}>{t}</button>;
                   })}
                 </div>
                 <div style={{display:'flex',justifyContent:'flex-end',marginTop:8}}>
@@ -1314,8 +1317,8 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
                 </div>
               </div>
               <div>
-                <div style={{...LBL}}>Flower preferences</div>
-                <div style={{display:'flex',gap:6}}>
+                <div id="pref-flowers-label" style={LBL}>Flower preferences</div>
+                <div role="group" aria-labelledby="pref-flowers-label" style={{display:'flex',gap:6}}>
                   <input value={flowerPrefs} onChange={e=>setFlowerPrefs(e.target.value)} placeholder="Roses, peonies, tulips…" style={{...inputSt,fontSize:11,padding:'6px 8px',flex:1}}/>
                   <PrimaryBtn label={flowerSaving?'…':'Save'} colorScheme="success" style={{fontSize:11,padding:'5px 10px',flexShrink:0}} onClick={async()=>{setFlowerSaving(true);await updateClient(cl.id,{flower_prefs:flowerPrefs});setFlowerSaving(false);toast('Saved ✓');}}/>
                 </div>
@@ -1420,21 +1423,21 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
             {[{key:'bust',label:'Bust (inches)'},{key:'waist',label:'Waist (inches)'},{key:'hips',label:'Hips (inches)'},{key:'height',label:'Height (inches)'}].map(f=>(
               <div key={f.key}>
-                <div style={{...LBL}}>{f.label}</div>
-                <input type="number" step="0.1" value={measModalDraft[f.key]} onChange={e=>setMeasModalDraft(d=>({...d,[f.key]:e.target.value}))} placeholder="—" style={{...inputSt,fontSize:12}}/>
+                <label htmlFor={`meas-modal-${f.key}`} style={LBL}>{f.label}</label>
+                <input id={`meas-modal-${f.key}`} type="number" step="0.1" value={measModalDraft[f.key]} onChange={e=>setMeasModalDraft(d=>({...d,[f.key]:e.target.value}))} placeholder="—" style={{...inputSt,fontSize:12}}/>
               </div>
             ))}
             <div>
-              <div style={{...LBL}}>Shoe size</div>
-              <input value={measModalDraft.shoe_size} onChange={e=>setMeasModalDraft(d=>({...d,shoe_size:e.target.value}))} placeholder="e.g. 7.5" style={{...inputSt,fontSize:12}}/>
+              <label htmlFor="meas-modal-shoe" style={LBL}>Shoe size</label>
+              <input id="meas-modal-shoe" value={measModalDraft.shoe_size} onChange={e=>setMeasModalDraft(d=>({...d,shoe_size:e.target.value}))} placeholder="e.g. 7.5" style={{...inputSt,fontSize:12}}/>
             </div>
             <div>
-              <div style={{...LBL}}>Taken by <span style={{fontWeight:400,color:C.gray}}>(optional)</span></div>
-              <input value={measModalDraft.taken_by_name} onChange={e=>setMeasModalDraft(d=>({...d,taken_by_name:e.target.value}))} placeholder="Staff name" style={{...inputSt,fontSize:12}}/>
+              <label htmlFor="meas-modal-takenby" style={LBL}>Taken by <span style={{fontWeight:400,color:C.gray}}>(optional)</span></label>
+              <input id="meas-modal-takenby" value={measModalDraft.taken_by_name} onChange={e=>setMeasModalDraft(d=>({...d,taken_by_name:e.target.value}))} placeholder="Staff name" style={{...inputSt,fontSize:12}}/>
             </div>
           </div>
-          <div style={{...LBL}}>Notes <span style={{fontWeight:400,color:C.gray}}>(optional)</span></div>
-          <textarea value={measModalDraft.notes} onChange={e=>setMeasModalDraft(d=>({...d,notes:e.target.value}))} placeholder="Any fitting notes…" rows={2} style={{...inputSt,resize:'vertical',fontSize:12,marginBottom:16,width:'100%',boxSizing:'border-box'}}/>
+          <label htmlFor="meas-modal-notes" style={LBL}>Notes <span style={{fontWeight:400,color:C.gray}}>(optional)</span></label>
+          <textarea id="meas-modal-notes" value={measModalDraft.notes} onChange={e=>setMeasModalDraft(d=>({...d,notes:e.target.value}))} placeholder="Any fitting notes…" rows={2} style={{...inputSt,resize:'vertical',fontSize:12,marginBottom:16,width:'100%',boxSizing:'border-box'}}/>
           <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
             <GhostBtn label="Cancel" colorScheme="danger" onClick={()=>{setShowMeasModal(false);setMeasModalEditId(null);}} style={{fontSize:12}}/>
             <PrimaryBtn label={measModalSaving?'Saving…':'Save'} colorScheme="success" onClick={handleSaveMeasModal} style={{fontSize:12}}/>
@@ -1445,19 +1448,19 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
         <div style={{background:C.white,borderRadius:16,width:360,padding:24,boxShadow:'0 24px 48px rgba(0,0,0,0.15)'}}>
           <div style={{fontSize:15,fontWeight:600,color:C.ink,marginBottom:4}}>Adjust loyalty points</div>
           <div style={{fontSize:12,color:C.gray,marginBottom:16}}>Current: {points.toLocaleString()} pts</div>
-          <div style={{display:'flex',gap:6,marginBottom:12}}>{[['add','Add'],['remove','Remove'],['set','Set to']].map(([v,l])=>(<button key={v} onClick={()=>setAdjPts(a=>({...a,type:v}))} style={{flex:1,padding:'7px 0',borderRadius:8,border:`1px solid ${adjPts.type===v?C.rosa:C.border}`,background:adjPts.type===v?C.rosaPale:C.white,color:adjPts.type===v?C.rosa:C.gray,fontSize:11,cursor:'pointer',fontWeight:500}}>{l}</button>))}</div>
-          <div style={{...LBL}}>Points</div><input type="number" value={adjPts.points} onChange={e=>setAdjPts(a=>({...a,points:e.target.value}))} placeholder="0" style={{...inputSt,marginBottom:10}}/>
-          <div style={{...LBL}}>Reason</div><input value={adjPts.reason} onChange={e=>setAdjPts(a=>({...a,reason:e.target.value}))} placeholder="Birthday bonus…" style={{...inputSt,marginBottom:16}}/>
+          <div style={{display:'flex',gap:6,marginBottom:12}}>{[['add','Add'],['remove','Remove'],['set','Set to']].map(([v,l])=>(<button key={v} onClick={()=>setAdjPts(a=>({...a,type:v}))} style={{flex:1,padding:'7px 0',borderRadius:8,border:`1px solid ${adjPts.type===v?C.rosa:C.border}`,background:adjPts.type===v?C.rosaPale:C.white,color:adjPts.type===v?C.rosaText:C.gray,fontSize:11,cursor:'pointer',fontWeight:500}}>{l}</button>))}</div>
+          <label htmlFor="adjpts-points" style={LBL}>Points</label><input id="adjpts-points" type="number" value={adjPts.points} onChange={e=>setAdjPts(a=>({...a,points:e.target.value}))} placeholder="0" style={{...inputSt,marginBottom:10}}/>
+          <label htmlFor="adjpts-reason" style={LBL}>Reason</label><input id="adjpts-reason" value={adjPts.reason} onChange={e=>setAdjPts(a=>({...a,reason:e.target.value}))} placeholder="Birthday bonus…" style={{...inputSt,marginBottom:16}}/>
           <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><GhostBtn label="Cancel" colorScheme="danger" onClick={()=>setShowAdjustPts(false)} style={{fontSize:12}}/><PrimaryBtn label="Save" colorScheme="success" onClick={async()=>{const n=Math.max(0,parseInt(adjPts.points)||0);let newPts,delta;if(adjPts.type==='add'){newPts=points+n;delta=n;}else if(adjPts.type==='remove'){newPts=Math.max(0,points-n);delta=-(points-newPts);}else{newPts=n;delta=newPts-points;}const{error}=await adjustLoyaltyPoints(cl.id,newPts,delta,adjPts.reason||null);if(!error){toast(`Points updated → ${newPts.toLocaleString()} pts ✓`);setShowAdjustPts(false);setAdjPts({type:'add',points:'',reason:''});}else toast('Failed to update points','warn');}} style={{fontSize:12}}/></div>
         </div>
       </div>)}
       {showAddTask&&(<div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>{if(e.target===e.currentTarget)setShowAddTask(false);}}>
         <div style={{background:C.white,borderRadius:16,width:400,padding:24,boxShadow:'0 24px 48px rgba(0,0,0,0.15)'}}>
           <div style={{fontSize:15,fontWeight:600,color:C.ink,marginBottom:16}}>Add task</div>
-          <div style={{...LBL}}>Description *</div><input value={taskDraft.text} onChange={e=>setTaskDraft(d=>({...d,text:e.target.value}))} placeholder="Call to confirm alterations…" style={{...inputSt,marginBottom:10}}/>
+          <label htmlFor="ctask-desc" style={LBL}>Description *</label><input id="ctask-desc" value={taskDraft.text} onChange={e=>setTaskDraft(d=>({...d,text:e.target.value}))} placeholder="Call to confirm alterations…" style={{...inputSt,marginBottom:10}}/>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-            <div><div style={{...LBL}}>Category</div><select value={taskDraft.category} onChange={e=>setTaskDraft(d=>({...d,category:e.target.value}))} style={{...inputSt,fontSize:11}}><option value="general">General</option><option value="crm">CRM</option><option value="payment">Payment</option><option value="fitting">Fitting</option><option value="follow_up">Follow-up</option></select></div>
-            <div><div style={{...LBL}}>Due date</div><input type="date" value={taskDraft.due_date} onChange={e=>setTaskDraft(d=>({...d,due_date:e.target.value}))} style={{...inputSt,fontSize:11}}/></div>
+            <div><label htmlFor="ctask-cat" style={LBL}>Category</label><select id="ctask-cat" value={taskDraft.category} onChange={e=>setTaskDraft(d=>({...d,category:e.target.value}))} style={{...inputSt,fontSize:11}}><option value="general">General</option><option value="crm">CRM</option><option value="payment">Payment</option><option value="fitting">Fitting</option><option value="follow_up">Follow-up</option></select></div>
+            <div><label htmlFor="ctask-due" style={LBL}>Due date</label><input id="ctask-due" type="date" value={taskDraft.due_date} onChange={e=>setTaskDraft(d=>({...d,due_date:e.target.value}))} style={{...inputSt,fontSize:11}}/></div>
           </div>
           <label style={{display:'flex',alignItems:'center',gap:8,fontSize:12,color:C.ink,marginBottom:16,cursor:'pointer'}}><input type="checkbox" checked={taskDraft.is_alert} onChange={e=>setTaskDraft(d=>({...d,is_alert:e.target.checked}))} style={{accentColor:'var(--color-danger)'}}/>Mark as alert (urgent)</label>
           <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><GhostBtn label="Cancel" colorScheme="danger" onClick={()=>setShowAddTask(false)} style={{fontSize:12}}/><PrimaryBtn label="Add task" colorScheme="success" onClick={handleAddTask} style={{fontSize:12}}/></div>
@@ -1468,10 +1471,10 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
           <div style={{fontSize:15,fontWeight:600,color:C.ink,marginBottom:4}}>Mark payment received</div>
           <div style={{fontSize:12,color:C.gray,marginBottom:16}}>{showMarkPaid.label} — {fmt(showMarkPaid.amount)}</div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-            <div><div style={{...LBL}}>Date received</div><input type="date" value={paidDraft.paid_date} onChange={e=>setPaidDraft(d=>({...d,paid_date:e.target.value}))} style={{...inputSt,fontSize:11}}/></div>
-            <div><div style={{...LBL}}>Method</div><select value={paidDraft.payment_method} onChange={e=>setPaidDraft(d=>({...d,payment_method:e.target.value}))} style={{...inputSt,fontSize:11}}><option value="cash">Cash</option><option value="zelle">Zelle</option><option value="card">Card</option><option value="check">Check</option><option value="other">Other</option></select></div>
+            <div><label htmlFor="cpaid-date" style={LBL}>Date received</label><input id="cpaid-date" type="date" value={paidDraft.paid_date} onChange={e=>setPaidDraft(d=>({...d,paid_date:e.target.value}))} style={{...inputSt,fontSize:11}}/></div>
+            <div><label htmlFor="cpaid-method" style={LBL}>Method</label><select id="cpaid-method" value={paidDraft.payment_method} onChange={e=>setPaidDraft(d=>({...d,payment_method:e.target.value}))} style={{...inputSt,fontSize:11}}><option value="cash">Cash</option><option value="zelle">Zelle</option><option value="card">Card</option><option value="check">Check</option><option value="other">Other</option></select></div>
           </div>
-          <div style={{...LBL}}>Notes</div><input value={paidDraft.notes} onChange={e=>setPaidDraft(d=>({...d,notes:e.target.value}))} placeholder="Optional…" style={{...inputSt,marginBottom:16}}/>
+          <label htmlFor="cpaid-notes" style={LBL}>Notes</label><input id="cpaid-notes" value={paidDraft.notes} onChange={e=>setPaidDraft(d=>({...d,notes:e.target.value}))} placeholder="Optional…" style={{...inputSt,marginBottom:16}}/>
           <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><GhostBtn label="Cancel" colorScheme="danger" onClick={()=>setShowMarkPaid(null)} style={{fontSize:12}}/><PrimaryBtn label="Record payment" colorScheme="success" onClick={handleMarkPaid} style={{fontSize:12}}/></div>
         </div>
       </div>)}
@@ -1480,24 +1483,24 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
           <div style={{fontSize:15,fontWeight:600,color:C.ink,marginBottom:4}}>Add pipeline lead</div>
           <div style={{fontSize:12,color:C.gray,marginBottom:16}}>Stage: {PIPELINE_STAGES.find(s=>s.id===showAddLead)?.label}</div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-            <div><div style={{...LBL}}>Name *</div><input value={leadDraft.lead_name} onChange={e=>setLeadDraft(d=>({...d,lead_name:e.target.value}))} style={{...inputSt,fontSize:11}}/></div>
-            <div><div style={{...LBL}}>Phone</div><input value={leadDraft.lead_phone} onChange={e=>setLeadDraft(d=>({...d,lead_phone:e.target.value}))} style={{...inputSt,fontSize:11}}/></div>
+            <div><label htmlFor="lead-name" style={LBL}>Name *</label><input id="lead-name" value={leadDraft.lead_name} onChange={e=>setLeadDraft(d=>({...d,lead_name:e.target.value}))} style={{...inputSt,fontSize:11}}/></div>
+            <div><label htmlFor="lead-phone" style={LBL}>Phone</label><input id="lead-phone" value={leadDraft.lead_phone} onChange={e=>setLeadDraft(d=>({...d,lead_phone:e.target.value}))} style={{...inputSt,fontSize:11}}/></div>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-            <div><div style={{...LBL}}>Event type</div><select value={leadDraft.event_type} onChange={e=>setLeadDraft(d=>({...d,event_type:e.target.value}))} style={{...inputSt,fontSize:11}}><option value="wedding">Wedding</option><option value="quinceanera">Quinceañera</option></select></div>
-            <div><div style={{...LBL}}>Est. value ($)</div><input type="number" value={leadDraft.estimated_value} onChange={e=>setLeadDraft(d=>({...d,estimated_value:e.target.value}))} placeholder="5000" style={{...inputSt,fontSize:11}}/></div>
+            <div><label htmlFor="lead-evtype" style={LBL}>Event type</label><select id="lead-evtype" value={leadDraft.event_type} onChange={e=>setLeadDraft(d=>({...d,event_type:e.target.value}))} style={{...inputSt,fontSize:11}}><option value="wedding">Wedding</option><option value="quinceanera">Quinceañera</option></select></div>
+            <div><label htmlFor="lead-value" style={LBL}>Est. value ($)</label><input id="lead-value" type="number" value={leadDraft.estimated_value} onChange={e=>setLeadDraft(d=>({...d,estimated_value:e.target.value}))} placeholder="5000" style={{...inputSt,fontSize:11}}/></div>
           </div>
-          <div><div style={{...LBL}}>Source</div><select value={leadDraft.source} onChange={e=>setLeadDraft(d=>({...d,source:e.target.value}))} style={{...inputSt,marginBottom:10,fontSize:11}}><option value="">Select…</option>{Object.entries(HOW_FOUND_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
-          <div><div style={{...LBL}}>Notes</div><textarea value={leadDraft.notes} onChange={e=>setLeadDraft(d=>({...d,notes:e.target.value}))} rows={2} style={{...inputSt,resize:'vertical',fontSize:11,marginBottom:16}}/></div>
+          <div><label htmlFor="lead-source" style={LBL}>Source</label><select id="lead-source" value={leadDraft.source} onChange={e=>setLeadDraft(d=>({...d,source:e.target.value}))} style={{...inputSt,marginBottom:10,fontSize:11}}><option value="">Select…</option>{Object.entries(HOW_FOUND_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
+          <div><label htmlFor="lead-notes" style={LBL}>Notes</label><textarea id="lead-notes" value={leadDraft.notes} onChange={e=>setLeadDraft(d=>({...d,notes:e.target.value}))} rows={2} style={{...inputSt,resize:'vertical',fontSize:11,marginBottom:16}}/></div>
           <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><GhostBtn label="Cancel" colorScheme="danger" onClick={()=>setShowAddLead(null)} style={{fontSize:12}}/><PrimaryBtn label="Add lead" colorScheme="success" onClick={handleAddLead} style={{fontSize:12}}/></div>
         </div>
       </div>)}
       {showAddTag&&(<div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>{if(e.target===e.currentTarget)setShowAddTag(false);}}>
         <div style={{background:C.white,borderRadius:16,width:360,padding:24,boxShadow:'0 24px 48px rgba(0,0,0,0.15)'}}>
           <div style={{fontSize:15,fontWeight:600,color:C.ink,marginBottom:16}}>Create new tag</div>
-          <div style={{...LBL}}>Tag name *</div><input value={tagDraft.name} onChange={e=>setTagDraft(d=>({...d,name:e.target.value}))} placeholder="VIP, Instagram lead…" style={{...inputSt,marginBottom:10}}/>
-          <div style={{...LBL}}>Category</div>
-          <select value={tagDraft.category} onChange={e=>setTagDraft(d=>({...d,category:e.target.value}))} style={{...inputSt,marginBottom:16}}>
+          <label htmlFor="tag-name" style={LBL}>Tag name *</label><input id="tag-name" value={tagDraft.name} onChange={e=>setTagDraft(d=>({...d,name:e.target.value}))} placeholder="VIP, Instagram lead…" style={{...inputSt,marginBottom:10}}/>
+          <label htmlFor="tag-cat" style={LBL}>Category</label>
+          <select id="tag-cat" value={tagDraft.category} onChange={e=>setTagDraft(d=>({...d,category:e.target.value}))} style={{...inputSt,marginBottom:16}}>
             <option value="status">Status</option><option value="source">Source</option><option value="service">Service</option><option value="internal">Internal</option><option value="alert">Alert ⚠️</option>
           </select>
           <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}><GhostBtn label="Cancel" colorScheme="danger" onClick={()=>setShowAddTag(false)} style={{fontSize:12}}/><PrimaryBtn label="Create & assign" colorScheme="success" onClick={async()=>{if(!tagDraft.name.trim())return;await addTagDef(tagDraft.name.trim(),tagDraft.category);setTagDraft({name:'',category:'internal'});setShowAddTag(false);toast('Tag created');}} style={{fontSize:12}}/></div>
@@ -1508,18 +1511,18 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
           <div style={{fontSize:15,fontWeight:600,color:C.ink,marginBottom:4}}>Redeem loyalty points</div>
           <div style={{fontSize:12,color:C.gray,marginBottom:4}}>Balance: <span style={{fontWeight:500,color:C.ink}}>{points.toLocaleString()} pts</span></div>
           <div style={{fontSize:11,color:C.gray,marginBottom:16,padding:'6px 10px',background:C.rosaPale,borderRadius:6}}>100 points = $1.00 discount &nbsp;·&nbsp; Minimum 500 points</div>
-          <div style={{...LBL}}>Points to redeem</div>
-          <input type="number" value={redeemDraft.points} min={500} step={100} max={points} onChange={e=>setRedeemDraft(d=>({...d,points:e.target.value}))} placeholder="500" style={{...inputSt,marginBottom:4}}/>
-          {redeemPts>=100&&<div style={{fontSize:12,fontWeight:500,color:'var(--color-success)',marginBottom:10}}>= ${redeemDollarValue} discount</div>}
-          {redeemPts>0&&redeemPts<500&&<div style={{fontSize:11,color:'var(--color-danger)',marginBottom:10}}>Minimum redemption is 500 points</div>}
-          {redeemPts>points&&<div style={{fontSize:11,color:'var(--color-danger)',marginBottom:10}}>Exceeds available balance</div>}
-          <div style={{...LBL}}>Apply to event (optional)</div>
-          <select value={redeemDraft.event_id} onChange={e=>setRedeemDraft(d=>({...d,event_id:e.target.value}))} style={{...inputSt,marginBottom:10}}>
+          <label htmlFor="redeem-pts" style={LBL}>Points to redeem</label>
+          <input id="redeem-pts" type="number" value={redeemDraft.points} min={500} step={100} max={points} onChange={e=>setRedeemDraft(d=>({...d,points:e.target.value}))} placeholder="500" style={{...inputSt,marginBottom:4}}/>
+          {redeemPts>=100&&<div style={{fontSize:12,fontWeight:500,color:'var(--text-success)',marginBottom:10}}>= ${redeemDollarValue} discount</div>}
+          {redeemPts>0&&redeemPts<500&&<div style={{fontSize:11,color:'var(--text-danger)',marginBottom:10}}>Minimum redemption is 500 points</div>}
+          {redeemPts>points&&<div style={{fontSize:11,color:'var(--text-danger)',marginBottom:10}}>Exceeds available balance</div>}
+          <label htmlFor="redeem-event" style={LBL}>Apply to event (optional)</label>
+          <select id="redeem-event" value={redeemDraft.event_id} onChange={e=>setRedeemDraft(d=>({...d,event_id:e.target.value}))} style={{...inputSt,marginBottom:10}}>
             <option value="">None</option>
             {evList.map(ev=><option key={ev.id} value={ev.id}>{ev.type} — {ev.event_date?new Date(ev.event_date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'No date'}</option>)}
           </select>
-          <div style={{...LBL}}>Note (optional)</div>
-          <input value={redeemDraft.note} onChange={e=>setRedeemDraft(d=>({...d,note:e.target.value}))} placeholder="Applied to final payment…" style={{...inputSt,marginBottom:16}}/>
+          <label htmlFor="redeem-note" style={LBL}>Note (optional)</label>
+          <input id="redeem-note" value={redeemDraft.note} onChange={e=>setRedeemDraft(d=>({...d,note:e.target.value}))} placeholder="Applied to final payment…" style={{...inputSt,marginBottom:16}}/>
           <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
             <GhostBtn label="Cancel" colorScheme="danger" onClick={()=>setShowRedeemModal(false)} style={{fontSize:12}}/>
             <PrimaryBtn label={redeemSaving?'Redeeming…':`Redeem $${redeemDollarValue}`} colorScheme="success" onClick={handleRedeem} style={{fontSize:12}} disabled={redeemSaving||redeemPts<500||redeemPts>points}/>
@@ -1530,11 +1533,11 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
         <div style={{background:C.white,borderRadius:16,width:360,padding:24,boxShadow:'0 24px 48px rgba(0,0,0,0.15)'}}>
           <div style={{fontSize:15,fontWeight:600,color:C.ink,marginBottom:4}}>Adjust loyalty points</div>
           <div style={{fontSize:12,color:C.gray,marginBottom:16}}>Current balance: <span style={{fontWeight:500,color:C.ink}}>{points.toLocaleString()} pts</span></div>
-          <div style={{...LBL}}>+/- Points</div>
-          <input type="number" value={adjustDraft.delta} onChange={e=>setAdjustDraft(d=>({...d,delta:e.target.value}))} placeholder="e.g. 200 or -100" style={{...inputSt,marginBottom:10}}/>
+          <label htmlFor="adjloy-delta" style={LBL}>+/- Points</label>
+          <input id="adjloy-delta" type="number" value={adjustDraft.delta} onChange={e=>setAdjustDraft(d=>({...d,delta:e.target.value}))} placeholder="e.g. 200 or -100" style={{...inputSt,marginBottom:10}}/>
           {adjustDraft.delta&&parseInt(adjustDraft.delta)!==0&&<div style={{fontSize:11,marginBottom:10,color:parseInt(adjustDraft.delta)>0?'var(--color-success)':'var(--color-danger)'}}>New balance: {Math.max(0,points+(parseInt(adjustDraft.delta)||0)).toLocaleString()} pts</div>}
-          <div style={{...LBL}}>Reason</div>
-          <input value={adjustDraft.note} onChange={e=>setAdjustDraft(d=>({...d,note:e.target.value}))} placeholder="Birthday bonus, correction…" style={{...inputSt,marginBottom:16}}/>
+          <label htmlFor="adjloy-reason" style={LBL}>Reason</label>
+          <input id="adjloy-reason" value={adjustDraft.note} onChange={e=>setAdjustDraft(d=>({...d,note:e.target.value}))} placeholder="Birthday bonus, correction…" style={{...inputSt,marginBottom:16}}/>
           <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
             <GhostBtn label="Cancel" colorScheme="danger" onClick={()=>setShowAdjustModal(false)} style={{fontSize:12}}/>
             <PrimaryBtn label={adjustSaving?'Saving…':'Save'} colorScheme="success" onClick={handleAdjust} style={{fontSize:12}} disabled={adjustSaving}/>
@@ -1545,18 +1548,18 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
         <div style={{background:C.white,borderRadius:16,width:420,padding:24,boxShadow:'0 24px 48px rgba(0,0,0,0.15)'}}>
           <div style={{fontSize:15,fontWeight:600,color:C.ink,marginBottom:4}}>Log satisfaction rating</div>
           <div style={{fontSize:12,color:C.gray,marginBottom:16}}>{cl.name}</div>
-          <div style={{...LBL}}>Score (0–10)</div>
-          <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:12}}>
+          <div id="rating-score-label" style={LBL}>Score (0–10)</div>
+          <div role="group" aria-labelledby="rating-score-label" style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:12}}>
             {[0,1,2,3,4,5,6,7,8,9,10].map(n=>{
               const bg=n>=9?C.green:n>=7?C.amber:n>=5?'#D97706':'#DC2626';
               const active=ratingDraft.score===n;
               return(<button key={n} onClick={()=>setRatingDraft(d=>({...d,score:n}))} style={{width:34,height:34,borderRadius:8,border:`2px solid ${active?bg:C.border}`,background:active?bg:C.white,color:active?'#fff':C.gray,fontSize:13,fontWeight:active?700:400,cursor:'pointer',transition:'all 0.1s'}}>{n}</button>);
             })}
           </div>
-          <div style={{...LBL}}>Comment (optional)</div>
-          <textarea value={ratingDraft.comment} onChange={e=>setRatingDraft(d=>({...d,comment:e.target.value}))} placeholder="Feedback or notes…" rows={3} style={{...inputSt,resize:'vertical',marginBottom:10,width:'100%',boxSizing:'border-box',fontSize:12}}/>
-          <div style={{...LBL}}>Link to event (optional)</div>
-          <select value={ratingDraft.event_id} onChange={e=>setRatingDraft(d=>({...d,event_id:e.target.value}))} style={{...inputSt,marginBottom:16}}>
+          <label htmlFor="rating-comment" style={LBL}>Comment (optional)</label>
+          <textarea id="rating-comment" value={ratingDraft.comment} onChange={e=>setRatingDraft(d=>({...d,comment:e.target.value}))} placeholder="Feedback or notes…" rows={3} style={{...inputSt,resize:'vertical',marginBottom:10,width:'100%',boxSizing:'border-box',fontSize:12}}/>
+          <label htmlFor="rating-event" style={LBL}>Link to event (optional)</label>
+          <select id="rating-event" value={ratingDraft.event_id} onChange={e=>setRatingDraft(d=>({...d,event_id:e.target.value}))} style={{...inputSt,marginBottom:16}}>
             <option value="">None</option>
             {evList.map(ev=><option key={ev.id} value={ev.id}>{ev.type} — {ev.event_date?new Date(ev.event_date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'No date'}</option>)}
           </select>
@@ -1568,6 +1571,26 @@ const ClientDetail = ({ cl, onBack, setSelectedEvent, setScreen, updateClient, a
       </div>)}
       {showDirectSMS&&(
         <DirectSMSModal client={cl} boutique={boutique} onClose={()=>setShowDirectSMS(false)} toast={toast}/>
+      )}
+      {deleteMeasConfirm&&(
+        <div role="presentation" onClick={e=>{if(e.target===e.currentTarget)setDeleteMeasConfirm(null);}}
+          style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1100,padding:16}}>
+          <div role="dialog" aria-modal="true" aria-labelledby="delete-meas-title"
+            style={{background:'#fff',borderRadius:16,width:360,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+            <div style={{padding:'20px 20px 12px',textAlign:'center'}}>
+              <div style={{fontSize:26,marginBottom:8}}>⚠️</div>
+              <div id="delete-meas-title" style={{fontSize:15,fontWeight:600,color:'#111',marginBottom:8}}>Delete measurement record?</div>
+              <div style={{fontSize:12,color:'var(--text-danger)',background:'var(--bg-danger)',borderRadius:8,padding:'8px 12px'}}>This cannot be undone.</div>
+            </div>
+            <div style={{padding:'12px 20px 20px',display:'flex',gap:8}}>
+              <GhostBtn label="Cancel" onClick={()=>setDeleteMeasConfirm(null)} style={{flex:1}}/>
+              <button onClick={confirmDeleteMeas}
+                style={{flex:1,padding:'9px 16px',borderRadius:8,border:'none',background:'var(--color-danger)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -62,11 +62,11 @@ export const DressLifecycleModal = ({dress, onClose, onUpdate}) => {
             <div>
               <div style={{...LBL,marginBottom:8}}>Condition on return</div>
               {[['perfect','✓ Perfect — no issues, ready for cleaning'],['minor_soiling','Minor soiling — normal wear, cleaning will resolve'],['needs_repair','⚠ Needs repair — torn seam, missing button, etc.'],['damaged','🚨 Damaged — significant damage, client may be charged']].map(([v,l])=>(
-                <button key={v} onClick={()=>setCondition(v)} style={{display:'block',width:'100%',textAlign:'left',padding:'8px 12px',marginBottom:4,borderRadius:7,border:`1.5px solid ${condition===v?C.rosa:C.border}`,background:condition===v?C.rosaPale:'transparent',color:condition===v?C.rosa:C.ink,cursor:'pointer',fontSize:12}}>{l}</button>
+                <button key={v} onClick={()=>setCondition(v)} style={{display:'block',width:'100%',textAlign:'left',padding:'8px 12px',marginBottom:4,borderRadius:7,border:`1.5px solid ${condition===v?C.rosa:C.border}`,background:condition===v?C.rosaPale:'transparent',color:condition===v?C.rosaText:C.ink,cursor:'pointer',fontSize:12}}>{l}</button>
               ))}
             </div>
           )}
-          <div><div style={{...LBL}}>Notes (optional)</div><textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2} placeholder="Any notes..." style={{...inputSt,resize:'vertical'}}/></div>
+          <div><label htmlFor="dlm-notes" style={LBL}>Notes (optional)</label><textarea id="dlm-notes" value={notes} onChange={e=>setNotes(e.target.value)} rows={2} placeholder="Any notes..." style={{...inputSt,resize:'vertical'}}/></div>
         </div>
         <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
           <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose}/><PrimaryBtn label={saving?'Updating…':(DRESS_TRANSITIONS[dress.status]?.label||'Confirm')} onClick={confirm}/>

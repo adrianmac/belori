@@ -20,7 +20,7 @@ const CAT_COLORS = {
   reminder:     { bg: '#FEF3C7',             color: '#B45309' },
   followup:     { bg: '#DBEAFE',             color: '#1D4ED8' },
   promotion:    { bg: '#EDE9FE',             color: '#7C3AED' },
-  contract:     { bg: C.rosaPale,            color: C.rosa },
+  contract:     { bg: C.rosaPale,            color: C.rosaText },
 };
 
 const SUGGESTED_VARS = [
@@ -160,8 +160,9 @@ const EditPanel = ({ template, onSave, onCancel, onDelete, saving }) => {
       {/* Name + Category row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10 }}>
         <div>
-          <div style={LBL}>Template name</div>
+          <label htmlFor="etmpl-name" style={LBL}>Template name</label>
           <input
+            id="etmpl-name"
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             placeholder="e.g. Appointment Confirmation"
@@ -169,8 +170,9 @@ const EditPanel = ({ template, onSave, onCancel, onDelete, saving }) => {
           />
         </div>
         <div>
-          <div style={LBL}>Category</div>
+          <label htmlFor="etmpl-category" style={LBL}>Category</label>
           <select
+            id="etmpl-category"
             value={form.category}
             onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
             style={{ ...inputSt, width: 140 }}>
@@ -183,8 +185,9 @@ const EditPanel = ({ template, onSave, onCancel, onDelete, saving }) => {
 
       {/* Subject */}
       <div>
-        <div style={LBL}>Email subject line</div>
+        <label htmlFor="etmpl-subject" style={LBL}>Email subject line</label>
         <input
+          id="etmpl-subject"
           value={form.subject}
           onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
           placeholder="e.g. Your appointment at {{boutique_name}} is confirmed"
@@ -195,10 +198,10 @@ const EditPanel = ({ template, onSave, onCancel, onDelete, saving }) => {
       {/* Body */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-          <div style={LBL}>Email body</div>
+          <label htmlFor="etmpl-body" style={LBL}>Email body</label>
           <button
             onClick={() => setShowPreview(p => !p)}
-            style={{ background: 'none', border: 'none', fontSize: 12, color: C.rosa, cursor: 'pointer', padding: 0 }}>
+            style={{ background: 'none', border: 'none', fontSize: 12, color: C.rosaText, cursor: 'pointer', padding: 0 }}>
             {showPreview ? 'Edit' : 'Preview'}
           </button>
         </div>
@@ -216,6 +219,7 @@ const EditPanel = ({ template, onSave, onCancel, onDelete, saving }) => {
           </div>
         ) : (
           <textarea
+            id="etmpl-body"
             ref={bodyRef}
             value={form.body}
             onChange={e => setForm(f => ({ ...f, body: e.target.value }))}

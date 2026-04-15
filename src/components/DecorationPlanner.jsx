@@ -108,7 +108,7 @@ function PillSelector({options, value, onChange, multi=false}) {
               borderRadius:20,
               border:`1.5px solid ${active?C.rosa:C.border}`,
               background:active?C.rosaPale:C.white,
-              color:active?C.rosa:C.gray,
+              color:active?C.rosaText:C.gray,
               fontSize:12,
               fontWeight:active?600:400,
               cursor:'pointer',
@@ -314,7 +314,7 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
               borderRadius:20,
               border:`1.5px solid ${activeTab===tab.key?C.rosa:C.border}`,
               background:activeTab===tab.key?C.rosaPale:C.white,
-              color:activeTab===tab.key?C.rosa:C.gray,
+              color:activeTab===tab.key?C.rosaText:C.gray,
               fontSize:12,
               fontWeight:activeTab===tab.key?600:400,
               cursor:'pointer',
@@ -393,12 +393,12 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
           <SectionHeader label="Floral Vendor"/>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
             <div>
-              <div style={{...LBL}}>Vendor Name</div>
-              <input value={floral.vendorName||''} onChange={e=>setFloral('vendorName',e.target.value)} placeholder="Vendor name" style={{...inputSt}}/>
+              <label htmlFor="deco-vendor-name" style={LBL}>Vendor Name</label>
+              <input id="deco-vendor-name" value={floral.vendorName||''} onChange={e=>setFloral('vendorName',e.target.value)} placeholder="Vendor name" style={{...inputSt}}/>
             </div>
             <div>
-              <div style={{...LBL}}>Phone</div>
-              <input value={floral.vendorPhone||''} onChange={e=>setFloral('vendorPhone',e.target.value)} placeholder="Phone number" style={{...inputSt}}/>
+              <label htmlFor="deco-vendor-phone" style={LBL}>Phone</label>
+              <input id="deco-vendor-phone" value={floral.vendorPhone||''} onChange={e=>setFloral('vendorPhone',e.target.value)} placeholder="Phone number" style={{...inputSt}}/>
             </div>
           </div>
 
@@ -434,7 +434,7 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
                 }}
               >
                 <div style={{fontSize:22,marginBottom:4}}>{icon}</div>
-                <div style={{fontSize:11,fontWeight:backdrop.type===key?600:400,color:backdrop.type===key?C.rosa:C.gray}}>{label}</div>
+                <div style={{fontSize:11,fontWeight:backdrop.type===key?600:400,color:backdrop.type===key?C.rosaText:C.gray}}>{label}</div>
               </div>
             ))}
           </div>
@@ -453,12 +453,12 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
           <SectionHeader label="Size"/>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
             <div>
-              <div style={{...LBL}}>Width</div>
-              <input value={backdrop.width||''} onChange={e=>setBackdrop('width',e.target.value)} placeholder="e.g. 8ft" style={{...inputSt}}/>
+              <label htmlFor="deco-backdrop-width" style={LBL}>Width</label>
+              <input id="deco-backdrop-width" value={backdrop.width||''} onChange={e=>setBackdrop('width',e.target.value)} placeholder="e.g. 8ft" style={{...inputSt}}/>
             </div>
             <div>
-              <div style={{...LBL}}>Height</div>
-              <input value={backdrop.height||''} onChange={e=>setBackdrop('height',e.target.value)} placeholder="e.g. 8ft" style={{...inputSt}}/>
+              <label htmlFor="deco-backdrop-height" style={LBL}>Height</label>
+              <input id="deco-backdrop-height" value={backdrop.height||''} onChange={e=>setBackdrop('height',e.target.value)} placeholder="e.g. 8ft" style={{...inputSt}}/>
             </div>
           </div>
 
@@ -477,7 +477,7 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
                     padding:'5px 12px',borderRadius:20,
                     border:`1.5px solid ${active?C.rosa:C.border}`,
                     background:active?C.rosaPale:C.white,
-                    color:active?C.rosa:C.gray,
+                    color:active?C.rosaText:C.gray,
                     fontSize:12,fontWeight:active?600:400,cursor:'pointer',
                   }}
                 >{m}</button>
@@ -485,8 +485,8 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
             })}
           </div>
           <div>
-            <div style={{...LBL}}>Color / Fabric Notes</div>
-            <input value={backdrop.materialNotes||''} onChange={e=>setBackdrop('materialNotes',e.target.value)} placeholder="e.g. Blush chiffon draping with gold fairy lights" style={{...inputSt}}/>
+            <label htmlFor="deco-backdrop-material" style={LBL}>Color / Fabric Notes</label>
+            <input id="deco-backdrop-material" value={backdrop.materialNotes||''} onChange={e=>setBackdrop('materialNotes',e.target.value)} placeholder="e.g. Blush chiffon draping with gold fairy lights" style={{...inputSt}}/>
           </div>
 
           <SectionHeader label="Photo Backdrop"/>
@@ -497,7 +497,7 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
           >
             <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:4}}>
               <div>
-                <div style={{...LBL}}>Type</div>
+                <div id="deco-photo-type-label" style={LBL}>Type</div>
                 <PillSelector
                   options={BACKDROP_TYPES.filter(b=>b.key!=='none')}
                   value={backdrop.photoType||''}
@@ -505,8 +505,8 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
                 />
               </div>
               <div>
-                <div style={{...LBL}}>Materials / Notes</div>
-                <input value={backdrop.photoNotes||''} onChange={e=>setBackdrop('photoNotes',e.target.value)} placeholder="Details…" style={{...inputSt}}/>
+                <label htmlFor="deco-photo-notes" style={LBL}>Materials / Notes</label>
+                <input id="deco-photo-notes" value={backdrop.photoNotes||''} onChange={e=>setBackdrop('photoNotes',e.target.value)} placeholder="Details…" style={{...inputSt}}/>
               </div>
             </div>
           </ToggleCard>
@@ -541,7 +541,7 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
                   padding:'6px 14px',borderRadius:20,
                   border:`1.5px solid ${active?C.rosa:C.border}`,
                   background:active?C.rosaPale:C.white,
-                  color:active?C.rosa:C.gray,
+                  color:active?C.rosaText:C.gray,
                   fontSize:12,fontWeight:active?600:400,cursor:'pointer',
                 }}>{opt}</button>
               );
@@ -551,12 +551,12 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
           <SectionHeader label="Centerpieces"/>
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             <div>
-              <div style={{...LBL}}>Style</div>
+              <div id="deco-cp-style-label" style={LBL}>Style</div>
               <PillSelector options={CENTERPIECE_STYLES} value={tables.cpStyle||''} onChange={v=>setTables('cpStyle',v)}/>
             </div>
             <div>
-              <div style={{...LBL}}>Notes</div>
-              <input value={tables.cpNotes||''} onChange={e=>setTables('cpNotes',e.target.value)} placeholder="Centerpiece details…" style={{...inputSt}}/>
+              <label htmlFor="deco-cp-notes" style={LBL}>Notes</label>
+              <input id="deco-cp-notes" value={tables.cpNotes||''} onChange={e=>setTables('cpNotes',e.target.value)} placeholder="Centerpiece details…" style={{...inputSt}}/>
             </div>
           </div>
 
@@ -578,7 +578,7 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
                   padding:'5px 12px',borderRadius:20,
                   border:`1.5px solid ${active?C.rosa:C.border}`,
                   background:active?C.rosaPale:C.white,
-                  color:active?C.rosa:C.gray,
+                  color:active?C.rosaText:C.gray,
                   fontSize:12,fontWeight:active?600:400,cursor:'pointer',
                 }}>{ps}</button>
               );
@@ -607,8 +607,9 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
                 onToggle={()=>setLightingOption(key,'enabled',!opt.enabled)}
               >
                 <div>
-                  <div style={{...LBL,marginBottom:4}}>{detail}</div>
+                  <label htmlFor={`lighting-${key}`} style={LBL}>{detail}</label>
                   <input
+                    id={`lighting-${key}`}
                     value={opt.detail||''}
                     onChange={e=>setLightingOption(key,'detail',e.target.value)}
                     placeholder={detail+'…'}
@@ -628,7 +629,7 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
                   padding:'6px 14px',borderRadius:20,
                   border:`1.5px solid ${active?C.rosa:C.border}`,
                   background:active?C.rosaPale:C.white,
-                  color:active?C.rosa:C.gray,
+                  color:active?C.rosaText:C.gray,
                   fontSize:12,fontWeight:active?600:400,cursor:'pointer',
                 }}>{opt}</button>
               );
@@ -681,8 +682,9 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
             <div style={{flex:1,overflowY:'auto',padding:20,display:'flex',flexDirection:'column',gap:14}}>
               {/* Item search */}
               <div>
-                <div style={{...LBL}}>{editingDecoId?'Item':'Search inventory'}</div>
+                <label htmlFor="deco-form-item" style={LBL}>{editingDecoId?'Item':'Search inventory'}</label>
                 <input
+                  id="deco-form-item"
                   value={decoSearch}
                   onChange={e=>{if(editingDecoId)return;setDecoSearch(e.target.value);setDecoForm(f=>({...f,inventoryId:''}));}}
                   placeholder="Search by name or SKU…"
@@ -707,31 +709,31 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
               {/* Qty + Setup time */}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                 <div>
-                  <div style={{...LBL}}>Quantity</div>
-                  <input type="number" min="1" value={decoForm.quantity} onChange={e=>setDecoForm(f=>({...f,quantity:e.target.value}))} style={{...inputSt}}/>
+                  <label htmlFor="deco-form-qty" style={LBL}>Quantity</label>
+                  <input id="deco-form-qty" type="number" min="1" value={decoForm.quantity} onChange={e=>setDecoForm(f=>({...f,quantity:e.target.value}))} style={{...inputSt}}/>
                 </div>
                 <div>
-                  <div style={{...LBL}}>Setup time</div>
-                  <input value={decoForm.setup_time} onChange={e=>setDecoForm(f=>({...f,setup_time:e.target.value}))} placeholder="e.g. 2:00 PM" style={{...inputSt}}/>
+                  <label htmlFor="deco-form-setup" style={LBL}>Setup time</label>
+                  <input id="deco-form-setup" value={decoForm.setup_time} onChange={e=>setDecoForm(f=>({...f,setup_time:e.target.value}))} placeholder="e.g. 2:00 PM" style={{...inputSt}}/>
                 </div>
               </div>
 
               {/* Placement */}
               <div>
-                <div style={{...LBL}}>Placement / location in venue</div>
-                <input value={decoForm.placement} onChange={e=>setDecoForm(f=>({...f,placement:e.target.value}))} placeholder="e.g. Ceremony arch backdrop, center aisle" style={{...inputSt}}/>
+                <label htmlFor="deco-form-placement" style={LBL}>Placement / location in venue</label>
+                <input id="deco-form-placement" value={decoForm.placement} onChange={e=>setDecoForm(f=>({...f,placement:e.target.value}))} placeholder="e.g. Ceremony arch backdrop, center aisle" style={{...inputSt}}/>
               </div>
 
               {/* Color notes */}
               <div>
-                <div style={{...LBL}}>Color / style notes</div>
-                <input value={decoForm.color_notes} onChange={e=>setDecoForm(f=>({...f,color_notes:e.target.value}))} placeholder="e.g. Dusty rose ribbons, gold accents" style={{...inputSt}}/>
+                <label htmlFor="deco-form-colornotes" style={LBL}>Color / style notes</label>
+                <input id="deco-form-colornotes" value={decoForm.color_notes} onChange={e=>setDecoForm(f=>({...f,color_notes:e.target.value}))} placeholder="e.g. Dusty rose ribbons, gold accents" style={{...inputSt}}/>
               </div>
 
               {/* General notes */}
               <div>
-                <div style={{...LBL}}>Additional notes</div>
-                <textarea value={decoForm.notes} onChange={e=>setDecoForm(f=>({...f,notes:e.target.value}))} placeholder="Any special handling, setup instructions, or reminders…" rows={2} style={{...inputSt,resize:'vertical'}}/>
+                <label htmlFor="deco-form-addnotes" style={LBL}>Additional notes</label>
+                <textarea id="deco-form-addnotes" value={decoForm.notes} onChange={e=>setDecoForm(f=>({...f,notes:e.target.value}))} placeholder="Any special handling, setup instructions, or reminders…" rows={2} style={{...inputSt,resize:'vertical'}}/>
               </div>
             </div>
             <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -774,31 +776,31 @@ function LinensSection({values, onChange}) {
   return (
     <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:4}}>
       <div>
-        <div style={{...LBL}}>Linen Color</div>
+        <div id="linen-color-label" style={LBL}>Linen Color</div>
         <div style={{display:'flex',flexWrap:'wrap',gap:4,marginBottom:4}}>
           {LINEN_COLORS.map(c=>{
             const active=values.color===c;
-            return <button key={c} onClick={()=>onChange('color',active?'':c)} style={{padding:'3px 10px',borderRadius:20,border:`1.5px solid ${active?C.rosa:C.border}`,background:active?C.rosaPale:C.white,color:active?C.rosa:C.gray,fontSize:11,cursor:'pointer',fontWeight:active?600:400}}>{c}</button>;
+            return <button key={c} onClick={()=>onChange('color',active?'':c)} style={{padding:'3px 10px',borderRadius:20,border:`1.5px solid ${active?C.rosa:C.border}`,background:active?C.rosaPale:C.white,color:active?C.rosaText:C.gray,fontSize:11,cursor:'pointer',fontWeight:active?600:400}}>{c}</button>;
           })}
         </div>
         {values.color==='Custom'&&<input value={values.colorCustom||''} onChange={e=>onChange('colorCustom',e.target.value)} placeholder="Custom color…" style={{...inputSt,fontSize:12,padding:'4px 8px'}}/>}
       </div>
       <div>
-        <div style={{...LBL}}>Style</div>
+        <div id="linen-style-label" style={LBL}>Style</div>
         <PillSelector options={LINEN_STYLES} value={values.style||''} onChange={v=>onChange('style',v)}/>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
         <div>
-          <div style={{...LBL}}>Overlay</div>
-          <input value={values.overlay||''} onChange={e=>onChange('overlay',e.target.value)} placeholder="e.g. Lace overlay" style={{...inputSt}}/>
+          <label htmlFor="linen-overlay" style={LBL}>Overlay</label>
+          <input id="linen-overlay" value={values.overlay||''} onChange={e=>onChange('overlay',e.target.value)} placeholder="e.g. Lace overlay" style={{...inputSt}}/>
         </div>
         <div>
-          <div style={{...LBL}}>Napkin Color</div>
-          <input value={values.napkinColor||''} onChange={e=>onChange('napkinColor',e.target.value)} placeholder="e.g. Ivory" style={{...inputSt}}/>
+          <label htmlFor="linen-napkin-color" style={LBL}>Napkin Color</label>
+          <input id="linen-napkin-color" value={values.napkinColor||''} onChange={e=>onChange('napkinColor',e.target.value)} placeholder="e.g. Ivory" style={{...inputSt}}/>
         </div>
       </div>
       <div>
-        <div style={{...LBL}}>Napkin Fold</div>
+        <div id="linen-napkin-fold-label" style={LBL}>Napkin Fold</div>
         <PillSelector options={NAPKIN_FOLDS} value={values.napkinFold||''} onChange={v=>onChange('napkinFold',v)}/>
       </div>
     </div>
@@ -831,7 +833,7 @@ function InventoryTab({decoItems, inventory, event, onAssign, onEdit, onRemove})
         </div>
         <button
           onClick={onAssign}
-          style={{padding:'6px 14px',borderRadius:20,border:`1.5px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,fontSize:12,fontWeight:600,cursor:'pointer'}}
+          style={{padding:'6px 14px',borderRadius:20,border:`1.5px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,fontSize:12,fontWeight:600,cursor:'pointer'}}
         >+ Assign item</button>
       </div>
 
@@ -858,14 +860,14 @@ function InventoryTab({decoItems, inventory, event, onAssign, onEdit, onRemove})
                         <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
                           <span style={{fontSize:13,fontWeight:600,color:C.ink}}>{d.name}</span>
                           {catLabel&&<span style={{fontSize:10,padding:'1px 6px',borderRadius:4,background:C.ivory,color:C.gray,border:`1px solid ${C.border}`,textTransform:'capitalize'}}>{catLabel}</span>}
-                          {d.color&&<span style={{fontSize:10,padding:'1px 6px',borderRadius:4,background:C.rosaPale,color:C.rosa,border:`1px solid ${C.border}`}}>{d.color}</span>}
-                          {d.condition&&d.condition!=='good'&&<span style={{fontSize:10,padding:'1px 6px',borderRadius:4,background:C.amberBg,color:C.amber,border:`1px solid ${C.border}`,textTransform:'capitalize'}}>{d.condition}</span>}
+                          {d.color&&<span style={{fontSize:10,padding:'1px 6px',borderRadius:4,background:C.rosaPale,color:C.rosaText,border:`1px solid ${C.border}`}}>{d.color}</span>}
+                          {d.condition&&d.condition!=='good'&&<span style={{fontSize:10,padding:'1px 6px',borderRadius:4,background:C.amberBg,color:C.warningText,border:`1px solid ${C.border}`,textTransform:'capitalize'}}>{d.condition}</span>}
                         </div>
                         <div style={{fontSize:10,color:C.gray,fontFamily:'monospace',marginTop:2}}>#{d.sku}{d.totalQty!=null?` · stock: ${d.totalQty}`:''}</div>
                       </div>
                       <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
                         <span style={{fontSize:12,color:C.gray}}>×{d.qty}</span>
-                        <Badge text={short<=0?'Available':`${d.available??d.qty} of ${d.qty}`} bg={short<=0?C.greenBg:C.amberBg} color={short<=0?C.green:C.amber}/>
+                        <Badge text={short<=0?'Available':`${d.available??d.qty} of ${d.qty}`} bg={short<=0?C.greenBg:C.amberBg} color={short<=0?C.green:C.warningText}/>
                         <button onClick={()=>onEdit(d)} style={{background:'none',border:`1px solid ${C.border}`,borderRadius:6,cursor:'pointer',color:C.gray,fontSize:11,padding:'2px 8px',minHeight:'unset'}} title="Edit">✏️</button>
                         <button onClick={()=>onRemove(d.id)} style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:16,lineHeight:1,padding:'0 2px',minHeight:'unset'}} title="Remove">×</button>
                       </div>
@@ -929,7 +931,7 @@ function OverviewTab({plan, decoItems, event}) {
           </div>
           <button
             onClick={()=>window.print()}
-            style={{padding:'7px 16px',borderRadius:8,border:`1.5px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,fontSize:12,fontWeight:600,cursor:'pointer'}}
+            style={{padding:'7px 16px',borderRadius:8,border:`1.5px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,fontSize:12,fontWeight:600,cursor:'pointer'}}
           >🖨 Print Day Sheet</button>
         </div>
 

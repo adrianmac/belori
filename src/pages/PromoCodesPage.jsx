@@ -281,7 +281,7 @@ function ApplyModal({ code, onApply, onClose }) {
         <div style={{ padding: '18px 22px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontWeight: 700, fontSize: 16, color: C.ink }}>Apply Code</span>
-            <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14, background: C.grayBg, borderRadius: 6, padding: '2px 8px', color: C.rosa }}>{code.code}</span>
+            <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14, background: C.grayBg, borderRadius: 6, padding: '2px 8px', color: C.rosaText }}>{code.code}</span>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
         </div>
@@ -435,7 +435,7 @@ function CodeCard({ code, uses, onToggleActive, onEdit, onDelete, onApply }) {
           <button
             onClick={() => onApply(code)}
             style={{
-              background: C.rosaPale, color: C.rosa, border: 'none', borderRadius: 8,
+              background: C.rosaPale, color: C.rosaText, border: 'none', borderRadius: 8,
               padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
             }}
           >+ Apply</button>

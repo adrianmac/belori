@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
 
 const C = {
-  rosa: '#C9697A', rosaHov: '#B85868', rosaPale: '#FDF5F6',
+  rosa: '#C9697A', rosaHov: '#B85868', rosaPale: '#FDF5F6', rosaText: '#8B3A4A',
   ink: '#1C1012', gray: '#6B7280', border: '#E5E7EB',
   white: '#FFFFFF', ivory: '#F8F4F0', red: '#B91C1C', redBg: '#FEE2E2',
 }
@@ -43,40 +43,40 @@ export default function Login() {
         <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 28 }}>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {error && (
-              <div style={{ background: C.redBg, color: C.red, padding: '10px 14px', borderRadius: 8, fontSize: 13 }}>
+              <div role="alert" aria-live="assertive" style={{ background: C.redBg, color: C.red, padding: '10px 14px', borderRadius: 8, fontSize: 13 }}>
                 {error}
               </div>
             )}
             <div>
-              <label style={{ fontSize: 12, fontWeight: 500, color: C.ink, display: 'block', marginBottom: 6 }}>Email</label>
+              <label htmlFor="login-email" style={{ fontSize: 12, fontWeight: 500, color: C.ink, display: 'block', marginBottom: 6 }}>Email</label>
               <input
-                type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                id="login-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required
                 style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.ink, outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 500, color: C.ink, display: 'block', marginBottom: 6 }}>Password</label>
+              <label htmlFor="login-password" style={{ fontSize: 12, fontWeight: 500, color: C.ink, display: 'block', marginBottom: 6 }}>Password</label>
               <input
-                type="password" value={password} onChange={e => setPassword(e.target.value)} required
+                id="login-password" type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required
                 style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.ink, outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Link to="/forgot-password" style={{ fontSize: 12, color: C.gray, textDecoration: 'none' }}
-                onMouseEnter={e => e.target.style.color = C.rosa}
+                onMouseEnter={e => e.target.style.color = C.rosaText}
                 onMouseLeave={e => e.target.style.color = C.gray}>
                 Forgot password?
               </Link>
             </div>
             <button
               type="submit" disabled={loading}
-              style={{ background: loading ? C.gray : C.rosa, color: C.white, border: 'none', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 500, cursor: loading ? 'default' : 'pointer', marginTop: 4 }}>
+              style={{ background: loading ? C.gray : C.rosaSolid, color: C.white, border: 'none', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 500, cursor: loading ? 'default' : 'pointer', marginTop: 4 }}>
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
           <div style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: C.gray }}>
             Don't have an account?{' '}
-            <Link to="/signup" style={{ color: C.rosa, fontWeight: 500, textDecoration: 'none' }}>Create one</Link>
+            <Link to="/signup" style={{ color: C.rosaText, fontWeight: 500, textDecoration: 'none' }}>Create one</Link>
           </div>
         </div>
       </div>

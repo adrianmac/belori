@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { C, fmt } from '../lib/colors';
-import { Topbar, PrimaryBtn, GhostBtn, inputSt, LBL, Avatar, useToast } from '../lib/ui.jsx';
+import { Topbar, PrimaryBtn, GhostBtn, inputSt, LBL, Avatar, useToast, ConfirmModal } from '../lib/ui.jsx';
 import { useCommissions } from '../hooks/useCommissions';
 import { useEvents } from '../hooks/useEvents';
 
@@ -139,14 +139,16 @@ const LogCommissionModal = ({ onClose, onCreate, staff, events }) => {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Event search + select */}
           <div>
-            <div style={LBL}>Event</div>
+            <label htmlFor="comm-event-search" style={LBL}>Event</label>
             <input
+              id="comm-event-search"
               style={{ ...inputSt, marginBottom: 6 }}
               placeholder="Search events by client or type…"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
             <select
+              id="comm-event-select"
               required
               value={eventId}
               onChange={e => handleEventChange(e.target.value)}
@@ -163,8 +165,9 @@ const LogCommissionModal = ({ onClose, onCreate, staff, events }) => {
 
           {/* Staff member */}
           <div>
-            <div style={LBL}>Staff Member</div>
+            <label htmlFor="comm-staff-member" style={LBL}>Staff Member</label>
             <select
+              id="comm-staff-member"
               required
               value={memberId}
               onChange={e => handleMemberChange(e.target.value)}
@@ -182,8 +185,9 @@ const LogCommissionModal = ({ onClose, onCreate, staff, events }) => {
           {/* Event total + Rate */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <div style={LBL}>Event Total ($)</div>
+              <label htmlFor="comm-event-total" style={LBL}>Event Total ($)</label>
               <input
+                id="comm-event-total"
                 type="number" min="0" step="0.01" required
                 style={inputSt}
                 placeholder="0.00"
@@ -192,8 +196,9 @@ const LogCommissionModal = ({ onClose, onCreate, staff, events }) => {
               />
             </div>
             <div>
-              <div style={LBL}>Commission Rate (%)</div>
+              <label htmlFor="comm-rate" style={LBL}>Commission Rate (%)</label>
               <input
+                id="comm-rate"
                 type="number" min="0" max="100" step="0.01" required
                 style={inputSt}
                 placeholder="e.g. 10"
@@ -205,8 +210,9 @@ const LogCommissionModal = ({ onClose, onCreate, staff, events }) => {
 
           {/* Commission amount */}
           <div>
-            <div style={LBL}>Commission Amount ($) — auto-calculated</div>
+            <label htmlFor="comm-amount" style={LBL}>Commission Amount ($) — auto-calculated</label>
             <input
+              id="comm-amount"
               type="number" min="0" step="0.01"
               style={inputSt}
               placeholder="0.00"
@@ -217,8 +223,9 @@ const LogCommissionModal = ({ onClose, onCreate, staff, events }) => {
 
           {/* Notes */}
           <div>
-            <div style={LBL}>Notes (optional)</div>
+            <label htmlFor="comm-notes" style={LBL}>Notes (optional)</label>
             <textarea
+              id="comm-notes"
               style={{ ...inputSt, minHeight: 64, resize: 'vertical' }}
               placeholder="Any notes about this commission…"
               value={notes}
@@ -289,21 +296,21 @@ const EditCommissionModal = ({ record, onClose, onSave }) => {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <div style={LBL}>Event Total ($)</div>
-              <input type="number" min="0" step="0.01" required style={inputSt} value={eventTotal} onChange={e => handleTotalChange(e.target.value)} />
+              <label htmlFor="comm-edit-total" style={LBL}>Event Total ($)</label>
+              <input id="comm-edit-total" type="number" min="0" step="0.01" required style={inputSt} value={eventTotal} onChange={e => handleTotalChange(e.target.value)} />
             </div>
             <div>
-              <div style={LBL}>Rate (%)</div>
-              <input type="number" min="0" max="100" step="0.01" required style={inputSt} value={rate} onChange={e => handleRateChange(e.target.value)} />
+              <label htmlFor="comm-edit-rate" style={LBL}>Rate (%)</label>
+              <input id="comm-edit-rate" type="number" min="0" max="100" step="0.01" required style={inputSt} value={rate} onChange={e => handleRateChange(e.target.value)} />
             </div>
           </div>
           <div>
-            <div style={LBL}>Commission Amount ($)</div>
-            <input type="number" min="0" step="0.01" style={inputSt} value={amount} onChange={e => setAmount(e.target.value)} />
+            <label htmlFor="comm-edit-amount" style={LBL}>Commission Amount ($)</label>
+            <input id="comm-edit-amount" type="number" min="0" step="0.01" style={inputSt} value={amount} onChange={e => setAmount(e.target.value)} />
           </div>
           <div>
-            <div style={LBL}>Notes</div>
-            <textarea style={{ ...inputSt, minHeight: 56, resize: 'vertical' }} value={notes} onChange={e => setNotes(e.target.value)} />
+            <label htmlFor="comm-edit-notes" style={LBL}>Notes</label>
+            <textarea id="comm-edit-notes" style={{ ...inputSt, minHeight: 56, resize: 'vertical' }} value={notes} onChange={e => setNotes(e.target.value)} />
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <GhostBtn label="Cancel" onClick={onClose} />
@@ -410,6 +417,7 @@ export default function CommissionsPage() {
   const [showLogModal, setShowLogModal] = useState(false);
   const [editRecord, setEditRecord] = useState(null);
   const [showRates, setShowRates] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // record id | null
 
   // Filters
   const [filterStaff, setFilterStaff] = useState('');
@@ -460,8 +468,11 @@ export default function CommissionsPage() {
     return { totalOwed, totalPaid, monthTotal, topEarner };
   }, [records]);
 
-  async function handleDelete(id) {
-    if (!window.confirm('Delete this commission record?')) return;
+  const handleDelete = (id) => setDeleteConfirm(id);
+  async function confirmDelete() {
+    if (!deleteConfirm) return;
+    const id = deleteConfirm;
+    setDeleteConfirm(null);
     try {
       await deleteRecord(id);
       toast('Record deleted', 'success');
@@ -683,6 +694,10 @@ export default function CommissionsPage() {
           onClose={() => setEditRecord(null)}
           onSave={updateRecord}
         />
+      )}
+      {deleteConfirm && (
+        <ConfirmModal title="Delete this commission record?" message="This cannot be undone." confirmLabel="Delete"
+          onConfirm={confirmDelete} onCancel={() => setDeleteConfirm(null)} />
       )}
     </div>
   );

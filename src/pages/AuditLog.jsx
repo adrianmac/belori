@@ -30,7 +30,7 @@ function absoluteTime(dateStr) {
 
 const ACTION_STYLE = {
   INSERT: { bg: C.greenBg, color: C.green, label: 'INSERT' },
-  UPDATE: { bg: C.amberBg, color: C.amber, label: 'UPDATE' },
+  UPDATE: { bg: C.amberBg, color: C.warningText, label: 'UPDATE' },
   DELETE: { bg: C.redBg,   color: C.red,   label: 'DELETE' },
 };
 
@@ -347,7 +347,7 @@ export default function AuditLog() {
                 borderRadius: 20,
                 border: `1px solid ${tableFilter === f.value ? C.rosa : C.border}`,
                 background: tableFilter === f.value ? C.rosaPale : C.white,
-                color: tableFilter === f.value ? C.rosa : C.gray,
+                color: tableFilter === f.value ? C.rosaText : C.gray,
                 fontSize: 12,
                 fontWeight: tableFilter === f.value ? 600 : 400,
                 cursor: 'pointer',

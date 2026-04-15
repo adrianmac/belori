@@ -57,9 +57,9 @@ const AddDressModal = ({onClose, onCreate}) => {
 
   return (
     <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-      <div style={{background:C.white,borderRadius:16,width:500,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="add-dress-title" style={{background:C.white,borderRadius:16,width:500,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'20px 24px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <div style={{fontWeight:600,fontSize:16,color:C.ink}}>Add dress to inventory</div>
+          <div id="add-dress-title" style={{fontWeight:600,fontSize:16,color:C.ink}}>Add dress to inventory</div>
           <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:24,display:'flex',flexDirection:'column',gap:16}}>
@@ -68,15 +68,15 @@ const AddDressModal = ({onClose, onCreate}) => {
             <div style={{...LBL,marginBottom:8,textTransform:'uppercase',letterSpacing:'0.06em'}}>Category</div>
             <div style={{display:'flex',gap:8}}>
               {['Bridal gown','Quinceañera gown'].map(c=>(
-                <button key={c} onClick={()=>setCat(c)} style={{flex:1,padding:'10px',borderRadius:8,border:`1.5px solid ${cat===c?C.rosa:C.border}`,background:cat===c?C.rosaPale:'transparent',color:cat===c?C.rosa:C.gray,cursor:'pointer',fontWeight:cat===c?500:400,fontSize:13}}>{c}</button>
+                <button key={c} onClick={()=>setCat(c)} style={{flex:1,padding:'10px',borderRadius:8,border:`1.5px solid ${cat===c?C.rosa:C.border}`,background:cat===c?C.rosaPale:'transparent',color:cat===c?C.rosaText:C.gray,cursor:'pointer',fontWeight:cat===c?500:400,fontSize:13}}>{c}</button>
               ))}
             </div>
           </div>
 
           {/* Photo upload */}
           <div>
-            <div style={{...LBL,marginBottom:8}}>Photo (optional)</div>
-            <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleFileChange}/>
+            <label htmlFor="add-dress-photo" style={{...LBL,marginBottom:8,display:'block'}}>Photo (optional)</label>
+            <input id="add-dress-photo" ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleFileChange}/>
             {imagePreview?(
               <div style={{position:'relative',display:'inline-block'}}>
                 <img src={imagePreview} alt="preview" style={{width:'100%',maxHeight:180,objectFit:'cover',borderRadius:10,border:`1px solid ${C.border}`,display:'block'}}/>
@@ -93,15 +93,15 @@ const AddDressModal = ({onClose, onCreate}) => {
 
           {/* SKU + Name */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 2fr',gap:12}}>
-            <div><div style={{...LBL}}>SKU</div><input value={sku} onChange={e=>setSku(e.target.value)} placeholder="BB-048" style={{...inputSt}}/></div>
-            <div><div style={{...LBL}}>Dress name</div><input value={name} onChange={e=>setName(e.target.value)} placeholder="Ivory A-line cathedral" style={{...inputSt}}/></div>
+            <div><label htmlFor="add-dress-sku" style={LBL}>SKU</label><input id="add-dress-sku" value={sku} onChange={e=>setSku(e.target.value)} placeholder="BB-048" style={{...inputSt}}/></div>
+            <div><label htmlFor="add-dress-name" style={LBL}>Dress name</label><input id="add-dress-name" value={name} onChange={e=>setName(e.target.value)} placeholder="Ivory A-line cathedral" style={{...inputSt}}/></div>
           </div>
 
           {/* Color + Size */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-            <div><div style={{...LBL}}>Color</div><input value={color} onChange={e=>setColor(e.target.value)} placeholder="Ivory" style={{...inputSt}}/></div>
-            <div><div style={{...LBL}}>Size</div>
-              <select value={size} onChange={e=>setSize(e.target.value)} style={{...inputSt}}>
+            <div><label htmlFor="add-dress-color" style={LBL}>Color</label><input id="add-dress-color" value={color} onChange={e=>setColor(e.target.value)} placeholder="Ivory" style={{...inputSt}}/></div>
+            <div><label htmlFor="add-dress-size" style={LBL}>Size</label>
+              <select id="add-dress-size" value={size} onChange={e=>setSize(e.target.value)} style={{...inputSt}}>
                 <option value="">Select size</option>
                 {['0','2','4','6','8','10','12','14','16','Custom'].map(s=><option key={s}>{s}</option>)}
               </select>
@@ -111,18 +111,18 @@ const AddDressModal = ({onClose, onCreate}) => {
           {/* Pricing */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
             <div>
-              <div style={{...LBL}}>Rental price ($)</div>
-              <input type="number" value={price} onChange={e=>{setPrice(e.target.value);if(!deposit)setDeposit(String(Math.round(Number(e.target.value)*0.65)));}} placeholder="450" style={{...inputSt}}/>
+              <label htmlFor="add-dress-price" style={LBL}>Rental price ($)</label>
+              <input id="add-dress-price" type="number" value={price} onChange={e=>{setPrice(e.target.value);if(!deposit)setDeposit(String(Math.round(Number(e.target.value)*0.65)));}} placeholder="450" style={{...inputSt}}/>
             </div>
             <div>
-              <div style={{...LBL}}>Security deposit ($)</div>
-              <input type="number" value={deposit} onChange={e=>setDeposit(e.target.value)} placeholder="300" style={{...inputSt}}/>
+              <label htmlFor="add-dress-deposit" style={LBL}>Security deposit ($)</label>
+              <input id="add-dress-deposit" type="number" value={deposit} onChange={e=>setDeposit(e.target.value)} placeholder="300" style={{...inputSt}}/>
               {price&&deposit&&Number(deposit)>0&&<div style={{fontSize:10,color:C.gray,marginTop:3}}>~{Math.round(Number(deposit)/Number(price)*100)}% of rental price</div>}
             </div>
           </div>
 
-          <div><div style={{...LBL}}>Notes (optional)</div><textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2} placeholder="Any notes about this dress..." style={{...inputSt,resize:'vertical'}}/></div>
-          {err&&<div style={{fontSize:12,color:'var(--color-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7}}>{err}</div>}
+          <div><label htmlFor="add-dress-notes" style={LBL}>Notes (optional)</label><textarea id="add-dress-notes" value={notes} onChange={e=>setNotes(e.target.value)} rows={2} placeholder="Any notes about this dress..." style={{...inputSt,resize:'vertical'}}/></div>
+          {err&&<div style={{fontSize:12,color:'var(--text-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7}}>{err}</div>}
         </div>
         <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
           <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose}/>

@@ -10,10 +10,10 @@ export function getUrgency(event) {
 // ─── PRD §6.2 Countdown Badge ─────────────────────────────────────────────
 export function getCountdownConfig(days) {
   if (days < 0)  return { text: 'Past',        bg: '#F3F4F6',            color: '#6B7280',             pulse: false }
-  if (days === 0) return { text: 'Today!',      bg: 'var(--bg-danger)',   color: 'var(--color-danger)', pulse: true  }
-  if (days <= 6)  return { text: `in ${days}d`, bg: 'var(--bg-danger)',   color: 'var(--color-danger)', pulse: false }
-  if (days <= 13) return { text: `in ${days}d`, bg: 'var(--bg-warning)',  color: 'var(--color-warning)',pulse: false }
-  if (days <= 30) return { text: `in ${days}d`, bg: 'var(--bg-warning)',  color: 'var(--color-warning)',pulse: false }
+  if (days === 0) return { text: 'Today!',      bg: 'var(--bg-danger)',   color: 'var(--text-danger)', pulse: true  }
+  if (days <= 6)  return { text: `in ${days}d`, bg: 'var(--bg-danger)',   color: 'var(--text-danger)', pulse: false }
+  if (days <= 13) return { text: `in ${days}d`, bg: 'var(--bg-warning)',  color: 'var(--text-warning)',pulse: false }
+  if (days <= 30) return { text: `in ${days}d`, bg: 'var(--bg-warning)',  color: 'var(--text-warning)',pulse: false }
   return           { text: `in ${days}d`,       bg: '#F3F4F6',            color: '#6B7280',             pulse: false }
 }
 

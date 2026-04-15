@@ -109,7 +109,7 @@ const SingleQRModal = ({ dress, onClose }) => {
               {[['small', 'Small', '2"×2"', 'Hanger tag'], ['large', 'Large', '3"×4"', 'Garment bag']].map(([v, l, s, sub]) => (
                 <button key={v} onClick={() => setSize(v)}
                   style={{ padding: '10px 12px', borderRadius: 10, border: `2px solid ${size === v ? C.rosa : C.border}`, background: size === v ? C.rosaPale : '#fff', cursor: 'pointer', textAlign: 'left', minHeight: 'unset', minWidth: 'unset' }}>
-                  <div style={{ fontSize: 12, fontWeight: size === v ? 700 : 500, color: size === v ? C.rosa : C.ink }}>{l} <span style={{ fontSize: 10, fontWeight: 400 }}>({s})</span></div>
+                  <div style={{ fontSize: 12, fontWeight: size === v ? 700 : 500, color: size === v ? C.rosaText : C.ink }}>{l} <span style={{ fontSize: 10, fontWeight: 400 }}>({s})</span></div>
                   <div style={{ fontSize: 10, color: C.gray, marginTop: 2 }}>{sub}</div>
                 </button>
               ))}
@@ -216,7 +216,7 @@ export default function QRCodesPage({ setScreen }) {
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
           {CATS.slice(0, 6).map(c => (
             <button key={c} onClick={() => setCatFilter(c)}
-              style={{ padding: '4px 10px', borderRadius: 20, border: `1px solid ${catFilter === c ? C.rosa : C.border}`, background: catFilter === c ? C.rosaPale : '#fff', color: catFilter === c ? C.rosa : C.gray, fontSize: 11, fontWeight: catFilter === c ? 600 : 400, cursor: 'pointer', minHeight: 'unset', minWidth: 'unset' }}>
+              style={{ padding: '4px 10px', borderRadius: 20, border: `1px solid ${catFilter === c ? C.rosa : C.border}`, background: catFilter === c ? C.rosaPale : '#fff', color: catFilter === c ? C.rosaText : C.gray, fontSize: 11, fontWeight: catFilter === c ? 600 : 400, cursor: 'pointer', minHeight: 'unset', minWidth: 'unset' }}>
               {c === 'all' ? 'All categories' : (CAT_LABELS[c] || c)}
             </button>
           ))}
@@ -225,14 +225,14 @@ export default function QRCodesPage({ setScreen }) {
         {/* Status filter */}
         {STATUSES.slice(0, 5).map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
-            style={{ padding: '4px 10px', borderRadius: 20, border: `1px solid ${statusFilter === s ? C.rosa : C.border}`, background: statusFilter === s ? C.rosaPale : '#fff', color: statusFilter === s ? C.rosa : C.gray, fontSize: 11, fontWeight: statusFilter === s ? 600 : 400, cursor: 'pointer', minHeight: 'unset', minWidth: 'unset' }}>
+            style={{ padding: '4px 10px', borderRadius: 20, border: `1px solid ${statusFilter === s ? C.rosa : C.border}`, background: statusFilter === s ? C.rosaPale : '#fff', color: statusFilter === s ? C.rosaText : C.gray, fontSize: 11, fontWeight: statusFilter === s ? 600 : 400, cursor: 'pointer', minHeight: 'unset', minWidth: 'unset' }}>
             {s === 'all' ? 'All statuses' : (STATUS_CFG[s]?.label || s)}
           </button>
         ))}
         <div style={{ flex: 1 }}/>
         {filtered.length > 0 && (
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={selectAll} style={{ fontSize: 11, color: C.rosa, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>Select all ({filtered.length})</button>
+            <button onClick={selectAll} style={{ fontSize: 11, color: C.rosaText, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>Select all ({filtered.length})</button>
             {selected.size > 0 && <button onClick={clearAll} style={{ fontSize: 11, color: C.gray, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>Clear</button>}
           </div>
         )}

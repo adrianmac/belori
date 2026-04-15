@@ -54,7 +54,7 @@ function fmtMoney(n: number): string {
 // ─── 1. 24-hour appointment reminder ─────────────────────────────────────────
 async function runSms24h() {
   const tomorrow = offsetDate(1)
-  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, automations')
+  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, automations').limit(500)
   if (!boutiques) return
 
   for (const boutique of boutiques) {
@@ -66,20 +66,33 @@ async function runSms24h() {
       .eq('date', tomorrow)
       .eq('status', 'scheduled')
 
+    // Idempotency: collect client_ids already reminded today so we don't double-send
+    const { data: todayReminders } = await supabaseAdmin
+      .from('client_interactions')
+      .select('client_id')
+      .eq('boutique_id', boutique.id)
+      .eq('type', 'reminder')
+      .eq('title', '24h appointment reminder sent')
+      .gte('occurred_at', today() + 'T00:00:00.000Z')
+    const alreadyReminded24h = new Set((todayReminders ?? []).map(r => r.client_id))
+
     for (const appt of (appts ?? [])) {
+      const clientId = appt.event?.client_id
+      if (clientId && alreadyReminded24h.has(clientId)) continue
       const phone = appt.event?.client?.phone
       const name  = appt.event?.client?.name?.split(' ')[0] ?? 'there'
       const e164  = phone ? toE164(phone) : null
       if (!e164) continue
       const msg = `Hi ${name}! Reminder from ${boutique.name}: you have a ${appt.type?.replace(/_/g,' ')} tomorrow (${fmtDate(tomorrow)}). See you soon! 💐`
       await sendSms(e164, msg)
-      if (appt.event?.client_id) {
+      if (clientId) {
         await supabaseAdmin.from('client_interactions').insert({
-          boutique_id: boutique.id, client_id: appt.event.client_id,
+          boutique_id: boutique.id, client_id: clientId,
           type: 'reminder', title: '24h appointment reminder sent',
           body: `SMS reminder sent for ${appt.type?.replace(/_/g,' ')} on ${fmtDate(tomorrow)}`,
           occurred_at: new Date().toISOString(),
         })
+        alreadyReminded24h.add(clientId) // prevent double-send within same run
       }
       // Push notification to boutique staff
       await sendPush(
@@ -100,7 +113,7 @@ async function runSms2h() {
   const hi   = new Date(now.getTime() + (125 * 60 * 1000))
   const loTime = lo.toTimeString().slice(0, 5)
   const hiTime = hi.toTimeString().slice(0, 5)
-  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, automations')
+  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, automations').limit(500)
   if (!boutiques) return
 
   for (const boutique of boutiques) {
@@ -111,7 +124,20 @@ async function runSms2h() {
       .eq('boutique_id', boutique.id).eq('date', todayDate).eq('status', 'scheduled')
       .gte('time', loTime).lte('time', hiTime)
 
+    // Idempotency: check if a 2h reminder was already sent within the past 90 minutes
+    const ninetyMinAgo = new Date(Date.now() - 90 * 60 * 1000).toISOString()
+    const { data: recentReminders2h } = await supabaseAdmin
+      .from('client_interactions')
+      .select('client_id')
+      .eq('boutique_id', boutique.id)
+      .eq('type', 'reminder')
+      .eq('title', '2h appointment reminder sent')
+      .gte('occurred_at', ninetyMinAgo)
+    const alreadyReminded2h = new Set((recentReminders2h ?? []).map(r => r.client_id))
+
     for (const appt of (appts ?? [])) {
+      const clientId = appt.event?.client_id
+      if (clientId && alreadyReminded2h.has(clientId)) continue
       const phone = appt.event?.client?.phone
       const name  = appt.event?.client?.name?.split(' ')[0] ?? 'there'
       const e164  = phone ? toE164(phone) : null
@@ -119,6 +145,15 @@ async function runSms2h() {
       const time = appt.time ? appt.time.slice(0, 5) : ''
       const msg  = `Hi ${name}! Just a reminder — your ${appt.type?.replace(/_/g,' ')} at ${boutique.name} is in about 2 hours${time ? ` (${time})` : ''}. See you soon! 💐`
       await sendSms(e164, msg)
+      if (clientId) {
+        await supabaseAdmin.from('client_interactions').insert({
+          boutique_id: boutique.id, client_id: clientId,
+          type: 'reminder', title: '2h appointment reminder sent',
+          body: `SMS reminder sent for ${appt.type?.replace(/_/g,' ')} at ${time || 'scheduled time'}`,
+          occurred_at: new Date().toISOString(),
+        })
+        alreadyReminded2h.add(clientId) // prevent double-send within same run
+      }
     }
   }
 }
@@ -126,7 +161,7 @@ async function runSms2h() {
 // ─── 3. Payment due reminder ──────────────────────────────────────────────────
 async function runPaymentReminder() {
   const targetDate = offsetDate(3)
-  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, email, automations')
+  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, email, automations').limit(500)
   if (!boutiques) return
 
   for (const boutique of boutiques) {
@@ -136,7 +171,11 @@ async function runPaymentReminder() {
       .select('*, event:events(client_id, client:clients(name, phone, email))')
       .eq('boutique_id', boutique.id).eq('due_date', targetDate).neq('status', 'paid')
 
+    // Idempotency: skip milestones already reminded within the past 22 hours
+    const payReminderCutoff = new Date(Date.now() - 22 * 60 * 60 * 1000).toISOString()
+
     for (const m of (milestones ?? [])) {
+      if (m.last_reminded_at && m.last_reminded_at > payReminderCutoff) continue
       const name  = m.event?.client?.name?.split(' ')[0] ?? 'there'
       const phone = m.event?.client?.phone
       const email = m.event?.client?.email
@@ -175,7 +214,7 @@ async function runPaymentReminder() {
 // ─── 4. Overdue payment alerts ────────────────────────────────────────────────
 async function runOverdueAlerts() {
   const checkDates = [offsetDate(-1), offsetDate(-7), offsetDate(-14)]
-  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, automations')
+  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, automations').limit(500)
   if (!boutiques) return
 
   for (const boutique of boutiques) {
@@ -185,7 +224,11 @@ async function runOverdueAlerts() {
       .select('*, event:events(client_id, client:clients(name, phone))')
       .eq('boutique_id', boutique.id).in('due_date', checkDates).neq('status', 'paid')
 
+    // Idempotency: skip milestones already alerted within the past 22 hours
+    const overdueCutoff = new Date(Date.now() - 22 * 60 * 60 * 1000).toISOString()
+
     for (const m of (milestones ?? [])) {
+      if (m.last_reminded_at && m.last_reminded_at > overdueCutoff) continue
       const daysLate = checkDates.indexOf(m.due_date) === 0 ? 1 : checkDates.indexOf(m.due_date) === 1 ? 7 : 14
       const name  = m.event?.client?.name?.split(' ')[0] ?? 'there'
       const phone = m.event?.client?.phone
@@ -219,7 +262,7 @@ async function runOverdueAlerts() {
 // ─── 5. Dress return reminder ─────────────────────────────────────────────────
 async function runReturnReminder() {
   const in48h = offsetDate(2)
-  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, automations')
+  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, automations').limit(500)
   if (!boutiques) return
 
   for (const boutique of boutiques) {
@@ -250,7 +293,7 @@ async function runReturnReminder() {
 // ─── 6. Post-event review request ────────────────────────────────────────────
 async function runReviewRequest() {
   const yesterday = offsetDate(-1)
-  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, instagram, booking_url, automations')
+  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, instagram, booking_url, automations').limit(500)
   if (!boutiques) return
 
   for (const boutique of boutiques) {
@@ -290,7 +333,7 @@ async function runReviewRequest() {
 // ─── 7. Win-back campaign ─────────────────────────────────────────────────────
 async function runWinBack() {
   const cutoff = offsetDate(-60)
-  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, automations')
+  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, automations').limit(500)
   if (!boutiques) return
 
   for (const boutique of boutiques) {
@@ -306,7 +349,7 @@ async function runWinBack() {
         .order('occurred_at', { ascending: false }).limit(1).maybeSingle()
       const lastDate = last?.occurred_at?.split('T')[0] ?? '2000-01-01'
       if (lastDate >= cutoff) continue
-      const firstName = client.name.split(' ')[0]
+      const firstName = client.name?.split(' ')[0] ?? 'there'
       await sendSms(e164, `Hi ${firstName}! We miss you at ${boutique.name} 💕 Whether you're planning a new event or just browsing, we'd love to see you. Reply to chat or visit us anytime!`)
       await supabaseAdmin.from('client_interactions').insert({
         boutique_id: boutique.id, client_id: client.id,
@@ -320,7 +363,7 @@ async function runWinBack() {
 
 // ─── 8. Weekly event digest ───────────────────────────────────────────────────
 async function runWeeklyDigest() {
-  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, email, automations')
+  const { data: boutiques } = await supabaseAdmin.from('boutiques').select('id, name, email, automations').limit(500)
   if (!boutiques) return
   const twoWeeksOut = offsetDate(14)
 
@@ -385,7 +428,7 @@ async function runBirthdaySms() {
     for (const client of birthdays) {
       const e164 = toE164(client.phone)
       if (!e164) continue
-      const firstName = client.name.split(' ')[0]
+      const firstName = client.name?.split(' ')[0] ?? 'there'
       const msg = `🎂 Happy Birthday ${firstName}! Wishing you a wonderful day from all of us at ${boutique.name}! 💕`
       await sendSms(e164, msg)
       await supabaseAdmin.from('client_interactions').insert({
@@ -434,7 +477,7 @@ async function runAnniversarySms() {
     for (const client of clientAnniversaries) {
       const e164 = toE164(client.phone)
       if (!e164) continue
-      const firstName = client.name.split(' ')[0]
+      const firstName = client.name?.split(' ')[0] ?? 'there'
       const years = now.getUTCFullYear() - new Date(client.anniversary_date).getUTCFullYear()
       const yearsStr = years > 0 ? `${years} year${years !== 1 ? 's' : ''}` : 'another year'
       const msg = `💕 Happy Anniversary ${firstName}! It's been ${yearsStr} since your special day. We hope the memories last forever! - ${boutique.name}`
@@ -453,7 +496,7 @@ async function runAnniversarySms() {
     // 2. Completed wedding events (event_date month+day = today)
     const { data: weddings } = await supabaseAdmin
       .from('events')
-      .select('id, client, event_date, client_id, clients(phone, name)')
+      .select('id, event_date, client_id, client:clients(id, name, phone)')
       .eq('boutique_id', boutique.id)
       .eq('type', 'wedding')
       .eq('status', 'completed')
@@ -466,14 +509,14 @@ async function runAnniversarySms() {
     })
 
     for (const wedding of weddingAnniversaries) {
-      const phone = wedding.clients?.phone
+      const phone = wedding.client?.phone
       if (!phone) continue
       const e164 = toE164(phone)
       if (!e164) continue
       const years = now.getUTCFullYear() - new Date(wedding.event_date).getUTCFullYear()
       if (years <= 0) continue
       const yearsStr = `${years} year${years !== 1 ? 's' : ''}`
-      const firstName = (wedding.client || wedding.clients?.name || '').split(' ')[0] || 'there'
+      const firstName = (wedding.client?.name || '').split(' ')[0] || 'there'
       const msg = `💕 Happy Anniversary ${firstName}! It's been ${yearsStr} since your special day. We hope the memories last forever! - ${boutique.name}`
       await sendSms(e164, msg)
       await supabaseAdmin.from('client_interactions').insert({
@@ -538,10 +581,13 @@ async function runStaffInvite(data: { email: string; boutique_name: string; role
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
-  // Auth check — accept key from header or query param
-  const SECRET = Deno.env.get('AUTOMATION_SECRET_KEY') ?? ''
-  const key = req.headers.get('x-automation-key') ?? new URL(req.url).searchParams.get('key') ?? ''
-  if (SECRET && key !== SECRET) {
+  // Auth check — require key from header only (never from query param to avoid log leakage)
+  const SECRET = Deno.env.get('AUTOMATION_SECRET_KEY')
+  if (!SECRET) {
+    return new Response('Server misconfiguration: AUTOMATION_SECRET_KEY not set', { status: 500, headers: corsHeaders })
+  }
+  const key = req.headers.get('x-automation-key') ?? ''
+  if (key !== SECRET) {
     return new Response('Unauthorized', { status: 401, headers: corsHeaders })
   }
 

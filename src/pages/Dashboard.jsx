@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { C, fmt, EVT_TYPES, SVC_LABELS, SVC_COLORS } from '../lib/colors';
 import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, SvcTag,
   Countdown, EventTypeBadge, ProgressBar, StatusDot, AlertBanner, useToast,
@@ -12,12 +12,12 @@ import { autoProgressEvents } from '../hooks/useEvents';
 import StandaloneAppointmentModal from '../components/StandaloneAppointmentModal';
 
 const APPT_TYPE_CFG = {
-  measurement:   {label:'Measurements',  tag:'Fitting',  tagBg:'var(--bg-success)', tagCol:'var(--color-success)', col:C.rosaPale,              textCol:C.rosa},
-  try_on:        {label:'1st fitting',   tag:'Fitting',  tagBg:'var(--bg-success)', tagCol:'var(--color-success)', col:C.rosaPale,              textCol:C.rosa},
-  final_fitting: {label:'Final fitting', tag:'Fitting',  tagBg:'var(--bg-success)', tagCol:'var(--color-success)', col:C.rosaPale,              textCol:C.rosa},
-  pickup:        {label:'Dress pickup',  tag:'Pickup',   tagBg:'var(--bg-warning)', tagCol:'var(--color-warning)', col:'var(--bg-warning)',      textCol:'var(--color-warning)'},
-  consultation:  {label:'Consultation',  tag:'Consult',  tagBg:'var(--bg-accent)',  tagCol:'var(--color-accent)',  col:'var(--bg-accent)',       textCol:'var(--color-accent)'},
-  other:         {label:'Appointment',   tag:'Appt',     tagBg:'var(--bg-info)',    tagCol:'var(--color-info)',    col:'var(--bg-info)',         textCol:'var(--color-info)'},
+  measurement:   {label:'Measurements',  tag:'Fitting',  tagBg:'var(--bg-success)', tagCol:'var(--text-success)', col:C.rosaPale,              textCol:C.rosaText},
+  try_on:        {label:'1st fitting',   tag:'Fitting',  tagBg:'var(--bg-success)', tagCol:'var(--text-success)', col:C.rosaPale,              textCol:C.rosaText},
+  final_fitting: {label:'Final fitting', tag:'Fitting',  tagBg:'var(--bg-success)', tagCol:'var(--text-success)', col:C.rosaPale,              textCol:C.rosaText},
+  pickup:        {label:'Dress pickup',  tag:'Pickup',   tagBg:'var(--bg-warning)', tagCol:'var(--text-warning)', col:'var(--bg-warning)',      textCol:'var(--text-warning)'},
+  consultation:  {label:'Consultation',  tag:'Consult',  tagBg:'var(--bg-accent)',  tagCol:'var(--text-accent)',  col:'var(--bg-accent)',       textCol:'var(--text-accent)'},
+  other:         {label:'Appointment',   tag:'Appt',     tagBg:'var(--bg-info)',    tagCol:'var(--text-info)',    col:'var(--bg-info)',         textCol:'var(--text-info)'},
 };
 
 
@@ -62,50 +62,50 @@ const NewAppointmentModal = ({events, staff, onClose, onSaved}) => {
       <div style={{background:C.white,borderRadius:16,width:440,maxHeight:'88vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
         <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
           <span style={{fontWeight:600,fontSize:15,color:C.ink}}>New appointment</span>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'4px 8px',minWidth:32,minHeight:32}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:20,display:'flex',flexDirection:'column',gap:14}}>
-          {err && <div style={{fontSize:12,color:'var(--color-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7,border:'1px solid var(--border-danger)'}}>{err}</div>}
+          {err && <div style={{fontSize:12,color:'var(--text-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7,border:'1px solid var(--border-danger)'}}>{err}</div>}
           <div>
-            <div style={{...LBL}}>Event *</div>
-            <select value={eventId} onChange={e=>setEventId(e.target.value)} style={{...inputSt}}>
+            <label htmlFor="new-appt-event" style={LBL}>Event *</label>
+            <select id="new-appt-event" value={eventId} onChange={e=>setEventId(e.target.value)} style={{...inputSt}}>
               <option value="">Select event…</option>
               {(events||[]).filter(ev=>ev.status!=='completed'&&ev.status!=='cancelled').map(ev=>(
-                <option key={ev.id} value={ev.id}>{ev.client} — {ev.type==='wedding'?'Wedding':'Quinceañera'} · {ev.date}</option>
+                <option key={ev.id} value={ev.id}>{ev.client} — {EVT_TYPES[ev.type]?.label || ev.type} · {ev.date}</option>
               ))}
             </select>
           </div>
           <div>
-            <div style={{...LBL}}>Type</div>
-            <select value={type} onChange={e=>setType(e.target.value)} style={{...inputSt}}>
+            <label htmlFor="new-appt-type" style={LBL}>Type</label>
+            <select id="new-appt-type" value={type} onChange={e=>setType(e.target.value)} style={{...inputSt}}>
               {APPT_TYPES.map(t=><option key={t} value={t}>{APPT_TYPE_LABELS[t]}</option>)}
             </select>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
             <div>
-              <div style={{...LBL}}>Date *</div>
-              <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={{...inputSt}}/>
+              <label htmlFor="new-appt-date" style={LBL}>Date *</label>
+              <input id="new-appt-date" type="date" value={date} onChange={e=>setDate(e.target.value)} style={{...inputSt}}/>
             </div>
             <div>
-              <div style={{...LBL}}>Time</div>
-              <input type="time" value={time} onChange={e=>setTime(e.target.value)} style={{...inputSt}}/>
+              <label htmlFor="new-appt-time" style={LBL}>Time</label>
+              <input id="new-appt-time" type="time" value={time} onChange={e=>setTime(e.target.value)} style={{...inputSt}}/>
             </div>
           </div>
           <div>
-            <div style={{...LBL}}>Staff member <span style={{fontWeight:400,color:C.gray}}>(optional)</span></div>
-            <select value={staffId} onChange={e=>setStaffId(e.target.value)} style={{...inputSt}}>
+            <label htmlFor="new-appt-staff" style={LBL}>Staff member <span style={{fontWeight:400,color:C.gray}}>(optional)</span></label>
+            <select id="new-appt-staff" value={staffId} onChange={e=>setStaffId(e.target.value)} style={{...inputSt}}>
               <option value="">Unassigned</option>
               {(staff||[]).map(s=><option key={s.id} value={s.id}>{s.name} — {s.role}</option>)}
             </select>
           </div>
           <div>
-            <div style={{...LBL}}>Note <span style={{fontWeight:400,color:C.gray}}>(optional)</span></div>
-            <textarea value={note} onChange={e=>setNote(e.target.value)} rows={2} placeholder="Any details for the appointment…" style={{...inputSt,resize:'vertical',fontFamily:'inherit'}}/>
+            <label htmlFor="new-appt-note" style={LBL}>Note <span style={{fontWeight:400,color:C.gray}}>(optional)</span></label>
+            <textarea id="new-appt-note" value={note} onChange={e=>setNote(e.target.value)} rows={2} placeholder="Any details for the appointment…" style={{...inputSt,resize:'vertical',fontFamily:'inherit'}}/>
           </div>
         </div>
         <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',flexShrink:0}}>
           <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose}/>
-          <PrimaryBtn label={saving?'Saving…':'Schedule appointment'} onClick={save}/>
+          <PrimaryBtn label={saving?'Saving…':'Schedule appointment'} onClick={save} disabled={saving}/>
         </div>
       </div>
     </div>
@@ -140,12 +140,12 @@ function DailyBriefingBanner({ appointments, payments, events }) {
         <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{greeting} 👋</div>
         <div style={{ fontSize: 12, color: C.gray, marginTop: 2 }}>{todayStr}</div>
         <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
-          {todayAppts > 0 && <span style={{ fontSize: 12, color: C.rosa, fontWeight: 500 }}>📅 {todayAppts} appointment{todayAppts !== 1 ? 's' : ''} today</span>}
-          {overdueCount > 0 && <span style={{ fontSize: 12, color: 'var(--color-danger)', fontWeight: 500 }}>⚠️ {overdueCount} overdue payment{overdueCount !== 1 ? 's' : ''}</span>}
-          {todayAppts === 0 && overdueCount === 0 && <span style={{ fontSize: 12, color: 'var(--color-success)', fontWeight: 500 }}>✅ Clear day — no urgent items</span>}
+          {todayAppts > 0 && <span style={{ fontSize: 12, color: C.rosaText, fontWeight: 500 }}>📅 {todayAppts} appointment{todayAppts !== 1 ? 's' : ''} today</span>}
+          {overdueCount > 0 && <span style={{ fontSize: 12, color: 'var(--text-danger)', fontWeight: 500 }}>⚠️ {overdueCount} overdue payment{overdueCount !== 1 ? 's' : ''}</span>}
+          {todayAppts === 0 && overdueCount === 0 && <span style={{ fontSize: 12, color: 'var(--text-success)', fontWeight: 500 }}>✅ Clear day — no urgent items</span>}
         </div>
       </div>
-      <button onClick={dismiss} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1, padding: 4, flexShrink: 0 }}>×</button>
+      <button onClick={dismiss} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1, padding: '4px 8px', flexShrink: 0, minWidth: 32, minHeight: 32 }}>×</button>
     </div>
   );
 }
@@ -202,7 +202,7 @@ const OnboardingChecklist = ({events, clients, staff, inventory, payments, appoi
     {label:'Add a dress to inventory',       done: (inventory?.length||0) > 0, action:()=>goWithHint('inventory','new_dress'),   icon:'👗'},
     {label:'Invite a staff member',          done: (staff?.length||0) > 1,     action:()=>goWithHint('settings','invite_staff'), icon:'👥'},
     {label:'Set up your first payment milestone', done: (payments?.length||0) > 0, action:()=>setScreen('payments'),            icon:'💳'},
-    {label:'Try the Calendar',               done: allAppointments.length > 0, action:()=>setScreen('staff_calendar'),          icon:'🗓️'},
+    {label:'Try the Calendar',               done: allAppointments.length > 0, action:()=>setScreen('schedule'),               icon:'🗓️'},
   ];
   const doneCount = items.filter(i=>i.done).length;
   const allDone = doneCount === items.length;
@@ -247,7 +247,7 @@ const OnboardingChecklist = ({events, clients, staff, inventory, payments, appoi
             <div style={{display:'flex',gap:3}}>
               {items.map((_,i)=><div key={i} style={{width:16,height:4,borderRadius:2,background:i<doneCount?C.rosa:C.border,transition:'background 0.2s'}}/>)}
             </div>
-            <button onClick={dismiss} style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:16,lineHeight:1,padding:0}}>×</button>
+            <button onClick={dismiss} aria-label="Close" style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:16,lineHeight:1,padding:'4px 8px',minWidth:32,minHeight:32}}>×</button>
           </div>
         </div>
         <div style={{padding:'8px 16px 16px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
@@ -261,7 +261,7 @@ const OnboardingChecklist = ({events, clients, staff, inventory, payments, appoi
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <span style={{fontSize:12,color:item.done?C.gray:C.ink,fontWeight:item.done?400:500,textDecoration:item.done?'line-through':'none',display:'block'}}>{item.label}</span>
-                {!item.done&&<span style={{fontSize:10,color:C.rosa}}>Tap to start →</span>}
+                {!item.done&&<span style={{fontSize:10,color:C.rosaText}}>Tap to start →</span>}
               </div>
             </button>
           ))}
@@ -447,7 +447,7 @@ function buildRuleInsights({ payments, events, inventory, clients, alterations }
 
 const INSIGHT_STYLE = {
   red:    { border: C.red,     bg: C.redBg,    text: C.red },
-  amber:  { border: C.amber,   bg: C.amberBg,  text: C.amber },
+  amber:  { border: C.amber,   bg: C.amberBg,  text: C.warningText },
   blue:   { border: C.blue,    bg: C.blueBg,   text: C.blue },
   green:  { border: C.green,   bg: C.greenBg,  text: C.green },
   purple: { border: '#7C3AED', bg: '#F5F3FF',  text: '#5B21B6' },
@@ -524,9 +524,9 @@ function RevenueForecastPanel({ payments }) {
         {/* This month vs last */}
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
           <div style={{background:C.rosaPale,borderRadius:10,padding:'10px 12px'}}>
-            <div style={{fontSize:10,color:C.rosa,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>This month</div>
+            <div style={{fontSize:10,color:C.rosaText,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>This month</div>
             <div style={{fontSize:18,fontWeight:700,color:C.ink}}>{fmt(thisMonth)}</div>
-            {trend!==null&&<div style={{fontSize:11,color:trendUp?'var(--color-success)':'var(--color-danger)',marginTop:2}}>{trendUp?'↑':'↓'} {Math.abs(Math.round(trend))}% vs last month</div>}
+            {trend!==null&&<div style={{fontSize:11,color:trendUp?'var(--text-success)':'var(--text-danger)',marginTop:2}}>{trendUp?'↑':'↓'} {Math.abs(Math.round(trend))}% vs last month</div>}
           </div>
           <div style={{background:C.grayBg,borderRadius:10,padding:'10px 12px'}}>
             <div style={{fontSize:10,color:C.gray,fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:4}}>Last month</div>
@@ -638,7 +638,7 @@ function EndOfDaySummary({ payments, events, appointments }) {
         {eventsToday > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: C.rosaPale, borderRadius: 8 }}>
             <span style={{ fontSize: 13, color: C.ink }}>Events today</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.rosa }}>{eventsToday}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.rosaText }}>{eventsToday}</span>
           </div>
         )}
         {doneAppts === 0 && paidToday.length === 0 && eventsToday === 0 && totalAppts > 0 && (
@@ -707,7 +707,7 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, payments, staff, 
         <div style={{ display: 'flex', gap: 10 }}>
           {[
             { label: '+ New Rental',     col: '#7C3AED', bg: '#F5F3FF', event: 'belori:new-rental',     screen: 'inventory' },
-            { label: '+ New Event',      col: C.rosa,    bg: C.rosaPale, event: 'belori:new-event',     screen: 'events' },
+            { label: '+ New Event',      col: C.rosaText, bg: C.rosaPale, event: 'belori:new-event',     screen: 'events' },
             { label: '+ New Alteration', col: '#0D9488', bg: '#F0FDFA', event: 'belori:new-alteration', screen: 'alterations' },
           ].map((a, i) => (
             <button key={i}
@@ -759,7 +759,7 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, payments, staff, 
                       <div style={{ fontSize: 11, color: C.gray }}>{APPT_TYPE_LABELS[a.type] || 'Appointment'}{a.note ? ` · ${a.note}` : ''}</div>
                     </div>
                     {isDone
-                      ? <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-success)', background: 'var(--bg-success)', padding: '3px 8px', borderRadius: 6 }}>Done</span>
+                      ? <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-success)', background: 'var(--bg-success)', padding: '3px 8px', borderRadius: 6 }}>Done</span>
                       : <Badge text={cfg.tag} bg={cfg.tagBg} color={cfg.tagCol} />
                     }
                   </div>
@@ -768,16 +768,8 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, payments, staff, 
               {todayAppts.some(a => a.status !== 'completed') && (
                 <div style={{ padding: '10px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'flex-end' }}>
                   <button
-                    onClick={async () => {
-                      const pending = todayAppts.filter(a => a.status !== 'completed');
-                      if (!pending.length) return;
-                      if (!window.confirm(`Mark all ${pending.length} appointment${pending.length !== 1 ? 's' : ''} as completed?`)) return;
-                      await Promise.all(pending.map(a =>
-                        supabase.from('appointments').update({ status: 'completed' }).eq('id', a.id)
-                      ));
-                      reloadAppts();
-                    }}
-                    style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-success)', background: 'var(--bg-success)', border: '1px solid var(--border-success)', borderRadius: 7, padding: '6px 12px', cursor: 'pointer', minHeight: 'unset', minWidth: 'unset' }}
+                    onClick={() => setShowMarkAllComplete(true)}
+                    style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-success)', background: 'var(--bg-success)', border: '1px solid var(--border-success)', borderRadius: 7, padding: '6px 12px', cursor: 'pointer', minHeight: 'unset', minWidth: 'unset' }}
                   >
                     Mark all complete
                   </button>
@@ -799,7 +791,7 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, payments, staff, 
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: isToday ? 'var(--color-danger)' : C.amber, flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: C.ink }}>{item.name}</div>
-                    <div style={{ fontSize: 11, color: isToday ? 'var(--color-danger)' : C.amber, fontWeight: 500 }}>
+                    <div style={{ fontSize: 11, color: isToday ? 'var(--text-danger)' : C.amber, fontWeight: 500 }}>
                       {isToday ? 'Due TODAY' : isTomorrow ? 'Due tomorrow' : `Due ${item.return_date}`}
                     </div>
                   </div>
@@ -822,7 +814,7 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, payments, staff, 
               const isTomorrow = job.deadline === tomorrow;
               const clientName = job.clients?.name || 'Client';
               const STATUS_LABEL = { pending: 'Pending', in_progress: 'In progress', fitting: 'Fitting', ready: 'Ready' };
-              const statusColors = { pending: C.gray, in_progress: C.amber, fitting: C.rosa, ready: 'var(--color-success)' };
+              const statusColors = { pending: C.gray, in_progress: C.amber, fitting: C.rosa, ready: 'var(--text-success)' };
               return (
                 <div key={job.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: i < dueAlts.length - 1 ? `1px solid ${C.border}` : 'none', cursor: 'pointer' }}
                   onClick={() => setScreen('alterations')}
@@ -832,7 +824,7 @@ const FocusDashboard = ({ setScreen, setSelectedEvent, events, payments, staff, 
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: isToday ? 'var(--color-danger)' : C.amber, flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: C.ink }}>{clientName} — {job.garment}</div>
-                    <div style={{ fontSize: 11, color: isToday ? 'var(--color-danger)' : C.amber, fontWeight: 500 }}>
+                    <div style={{ fontSize: 11, color: isToday ? 'var(--text-danger)' : C.amber, fontWeight: 500 }}>
                       {isToday ? 'Deadline TODAY' : isTomorrow ? 'Due tomorrow' : `Due ${job.deadline}`}
                     </div>
                   </div>
@@ -869,6 +861,7 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
   const { appointments: todayAppts, reload: reloadAppts } = useAppointmentsToday();
   const [showNewAppt, setShowNewAppt] = useState(false);
   const [showStandaloneAppt, setShowStandaloneAppt] = useState(false);
+  const [showMarkAllComplete, setShowMarkAllComplete] = useState(false);
   const [churnCount, setChurnCount] = useState(0);
   const [weeklyRevenue, setWeeklyRevenue] = useState(null);
   const toast = useToast();
@@ -890,23 +883,26 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
   const alert = getPriorityAlert(events);
   const { isTablet } = useLayoutMode();
 
-  // Real-time revenue: sum paid milestones this calendar month
+  // Real-time revenue: sum paid milestones this calendar month (memoized to avoid re-flatMap on every render)
   const now = new Date();
-  const monthStart    = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-  const lastMonthStart = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString().split('T')[0];
+  const monthStart     = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
   const lastMonthEnd   = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
-  const allMilestones  = events.flatMap(e => e.milestones || []);
-  const revenueThisMonth = events.length
-    ? allMilestones.filter(m => m.status === 'paid' && m.paid_date && m.paid_date >= monthStart)
-        .reduce((s, m) => s + Number(m.amount), 0)
-    : null;
-  const revenueLastMonth = events.length
-    ? allMilestones.filter(m => m.status === 'paid' && m.paid_date && m.paid_date >= lastMonthStart && m.paid_date <= lastMonthEnd)
-        .reduce((s, m) => s + Number(m.amount), 0)
-    : null;
-  const revPct = revenueThisMonth !== null && revenueLastMonth !== null && revenueLastMonth > 0
-    ? Math.round(((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100)
-    : null;
+
+  const { revenueThisMonth, revenueLastMonth, revPct } = useMemo(() => {
+    if (!events.length) return { revenueThisMonth: null, revenueLastMonth: null, revPct: null };
+    const allMilestones = events.flatMap(e => e.milestones || []);
+    const thisMonth = allMilestones
+      .filter(m => m.status === 'paid' && m.paid_date && m.paid_date >= monthStart)
+      .reduce((s, m) => s + Number(m.amount), 0);
+    const lastMonth = allMilestones
+      .filter(m => m.status === 'paid' && m.paid_date && m.paid_date >= lastMonthStart && m.paid_date <= lastMonthEnd)
+      .reduce((s, m) => s + Number(m.amount), 0);
+    const pct = lastMonth > 0
+      ? Math.round(((thisMonth - lastMonth) / lastMonth) * 100)
+      : null;
+    return { revenueThisMonth: thisMonth, revenueLastMonth: lastMonth, revPct: pct };
+  }, [events, monthStart, lastMonthStart, lastMonthEnd]);
 
   // Churn alert: clients with last_contacted_at > 90 days ago
   useEffect(() => {
@@ -951,7 +947,7 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
     const clientName = a.event?.client?.name || a.client_name || '';
     const parts = clientName.split(' ');
     const init = (parts[0]?.[0] || '') + (parts[parts.length - 1]?.[0] || '');
-    const evType = a.event?.type === 'wedding' ? 'Wedding' : a.event?.type === 'quince' ? 'Quinceañera' : '';
+    const evType = EVT_TYPES[a.event?.type]?.label || '';
     const isWalkIn = a.type === 'walk_in';
     const serviceStr = isWalkIn
       ? ['Walk-in', a.client_phone, a.note].filter(Boolean).join(' · ')
@@ -968,12 +964,12 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
   }
 
   const QUICK_ACTIONS = [
-    {label:'New rental',sub:'Reserve a dress',icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 3c-2 0-4 1.5-5.5 4L4 12v8h16v-8l-2.5-5C16 4.5 14 3 12 3z"/><path d="M9 12c0-1.7 1.3-3 3-3s3 1.3 3 3"/></svg>,bg:'var(--bg-primary)',col:'var(--color-primary)',onClick:()=>setScreen('inventory')},
-    {label:'Log return',sub:'Check a dress in',icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>,bg:'var(--bg-success)',col:'var(--color-success)',onClick:()=>setScreen('inventory')},
-    {label:'New event',sub:'Book a client',icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M12 14v4M10 16h4"/></svg>,bg:'var(--bg-info)',col:'var(--color-info)',onClick:()=>goWithHint('events','new_event')},
-    {label:'Add alteration',sub:'Start a job',icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 3l2 6-4 3 4 3-2 6 6-4 6 4-2-6 4-3-4-3 2-6-6 4z"/></svg>,bg:'var(--bg-accent)',col:'var(--color-accent)',onClick:()=>goWithHint('alterations','new_alteration')},
-    {label:'Payments',sub:'View overdue',icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>,bg:'var(--bg-warning)',col:'var(--color-warning)',onClick:()=>setScreen('payments')},
-    {label:'New client',sub:'Add a contact',icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10" cy="7" r="4"/><path d="M2 21v-1a8 8 0 0 1 12.95-6.3M19 15v6M22 18h-6"/></svg>,bg:'var(--bg-success)',col:'var(--color-success)',onClick:()=>goWithHint('clients','new_client')},
+    {label:'New rental',sub:'Reserve a dress',icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 3c-2 0-4 1.5-5.5 4L4 12v8h16v-8l-2.5-5C16 4.5 14 3 12 3z"/><path d="M9 12c0-1.7 1.3-3 3-3s3 1.3 3 3"/></svg>,bg:C.rosaPale,col:C.rosaText,onClick:()=>setScreen('inventory')},
+    {label:'Log return',sub:'Check a dress in',icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>,bg:'var(--bg-success)',col:'var(--text-success)',onClick:()=>setScreen('inventory')},
+    {label:'New event',sub:'Book a client',icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M12 14v4M10 16h4"/></svg>,bg:'var(--bg-info)',col:'var(--text-info)',onClick:()=>goWithHint('events','new_event')},
+    {label:'Add alteration',sub:'Start a job',icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 3l2 6-4 3 4 3-2 6 6-4 6 4-2-6 4-3-4-3 2-6-6 4z"/></svg>,bg:'var(--bg-accent)',col:'var(--text-accent)',onClick:()=>goWithHint('alterations','new_alteration')},
+    {label:'Payments',sub:'View overdue',icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>,bg:'var(--bg-warning)',col:'var(--text-warning)',onClick:()=>setScreen('payments')},
+    {label:'New client',sub:'Add a contact',icon:<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10" cy="7" r="4"/><path d="M2 21v-1a8 8 0 0 1 12.95-6.3M19 15v6M22 18h-6"/></svg>,bg:'var(--bg-success)',col:'var(--text-success)',onClick:()=>goWithHint('clients','new_client')},
   ];
 
   // Returns due in next 7 days
@@ -984,11 +980,11 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
   const fmtCurrency = (amount) => new Intl.NumberFormat('en-US', {style:'currency',currency:'USD',maximumFractionDigits:0}).format(amount);
 
   const STATS = [
-    {label:'Revenue this month',val:revenueThisMonth !== null ? fmt(revenueThisMonth) : '—',sub:revenueThisMonth !== null ? (revPct !== null ? `${revPct >= 0 ? '▲' : '▼'} ${Math.abs(revPct)}% vs last month` : `${now.toLocaleString('default',{month:'long'})}`) : 'Loading…',subCol:revPct !== null ? (revPct >= 0 ? 'var(--color-success)' : 'var(--color-danger)') : 'var(--color-success)',icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,iconBg:'var(--bg-success)',iconCol:'var(--color-success)',onClick:()=>setScreen('payments')},
-    {label:'Active events',val:`${events.length}`,sub:`${events.filter(e=>e.type==='wedding').length} weddings · ${events.filter(e=>e.type==='quince').length} quinces`,subCol:C.gray,icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>,iconBg:'var(--bg-info)',iconCol:'var(--color-info)',onClick:()=>setScreen('events')},
-    {label:'Dresses rented',val:`${rentedCount}/${totalCount}`,sub:returnsDue.length>0?`${returnsDue.length} due back soon`:'No returns due soon',subCol:returnsDue.length>0?'var(--color-warning)':C.gray,icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 3c-2 0-4 1.5-5.5 4L4 12v8h16v-8l-2.5-5C16 4.5 14 3 12 3z"/></svg>,iconBg:'var(--bg-primary)',iconCol:'var(--color-primary)',onClick:()=>setScreen('inventory')},
-    {label:'Payments overdue',val:fmt(overdueTotal),sub:`${payments.filter(p=>p.status==='overdue').length} clients · action needed`,subCol:'var(--color-danger)',icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>,iconBg:'var(--bg-danger)',iconCol:'var(--color-danger)',onClick:()=>setScreen('payments')},
-    {label:"This week's revenue",val:weeklyRevenue !== null ? fmtCurrency(weeklyRevenue) : '—',sub:'Last 7 days collected',subCol:'var(--color-success)',icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>,iconBg:'var(--bg-success)',iconCol:'var(--color-success)',onClick:()=>setScreen('payments')},
+    {label:'Revenue this month',val:revenueThisMonth !== null ? fmt(revenueThisMonth) : '—',sub:revenueThisMonth !== null ? (revPct !== null ? `${revPct >= 0 ? '▲' : '▼'} ${Math.abs(revPct)}% vs last month` : `${now.toLocaleString('default',{month:'long'})}`) : 'Loading…',subCol:revPct !== null ? (revPct >= 0 ? 'var(--text-success)' : 'var(--text-danger)') : 'var(--text-success)',icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,iconBg:'var(--bg-success)',iconCol:'var(--text-success)',onClick:()=>setScreen('payments')},
+    {label:'Active events',val:`${events.length}`,sub:`${events.filter(e=>e.type==='wedding').length} weddings · ${events.filter(e=>e.type==='quince').length} quinces`,subCol:C.gray,icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>,iconBg:'var(--bg-info)',iconCol:'var(--text-info)',onClick:()=>setScreen('events')},
+    {label:'Dresses rented',val:`${rentedCount}/${totalCount}`,sub:returnsDue.length>0?`${returnsDue.length} due back soon`:'No returns due soon',subCol:returnsDue.length>0?'var(--text-warning)':C.gray,icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 3c-2 0-4 1.5-5.5 4L4 12v8h16v-8l-2.5-5C16 4.5 14 3 12 3z"/></svg>,iconBg:C.rosaPale,iconCol:C.rosaText,onClick:()=>setScreen('inventory')},
+    {label:'Payments overdue',val:fmt(overdueTotal),sub:`${payments.filter(p=>p.status==='overdue').length} clients · action needed`,subCol:'var(--text-danger)',icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>,iconBg:'var(--bg-danger)',iconCol:'var(--text-danger)',onClick:()=>setScreen('payments')},
+    {label:"This week's revenue",val:weeklyRevenue !== null ? fmtCurrency(weeklyRevenue) : '—',sub:'Last 7 days collected',subCol:'var(--text-success)',icon:<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>,iconBg:'var(--bg-success)',iconCol:'var(--text-success)',onClick:()=>setScreen('payments')},
   ];
 
   return (
@@ -1013,7 +1009,7 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
           <div style={{ background: 'var(--bg-warning)', border: '1px solid var(--border-warning)', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-warning)' }}>⚠️ {churnCount} clients need re-engagement</div>
-              <div style={{ fontSize: 11, color: 'var(--color-warning)', marginTop: 2 }}>Last contact was 90+ days ago with no upcoming events</div>
+              <div style={{ fontSize: 11, color: 'var(--text-warning)', marginTop: 2 }}>Last contact was 90+ days ago with no upcoming events</div>
             </div>
             <button onClick={() => setScreen('reports')} style={{ padding: '6px 12px', background: 'var(--color-warning)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
               View →
@@ -1086,6 +1082,45 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
           <div style={{display:'flex',flexDirection:'column',gap:14}}>
             <Card>
               <CardHead title="Today's appointments" action="+ New" onAction={()=>setShowStandaloneAppt(true)}/>
+              {todayAppts.length > 0 && (() => {
+                const APPT_COLORS = {
+                  consultation: { color: '#A84D5E', bg: '#FDF5F6', icon: '👗' },
+                  fitting:      { color: '#6B46B0', bg: '#F5F3FF', icon: '✂️' },
+                  pickup:       { color: '#0B8562', bg: '#F0FDF4', icon: '📦' },
+                  return:       { color: '#C87810', bg: '#FFFBEB', icon: '🔄' },
+                  measurement:  { color: '#1D4ED8', bg: '#DBEAFE', icon: '📏' },
+                  follow_up:    { color: '#7C3AED', bg: '#EDE9FE', icon: '📞' },
+                  other:        { color: '#6B7280', bg: '#F9FAFB', icon: '📅' },
+                };
+                return (
+                  <div style={{ padding: '10px 16px 4px' }}>
+                    <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6, scrollbarWidth: 'none' }}>
+                      {todayAppts.map(appt => {
+                        const cfg = APPT_COLORS[appt.type] || APPT_COLORS.other;
+                        const apptClientName = appt.event?.client?.name || appt.client_name || 'Client';
+                        return (
+                          <div key={appt.id} style={{
+                            flexShrink: 0, minWidth: 140, borderRadius: 12, padding: '12px 14px',
+                            background: cfg.bg, border: `1px solid ${cfg.color}30`,
+                            cursor: 'pointer',
+                          }}>
+                            <div style={{ fontSize: '1.3rem', marginBottom: 4 }}>{cfg.icon}</div>
+                            <div style={{ fontWeight: 600, fontSize: 12, color: cfg.color }}>
+                              {appt.time ? appt.time.slice(0, 5) : '—'}
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 500, color: C.ink, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {apptClientName}
+                            </div>
+                            <div style={{ fontSize: 10, color: C.gray, marginTop: 1 }}>
+                              {appt.type?.replace(/_/g, ' ')}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
               {displayAppts.length === 0
                 ? <div style={{padding:'20px 16px',textAlign:'center',color:C.gray,fontSize:13}}>No appointments scheduled for today</div>
                 : displayAppts.map((a,i)=>(
@@ -1113,15 +1148,15 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
                   </div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:13,fontWeight:500,color:C.ink}}>{ev.client}</div>
-                    <div style={{fontSize:11,color:C.gray,marginTop:1}}>{ev.type==='wedding'?'Wedding':'Quinceañera'} · {ev.venue}</div>
+                    <div style={{fontSize:11,color:C.gray,marginTop:1}}>{EVT_TYPES[ev.type]?.label || ev.type} · {ev.venue}</div>
                     <div style={{display:'flex',gap:4,marginTop:5,flexWrap:'wrap'}}>
                       {ev.services.map(s=><SvcTag key={s} svc={s}/>)}
                     </div>
                   </div>
                   <div style={{textAlign:'right',flexShrink:0}}>
                     <div style={{fontSize:13,fontWeight:500,color:C.ink}}>{fmt(ev.total)}</div>
-                    {ev.overdue>0?<div style={{fontSize:11,color:'var(--color-danger)'}}>{fmt(ev.overdue)} overdue</div>
-                      :<div style={{fontSize:11,color:'var(--color-success)'}}>{fmt(ev.paid)} paid</div>}
+                    {ev.overdue>0?<div style={{fontSize:11,color:'var(--text-danger)'}}>{fmt(ev.overdue)} overdue</div>
+                      :<div style={{fontSize:11,color:'var(--text-success)'}}>{fmt(ev.paid)} paid</div>}
                     <Countdown days={ev.daysUntil}/>
                   </div>
                 </div>
@@ -1140,8 +1175,8 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
                     <div style={{fontSize:11,color:C.gray}}>{p.status==='overdue'?`${p.daysLate} days overdue`:`Due ${p.due}`}</div>
                   </div>
                   <div style={{textAlign:'right'}}>
-                    <div style={{fontSize:13,fontWeight:500,color:p.status==='overdue'?'var(--color-danger)':C.ink}}>{fmt(p.amount)}</div>
-                    {p.status==='overdue'&&<div onClick={()=>setScreen('payments')} style={{fontSize:11,color:C.rosa,cursor:'pointer',fontWeight:500}}>Remind →</div>}
+                    <div style={{fontSize:13,fontWeight:500,color:p.status==='overdue'?'var(--text-danger)':C.ink}}>{fmt(p.amount)}</div>
+                    {p.status==='overdue'&&<div onClick={()=>setScreen('payments')} style={{fontSize:11,color:C.rosaText,cursor:'pointer',fontWeight:500}}>Remind →</div>}
                   </div>
                 </div>
               ))}
@@ -1159,7 +1194,7 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
                         <div style={{fontSize:12,fontWeight:500,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.name}</div>
                         <div style={{fontSize:11,color:C.gray}}>{d.clientName||'—'}</div>
                       </div>
-                      <div style={{fontSize:11,fontWeight:500,color:isToday?'var(--color-danger)':'var(--color-warning)',whiteSpace:'nowrap'}}>{isToday?'Today':dueDate}</div>
+                      <div style={{fontSize:11,fontWeight:500,color:isToday?'var(--text-danger)':'var(--text-warning)',whiteSpace:'nowrap'}}>{isToday?'Today':dueDate}</div>
                     </div>
                   );
                 })}
@@ -1232,6 +1267,42 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
           onSaved={()=>{ setShowStandaloneAppt(false); reloadAppts(); }}
         />
       )}
+      {showMarkAllComplete && (() => {
+        const pending = todayAppts.filter(a => a.status !== 'completed');
+        return (
+          <div role="presentation" onClick={e => { if (e.target === e.currentTarget) setShowMarkAllComplete(false); }}
+            style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
+            <div role="dialog" aria-modal="true" aria-labelledby="mark-all-complete-title"
+              style={{background:'#fff',borderRadius:16,width:360,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+              <div style={{padding:'20px 20px 12px',textAlign:'center'}}>
+                <div style={{fontSize:26,marginBottom:8}}>✅</div>
+                <div id="mark-all-complete-title" style={{fontSize:15,fontWeight:600,color:'#111',marginBottom:8}}>
+                  Mark all appointments complete?
+                </div>
+                <div style={{fontSize:13,color:'#666'}}>
+                  {pending.length} appointment{pending.length !== 1 ? 's' : ''} will be marked as completed.
+                </div>
+              </div>
+              <div style={{padding:'12px 20px 20px',display:'flex',gap:8}}>
+                <button onClick={() => setShowMarkAllComplete(false)}
+                  style={{flex:1,padding:'9px 16px',borderRadius:8,border:'1px solid #e5e5e5',background:'#fff',color:'#666',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                  Cancel
+                </button>
+                <button onClick={async () => {
+                  await Promise.all(pending.map(a =>
+                    supabase.from('appointments').update({ status: 'completed' }).eq('id', a.id)
+                  ));
+                  setShowMarkAllComplete(false);
+                  reloadAppts();
+                }}
+                  style={{flex:1,padding:'9px 16px',borderRadius:8,border:'none',background:'var(--color-success)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                  Mark complete
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

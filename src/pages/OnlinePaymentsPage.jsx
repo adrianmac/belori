@@ -32,7 +32,7 @@ function MilestoneStatusBadge({ status }) {
   const cfg = {
     paid:    { text: '✓ Paid',    bg: C.greenBg,  color: C.green },
     overdue: { text: 'Overdue',   bg: C.redBg,    color: C.red },
-    pending: { text: 'Pending',   bg: C.amberBg,  color: C.amber },
+    pending: { text: 'Pending',   bg: C.amberBg,  color: C.warningText },
   }
   const c = cfg[status] || { text: status, bg: C.grayBg, color: C.gray }
   return (
@@ -152,7 +152,7 @@ function MilestoneRow({ milestone, onGenerate, generating }) {
               style={{
                 fontSize: 12, padding: '5px 10px', borderRadius: 7,
                 border: `1px solid ${C.rosa}`, background: C.white,
-                cursor: 'pointer', color: C.rosa, fontWeight: 500,
+                cursor: 'pointer', color: C.rosaText, fontWeight: 500,
                 display: 'flex', alignItems: 'center', gap: 4,
               }}
             >

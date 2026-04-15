@@ -481,8 +481,35 @@ async function buildQuotePdf(payload: QuotePayload): Promise<Uint8Array> {
   return await doc.save()
 }
 
+// ─── JWT auth helper ─────────────────────────────────────────────────────────
+async function requireAuth(req: Request): Promise<{ userId: string; boutiqueId: string } | Response> {
+  const authHeader = req.headers.get('Authorization') ?? ''
+  const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+  if (!jwt) return new Response('Unauthorized', { status: 401 })
+  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2')
+  const anon = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!)
+  const { data: { user }, error } = await anon.auth.getUser(jwt)
+  if (error || !user) return new Response('Unauthorized', { status: 401 })
+  // Verify boutique membership and capture boutique_id for scope enforcement
+  const { data: member } = await supabaseAdmin
+    .from('boutique_members')
+    .select('boutique_id')
+    .eq('user_id', user.id)
+    .limit(1)
+    .single()
+  if (!member?.boutique_id) return new Response('Unauthorized', { status: 401 })
+  return { userId: user.id, boutiqueId: member.boutique_id }
+}
+
 // ─── Request handler ──────────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') return new Response(null, { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' } })
+
+  // Require authenticated user for all PDF types
+  const authResult = await requireAuth(req)
+  if (authResult instanceof Response) return authResult
+  const { boutiqueId } = authResult
+
   const url        = new URL(req.url)
   const eventId    = url.searchParams.get('event_id')
   const milestoneId= url.searchParams.get('milestone_id')
@@ -510,9 +537,15 @@ Deno.serve(async (req: Request) => {
       pdfBytes = await buildQuotePdf(payload)
       filename = `quote-${payload.quote.client_name.replace(/\s+/g, '-').toLowerCase().slice(0, 20)}.pdf`
     } else if (type === 'receipt' && milestoneId) {
+      // Verify milestone belongs to caller's boutique before serving PDF
+      const { data: ms } = await supabaseAdmin.from('payment_milestones').select('boutique_id').eq('id', milestoneId).single()
+      if (!ms || ms.boutique_id !== boutiqueId) return new Response('Not found', { status: 404 })
       pdfBytes = await buildReceiptPdf(milestoneId)
       filename = `receipt-${milestoneId.slice(0, 8)}.pdf`
     } else if (eventId) {
+      // Verify event belongs to caller's boutique before serving PDF
+      const { data: ev } = await supabaseAdmin.from('events').select('boutique_id').eq('id', eventId).single()
+      if (!ev || ev.boutique_id !== boutiqueId) return new Response('Not found', { status: 404 })
       pdfBytes = await buildContractPdf(eventId)
       filename = `contract-${eventId.slice(0, 8)}.pdf`
     } else {

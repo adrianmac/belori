@@ -207,7 +207,7 @@ export default function Onboarding() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
-                  <label style={lbl}>Boutique name <span style={{ color: C.rosa }}>*</span></label>
+                  <label style={lbl}>Boutique name <span style={{ color: C.rosaText }}>*</span></label>
                   <input
                     type="text" value={name} onChange={e => setName(e.target.value)}
                     placeholder="e.g. Bella Bridal & Events"

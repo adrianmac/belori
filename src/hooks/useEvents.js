@@ -151,12 +151,14 @@ export function useEvents() {
 
     if (clientEmail && event.portal_token) {
       const portalUrl = `${window.location.origin}/portal/${event.portal_token}`
+      const { data: { session: emailSession } } = await supabase.auth.getSession()
       await supabase.functions.invoke('send-email', {
         body: {
           to: clientEmail,
           subject: `Your Client Portal for ${boutique.name}`,
-          html: `<p>Hi ${clientName.split(' ')[0]},</p><p>We are thrilled to be working with you! You can access your client portal to view your invoices, contracts, and event details here:</p><p><a href="${portalUrl}">${portalUrl}</a></p>`
-        }
+          html: `<p>Hi ${clientName?.split(' ')[0] || 'there'},</p><p>We are thrilled to be working with you! You can access your client portal to view your invoices, contracts, and event details here:</p><p><a href="${portalUrl}">${portalUrl}</a></p>`
+        },
+        headers: { Authorization: `Bearer ${emailSession?.access_token}` },
       })
     }
 
@@ -243,6 +245,67 @@ export function useEvents() {
       )
     }
 
+    // Copy tasks (reset done state)
+    const { data: origTasks } = await supabase
+      .from('tasks')
+      .select('text, category, alert')
+      .eq('event_id', eventId)
+      .eq('boutique_id', boutique.id)
+    if (origTasks?.length) {
+      await supabase.from('tasks').insert(
+        origTasks.map(t => ({
+          event_id: copy.id,
+          boutique_id: boutique.id,
+          text: t.text,
+          category: t.category,
+          alert: t.alert,
+          done: false,
+        }))
+      )
+    }
+
+    // Copy appointments as shells (clear date/time, reset to 'scheduled')
+    const { data: origAppts } = await supabase
+      .from('appointments')
+      .select('type, staff_id, note')
+      .eq('event_id', eventId)
+      .eq('boutique_id', boutique.id)
+    if (origAppts?.length) {
+      await supabase.from('appointments').insert(
+        origAppts.map(a => ({
+          event_id: copy.id,
+          boutique_id: boutique.id,
+          type: a.type,
+          staff_id: a.staff_id || null,
+          note: a.note || null,
+          date: null,
+          time: null,
+          status: 'scheduled',
+        }))
+      )
+    }
+
+    // Copy decoration / inventory assignments
+    const { data: origDeco } = await supabase
+      .from('event_inventory')
+      .select('inventory_id, quantity, notes, setup_time, placement, color_notes')
+      .eq('event_id', eventId)
+      .eq('boutique_id', boutique.id)
+    if (origDeco?.length) {
+      await supabase.from('event_inventory').insert(
+        origDeco.map(d => ({
+          event_id: copy.id,
+          boutique_id: boutique.id,
+          inventory_id: d.inventory_id,
+          quantity: d.quantity,
+          notes: d.notes || null,
+          setup_time: d.setup_time || null,
+          placement: d.placement || null,
+          color_notes: d.color_notes || null,
+        }))
+      )
+    }
+
     await fetchEvents()
     return { data: copy }
   }
@@ -276,13 +339,12 @@ export function useEvents() {
         .eq('event_id', eventId)
         .eq('boutique_id', boutique.id)
         .neq('status', 'paid')
-      for (const m of msData || []) {
-        if (!m.due_date) continue
-        await supabase.from('payment_milestones')
+      await Promise.all((msData || []).filter(m => m.due_date).map(m =>
+        supabase.from('payment_milestones')
           .update({ due_date: shiftDate(m.due_date, deltaDays) })
           .eq('id', m.id)
           .eq('boutique_id', boutique.id)
-      }
+      ))
 
       // Shift appointments
       const { data: apptData } = await supabase
@@ -290,13 +352,12 @@ export function useEvents() {
         .select('id, date')
         .eq('event_id', eventId)
         .eq('boutique_id', boutique.id)
-      for (const a of apptData || []) {
-        if (!a.date) continue
-        await supabase.from('appointments')
+      await Promise.all((apptData || []).filter(a => a.date).map(a =>
+        supabase.from('appointments')
           .update({ date: shiftDate(a.date, deltaDays) })
           .eq('id', a.id)
           .eq('boutique_id', boutique.id)
-      }
+      ))
 
       await fetchEvents()
       return { error: null }
@@ -331,26 +392,24 @@ export function makeRescheduleEvent(boutiqueId) {
         .eq('event_id', eventId)
         .eq('boutique_id', boutiqueId)
         .neq('status', 'paid')
-      for (const m of msData || []) {
-        if (!m.due_date) continue
-        await supabase.from('payment_milestones')
+      await Promise.all((msData || []).filter(m => m.due_date).map(m =>
+        supabase.from('payment_milestones')
           .update({ due_date: shiftDate(m.due_date, deltaDays) })
           .eq('id', m.id)
           .eq('boutique_id', boutiqueId)
-      }
+      ))
 
       const { data: apptData } = await supabase
         .from('appointments')
         .select('id, date')
         .eq('event_id', eventId)
         .eq('boutique_id', boutiqueId)
-      for (const a of apptData || []) {
-        if (!a.date) continue
-        await supabase.from('appointments')
+      await Promise.all((apptData || []).filter(a => a.date).map(a =>
+        supabase.from('appointments')
           .update({ date: shiftDate(a.date, deltaDays) })
           .eq('id', a.id)
           .eq('boutique_id', boutiqueId)
-      }
+      ))
 
       return { error: null }
     } catch (error) {
@@ -372,12 +431,12 @@ export async function autoProgressEvents(events, boutiqueId, supabaseClient) {
     Number(e.paid) >= Number(e.total) &&
     Number(e.total) > 0
   )
-  for (const e of toComplete) {
-    await supabaseClient.from('events')
+  await Promise.all(toComplete.map(e =>
+    supabaseClient.from('events')
       .update({ status: 'completed' })
       .eq('id', e.id)
       .eq('boutique_id', boutiqueId)
-  }
+  ))
   return toComplete.length
 }
 
@@ -446,14 +505,15 @@ export function useEvent(eventId) {
     })
     if (!error) {
       await fetchEvent()
-      // Fire-and-forget confirmation SMS if client has a phone
-      const clientPhone = event?.clientData?.phone
-      if (clientPhone) {
+      // Fire-and-forget confirmation SMS if client has opted in
+      const clientId = event?.client_id
+      const commPrefs = event?.clientData?.comm_prefs || {}
+      if (clientId && commPrefs.sms !== false) {
         const firstName = event?.clientData?.name?.split(' ')[0] || 'there'
         const timeStr = time ? ` at ${formatTime(time)}` : ''
         supabase.functions.invoke('send-sms', {
           body: {
-            to: clientPhone,
+            client_id: clientId,
             message: `Hi ${firstName}, your ${type.replace(/_/g,' ')} appointment at ${boutique.name} is confirmed for ${date}${timeStr}. Reply STOP to opt out.`,
           },
         }).catch(() => {}) // fire and forget — don't block

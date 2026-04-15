@@ -59,6 +59,7 @@ function Lightbox({ photo, events, onClose, onDelete, onUpdateCaption }) {
   const [caption, setCaption] = useState(photo.caption || '');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   const eventName = photo.event
     ? (photo.event.client?.name
@@ -73,8 +74,8 @@ function Lightbox({ photo, events, onClose, onDelete, onUpdateCaption }) {
     setEditing(false);
   }
 
-  async function handleDelete() {
-    if (!window.confirm('Delete this photo? This cannot be undone.')) return;
+  async function confirmDelete() {
+    setDeleteConfirm(false);
     setDeleting(true);
     await onDelete(photo);
     onClose();
@@ -146,7 +147,7 @@ function Lightbox({ photo, events, onClose, onDelete, onUpdateCaption }) {
                   </span>
                   <button
                     onClick={() => setEditing(true)}
-                    style={{ fontSize: 11, color: C.rosa, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    style={{ fontSize: 11, color: C.rosaText, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                   >
                     Edit caption
                   </button>
@@ -157,7 +158,7 @@ function Lightbox({ photo, events, onClose, onDelete, onUpdateCaption }) {
             {/* Right: actions */}
             <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
               <button
-                onClick={handleDelete}
+                onClick={() => setDeleteConfirm(true)}
                 disabled={deleting}
                 style={{
                   padding: '7px 14px', borderRadius: 7, border: `1px solid ${C.redBg}`,
@@ -181,6 +182,29 @@ function Lightbox({ photo, events, onClose, onDelete, onUpdateCaption }) {
           </div>
         </div>
       </div>
+      {deleteConfirm && (
+        <div role="presentation" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.65)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1100,padding:16}}
+          onClick={e=>{if(e.target===e.currentTarget)setDeleteConfirm(false);}}>
+          <div role="dialog" aria-modal="true" aria-labelledby="delete-photo-title"
+            style={{background:'#fff',borderRadius:16,width:360,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.25)'}}>
+            <div style={{padding:'20px 20px 12px',textAlign:'center'}}>
+              <div style={{fontSize:26,marginBottom:8}}>🗑️</div>
+              <div id="delete-photo-title" style={{fontSize:15,fontWeight:600,color:'#111',marginBottom:8}}>Delete this photo?</div>
+              <div style={{fontSize:12,color:'var(--text-danger)',background:'var(--bg-danger)',borderRadius:8,padding:'8px 12px'}}>This cannot be undone.</div>
+            </div>
+            <div style={{padding:'12px 20px 20px',display:'flex',gap:8}}>
+              <button onClick={()=>setDeleteConfirm(false)}
+                style={{flex:1,padding:'9px 16px',borderRadius:8,border:'1px solid #e5e5e5',background:'#fff',color:'#666',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                Cancel
+              </button>
+              <button onClick={confirmDelete}
+                style={{flex:1,padding:'9px 16px',borderRadius:8,border:'none',background:'var(--color-danger)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -388,8 +412,9 @@ function UploadModal({ events, onClose, onUploadComplete }) {
 
         {/* Event picker */}
         <div style={{ marginBottom: 14 }}>
-          <div style={LBL}>Link to event (optional)</div>
+          <label htmlFor="photo-event" style={LBL}>Link to event (optional)</label>
           <select
+            id="photo-event"
             value={selectedEventId}
             onChange={e => setSelectedEventId(e.target.value)}
             style={{ ...inputSt }}
@@ -405,8 +430,9 @@ function UploadModal({ events, onClose, onUploadComplete }) {
 
         {/* Photo type */}
         <div style={{ marginBottom: 14 }}>
-          <div style={LBL}>Photo type</div>
+          <label htmlFor="photo-type" style={LBL}>Photo type</label>
           <select
+            id="photo-type"
             value={selectedType}
             onChange={e => setSelectedType(e.target.value)}
             style={{ ...inputSt }}
@@ -419,8 +445,10 @@ function UploadModal({ events, onClose, onUploadComplete }) {
 
         {/* File picker */}
         <div style={{ marginBottom: 20 }}>
-          <div style={LBL}>Photos</div>
+          <div id="photo-files-label" style={LBL}>Photos</div>
           <div
+            role="group"
+            aria-labelledby="photo-files-label"
             onClick={() => fileInputRef.current?.click()}
             style={{
               border: `2px dashed ${pendingFiles.length ? C.rosa : C.border}`,
@@ -432,14 +460,14 @@ function UploadModal({ events, onClose, onUploadComplete }) {
           >
             {pendingFiles.length ? (
               <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: C.rosa, marginBottom: 4 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: C.rosaText, marginBottom: 4 }}>
                   {pendingFiles.length} file{pendingFiles.length > 1 ? 's' : ''} selected
                 </div>
                 <div style={{ fontSize: 11, color: C.gray }}>
                   {pendingFiles.map(f => f.name).join(', ').slice(0, 80)}
                   {pendingFiles.map(f => f.name).join(', ').length > 80 ? '…' : ''}
                 </div>
-                <div style={{ fontSize: 11, color: C.rosa, marginTop: 6 }}>Click to change</div>
+                <div style={{ fontSize: 11, color: C.rosaText, marginTop: 6 }}>Click to change</div>
               </div>
             ) : (
               <div>

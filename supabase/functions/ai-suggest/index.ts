@@ -1,12 +1,39 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const supabaseUrl  = Deno.env.get('SUPABASE_URL') ?? ''
+const serviceKey   = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+
+async function verifyJwt(token: string) {
+  const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } })
+  const { data: { user }, error } = await admin.auth.getUser(token)
+  if (error || !user) return null
+  return user
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+
+  // Require a valid JWT — this endpoint calls the Anthropic API and must not be open
+  const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '').trim() ?? ''
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+  const user = await verifyJwt(token)
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
 
   try {
     const body = await req.json()

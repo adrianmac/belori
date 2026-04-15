@@ -29,10 +29,21 @@ Deno.serve(async (req) => {
     const { data: { user } } = await supabaseClient.auth.getUser()
     if (!user) throw new Error('Not authenticated')
 
+    // Resolve boutique via boutique_members — boutiques has no owner_id column
+    const { data: member } = await supabaseClient
+      .from('boutique_members')
+      .select('boutique_id')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single()
+
+    if (!member) throw new Error('No boutique membership found for user')
+
     const { data: boutique } = await supabaseClient
       .from('boutiques')
       .select('id, stripe_customer_id')
-      .eq('owner_id', user.id)
+      .eq('id', member.boutique_id)
       .single()
 
     if (!boutique || !boutique.stripe_customer_id) {

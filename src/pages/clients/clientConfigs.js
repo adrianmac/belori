@@ -12,7 +12,7 @@ export const TIER_THRESHOLDS = { new: [0, 500], regular: [500, 1500], loyal: [15
 
 export const HOW_FOUND_LABELS = { google: 'Google search', instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok', referral: 'Referral', walk_in: 'Walk-in', expo: 'Expo / event', returning: 'Returning client', other: 'Other' };
 
-export const NOTE_CAT_CFG = { general: { bg: C.grayBg, col: C.gray }, measurement: { bg: 'var(--bg-info)', col: 'var(--color-info)' }, preference: { bg: C.purpleBg, col: C.purple }, follow_up: { bg: 'var(--bg-warning)', col: 'var(--color-warning)' } };
+export const NOTE_CAT_CFG = { general: { bg: C.grayBg, col: C.gray }, measurement: { bg: 'var(--bg-info)', col: 'var(--text-info)' }, preference: { bg: C.purpleBg, col: C.purple }, follow_up: { bg: 'var(--bg-warning)', col: 'var(--text-warning)' } };
 
 export const INTERACTION_CFG = {
   note:             { icon: '📝', label: 'Note',           dot: '#3B82F6' },

@@ -131,7 +131,7 @@ const EventTasksCard = ({
             <button
               onClick={getAISuggestions}
               disabled={aiLoading}
-              style={{padding:'4px 10px',borderRadius:7,border:`1px solid ${C.border}`,background:aiTasks.length>0?C.rosaPale:C.white,color:aiTasks.length>0?C.rosa:C.gray,fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>
+              style={{padding:'4px 10px',borderRadius:7,border:`1px solid ${C.border}`,background:aiTasks.length>0?C.rosaPale:C.white,color:aiTasks.length>0?C.rosaText:C.gray,fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>
               {aiLoading ? '✨ Thinking…' : '✨ AI suggest'}
             </button>
           )}
@@ -140,7 +140,7 @@ const EventTasksCard = ({
               <button
                 onClick={() => setShowTemplatePicker(p => !p)}
                 disabled={applying}
-                style={{padding:'4px 10px',borderRadius:7,border:`1px solid ${C.border}`,background:showTemplatePicker?C.rosaPale:C.white,color:showTemplatePicker?C.rosa:C.gray,fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>
+                style={{padding:'4px 10px',borderRadius:7,border:`1px solid ${C.border}`,background:showTemplatePicker?C.rosaPale:C.white,color:showTemplatePicker?C.rosaText:C.gray,fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>
                 {applying ? 'Applying…' : '📋 Apply template'}
               </button>
               {showTemplatePicker && (

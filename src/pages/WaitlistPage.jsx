@@ -135,14 +135,14 @@ function EntryCard({ entry, onMarkContacted, onMarkBooked, onRemove, onEdit }) {
                 color={sc.color}
               />
               {entry.flexible_dates && (
-                <Badge text="Flexible dates" bg={C.rosaPale} color={C.rosa} />
+                <Badge text="Flexible dates" bg={C.rosaPale} color={C.rosaText} />
               )}
             </div>
             <div style={{ display: 'flex', gap: 12, marginTop: 4, flexWrap: 'wrap' }}>
               {entry.phone && (
                 <a
                   href={`tel:${entry.phone}`}
-                  style={{ fontSize: 12, color: C.rosa, textDecoration: 'none' }}
+                  style={{ fontSize: 12, color: C.rosaText, textDecoration: 'none' }}
                 >
                   {entry.phone}
                 </a>
@@ -343,8 +343,9 @@ function WaitlistModal({ entry, onClose, onSave }) {
         <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '70vh', overflowY: 'auto' }}>
           {/* Name */}
           <div>
-            <div style={LBL}>Name <span style={{ color: C.rosa }}>*</span></div>
+            <label htmlFor="wait-name" style={LBL}>Name <span style={{ color: C.rosaText }}>*</span></label>
             <input
+              id="wait-name"
               style={inputSt}
               placeholder="Client name"
               value={form.name}
@@ -355,8 +356,9 @@ function WaitlistModal({ entry, onClose, onSave }) {
           {/* Phone + Email */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
-              <div style={LBL}>Phone</div>
+              <label htmlFor="wait-phone" style={LBL}>Phone</label>
               <input
+                id="wait-phone"
                 style={inputSt}
                 placeholder="(555) 000-0000"
                 value={form.phone}
@@ -364,8 +366,9 @@ function WaitlistModal({ entry, onClose, onSave }) {
               />
             </div>
             <div>
-              <div style={LBL}>Email</div>
+              <label htmlFor="wait-email" style={LBL}>Email</label>
               <input
+                id="wait-email"
                 style={inputSt}
                 type="email"
                 placeholder="email@example.com"
@@ -377,8 +380,9 @@ function WaitlistModal({ entry, onClose, onSave }) {
 
           {/* Event type */}
           <div>
-            <div style={LBL}>Event type</div>
+            <label htmlFor="wait-event-type" style={LBL}>Event type</label>
             <select
+              id="wait-event-type"
               style={{ ...inputSt }}
               value={form.event_type}
               onChange={e => set('event_type', e.target.value)}
@@ -392,7 +396,7 @@ function WaitlistModal({ entry, onClose, onSave }) {
           {/* Preferred date + flexible */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <div style={LBL}>Preferred date</div>
+              <label htmlFor="wait-preferred-date" style={LBL}>Preferred date</label>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, color: C.gray }}>
                 <input
                   type="checkbox"
@@ -404,6 +408,7 @@ function WaitlistModal({ entry, onClose, onSave }) {
               </label>
             </div>
             <input
+              id="wait-preferred-date"
               style={{ ...inputSt, opacity: form.flexible_dates ? 0.45 : 1 }}
               type="date"
               value={form.preferred_date}
@@ -414,8 +419,9 @@ function WaitlistModal({ entry, onClose, onSave }) {
 
           {/* Source */}
           <div>
-            <div style={LBL}>Source</div>
+            <label htmlFor="wait-source" style={LBL}>Source</label>
             <select
+              id="wait-source"
               style={{ ...inputSt }}
               value={form.source}
               onChange={e => set('source', e.target.value)}
@@ -428,8 +434,9 @@ function WaitlistModal({ entry, onClose, onSave }) {
 
           {/* Notes */}
           <div>
-            <div style={LBL}>Notes</div>
+            <label htmlFor="wait-notes" style={LBL}>Notes</label>
             <textarea
+              id="wait-notes"
               style={{ ...inputSt, resize: 'vertical', minHeight: 72, fontFamily: 'inherit' }}
               placeholder="Any special requests or details…"
               value={form.notes}

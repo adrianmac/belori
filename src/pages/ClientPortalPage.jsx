@@ -107,7 +107,7 @@ function Spinner() {
       }}/>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{ fontSize: 20, marginBottom: 8 }}>
-        <span style={{ fontFamily: 'Georgia,serif', color: C.rosa, fontWeight: 600 }}>Belori</span>
+        <span style={{ fontFamily: 'Georgia,serif', color: C.rosaText, fontWeight: 600 }}>Belori</span>
       </div>
       <div style={{ fontSize: 13, color: C.gray }}>Loading your event portal…</div>
     </div>
@@ -477,7 +477,7 @@ export default function ClientPortalPage() {
             <div style={{ fontSize:13,fontWeight:600,color:C.ink,marginBottom:12 }}>✨ Your services</div>
             <div style={{ display:'flex',flexWrap:'wrap',gap:6 }}>
               {services.map(s => (
-                <span key={s} style={{ fontSize:12,fontWeight:500,padding:'4px 12px',borderRadius:20,background:C.rosaPale,color:C.rosa,border:`1px solid ${C.rosa}22` }}>
+                <span key={s} style={{ fontSize:12,fontWeight:500,padding:'4px 12px',borderRadius:20,background:C.rosaPale,color:C.rosaText,border:`1px solid ${C.rosa}22` }}>
                   {SVC_LABELS[s] || s.replace(/_/g,' ')}
                 </span>
               ))}
@@ -549,7 +549,7 @@ export default function ClientPortalPage() {
                       href={m.stripe_payment_link_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginTop:10,width:'100%',height:48,borderRadius:12,background:C.rosa,color:C.white,fontWeight:700,fontSize:15,textDecoration:'none',boxSizing:'border-box',boxShadow:`0 2px 8px ${C.rosa}55` }}
+                      style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginTop:10,width:'100%',height:48,borderRadius:12,background:C.rosaSolid,color:C.white,fontWeight:700,fontSize:15,textDecoration:'none',boxSizing:'border-box',boxShadow:`0 2px 8px ${C.rosaSolid}55` }}
                     >
                       💳 Pay {fmt(m.amount)} online →
                     </a>
@@ -768,7 +768,7 @@ export default function ClientPortalPage() {
               <a href={`tel:${boutique.phone}`} style={{ display:'flex',alignItems:'center',gap:12,textDecoration:'none',padding:'12px 14px',borderRadius:12,background:C.rosaPale,border:`1px solid ${C.rosa}22` }}>
                 <span style={{ fontSize:20 }}>📞</span>
                 <div>
-                  <div style={{ fontSize:11,fontWeight:600,color:C.rosa,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:1 }}>Call us</div>
+                  <div style={{ fontSize:11,fontWeight:600,color:C.rosaText,textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:1 }}>Call us</div>
                   <div style={{ fontSize:14,fontWeight:600,color:C.ink }}>{boutique.phone}</div>
                 </div>
               </a>

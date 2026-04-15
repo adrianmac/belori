@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { C } from '../lib/colors'
-import { Topbar, inputSt, LBL } from '../lib/ui.jsx'
+import { Topbar, inputSt, LBL, ConfirmModal } from '../lib/ui.jsx'
 import { useExpenses } from '../hooks/useExpenses'
 
 // ─── CATEGORY CONFIG ───────────────────────────────────────────────────────────
@@ -8,7 +8,7 @@ const EXPENSE_CATS = {
   dress_purchase: { label: 'Dress purchase',  emoji: '👗', color: '#9D174D', bg: '#FDF2F8' },
   alterations:    { label: 'Alterations',     emoji: '🧵', color: '#1D4ED8', bg: '#EFF6FF' },
   decoration:     { label: 'Decoration',      emoji: '🌸', color: '#15803D', bg: '#F0FDF4' },
-  marketing:      { label: 'Marketing',       emoji: '📣', color: C.rosa,    bg: C.rosaPale },
+  marketing:      { label: 'Marketing',       emoji: '📣', color: C.rosaText, bg: C.rosaPale },
   utilities:      { label: 'Utilities',       emoji: '💡', color: '#374151', bg: '#F9FAFB' },
   payroll:        { label: 'Payroll',         emoji: '💼', color: '#0891B2', bg: '#ECFEFF' },
   maintenance:    { label: 'Maintenance',     emoji: '🔧', color: '#92400E', bg: '#FEF3C7' },
@@ -119,7 +119,7 @@ const LogExpenseModal = ({ onClose, onSave, saving, events, editExpense }) => {
 
           {/* Description */}
           <div>
-            <label style={lbl}>Description <span style={{ color: C.rosa }}>*</span></label>
+            <label style={lbl}>Description <span style={{ color: C.rosaText }}>*</span></label>
             <input
               type="text"
               placeholder="e.g. Monthly storefront rent"
@@ -142,7 +142,7 @@ const LogExpenseModal = ({ onClose, onSave, saving, events, editExpense }) => {
               />
             </div>
             <div>
-              <label style={lbl}>Amount <span style={{ color: C.rosa }}>*</span></label>
+              <label style={lbl}>Amount <span style={{ color: C.rosaText }}>*</span></label>
               <input
                 type="number"
                 min="0"
@@ -204,6 +204,7 @@ export default function Expenses({ events = [], setScreen, setSelectedEvent }) {
   const [showModal, setShowModal] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(null) // expense id | null
   const [sortCol, setSortCol] = useState('date')
   const [sortDir, setSortDir] = useState('desc')
 
@@ -256,7 +257,7 @@ export default function Expenses({ events = [], setScreen, setSelectedEvent }) {
 
   const SortArrow = ({ col }) => {
     if (sortCol !== col) return <span style={{ color: C.border, marginLeft: 3 }}>↕</span>
-    return <span style={{ color: C.rosa, marginLeft: 3 }}>{sortDir === 'asc' ? '↑' : '↓'}</span>
+    return <span style={{ color: C.rosaText, marginLeft: 3 }}>{sortDir === 'asc' ? '↑' : '↓'}</span>
   }
 
   // ── Save handler ──────────────────────────────────────────────────────────
@@ -272,9 +273,11 @@ export default function Expenses({ events = [], setScreen, setSelectedEvent }) {
     setEditTarget(null)
   }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this expense?')) return
-    await deleteExpense(id)
+  const handleDelete = (id) => setDeleteConfirm(id)
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return
+    await deleteExpense(deleteConfirm)
+    setDeleteConfirm(null)
   }
 
   const openEdit = (e) => { setEditTarget(e); setShowModal(true) }
@@ -285,7 +288,7 @@ export default function Expenses({ events = [], setScreen, setSelectedEvent }) {
 
   const rangeBtn = (r) => ({
     padding: '6px 14px', borderRadius: 20, border: `1px solid ${range === r ? C.rosa : C.border}`,
-    background: range === r ? C.rosaPale : C.white, color: range === r ? C.rosa : C.gray,
+    background: range === r ? C.rosaPale : C.white, color: range === r ? C.rosaText : C.gray,
     fontSize: 12, fontWeight: range === r ? 600 : 400, cursor: 'pointer',
   })
 
@@ -411,7 +414,7 @@ export default function Expenses({ events = [], setScreen, setSelectedEvent }) {
                 <div style={{ fontSize: 13, color: C.gray, marginBottom: 18 }}>Start tracking your boutique costs to see insights here.</div>
                 <button
                   onClick={() => { setEditTarget(null); setShowModal(true) }}
-                  style={{ background: 'none', border: 'none', color: C.rosa, fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                  style={{ background: 'none', border: 'none', color: C.rosaText, fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
                 >
                   + Log your first expense →
                 </button>
@@ -482,7 +485,7 @@ export default function Expenses({ events = [], setScreen, setSelectedEvent }) {
                         {linkedEvent ? (
                           <button
                             onClick={() => { if (setScreen && setSelectedEvent) { setSelectedEvent(linkedEvent.id); setScreen('event_detail') } }}
-                            style={{ background: 'none', border: 'none', color: C.rosa, cursor: 'pointer', fontSize: 12, fontWeight: 500, padding: 0, textDecoration: 'underline' }}
+                            style={{ background: 'none', border: 'none', color: C.rosaText, cursor: 'pointer', fontSize: 12, fontWeight: 500, padding: 0, textDecoration: 'underline' }}
                           >
                             View event →
                           </button>
@@ -530,6 +533,15 @@ export default function Expenses({ events = [], setScreen, setSelectedEvent }) {
           saving={saving}
           events={events}
           editExpense={editTarget}
+        />
+      )}
+      {deleteConfirm && (
+        <ConfirmModal
+          title="Delete this expense?"
+          message="This cannot be undone."
+          confirmLabel="Delete"
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteConfirm(null)}
         />
       )}
     </div>

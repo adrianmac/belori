@@ -24,7 +24,7 @@ const CAT_COLORS = {
   catering:     { bg: C.greenBg, color: C.green },
   videographer: { bg: C.blueBg, color: C.blue },
   hair_makeup:  { bg: '#F0FDFA', color: '#0F766E' },
-  venue:        { bg: C.amberBg, color: C.amber },
+  venue:        { bg: C.amberBg, color: C.warningText },
   other:        { bg: C.grayBg, color: C.gray },
 }
 
@@ -179,14 +179,14 @@ function VendorModal({ vendor, onClose, onSave }) {
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '70vh', overflowY: 'auto' }}>
           {/* Name */}
           <div>
-            <div style={LBL}>Name *</div>
-            <input style={inputSt} value={form.name} onChange={e => set('name', e.target.value)} placeholder="Vendor name" autoFocus />
+            <label htmlFor="vend-name" style={LBL}>Name *</label>
+            <input id="vend-name" style={inputSt} value={form.name} onChange={e => set('name', e.target.value)} placeholder="Vendor name" autoFocus />
           </div>
 
           {/* Category */}
           <div>
-            <div style={LBL}>Category *</div>
-            <select style={inputSt} value={form.category} onChange={e => set('category', e.target.value)}>
+            <label htmlFor="vend-category" style={LBL}>Category *</label>
+            <select id="vend-category" style={inputSt} value={form.category} onChange={e => set('category', e.target.value)}>
               {CATEGORIES.map(c => <option key={c} value={c}>{CAT_LABELS[c]}</option>)}
             </select>
           </div>
@@ -194,24 +194,24 @@ function VendorModal({ vendor, onClose, onSave }) {
           {/* Phone & Email */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <div style={LBL}>Phone</div>
-              <input style={inputSt} value={form.phone || ''} onChange={e => set('phone', e.target.value)} placeholder="(555) 000-0000" />
+              <label htmlFor="vend-phone" style={LBL}>Phone</label>
+              <input id="vend-phone" style={inputSt} value={form.phone || ''} onChange={e => set('phone', e.target.value)} placeholder="(555) 000-0000" />
             </div>
             <div>
-              <div style={LBL}>Email</div>
-              <input style={inputSt} value={form.email || ''} onChange={e => set('email', e.target.value)} placeholder="email@example.com" type="email" />
+              <label htmlFor="vend-email" style={LBL}>Email</label>
+              <input id="vend-email" style={inputSt} value={form.email || ''} onChange={e => set('email', e.target.value)} placeholder="email@example.com" type="email" />
             </div>
           </div>
 
           {/* Website & Instagram */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <div style={LBL}>Website</div>
-              <input style={inputSt} value={form.website || ''} onChange={e => set('website', e.target.value)} placeholder="www.example.com" />
+              <label htmlFor="vend-website" style={LBL}>Website</label>
+              <input id="vend-website" style={inputSt} value={form.website || ''} onChange={e => set('website', e.target.value)} placeholder="www.example.com" />
             </div>
             <div>
-              <div style={LBL}>Instagram</div>
-              <input style={inputSt} value={form.instagram || ''} onChange={e => set('instagram', e.target.value)} placeholder="@handle" />
+              <label htmlFor="vend-instagram" style={LBL}>Instagram</label>
+              <input id="vend-instagram" style={inputSt} value={form.instagram || ''} onChange={e => set('instagram', e.target.value)} placeholder="@handle" />
             </div>
           </div>
 
@@ -223,8 +223,9 @@ function VendorModal({ vendor, onClose, onSave }) {
 
           {/* Notes */}
           <div>
-            <div style={LBL}>Notes</div>
+            <label htmlFor="vend-notes" style={LBL}>Notes</label>
             <textarea
+              id="vend-notes"
               style={{ ...inputSt, minHeight: 72, resize: 'vertical' }}
               value={form.notes || ''}
               onChange={e => set('notes', e.target.value)}
@@ -339,7 +340,7 @@ export default function VendorsPage() {
                   borderRadius: 999,
                   border: `1px solid ${active ? (colors?.color || C.rosa) : C.border}`,
                   background: active ? (colors?.bg || C.rosaPale) : C.white,
-                  color: active ? (colors?.color || C.rosa) : C.gray,
+                  color: active ? (colors?.color || C.rosaText) : C.gray,
                   fontSize: 12,
                   fontWeight: active ? 600 : 400,
                   cursor: 'pointer',

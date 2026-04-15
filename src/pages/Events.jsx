@@ -5,7 +5,7 @@ import { C, fmt, pct, SVC_LABELS, SVC_COLORS, EVT_TYPES, TYPE_SVCS,
   TYPE_DEFAULT_SVCS, COLOR_PRESETS, STYLE_OPTIONS } from '../lib/colors';
 import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, SvcTag,
   Countdown, EventTypeBadge, ProgressBar, StatusDot, AlertBanner, useToast,
-  inputSt, LBL, SkeletonList } from '../lib/ui.jsx';
+  inputSt, LBL, SkeletonList, EmptyState } from '../lib/ui.jsx';
 import { getPriorityAlert, getCountdownConfig, DRESS_TRANSITIONS,
   ALTERATION_TRANSITIONS } from '../lib/urgency';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
@@ -85,6 +85,8 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
   const [step,setStep]=useState(1);
   const [saving,setSaving]=useState(false);
   const [err,setErr]=useState('');
+  const [showDiscardConfirm,setShowDiscardConfirm]=useState(false);
+  const toast = useToast();
   const [staff,setStaff]=useState([]);
   useEffect(()=>{getStaff().then(({data})=>{if(data?.length)setStaff(data);});},[]);
   // Step 1 — Client & event
@@ -160,7 +162,11 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
   const STEP_LABELS={1:'Client & event details',2:'Services',3:'Pricing & quote',4:'Inspiration & vision',5:'Venue & inventory needs',6:'Review & confirm'};
 
   // Effects
-  useEffect(()=>{if(clientName)setEvName(clientName);},[clientId,newCl.name,evType]);
+  // Auto-fill event name from client name when client is first selected.
+  // evType intentionally excluded from deps — type changes must not overwrite
+  // a name the user has already customised (BUG-014).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(()=>{if(clientName)setEvName(clientName);},[clientId,newCl.name]);
   useEffect(()=>{setSvcs(TYPE_DEFAULT_SVCS[evType]||['planning','decoration']);setFloralType('');setSelectedPkgId(null);},[evType]);
   // Line items auto-sync from selected services
   const SVC_DEFAULT_LABELS={dress_rental:'Dress rental',alterations:'Alterations & tailoring',decoration:'Decoration & florals',photography:'Photography & video',dj:'DJ / Music',planning:'Event planning'};
@@ -290,15 +296,24 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
     setErr('');
     const ni=stepIdx+1;if(ni<stepList.length)setStep(stepList[ni]);
   }
-  function goBack(){setErr('');const pi=stepIdx-1;if(pi>=0)setStep(stepList[pi]);else onClose();}
+  function goBack(){setErr('');const pi=stepIdx-1;if(pi>=0)setStep(stepList[pi]);else handleClose();}
+  // svcs is pre-populated with defaults — only flag as dirty if user changed them
+  const DEFAULT_SVCS = ['dress_rental','alterations','planning','decoration'];
+  const svcsDirty = svcs.some(s=>!DEFAULT_SVCS.includes(s)) || DEFAULT_SVCS.some(s=>!svcs.includes(s));
+  const isDirty = !!(selClient||clientId||evName||evDate||svcsDirty);
+  function handleClose(){
+    if(isDirty){ setShowDiscardConfirm(true); return; }
+    onClose();
+  }
   const isLast=stepIdx===totalSteps-1;
 
   async function confirm(){
     setSaving(true);
+    const partialFailures=[];
     const checkedAiTasks=aiSuggestedTasks.filter((_,i)=>aiTasksChecked[i]);
     const{error,data:createdEvent}=await onSave({client_id:newMode?null:clientId,isNewClient:newMode,newClientData:newMode?newCl:null,type:evType,event_name:evName,event_date:evDate,venue,guests:Number(guests)||0,coordinator_id:coordId||null,total:computedTotal,paid:0,status:'active',services:svcs,milestones,dress_id:dressMode==='now'?dressId:null,alterationData:svcs.includes('alterations')?{seamstress_id:altStaff,garment:altDesc,items:altItems,price:Number(altPrice)||0}:null,inspiration_colors:inspoColors,inspiration_styles:inspoStyles,inspiration_notes:visionNotes||null,quince_theme:quinceTheme||null,quince_waltz_song:quinceWaltz||null,quince_cort_size_damas:quinceDamas?Number(quinceDamas):null,quince_cort_size_chambelanes:quinceChamb?Number(quinceChamb):null,venue_plan:hasDeco?vp:null,package_id:selectedPkgId||null,aiTasks:checkedAiTasks.length>0?checkedAiTasks:undefined});
     if(!error&&createdEvent?.id){
-      await supabase.from('quotes').insert({boutique_id:boutique.id,event_id:createdEvent.id,client_name:clientName,event_type:evType,event_date:evDate,venue:venue||null,expires_at:quoteExpiry||null,line_items:lineItems.map(li=>({description:li.description,qty:Number(li.qty)||1,unit_price:Number(li.unitPrice)||0})),milestones:milestones.map(m=>({label:m.label,amount:Number(m.amount)||0,due_date:m.due})),discount_type:discount.type,discount_value:Number(discount.value)||0,total:computedTotal,status:'draft'}).catch(()=>{});
+      await supabase.from('quotes').insert({boutique_id:boutique.id,event_id:createdEvent.id,client_name:clientName,event_type:evType,event_date:evDate,venue:venue||null,expires_at:quoteExpiry||null,line_items:lineItems.map(li=>({description:li.description,qty:Number(li.qty)||1,unit_price:Number(li.unitPrice)||0})),milestones:milestones.map(m=>({label:m.label,amount:Number(m.amount)||0,due_date:m.due})),discount_type:discount.type,discount_value:Number(discount.value)||0,total:computedTotal,status:'draft'}).catch(err=>{console.warn('[event creation] quote insert failed:',err?.message);partialFailures.push(err?.message||'unknown error');});
     }
     if(!error&&createdEvent?.id&&selectedChecklistId){
       const tmpl=checklistTemplates.find(t=>t.id===selectedChecklistId);
@@ -311,45 +326,78 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
           alert:it.is_alert||false,
           done:false,
         }));
-        if(rows.length)await supabase.from('tasks').insert(rows).catch(()=>{});
+        if(rows.length)await supabase.from('tasks').insert(rows).catch(err=>{console.warn('[event creation] checklist tasks insert failed:',err?.message);partialFailures.push(err?.message||'unknown error');});
       }
     }
     if(!error&&createdEvent?.id&&tasksGenerated&&selectedTasks.size>0){
       const tasksToInsert=suggestedTasks
         .filter((_,i)=>selectedTasks.has(i))
         .map(t=>({boutique_id:boutique.id,event_id:createdEvent.id,text:t.text,category:t.category,alert:t.alert,done:false}));
-      if(tasksToInsert.length)await supabase.from('tasks').insert(tasksToInsert).catch(()=>{});
+      if(tasksToInsert.length)await supabase.from('tasks').insert(tasksToInsert).catch(err=>{console.warn('[event creation] suggested tasks insert failed:',err?.message);partialFailures.push(err?.message||'unknown error');});
     }
-    setSaving(false);if(!error)onClose();else setErr(error.message||'Failed to create event');
+    if(!error&&createdEvent?.id){
+      const DEFAULT_MILESTONES={
+        wedding:[{label:'Deposit',pct:0.30},{label:'Interim payment',pct:0.40},{label:'Final balance',pct:0.30}],
+        quince:[{label:'Deposit',pct:0.25},{label:'Mid-event payment',pct:0.50},{label:'Final balance',pct:0.25}],
+        other:[{label:'Deposit',pct:0.50},{label:'Final balance',pct:0.50}],
+      };
+      const DEFAULT_TASKS={
+        wedding:['Confirm venue booking','Book dress fitting','Schedule measurements','Confirm florals','Send payment reminder','Confirm day-of timeline'],
+        quince:['Confirm venue booking','Book dress fitting','Schedule court measurements','Confirm music/DJ','Book photographer','Send payment reminder'],
+        other:['Confirm booking','Send payment reminder','Confirm day-of details'],
+      };
+      const inserts=[];
+      if(!milestones.length&&computedTotal>0){
+        const tpl=DEFAULT_MILESTONES[evType]||DEFAULT_MILESTONES.other;
+        inserts.push(supabase.from('payment_milestones').insert(tpl.map((m,idx)=>({boutique_id:boutique.id,event_id:createdEvent.id,label:m.label,amount:Math.round(computedTotal*m.pct),status:'pending',sort_order:idx}))).catch(err=>{console.warn('[event creation] default milestones insert failed:',err?.message);partialFailures.push(err?.message||'unknown error');}));
+      }
+      if(!tasksGenerated&&!selectedChecklistId){
+        const tpl=DEFAULT_TASKS[evType]||DEFAULT_TASKS.other;
+        inserts.push(supabase.from('tasks').insert(tpl.map(text=>({boutique_id:boutique.id,event_id:createdEvent.id,text,category:'General',alert:false,done:false}))).catch(err=>{console.warn('[event creation] default tasks insert failed:',err?.message);partialFailures.push(err?.message||'unknown error');}));
+      }
+      if(inserts.length)await Promise.all(inserts);
+    }
+    setSaving(false);
+    if(!error){
+      if(partialFailures.length>0){
+        toast('Event created, but some details may be missing — please review tasks and milestones.','warn');
+      }else{
+        toast('Event created successfully ✓');
+      }
+      onClose();
+    }else{
+      setErr(error.message||'Failed to create event');
+    }
   }
 
   // Shared chip style helper
-  const chip=(sel)=>({padding:'5px 10px',borderRadius:999,border:`1px solid ${sel?C.rosa:C.border}`,background:sel?C.rosaPale:C.white,color:sel?C.rosa:C.gray,cursor:'pointer',fontSize:11,minHeight:'unset',transition:'all 0.15s'});
+  const chip=(sel)=>({padding:'5px 10px',borderRadius:999,border:`1px solid ${sel?C.rosa:C.border}`,background:sel?C.rosaPale:C.white,color:sel?C.rosaText:C.gray,cursor:'pointer',fontSize:11,minHeight:'unset',transition:'all 0.15s'});
   const radioRow={display:'flex',alignItems:'center',gap:6,marginBottom:4,cursor:'pointer',fontSize:12,color:C.ink};
   const sectionBox={border:`1px solid ${C.border}`,borderRadius:10,padding:14};
 
   return(
-    <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
-      <div style={{background:C.white,borderRadius:16,width:'100%',maxWidth:640,maxHeight:'88vh',display:'flex',flexDirection:'column',boxShadow:'0 24px 60px rgba(0,0,0,0.18)'}}>
+    <>
+    <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>{if(e.target===e.currentTarget)handleClose()}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="events-create-title" style={{background:C.white,borderRadius:16,width:'100%',maxWidth:640,maxHeight:'88vh',display:'flex',flexDirection:'column',boxShadow:'0 24px 60px rgba(0,0,0,0.18)'}}>
         {/* Header + stepper */}
         <div style={{padding:'16px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-          <span style={{fontSize:16,fontWeight:500,color:C.ink}}>New event</span>
+          <span id="events-create-title" style={{fontSize:16,fontWeight:500,color:C.ink}}>New event</span>
           <div style={{display:'flex',gap:6,alignItems:'center'}}>
             {stepList.map((s,i)=><div key={s} style={{height:8,borderRadius:4,background:i<stepIdx?'var(--color-success)':s===step?'var(--color-primary)':C.border,width:s===step?28:8,transition:'all 0.2s'}}/>)}
             <span style={{fontSize:11,color:C.gray,marginLeft:4}}>Step {stepIdx+1} of {totalSteps}</span>
           </div>
-          <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:22,lineHeight:1,padding:2,minHeight:'unset',minWidth:'unset'}}>×</button>
+          <button onClick={handleClose} aria-label="Close" style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:22,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
         </div>
         <div style={{padding:'7px 24px',background:C.ivory,borderBottom:`1px solid ${C.border}`,fontSize:12,color:C.gray,flexShrink:0}}>
           {STEP_LABELS[step]}
         </div>
-        {err&&<div style={{padding:'8px 24px',background:'var(--bg-danger)',color:'var(--color-danger)',fontSize:13,flexShrink:0}}>{err}</div>}
+        {err&&<div style={{padding:'8px 24px',background:'var(--bg-danger)',color:'var(--text-danger)',fontSize:13,flexShrink:0}}>{err}</div>}
 
         {/* ══════ STEP 1 — Client & Event ══════ */}
         {step===1&&(
           <div style={{flex:1,overflowY:'auto',padding:'20px 24px',display:'flex',flexDirection:'column',gap:16}}>
             <div>
-              <div style={LBL}>Client *</div>
+              <div id="ev-client-lbl" style={LBL}>Client *</div>
               {selClient?(
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 12px',borderRadius:8,border:`1px solid ${C.rosa}`,background:C.rosaPale}}>
                   <div><span style={{fontWeight:500,color:C.ink}}>{selClient.name}</span>{selClient.phone&&<span style={{fontSize:12,color:C.gray,marginLeft:8}}>{selClient.phone}</span>}</div>
@@ -365,7 +413,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                 </div>
               ):(
                 <div style={{position:'relative'}}>
-                  <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search existing clients…" style={inputSt}/>
+                  <input aria-labelledby="ev-client-lbl" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search existing clients…" style={inputSt}/>
                   {searchResults.length>0&&(
                     <div style={{position:'absolute',top:'calc(100% + 4px)',left:0,right:0,background:C.white,border:`1px solid ${C.border}`,borderRadius:8,boxShadow:'0 4px 12px rgba(0,0,0,0.08)',zIndex:10}}>
                       {searchResults.map(cl=>(
@@ -385,8 +433,8 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
               )}
             </div>
             <div>
-              <div style={LBL}>Event type</div>
-              <div className="type-grid" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
+              <div id="ev-type-lbl" style={LBL}>Event type</div>
+              <div className="type-grid" role="group" aria-labelledby="ev-type-lbl" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
                 {Object.entries(EVT_TYPES).map(([v,t])=>(
                   <button key={v} onClick={()=>setEvType(v)} style={{padding:'10px 4px',borderRadius:8,border:`2px solid ${evType===v?t.col:C.border}`,background:evType===v?t.bg:C.white,color:evType===v?t.col:C.gray,cursor:'pointer',fontWeight:evType===v?600:400,fontSize:11,minHeight:56,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,transition:'all 0.15s'}}>
                     <span style={{fontSize:18,lineHeight:1}}>{t.icon}</span>
@@ -402,22 +450,22 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
               </div>
             </div>
             <div>
-              <div style={LBL}>Event name *</div>
-              <input value={evName} onChange={e=>setEvName(e.target.value)} placeholder="e.g. Sophia & Rafael Rodriguez" style={inputSt} maxLength={80}/>
+              <label htmlFor="ev-name" style={LBL}>Event name *</label>
+              <input id="ev-name" value={evName} onChange={e=>setEvName(e.target.value)} placeholder="e.g. Sophia & Rafael Rodriguez" style={inputSt} maxLength={80}/>
             </div>
             <div>
-              <div style={LBL}>Event date *</div>
-              <input type="date" value={evDate} onChange={e=>setEvDate(e.target.value)} style={inputSt}/>
-              {dateWarn&&<div style={{fontSize:12,color:'var(--color-warning)',marginTop:4}}>{dateWarn}</div>}
+              <label htmlFor="ev-date" style={LBL}>Event date *</label>
+              <input id="ev-date" type="date" value={evDate} onChange={e=>setEvDate(e.target.value)} style={inputSt}/>
+              {dateWarn&&<div style={{fontSize:12,color:'var(--text-warning)',marginTop:4}}>{dateWarn}</div>}
             </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 90px',gap:12}}>
-              <div><div style={LBL}>Venue / location</div><input value={venue} onChange={e=>setVenue(e.target.value)} placeholder="e.g. St. Anthony's Chapel" style={inputSt}/></div>
-              <div><div style={LBL}>Guests</div><input type="number" value={guests} onChange={e=>setGuests(e.target.value)} placeholder="0" min="1" max="2000" style={inputSt}/></div>
+              <div><label htmlFor="ev-venue" style={LBL}>Venue / location</label><input id="ev-venue" value={venue} onChange={e=>setVenue(e.target.value)} placeholder="e.g. St. Anthony's Chapel" style={inputSt}/></div>
+              <div><label htmlFor="ev-guests" style={LBL}>Guests</label><input id="ev-guests" type="number" value={guests} onChange={e=>setGuests(e.target.value)} placeholder="0" min="1" max="2000" style={inputSt}/></div>
             </div>
             <div>
-              <div style={LBL}>Assigned coordinator *</div>
+              <label htmlFor="ev-coordinator" style={LBL}>Assigned coordinator *</label>
               <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                <select value={coordId} onChange={e=>setCoordId(e.target.value)} style={{...inputSt,flex:1}}>
+                <select id="ev-coordinator" value={coordId} onChange={e=>setCoordId(e.target.value)} style={{...inputSt,flex:1}}>
                   <option value="">Select coordinator…</option>
                   {coordinators.map(s=><option key={s.id} value={s.id}>{s.name} — {s.role}</option>)}
                 </select>
@@ -442,9 +490,10 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
             {/* ── Services with inline config ── */}
             <div>
               <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:4}}>
-                <div style={LBL}>Services</div>
+                <div id="ev-services-lbl" style={LBL}>Services</div>
                 <span style={{fontSize:11,color:C.gray}}>Tap to toggle · details expand when included</span>
               </div>
+              <div role="group" aria-labelledby="ev-services-lbl">
               {[['dress_rental','👗','Dress rental','Reserve a gown from inventory'],['alterations','✂️','Alterations','Hem, bustle, seamstress work'],['decoration','🌸','Decoration','Setup, florals, venue styling'],['photography','📷','Photography','Photo & video coverage'],['dj','🎵','DJ / Music','Sound system & entertainment']]
                 .filter(([id])=>(TYPE_SVCS[evType]||Object.keys(SVC_LABELS)).includes(id))
                 .map(([id,icon,lbl,desc])=>{
@@ -455,7 +504,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                       <button onClick={()=>toggleSvc(id)} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'11px 14px',borderRadius:isOn?'10px 10px 0 0':10,border:`2px solid ${isOn?C.rosa:C.border}`,background:isOn?C.rosaPale:C.white,cursor:'pointer',textAlign:'left',transition:'all 0.15s',minHeight:'unset'}}>
                         <span style={{fontSize:18,flexShrink:0,opacity:isOn?1:0.5}}>{icon}</span>
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:13,fontWeight:500,color:isOn?C.rosa:C.ink}}>{lbl}</div>
+                          <div style={{fontSize:13,fontWeight:500,color:isOn?C.rosaText:C.ink}}>{lbl}</div>
                           <div style={{fontSize:11,color:C.gray,marginTop:1}}>{desc}</div>
                         </div>
                         <div style={{width:20,height:20,borderRadius:'50%',background:isOn?C.rosa:C.white,border:`2px solid ${isOn?C.rosa:C.border}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'all 0.15s'}}>
@@ -464,14 +513,14 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                       </button>
                       {isOn&&id==='dress_rental'&&(
                         <div style={{border:expandBorder,borderTop:'none',borderRadius:'0 0 10px 10px',padding:'12px 14px',background:'rgba(253,245,246,0.6)',display:'flex',flexDirection:'column',gap:8}}>
-                          <div style={{fontSize:11,color:C.rosa,fontWeight:500}}>Dress reservation</div>
+                          <div style={{fontSize:11,color:C.rosaText,fontWeight:500}}>Dress reservation</div>
                           <div style={{display:'flex',gap:6}}>
                             {[['now','Reserve now'],['later','Reserve later']].map(([v,l])=>(
-                              <button key={v} onClick={()=>setDressMode(v)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${dressMode===v?C.rosa:C.border}`,background:dressMode===v?C.rosaPale:'transparent',color:dressMode===v?C.rosa:C.gray,cursor:'pointer',fontSize:12,minHeight:'unset'}}>{l}</button>
+                              <button key={v} onClick={()=>setDressMode(v)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${dressMode===v?C.rosa:C.border}`,background:dressMode===v?C.rosaPale:'transparent',color:dressMode===v?C.rosaText:C.gray,cursor:'pointer',fontSize:12,minHeight:'unset'}}>{l}</button>
                             ))}
                           </div>
                           {dressMode==='now'?(availDresses.length===0
-                            ?<div style={{fontSize:12,color:'var(--color-warning)'}}>No {evType==='wedding'?'bridal':'quinceañera'} gowns available — a task will be created to reserve later.</div>
+                            ?<div style={{fontSize:12,color:'var(--text-warning)'}}>No {evType==='wedding'?'bridal':'quinceañera'} gowns available — a task will be created to reserve later.</div>
                             :<select value={dressId} onChange={e=>setDressId(e.target.value)} style={inputSt}>
                               <option value="">Select available dress…</option>
                               {availDresses.map(d=><option key={d.id} value={d.id}>#{d.sku} · {d.name} · Size {d.size} · {d.color} · {fmt(d.price)}/rental</option>)}
@@ -481,7 +530,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                       )}
                       {isOn&&id==='alterations'&&(
                         <div style={{border:expandBorder,borderTop:'none',borderRadius:'0 0 10px 10px',padding:'12px 14px',background:'rgba(253,245,246,0.6)',display:'flex',flexDirection:'column',gap:8}}>
-                          <div style={{fontSize:11,color:C.rosa,fontWeight:500}}>Alteration details <span style={{color:C.gray,fontWeight:400}}>(all optional — can fill in later)</span></div>
+                          <div style={{fontSize:11,color:C.rosaText,fontWeight:500}}>Alteration details <span style={{color:C.gray,fontWeight:400}}>(all optional — can fill in later)</span></div>
                           <select value={altStaff} onChange={e=>setAltStaff(e.target.value)} style={inputSt}>
                             <option value="">Assign seamstress…</option>
                             {seamstresses.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
@@ -497,18 +546,18 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                       )}
                       {isOn&&id==='decoration'&&(
                         <div style={{border:expandBorder,borderTop:'none',borderRadius:'0 0 10px 10px',padding:'12px 14px',background:'rgba(253,245,246,0.6)',display:'flex',flexDirection:'column',gap:8}}>
-                          <div style={{fontSize:11,color:C.rosa,fontWeight:500}}>Floral arrangement <span style={{color:C.gray,fontWeight:400}}>· affects deposit amount</span></div>
+                          <div style={{fontSize:11,color:C.rosaText,fontWeight:500}}>Floral arrangement <span style={{color:C.gray,fontWeight:400}}>· affects deposit amount</span></div>
                           {[['real','🌸 Real flowers','Natural blooms, seasonal · Deposit $800'],['silk','🎀 Silk / artificial','Always available, no wilt · Deposit $500']].map(([v,l,d])=>(
                             <button key={v} onClick={()=>setFloralType(v)} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 12px',borderRadius:8,border:`1.5px solid ${floralType===v?C.rosa:C.border}`,background:floralType===v?C.rosaPale:C.white,cursor:'pointer',textAlign:'left',transition:'all 0.15s',minHeight:'unset'}}>
                               <div style={{width:14,height:14,borderRadius:'50%',border:`2px solid ${floralType===v?C.rosa:C.borderDark}`,background:floralType===v?C.rosa:'transparent',flexShrink:0,transition:'all 0.15s'}}/>
                               <div>
-                                <div style={{fontSize:12,fontWeight:floralType===v?500:400,color:floralType===v?C.rosa:C.ink}}>{l}</div>
+                                <div style={{fontSize:12,fontWeight:floralType===v?500:400,color:floralType===v?C.rosaText:C.ink}}>{l}</div>
                                 <div style={{fontSize:10,color:C.gray,marginTop:1}}>{d}</div>
                               </div>
                             </button>
                           ))}
                           {!floralType&&<div style={{fontSize:11,color:C.amber}}>⚠ Select a floral type to confirm the deposit amount</div>}
-                          <div style={{padding:'7px 10px',background:'var(--bg-warning)',borderRadius:6,fontSize:11,color:'var(--color-warning)'}}>
+                          <div style={{padding:'7px 10px',background:'var(--bg-warning)',borderRadius:6,fontSize:11,color:'var(--text-warning)'}}>
                             Venue & linen details collected in step 5
                           </div>
                           {inspoColors.length>0&&(
@@ -531,6 +580,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                 </div>
                 <span style={{fontSize:10,fontWeight:600,padding:'2px 8px',borderRadius:999,background:'#F3F4F6',color:C.gray,whiteSpace:'nowrap',letterSpacing:'0.03em'}}>Add-on</span>
               </div>
+              </div>{/* /role="group" ev-services-lbl */}
             </div>
 
             {/* ── Package picker + Checklist ── */}
@@ -552,16 +602,16 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                               if(sel){setSelectedPkgId(null);}
                               else{setSelectedPkgId(pkg.id);setSvcs(pkg.services||[]);setFloralType('');}
                             }} style={{flexShrink:0,padding:'10px 14px',borderRadius:10,border:`2px solid ${sel?C.rosa:C.border}`,background:sel?C.rosaPale:C.white,cursor:'pointer',textAlign:'left',minWidth:150,maxWidth:190,transition:'all 0.15s',minHeight:'unset'}}>
-                              <div style={{fontSize:12,fontWeight:600,color:sel?C.rosa:C.ink,marginBottom:2}}>{pkg.name}</div>
-                              <div style={{fontSize:13,fontWeight:700,color:sel?C.rosa:'#16a34a',marginBottom:5}}>{fmt(pkg.base_price)}</div>
+                              <div style={{fontSize:12,fontWeight:600,color:sel?C.rosaText:C.ink,marginBottom:2}}>{pkg.name}</div>
+                              <div style={{fontSize:13,fontWeight:700,color:sel?C.rosaText:'#16a34a',marginBottom:5}}>{fmt(pkg.base_price)}</div>
                               <div style={{display:'flex',gap:3,flexWrap:'wrap'}}>
-                                {(pkg.services||[]).map(s=><span key={s} style={{fontSize:10,padding:'2px 5px',borderRadius:999,background:sel?'rgba(201,105,122,0.15)':C.border,color:sel?C.rosa:C.gray}}>{SVC_LABELS[s]||s}</span>)}
+                                {(pkg.services||[]).map(s=><span key={s} style={{fontSize:10,padding:'2px 5px',borderRadius:999,background:sel?'rgba(201,105,122,0.15)':C.border,color:sel?C.rosaText:C.gray}}>{SVC_LABELS[s]||s}</span>)}
                               </div>
                             </button>
                           );
                         })}
                       </div>
-                      {selectedPkgId&&<div style={{fontSize:11,color:C.rosa,marginTop:4}}>✓ Package applied — services pre-filled</div>}
+                      {selectedPkgId&&<div style={{fontSize:11,color:C.rosaText,marginTop:4}}>✓ Package applied — services pre-filled</div>}
                     </div>
                   )}
                   {clTmpls.length>0&&(
@@ -573,7 +623,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                           <option key={t.id} value={t.id}>{t.name} ({(t.items||[]).length} items)</option>
                         ))}
                       </select>
-                      {selectedChecklistId&&<div style={{fontSize:11,color:C.rosa,marginTop:4}}>✓ Checklist tasks will be added on creation</div>}
+                      {selectedChecklistId&&<div style={{fontSize:11,color:C.rosaText,marginTop:4}}>✓ Checklist tasks will be added on creation</div>}
                     </div>
                   )}
                 </div>
@@ -589,15 +639,15 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
             {/* Quote expiry */}
             <div style={{display:'flex',alignItems:'center',gap:12}}>
               <div style={{flex:1}}>
-                <div style={LBL}>Quote valid until</div>
-                <input type="date" value={quoteExpiry} onChange={e=>setQuoteExpiry(e.target.value)} style={inputSt}/>
+                <label htmlFor="ev-quote-expiry" style={LBL}>Quote valid until</label>
+                <input id="ev-quote-expiry" type="date" value={quoteExpiry} onChange={e=>setQuoteExpiry(e.target.value)} style={inputSt}/>
               </div>
             </div>
 
             {/* Line items table */}
             <div>
               <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:8}}>
-                <div style={LBL}>Services & pricing</div>
+                <div id="ev-pricing-lbl" style={LBL}>Services & pricing</div>
                 <span style={{fontSize:11,color:C.gray}}>Edit descriptions and enter prices for each service</span>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 60px 110px 28px',gap:5,marginBottom:4}}>
@@ -606,7 +656,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                 <span style={{fontSize:11,color:C.gray,fontWeight:600}}>Unit price</span>
                 <span/>
               </div>
-              <div style={{display:'flex',flexDirection:'column',gap:5}}>
+              <div role="group" aria-labelledby="ev-pricing-lbl" style={{display:'flex',flexDirection:'column',gap:5}}>
                 {lineItems.map((li,i)=>(
                   <div key={li.id} style={{display:'grid',gridTemplateColumns:'1fr 60px 110px 28px',gap:5,alignItems:'center'}}>
                     <div style={{position:'relative'}}>
@@ -628,7 +678,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                   </div>
                 ))}
               </div>
-              <button onClick={()=>setLineItems(prev=>[...prev,{id:Date.now(),description:'',qty:1,unitPrice:''}])} style={{marginTop:8,fontSize:12,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0,minHeight:'unset'}}>+ Add custom line item</button>
+              <button onClick={()=>setLineItems(prev=>[...prev,{id:Date.now(),description:'',qty:1,unitPrice:''}])} style={{marginTop:8,fontSize:12,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0,minHeight:'unset'}}>+ Add custom line item</button>
             </div>
 
             {/* Totals */}
@@ -639,7 +689,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                 <div style={{display:'flex',gap:4}}>
                   {[['fixed','$'],['percent','%']].map(([v,l])=>(
                     <button key={v} onClick={()=>setDiscount(d=>({...d,type:v}))}
-                      style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${discount.type===v?C.rosa:C.border}`,background:discount.type===v?C.rosaPale:C.white,color:discount.type===v?C.rosa:C.gray,cursor:'pointer',fontSize:12,minHeight:'unset'}}>
+                      style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${discount.type===v?C.rosa:C.border}`,background:discount.type===v?C.rosaPale:C.white,color:discount.type===v?C.rosaText:C.gray,cursor:'pointer',fontSize:12,minHeight:'unset'}}>
                       {l}
                     </button>
                   ))}
@@ -664,7 +714,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
               {/* AI price suggestion */}
               {boutique?.plan&&['pro','enterprise'].includes(boutique.plan)&&(
                 <button type="button" onClick={getAIPriceSuggestion} disabled={aiPriceLoading||!svcs.length}
-                  style={{marginTop:10,fontSize:11,padding:'4px 12px',borderRadius:6,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,cursor:'pointer',fontWeight:500,minHeight:'unset',opacity:aiPriceLoading||!svcs.length?0.6:1}}>
+                  style={{marginTop:10,fontSize:11,padding:'4px 12px',borderRadius:6,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,cursor:'pointer',fontWeight:500,minHeight:'unset',opacity:aiPriceLoading||!svcs.length?0.6:1}}>
                   {aiPriceLoading?'✨ Thinking…':'✨ AI price suggestion'}
                 </button>
               )}
@@ -695,27 +745,27 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
                   <div style={{fontSize:12,color:C.gray,fontWeight:500}}>Payment milestones</div>
                   <button onClick={()=>setMilestones(genMilestones(evType,svcs,computedTotal,evDate))}
-                    style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer',minHeight:'unset'}}>↺ Recalculate</button>
+                    style={{fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer',minHeight:'unset'}}>↺ Recalculate</button>
                 </div>
-                {mismatch&&<div style={{fontSize:12,color:C.amber,background:C.amberBg,padding:'6px 10px',borderRadius:6,marginBottom:8}}>Milestones total {fmt(milestoneSum)} — should equal {fmt(computedTotal)}</div>}
+                {mismatch&&<div style={{fontSize:12,color:C.warningText,background:C.amberBg,padding:'6px 10px',borderRadius:6,marginBottom:8}}>Milestones total {fmt(milestoneSum)} — should equal {fmt(computedTotal)}</div>}
                 <div style={{display:'flex',flexDirection:'column',gap:5}}>
                   {milestones.map((m,i)=>(
                     <div key={m.id||i} style={{display:'grid',gridTemplateColumns:'1fr 90px 130px 28px',gap:5,alignItems:'center'}}>
                       <input value={m.label} onChange={e=>setMs(i,'label',e.target.value)} style={{...inputSt,fontSize:12}}/>
                       <input type="number" value={m.amount} onChange={e=>setMs(i,'amount',e.target.value)} placeholder="$0" style={{...inputSt,fontSize:12}}/>
                       <input type="date" value={m.due} onChange={e=>setMs(i,'due',e.target.value)} style={{...inputSt,fontSize:12}}/>
-                      <button onClick={()=>setMilestones(ms=>ms.filter((_,j)=>j!==i))} disabled={milestones.length<=1}
-                        style={{background:'none',border:'none',color:C.gray,cursor:'pointer',fontSize:16,padding:0,minHeight:'unset',minWidth:'unset',opacity:milestones.length<=1?0.3:1}}>×</button>
+                      <button onClick={()=>setMilestones(ms=>ms.filter((_,j)=>j!==i))} disabled={milestones.length<=1} aria-label="Remove milestone"
+                        style={{background:'none',border:'none',color:C.gray,cursor:'pointer',fontSize:16,padding:'4px 8px',minHeight:32,minWidth:32,opacity:milestones.length<=1?0.3:1}}>×</button>
                     </div>
                   ))}
                   <button onClick={()=>setMilestones(ms=>[...ms,{id:Date.now(),label:'',amount:'',due:''}])}
-                    style={{alignSelf:'flex-start',fontSize:12,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0,minHeight:'unset'}}>+ Add milestone</button>
+                    style={{alignSelf:'flex-start',fontSize:12,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0,minHeight:'unset'}}>+ Add milestone</button>
                 </div>
               </div>
             )}
             {computedTotal>0&&milestones.length===0&&evDate&&(
               <button onClick={()=>setMilestones(genMilestones(evType,svcs,computedTotal,evDate))}
-                style={{alignSelf:'flex-start',fontSize:12,color:C.rosa,background:C.rosaPale,border:`1px solid ${C.rosa}`,borderRadius:8,padding:'6px 14px',cursor:'pointer',fontWeight:500,minHeight:'unset'}}>
+                style={{alignSelf:'flex-start',fontSize:12,color:C.rosaText,background:C.rosaPale,border:`1px solid ${C.rosa}`,borderRadius:8,padding:'6px 14px',cursor:'pointer',fontWeight:500,minHeight:'unset'}}>
                 Generate payment milestones
               </button>
             )}
@@ -728,7 +778,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                   <div style={{fontSize:11,color:C.gray,marginTop:1}}>Auto-generated tasks based on your services</div>
                 </div>
                 {!tasksGenerated
-                  ?<button onClick={generateSmartTasks} style={{fontSize:12,padding:'6px 14px',borderRadius:8,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,cursor:'pointer',fontWeight:500,minHeight:'unset'}}>Generate tasks</button>
+                  ?<button onClick={generateSmartTasks} style={{fontSize:12,padding:'6px 14px',borderRadius:8,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,cursor:'pointer',fontWeight:500,minHeight:'unset'}}>Generate tasks</button>
                   :<button onClick={()=>{setTasksGenerated(false);setSuggestedTasks([]);}} style={{fontSize:11,color:C.gray,background:'none',border:'none',cursor:'pointer',minHeight:'unset'}}>Reset</button>
                 }
               </div>
@@ -758,20 +808,20 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
 
             {/* Color palette */}
             <div>
-              <div style={LBL}>Event color palette <span style={{fontWeight:400}}>(up to 6)</span></div>
+              <div id="ev-palette-lbl" style={LBL}>Event color palette <span style={{fontWeight:400}}>(up to 6)</span></div>
               {inspoColors.length>0&&(
                 <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
                   {inspoColors.map((c,i)=>(
                     <div key={i} style={{display:'flex',alignItems:'center',gap:4,background:C.grayBg,borderRadius:999,padding:'4px 10px 4px 4px'}}>
                       <div style={{width:20,height:20,borderRadius:'50%',background:c.hex,border:'1px solid rgba(0,0,0,0.1)',flexShrink:0}}/>
                       <span style={{fontSize:11,color:C.ink}}>{c.label}</span>
-                      <button onClick={()=>removeColor(i)} style={{background:'none',border:'none',cursor:'pointer',fontSize:14,color:C.gray,padding:0,marginLeft:2,minHeight:'unset',minWidth:'unset',lineHeight:1}}>×</button>
+                      <button onClick={()=>removeColor(i)} aria-label="Remove color" style={{background:'none',border:'none',cursor:'pointer',fontSize:14,color:C.gray,padding:'4px 8px',marginLeft:2,minHeight:32,minWidth:32,lineHeight:1}}>×</button>
                     </div>
                   ))}
                 </div>
               )}
               <div style={{fontSize:11,color:C.gray,marginBottom:6}}>Quick presets:</div>
-              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              <div role="group" aria-labelledby="ev-palette-lbl" style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                 {COLOR_PRESETS.map(p=>(
                   <button key={p.name} onClick={()=>setInspoColors(p.colors.slice(0,6))} style={{padding:'5px 10px',borderRadius:999,border:`1px solid ${C.border}`,background:C.white,cursor:'pointer',fontSize:11,color:C.ink,minHeight:'unset',display:'flex',alignItems:'center',gap:4}}>
                     {p.colors.slice(0,3).map((c,i)=><div key={i} style={{width:10,height:10,borderRadius:'50%',background:c.hex,border:'0.5px solid rgba(0,0,0,0.15)'}}/>)}
@@ -783,8 +833,8 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
 
             {/* Style chips */}
             <div>
-              <div style={LBL}>Event style <span style={{fontWeight:400}}>(up to 3)</span></div>
-              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              <div id="ev-style-lbl" style={LBL}>Event style <span style={{fontWeight:400}}>(up to 3)</span></div>
+              <div role="group" aria-labelledby="ev-style-lbl" style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                 {STYLE_OPTIONS.map(s=>(
                   <button key={s} onClick={()=>toggleStyle(s)} style={chip(inspoStyles.includes(s))}>{s}</button>
                 ))}
@@ -793,15 +843,15 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
 
             {/* Vision notes */}
             <div>
-              <div style={LBL}>Vision notes <span style={{fontWeight:400}}>(optional)</span></div>
-              <textarea value={visionNotes} onChange={e=>setVisionNotes(e.target.value)} placeholder="Anything about the client's vision — specific flowers, must-have moments, things to avoid, special traditions…" maxLength={500} style={{...inputSt,minHeight:80,resize:'vertical',fontFamily:'inherit'}}/>
+              <label htmlFor="ev-vision-notes" style={LBL}>Vision notes <span style={{fontWeight:400}}>(optional)</span></label>
+              <textarea id="ev-vision-notes" value={visionNotes} onChange={e=>setVisionNotes(e.target.value)} placeholder="Anything about the client's vision — specific flowers, must-have moments, things to avoid, special traditions…" maxLength={500} style={{...inputSt,minHeight:80,resize:'vertical',fontFamily:'inherit'}}/>
               <div style={{fontSize:11,color:C.gray,textAlign:'right'}}>{visionNotes.length}/500</div>
             </div>
 
             {/* Quinceañera-specific */}
             {evType==='quince'&&(
               <div style={{border:`1px solid var(--color-accent)`,borderRadius:10,padding:14,background:'var(--bg-accent)'}}>
-                <div style={{fontSize:12,fontWeight:600,color:'var(--color-accent)',marginBottom:10}}>Quinceañera details</div>
+                <div style={{fontSize:12,fontWeight:600,color:'var(--text-accent)',marginBottom:10}}>Quinceañera details</div>
                 <div style={{display:'flex',flexDirection:'column',gap:8}}>
                   <input value={quinceTheme} onChange={e=>setQuinceTheme(e.target.value)} placeholder='Theme — e.g. "Under the stars", "Enchanted garden"' style={inputSt}/>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
@@ -963,21 +1013,21 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
 
             {/* Notes */}
             <div>
-              <div style={LBL}>Other decoration needs</div>
-              <textarea value={vp.notes} onChange={e=>sv('notes',e.target.value)} placeholder="Fairy lights on ceiling, specific floral arrangements, photo booth props…" style={{...inputSt,minHeight:60,resize:'vertical',fontFamily:'inherit'}}/>
+              <label htmlFor="ev-deco-notes" style={LBL}>Other decoration needs</label>
+              <textarea id="ev-deco-notes" value={vp.notes} onChange={e=>sv('notes',e.target.value)} placeholder="Fairy lights on ceiling, specific floral arrangements, photo booth props…" style={{...inputSt,minHeight:60,resize:'vertical',fontFamily:'inherit'}}/>
             </div>
 
             {/* Live summary */}
             {(vp.tableCount||vp.chairSource==='us'||vp.centerpieces||vp.arch)&&(
               <div style={{background:'var(--bg-success)',borderRadius:10,padding:14}}>
-                <div style={{fontSize:10,fontWeight:600,color:'var(--color-success)',letterSpacing:'0.08em',marginBottom:8}}>ITEMS TO RESERVE FROM INVENTORY</div>
-                {vp.clothSource==='us'&&vp.tableCount&&<div style={{fontSize:12,color:'var(--color-success)',marginBottom:3}}>✓ {vp.clothColor||'—'} {vp.clothStyle!=='plain'?vp.clothStyle+' ':''} tablecloths × {Number(vp.tableCount)+(vp.sweetheart?1:0)}</div>}
-                {vp.coverSource==='us'&&vp.chairCount&&<div style={{fontSize:12,color:'var(--color-success)',marginBottom:3}}>✓ {vp.coverColor||'—'} chair covers × {vp.chairCount}</div>}
-                {vp.sashes&&vp.chairCount&&<div style={{fontSize:12,color:'var(--color-success)',marginBottom:3}}>✓ {vp.sashColor||'—'} {vp.sashStyle} chair sashes × {vp.chairCount}</div>}
-                {vp.chairSource==='us'&&vp.chairCount&&<div style={{fontSize:12,color:'var(--color-success)',marginBottom:3}}>✓ {vp.chairStyle||'Chairs'} × {vp.chairCount}</div>}
-                {vp.centerpieces&&vp.cpQty&&<div style={{fontSize:12,color:'var(--color-success)',marginBottom:3}}>✓ {vp.cpStyle||'Centerpiece'} sets × {vp.cpQty}</div>}
-                {vp.arch&&vp.archType&&<div style={{fontSize:12,color:'var(--color-success)',marginBottom:3}}>✓ {vp.archType} × 1</div>}
-                <div style={{fontSize:11,color:'var(--color-success)',marginTop:6,borderTop:`1px solid rgba(var(--color-success-rgb), 0.2)`,paddingTop:6}}>All items will be reserved on save.</div>
+                <div style={{fontSize:10,fontWeight:600,color:'var(--text-success)',letterSpacing:'0.08em',marginBottom:8}}>ITEMS TO RESERVE FROM INVENTORY</div>
+                {vp.clothSource==='us'&&vp.tableCount&&<div style={{fontSize:12,color:'var(--text-success)',marginBottom:3}}>✓ {vp.clothColor||'—'} {vp.clothStyle!=='plain'?vp.clothStyle+' ':''} tablecloths × {Number(vp.tableCount)+(vp.sweetheart?1:0)}</div>}
+                {vp.coverSource==='us'&&vp.chairCount&&<div style={{fontSize:12,color:'var(--text-success)',marginBottom:3}}>✓ {vp.coverColor||'—'} chair covers × {vp.chairCount}</div>}
+                {vp.sashes&&vp.chairCount&&<div style={{fontSize:12,color:'var(--text-success)',marginBottom:3}}>✓ {vp.sashColor||'—'} {vp.sashStyle} chair sashes × {vp.chairCount}</div>}
+                {vp.chairSource==='us'&&vp.chairCount&&<div style={{fontSize:12,color:'var(--text-success)',marginBottom:3}}>✓ {vp.chairStyle||'Chairs'} × {vp.chairCount}</div>}
+                {vp.centerpieces&&vp.cpQty&&<div style={{fontSize:12,color:'var(--text-success)',marginBottom:3}}>✓ {vp.cpStyle||'Centerpiece'} sets × {vp.cpQty}</div>}
+                {vp.arch&&vp.archType&&<div style={{fontSize:12,color:'var(--text-success)',marginBottom:3}}>✓ {vp.archType} × 1</div>}
+                <div style={{fontSize:11,color:'var(--text-success)',marginTop:6,borderTop:`1px solid rgba(var(--color-success-rgb), 0.2)`,paddingTop:6}}>All items will be reserved on save.</div>
               </div>
             )}
           </div>
@@ -1095,9 +1145,9 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
               </div>
             )}
             <div style={{background:'var(--bg-success)',borderRadius:10,padding:14}}>
-              <div style={{fontSize:10,fontWeight:600,color:'var(--color-success)',letterSpacing:'0.08em',marginBottom:8}}>AUTOMATIONS THAT WILL ENROLL</div>
+              <div style={{fontSize:10,fontWeight:600,color:'var(--text-success)',letterSpacing:'0.08em',marginBottom:8}}>AUTOMATIONS THAT WILL ENROLL</div>
               {['Appointment reminders (SMS 24h + 2h)','Payment milestone reminders','Dress return reminder','Post-event review request'].map(a=>(
-                <div key={a} style={{fontSize:12,color:'var(--color-success)',marginBottom:3}}>✓ {a}</div>
+                <div key={a} style={{fontSize:12,color:'var(--text-success)',marginBottom:3}}>✓ {a}</div>
               ))}
             </div>
           </div>
@@ -1105,11 +1155,35 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
 
         {/* Footer */}
         <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',gap:8,flexShrink:0}}>
-          <GhostBtn label={step===1?'Cancel':'← Back'} onClick={()=>step===1?onClose():goBack()}/>
+          <GhostBtn label={step===1?'Cancel':'← Back'} onClick={()=>step===1?handleClose():goBack()}/>
           {!isLast?<PrimaryBtn label="Continue →" onClick={goNext}/>:<PrimaryBtn label={saving?'Creating…':'Create event & save quote'} colorScheme="success" onClick={confirm}/>}
         </div>
       </div>
     </div>
+    {/* Discard confirm */}
+    {showDiscardConfirm && (
+      <div role="presentation" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1100,padding:16}}>
+        <div role="dialog" aria-modal="true" aria-labelledby="discard-event-title"
+          style={{background:'#fff',borderRadius:16,width:380,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.25)'}}>
+          <div style={{padding:'20px 20px 12px',textAlign:'center'}}>
+            <div style={{fontSize:28,marginBottom:8}}>🗑️</div>
+            <div id="discard-event-title" style={{fontSize:16,fontWeight:600,color:'#111',marginBottom:8}}>Discard this event?</div>
+            <div style={{fontSize:13,color:'#666'}}>All unsaved data will be lost.</div>
+          </div>
+          <div style={{padding:'12px 20px 20px',display:'flex',gap:8}}>
+            <button onClick={()=>setShowDiscardConfirm(false)}
+              style={{flex:1,padding:'9px 16px',borderRadius:8,border:'1px solid #e5e5e5',background:'#fff',color:'#666',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+              Keep editing
+            </button>
+            <button onClick={()=>{setShowDiscardConfirm(false);onClose();}}
+              style={{flex:1,padding:'9px 16px',borderRadius:8,border:'none',background:'var(--color-danger)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+              Discard
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 // ─── CALENDAR VIEW (rebuilt) ────────────────────────────────────────────────
@@ -1120,19 +1194,6 @@ function evDate(ev) {
   }
   const t = new Date(); t.setDate(t.getDate()+(ev.daysUntil||0)); return t;
 }
-const CAL_TYPES={
-  wedding:      {bg:'#FCE7F3',col:'#BE185D',icon:'💍'},
-  quince:       {bg:'var(--bg-accent)',col:'var(--color-accent)',icon:'👑'},
-  baptism:      {bg:'#DBEAFE',col:'#1D4ED8',icon:'🕊'},
-  birthday:     {bg:'var(--bg-warning)',col:'var(--color-warning)',icon:'🎂'},
-  anniversary:  {bg:'#FCE7F3',col:'#BE185D',icon:'💕'},
-  graduation:   {bg:'var(--bg-success)',col:'var(--color-success)',icon:'🎓'},
-  baby_shower:  {bg:'#E0F2FE',col:'#0369A1',icon:'🍼'},
-  bridal_shower:{bg:'#FDF2F8',col:'#9D174D',icon:'💐'},
-  pickup:       {bg:'#FEF3C7',col:'#B45309',icon:'📦'},
-  return:       {bg:'#DBEAFE',col:'#1D4ED8',icon:'↩'},
-  alteration:   {bg:'#DCFCE7',col:'#15803D',icon:'✂'},
-};
 const APPT_CAL={
   measurements:      {bg:'#E0F2FE',col:'#0369A1',icon:'📏'},
   venue_walkthrough: {bg:'#F0FDF4',col:'#15803D',icon:'🏛'},
@@ -1201,7 +1262,7 @@ const CalendarView = ({events, inventory, alterations, setScreen, setSelectedEve
       const d=evDate(ev);
       if(d.getFullYear()===yr&&d.getMonth()===mo){
         const k=`${yr}-${mo}-${d.getDate()}`;
-        const t=CAL_TYPES[ev.type]||{bg:C.rosaPale,col:C.rosa,icon:'📅'};
+        const t=EVT_TYPES[ev.type]||{bg:C.rosaPale,col:C.rosaText,icon:'📅'};
         addEntry(k,{id:`ev-${ev.id}`,kind:'event',bg:t.bg,col:t.col,icon:t.icon,
           label:ev.client?.split(' ')[0]||'Event',
           sub:EVT_TYPES[ev.type]?.label||ev.type,
@@ -1230,8 +1291,8 @@ const CalendarView = ({events, inventory, alterations, setScreen, setSelectedEve
     (inventory||[]).forEach(d=>{
       if(!['reserved','rented','picked_up'].includes(d.status))return;
       const lbl=(d.client?.name||d.client||'').split(' ')[0]||d.sku;
-      if(d.pickup_date) addEntry(toKey(d.pickup_date),{id:`pick-${d.id}`,kind:'pickup',bg:CAL_TYPES.pickup.bg,col:CAL_TYPES.pickup.col,icon:'📦',label:lbl,sub:`Pickup #${d.sku}`});
-      if(d.return_date) addEntry(toKey(d.return_date),{id:`ret-${d.id}`,kind:'return',bg:CAL_TYPES.return.bg,col:CAL_TYPES.return.col,icon:'↩',label:lbl,sub:`Return #${d.sku}`});
+      if(d.pickup_date) addEntry(toKey(d.pickup_date),{id:`pick-${d.id}`,kind:'pickup',bg:APPT_CAL.pickup.bg,col:APPT_CAL.pickup.col,icon:'📦',label:lbl,sub:`Pickup #${d.sku}`});
+      if(d.return_date) addEntry(toKey(d.return_date),{id:`ret-${d.id}`,kind:'return',bg:APPT_CAL.return.bg,col:APPT_CAL.return.col,icon:'↩',label:lbl,sub:`Return #${d.sku}`});
     });
     (alterations||[]).forEach(a=>{
       if(a.status==='complete')return;
@@ -1239,7 +1300,7 @@ const CalendarView = ({events, inventory, alterations, setScreen, setSelectedEve
       if(!ds&&a.daysUntil!=null){const e=new Date(now);e.setDate(now.getDate()+a.daysUntil-1);ds=e.toISOString().split('T')[0];}
       if(!ds)return;
       const isU=(a.daysUntil??99)<=7;
-      addEntry(toKey(ds),{id:`alt-${a.id}`,kind:'alteration',bg:isU?C.redBg:CAL_TYPES.alteration.bg,col:isU?C.red:CAL_TYPES.alteration.col,icon:'✂',label:a.client?.split(' ')[0]||'Alt',sub:(a.work||[]).slice(0,2).join(', ')||a.status});
+      addEntry(toKey(ds),{id:`alt-${a.id}`,kind:'alteration',bg:isU?C.redBg:APPT_CAL.alteration_check.bg,col:isU?C.red:APPT_CAL.alteration_check.col,icon:'✂',label:a.client?.split(' ')[0]||'Alt',sub:(a.work||[]).slice(0,2).join(', ')||a.status});
     });
   }
 
@@ -1283,7 +1344,7 @@ const CalendarView = ({events, inventory, alterations, setScreen, setSelectedEve
           <div style={{width:1,height:20,background:C.border,flexShrink:0,margin:'0 4px'}}/>
           <div style={{display:'flex',gap:3}}>
             {[['all','All types'],['wedding','💍 Weddings'],['quince','👑 Quinceañeras'],['other','Other']].map(([v,l])=>(
-              <button key={v} onClick={()=>setEvType(v)} style={{padding:'4px 10px',borderRadius:999,border:`1px solid ${evType===v?C.rosa:C.border}`,background:evType===v?C.rosaPale:'transparent',color:evType===v?C.rosa:C.gray,fontSize:11,fontWeight:evType===v?500:400,cursor:'pointer',whiteSpace:'nowrap'}}>{l}</button>
+              <button key={v} onClick={()=>setEvType(v)} style={{padding:'4px 10px',borderRadius:999,border:`1px solid ${evType===v?C.rosa:C.border}`,background:evType===v?C.rosaPale:'transparent',color:evType===v?C.rosaText:C.gray,fontSize:11,fontWeight:evType===v?500:400,cursor:'pointer',whiteSpace:'nowrap'}}>{l}</button>
             ))}
           </div>
         </>)}
@@ -1317,7 +1378,7 @@ const CalendarView = ({events, inventory, alterations, setScreen, setSelectedEve
                   <div key={k} onClick={()=>setSelectedDay(isSel?null:k)}
                     style={{borderRight:`1px solid ${C.border}`,borderBottom:`1px solid ${C.border}`,padding:'5px 6px',background:isSel?C.rosaPale:isToday?'#FFF5F7':C.white,transition:'background 0.1s',minHeight:110,cursor:'pointer',position:'relative'}}>
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:3}}>
-                      <div style={{width:22,height:22,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:isToday?700:400,background:isToday?C.rosa:'transparent',color:isToday?C.white:isSel?C.rosa:C.inkMid,flexShrink:0}}>{day}</div>
+                      <div style={{width:22,height:22,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:isToday?700:400,background:isToday?C.rosa:'transparent',color:isToday?C.white:isSel?C.rosaText:C.inkMid,flexShrink:0}}>{day}</div>
                       {apptCount>0&&<span style={{fontSize:9,padding:'1px 5px',borderRadius:999,background:'#DBEAFE',color:'#1D4ED8',fontWeight:600}}>{apptCount}a</span>}
                     </div>
                     {entries.slice(0,3).map(entry=>(
@@ -1339,50 +1400,107 @@ const CalendarView = ({events, inventory, alterations, setScreen, setSelectedEve
         </div>
 
         {/* Day detail side panel */}
-        {selectedDay&&(
-          <div style={{width:252,borderLeft:`1px solid ${C.border}`,background:C.white,display:'flex',flexDirection:'column',overflow:'hidden',flexShrink:0}}>
-            <div style={{padding:'12px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        {selectedDay&&(()=>{
+          const eventEntries=selEntries.filter(e=>e.kind==='event');
+          const apptEntries=selEntries.filter(e=>e.kind==='appointment');
+          const dressEntries=selEntries.filter(e=>['pickup','return','alteration'].includes(e.kind));
+          return(
+          <div style={{width:280,borderLeft:`1px solid ${C.border}`,background:C.white,display:'flex',flexDirection:'column',overflow:'hidden',flexShrink:0}}>
+            {/* Header */}
+            <div style={{padding:'14px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexShrink:0}}>
               <div>
-                <div style={{fontSize:13,fontWeight:600,color:C.ink}}>
-                  {new Date(keyToISO(selectedDay)+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}
+                <div style={{fontSize:15,fontWeight:700,color:C.ink}}>
+                  {new Date(keyToISO(selectedDay)+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}
                 </div>
-                <div style={{fontSize:11,color:C.gray,marginTop:1}}>{selEntries.length} {selEntries.length===1?'entry':'entries'}</div>
+                <div style={{fontSize:11,color:C.gray,marginTop:2}}>{selEntries.length} {selEntries.length===1?'item':'items'}</div>
               </div>
-              <button onClick={()=>setSelectedDay(null)} style={{border:'none',background:'none',cursor:'pointer',color:C.gray,fontSize:18,padding:0,lineHeight:1}}>×</button>
+              <button onClick={()=>setSelectedDay(null)} aria-label="Close" style={{border:'none',background:'none',cursor:'pointer',color:C.gray,fontSize:18,lineHeight:1,padding:'2px 6px'}}>×</button>
             </div>
-            {selEntries.length===0
-              ?(
-                <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:10,padding:20,textAlign:'center'}}>
-                  <div style={{fontSize:32,opacity:0.4}}>📅</div>
-                  <div style={{fontSize:12,color:C.gray}}>Nothing scheduled</div>
-                  {onAddEvent&&<button onClick={()=>onAddEvent(keyToISO(selectedDay))} style={{fontSize:12,color:C.rosa,background:'none',border:`1px solid ${C.petal}`,borderRadius:8,padding:'6px 14px',cursor:'pointer',fontWeight:500}}>+ New event</button>}
+
+            {/* Scrollable body */}
+            <div style={{flex:1,overflowY:'auto'}}>
+              {selEntries.length===0?(
+                <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,padding:24,textAlign:'center',minHeight:200}}>
+                  <div style={{fontSize:40,opacity:0.3}}>📅</div>
+                  <div style={{fontSize:13,fontWeight:600,color:C.ink}}>Nothing scheduled</div>
+                  <div style={{fontSize:11,color:C.gray}}>This day is clear.</div>
                 </div>
-              )
-              :(
-                <div style={{flex:1,overflowY:'auto',padding:10,display:'flex',flexDirection:'column',gap:6}}>
-                  {selEntries.map(entry=>(
-                    <div key={entry.id} onClick={entry.onClick}
-                      style={{padding:'9px 12px',borderRadius:10,border:`1px solid ${entry.bg}`,background:entry.bg,cursor:entry.onClick?'pointer':'default',transition:'opacity 0.1s'}}
-                      onMouseEnter={e=>{if(entry.onClick)e.currentTarget.style.opacity='0.8';}}
-                      onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
-                      <div style={{display:'flex',alignItems:'center',gap:6}}>
-                        <span style={{fontSize:15}}>{entry.icon}</span>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:12,fontWeight:600,color:entry.col,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{entry.label}</div>
-                          <div style={{fontSize:10,color:entry.col,opacity:0.75,marginTop:1}}>{entry.sub}</div>
-                        </div>
-                        {entry.time&&<span style={{fontSize:10,color:entry.col,opacity:0.8,flexShrink:0}}>{entry.time.slice(0,5)}</span>}
+              ):(
+                <>
+                  {/* Events section */}
+                  {eventEntries.length>0&&(
+                    <div>
+                      <div style={{fontSize:10,fontWeight:700,color:C.gray,letterSpacing:'0.06em',textTransform:'uppercase',padding:'10px 14px 6px',borderBottom:`1px solid ${C.border}`}}>Events</div>
+                      <div style={{display:'flex',flexDirection:'column',gap:8,padding:'10px 10px 4px'}}>
+                        {eventEntries.map(entry=>(
+                          <div key={entry.id} onClick={entry.onClick}
+                            style={{padding:'10px 12px',borderRadius:10,border:`1px solid ${entry.bg}`,background:entry.bg,cursor:entry.onClick?'pointer':'default',transition:'opacity 0.15s'}}
+                            onMouseEnter={e=>{if(entry.onClick)e.currentTarget.style.opacity='0.85';}}
+                            onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
+                            <div style={{display:'flex',alignItems:'center',gap:6}}>
+                              <span style={{fontSize:16}}>{entry.icon}</span>
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{fontSize:13,fontWeight:700,color:entry.col,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{entry.label}</div>
+                                <div style={{fontSize:11,color:entry.col,opacity:0.75,marginTop:1}}>{entry.sub}</div>
+                              </div>
+                              {entry.onClick&&<span style={{fontSize:12,color:entry.col,opacity:0.5}}>›</span>}
+                            </div>
+                            {entry.overdue&&(
+                              <div style={{marginTop:6,fontSize:10,color:'#DC2626',background:'#FEE2E2',borderRadius:4,padding:'2px 6px',display:'inline-block',fontWeight:600}}>⚠ Payment overdue</div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
-                  {onAddEvent&&(
-                    <button onClick={()=>onAddEvent(keyToISO(selectedDay))} style={{marginTop:2,fontSize:11,color:C.rosa,background:'none',border:`1px dashed ${C.petal}`,borderRadius:8,padding:'7px',cursor:'pointer',width:'100%',fontWeight:500}}>+ New event this day</button>
                   )}
-                </div>
-              )
-            }
+
+                  {/* Appointments section */}
+                  {apptEntries.length>0&&(
+                    <div style={{marginTop:eventEntries.length>0?4:0}}>
+                      <div style={{fontSize:10,fontWeight:700,color:C.gray,letterSpacing:'0.06em',textTransform:'uppercase',padding:'10px 14px 6px',borderBottom:`1px solid ${C.border}`}}>Appointments / Citas</div>
+                      {apptEntries.map(entry=>(
+                        <div key={entry.id} style={{padding:'10px 12px',display:'flex',alignItems:'flex-start',gap:10,borderBottom:`1px solid ${C.border}`}}>
+                          <div style={{fontSize:12,fontWeight:700,color:entry.col,width:38,flexShrink:0,paddingTop:1}}>{entry.time?entry.time.slice(0,5):'—'}</div>
+                          <div style={{width:32,height:32,borderRadius:8,background:entry.bg,border:`1px solid ${entry.col}30`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1rem',flexShrink:0}}>{entry.icon}</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:12,fontWeight:600,color:C.ink}}>{entry.label}</div>
+                            <div style={{fontSize:10,color:C.gray,marginTop:1}}>{entry.sub}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Dress & Alterations section */}
+                  {dressEntries.length>0&&(
+                    <div style={{marginTop:(eventEntries.length>0||apptEntries.length>0)?4:0}}>
+                      <div style={{fontSize:10,fontWeight:700,color:C.gray,letterSpacing:'0.06em',textTransform:'uppercase',padding:'10px 14px 6px',borderBottom:`1px solid ${C.border}`}}>Dress &amp; Alterations</div>
+                      {dressEntries.map(entry=>(
+                        <div key={entry.id} style={{padding:'10px 12px',display:'flex',alignItems:'flex-start',gap:10,borderBottom:`1px solid ${C.border}`}}>
+                          <div style={{width:32,height:32,borderRadius:8,background:entry.bg,border:`1px solid ${entry.col}30`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1rem',flexShrink:0}}>{entry.icon}</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:12,fontWeight:600,color:C.ink}}>{entry.label}</div>
+                            <div style={{fontSize:10,color:C.gray,marginTop:1}}>{entry.sub}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Footer quick actions */}
+            <div style={{borderTop:`1px solid ${C.border}`,padding:'10px 12px',flexShrink:0,display:'flex',flexDirection:'column',gap:6}}>
+              {onAddEvent&&(
+                <button onClick={()=>onAddEvent(keyToISO(selectedDay))} style={{width:'100%',padding:'8px',borderRadius:8,border:`1px dashed ${C.petal}`,background:'transparent',color:C.rosaText,fontSize:12,fontWeight:500,cursor:'pointer'}}>
+                  + New event this day / Nuevo evento
+                </button>
+              )}
+            </div>
           </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Legend */}
@@ -1458,54 +1576,54 @@ const AddWaitlistModal = ({ onClose, onSave }) => {
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{background:C.white,borderRadius:16,width:'100%',maxWidth:480,boxShadow:'0 24px 60px rgba(0,0,0,0.18)',display:'flex',flexDirection:'column'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="events-waitlist-title" style={{background:C.white,borderRadius:16,width:'100%',maxWidth:480,boxShadow:'0 24px 60px rgba(0,0,0,0.18)',display:'flex',flexDirection:'column'}}>
         <div style={{padding:'16px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <span style={{fontSize:16,fontWeight:500,color:C.ink}}>Add to waitlist</span>
-          <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:22,lineHeight:1,padding:2,minHeight:'unset',minWidth:'unset'}}>×</button>
+          <span id="events-waitlist-title" style={{fontSize:16,fontWeight:500,color:C.ink}}>Add to waitlist</span>
+          <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:22,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
         </div>
-        {err && <div style={{padding:'8px 24px',background:'var(--bg-danger)',color:'var(--color-danger)',fontSize:13}}>{err}</div>}
+        {err && <div style={{padding:'8px 24px',background:'var(--bg-danger)',color:'var(--text-danger)',fontSize:13}}>{err}</div>}
         <div style={{padding:'20px 24px',display:'flex',flexDirection:'column',gap:12,overflowY:'auto',maxHeight:'70vh'}}>
           <div>
-            <div style={LBL}>Name *</div>
-            <input value={name} onChange={e=>setName(e.target.value)} placeholder="Full name" style={inputSt}/>
+            <label htmlFor="wl-name" style={LBL}>Name *</label>
+            <input id="wl-name" value={name} onChange={e=>setName(e.target.value)} placeholder="Full name" style={inputSt}/>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
             <div>
-              <div style={LBL}>Phone</div>
-              <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="(555) 000-0000" style={inputSt}/>
+              <label htmlFor="wl-phone" style={LBL}>Phone</label>
+              <input id="wl-phone" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="(555) 000-0000" style={inputSt}/>
             </div>
             <div>
-              <div style={LBL}>Email</div>
-              <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="email@example.com" style={inputSt}/>
+              <label htmlFor="wl-email" style={LBL}>Email</label>
+              <input id="wl-email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="email@example.com" style={inputSt}/>
             </div>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
             <div>
-              <div style={LBL}>Event type</div>
-              <select value={evType} onChange={e=>setEvType(e.target.value)} style={selSt}>
+              <label htmlFor="wl-ev-type" style={LBL}>Event type</label>
+              <select id="wl-ev-type" value={evType} onChange={e=>setEvType(e.target.value)} style={selSt}>
                 <option value=''>-- select --</option>
                 {EVT_TYPE_OPTS.map(o=><option key={o.val} value={o.val}>{o.label}</option>)}
               </select>
             </div>
             <div>
-              <div style={LBL}>Source</div>
-              <select value={source} onChange={e=>setSource(e.target.value)} style={selSt}>
+              <label htmlFor="wl-source" style={LBL}>Source</label>
+              <select id="wl-source" value={source} onChange={e=>setSource(e.target.value)} style={selSt}>
                 <option value='manual'>Manual entry</option>
                 <option value='phone'>Phone call</option>
               </select>
             </div>
           </div>
           <div>
-            <div style={LBL}>Preferred date</div>
-            <input type='date' value={prefDate} onChange={e=>setPrefDate(e.target.value)} style={inputSt}/>
+            <label htmlFor="wl-pref-date" style={LBL}>Preferred date</label>
+            <input id="wl-pref-date" type='date' value={prefDate} onChange={e=>setPrefDate(e.target.value)} style={inputSt}/>
           </div>
           <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:13,color:C.ink}}>
             <input type='checkbox' checked={flexible} onChange={e=>setFlexible(e.target.checked)} style={{accentColor:C.rosa,width:16,height:16}}/>
             Flexible on dates
           </label>
           <div>
-            <div style={LBL}>Notes</div>
-            <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Any details…" style={{...inputSt,minHeight:72,resize:'vertical',fontFamily:'inherit'}}/>
+            <label htmlFor="wl-notes" style={LBL}>Notes</label>
+            <textarea id="wl-notes" value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Any details…" style={{...inputSt,minHeight:72,resize:'vertical',fontFamily:'inherit'}}/>
           </div>
         </div>
         <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'flex-end',gap:8}}>
@@ -1521,8 +1639,8 @@ const AddWaitlistModal = ({ onClose, onSave }) => {
 const MarkBookedModal = ({ entry, onClose, onJustMark, onCreateEvent }) => (
   <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1010,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}
     onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-    <div style={{background:C.white,borderRadius:16,width:'100%',maxWidth:400,boxShadow:'0 24px 60px rgba(0,0,0,0.18)',padding:28}}>
-      <div style={{fontSize:16,fontWeight:600,color:C.ink,marginBottom:8}}>Convert to event?</div>
+    <div role="dialog" aria-modal="true" aria-labelledby="events-mark-booked-title" style={{background:C.white,borderRadius:16,width:'100%',maxWidth:400,boxShadow:'0 24px 60px rgba(0,0,0,0.18)',padding:28}}>
+      <div id="events-mark-booked-title" style={{fontSize:16,fontWeight:600,color:C.ink,marginBottom:8}}>Convert to event?</div>
       <div style={{fontSize:13,color:C.gray,marginBottom:20}}>
         Mark <strong style={{color:C.ink}}>{entry.name}</strong> as booked.
         Would you like to create a new event for them?
@@ -1530,7 +1648,7 @@ const MarkBookedModal = ({ entry, onClose, onJustMark, onCreateEvent }) => (
       <div style={{display:'flex',flexDirection:'column',gap:8}}>
         <button
           onClick={onCreateEvent}
-          style={{padding:'12px 18px',borderRadius:10,border:`1.5px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,fontSize:14,fontWeight:600,cursor:'pointer',textAlign:'left'}}>
+          style={{padding:'12px 18px',borderRadius:10,border:`1.5px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,fontSize:14,fontWeight:600,cursor:'pointer',textAlign:'left'}}>
           Yes, create a new event →
         </button>
         <button
@@ -1651,10 +1769,10 @@ const WaitlistView = ({ setScreen, setSelectedEvent }) => {
                   <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:4}}>
                     <span style={{fontSize:14,fontWeight:600,color:C.ink}}>{entry.name}</span>
                     {entry.status === 'contacted' && (
-                      <span style={{fontSize:10,fontWeight:600,padding:'2px 8px',borderRadius:999,background:'var(--bg-info)',color:'var(--color-info)'}}>Contacted</span>
+                      <span style={{fontSize:10,fontWeight:600,padding:'2px 8px',borderRadius:999,background:'var(--bg-info)',color:'var(--text-info)'}}>Contacted</span>
                     )}
                     {evLabel && (
-                      <span style={{fontSize:11,padding:'2px 8px',borderRadius:999,background:C.rosaPale,color:C.rosa,fontWeight:500}}>{evLabel}</span>
+                      <span style={{fontSize:11,padding:'2px 8px',borderRadius:999,background:C.rosaPale,color:C.rosaText,fontWeight:500}}>{evLabel}</span>
                     )}
                     {entry.source === 'booking_form' && (
                       <span style={{fontSize:10,padding:'2px 7px',borderRadius:999,background:C.ivory,color:C.gray,border:`1px solid ${C.border}`}}>Booking form</span>
@@ -1676,7 +1794,7 @@ const WaitlistView = ({ setScreen, setSelectedEvent }) => {
                   {hasNotes && (
                     <div>
                       <button onClick={() => toggleNotes(entry.id)}
-                        style={{background:'none',border:'none',padding:0,cursor:'pointer',fontSize:12,color:C.rosa,textDecoration:'underline'}}>
+                        style={{background:'none',border:'none',padding:0,cursor:'pointer',fontSize:12,color:C.rosaText,textDecoration:'underline'}}>
                         {notesOpen ? 'Hide notes' : 'Show notes'}
                       </button>
                       {notesOpen && (
@@ -1698,7 +1816,7 @@ const WaitlistView = ({ setScreen, setSelectedEvent }) => {
                   )}
                   <button
                     onClick={() => setBookingEntry(entry)}
-                    style={{fontSize:11,padding:'5px 10px',borderRadius:8,border:`1px solid ${'var(--color-success)'}`,background:'var(--bg-success)',color:'var(--color-success)',cursor:'pointer',whiteSpace:'nowrap'}}>
+                    style={{fontSize:11,padding:'5px 10px',borderRadius:8,border:`1px solid ${'var(--color-success)'}`,background:'var(--bg-success)',color:'var(--text-success)',cursor:'pointer',whiteSpace:'nowrap'}}>
                     ✅ Mark booked
                   </button>
                   <button
@@ -1787,7 +1905,7 @@ function EventRow({ev,swipedId,setSwipedId,setSelectedEvent,setScreen,duplicateE
       >
         <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12}}>
           <div style={{display:'flex',alignItems:'flex-start',gap:12,flex:1,minWidth:0}}>
-            <Avatar initials={ev.client.split(' ').map(w=>w[0]).slice(0,2).join('')} size={40} bg={ev.type==='wedding'?C.rosaPale:C.purpleBg} color={ev.type==='wedding'?C.rosa:C.purple}/>
+            <Avatar initials={ev.client.split(' ').map(w=>w[0]).slice(0,2).join('')} size={40} bg={ev.type==='wedding'?C.rosaPale:C.purpleBg} color={ev.type==='wedding'?C.rosaText:C.purple}/>
             <div style={{flex:1,minWidth:0}}>
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4,flexWrap:'wrap'}}>
                 <span style={{fontSize:14,fontWeight:500,color:C.ink}}>{ev.client}</span>
@@ -1803,8 +1921,8 @@ function EventRow({ev,swipedId,setSwipedId,setSelectedEvent,setScreen,duplicateE
           <div style={{textAlign:'right',flexShrink:0}}>
             <div style={{fontSize:15,fontWeight:500,color:C.ink}}>{fmt(ev.total)}</div>
             {ev.overdue>0
-              ?<div style={{fontSize:12,color:'var(--color-danger)',marginTop:2}}>{fmt(ev.overdue)} overdue</div>
-              :<div style={{fontSize:12,color:'var(--color-success)',marginTop:2}}>{pct(ev.paid,ev.total)}% paid</div>}
+              ?<div style={{fontSize:12,color:'var(--text-danger)',marginTop:2}}>{fmt(ev.overdue)} overdue</div>
+              :<div style={{fontSize:12,color:'var(--text-success)',marginTop:2}}>{pct(ev.paid,ev.total)}% paid</div>}
             <div style={{marginTop:6}}><Countdown days={ev.daysUntil}/></div>
             {duplicateEvent&&!showDupConfirm&&(
               <button
@@ -1868,7 +1986,7 @@ function EventRow({ev,swipedId,setSwipedId,setSelectedEvent,setScreen,duplicateE
 }
 
 // ─── EVENTS LIST ───────────────────────────────────────────────────────────
-const EventsList = ({setScreen,setSelectedEvent,events,createEvent,duplicateEvent,clients=[],inventory=[],alterations=[]}) => {
+const EventsList = ({setScreen,setSelectedEvent,events,eventsLoading,createEvent,duplicateEvent,clients=[],inventory=[],alterations=[]}) => {
   const toast = useToast();
   const { boutique } = useAuth();
   const [view,setView]=useState('calendar'); // calendar is default
@@ -1915,7 +2033,7 @@ const EventsList = ({setScreen,setSelectedEvent,events,createEvent,duplicateEven
     if(!selectedIds.size||bulkWorking) return;
     setBulkWorking(true); setShowStatusMenu(false);
     const ids=[...selectedIds];
-    const {error}=await supabase.from('events').update({status}).in('id',ids);
+    const {error}=await supabase.from('events').update({status}).eq('boutique_id',boutique.id).in('id',ids);
     if(error) toast('Failed to update status','error');
     else { toast(`${ids.length} event${ids.length!==1?'s':''} marked ${status} ✓`); clearSelection(); }
     setBulkWorking(false);
@@ -1924,7 +2042,7 @@ const EventsList = ({setScreen,setSelectedEvent,events,createEvent,duplicateEven
     if(!selectedIds.size||bulkWorking) return;
     setBulkWorking(true); setShowCoordMenu(false);
     const ids=[...selectedIds];
-    const {error}=await supabase.from('events').update({coordinator_id:userId}).in('id',ids);
+    const {error}=await supabase.from('events').update({coordinator_id:userId}).eq('boutique_id',boutique.id).in('id',ids);
     if(error) toast('Failed to assign coordinator','error');
     else { toast(`Coordinator assigned to ${ids.length} event${ids.length!==1?'s':''} ✓`); clearSelection(); }
     setBulkWorking(false);
@@ -1936,7 +2054,7 @@ const EventsList = ({setScreen,setSelectedEvent,events,createEvent,duplicateEven
     clearSelection();
   };
 
-  if (!events) return <SkeletonList count={5} style={{padding:'0 16px',marginTop:16}}/>;
+  if (eventsLoading && !events?.length) return <SkeletonList count={5} style={{padding:'0 16px',marginTop:16}}/>;
 
   return (
     <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
@@ -1946,10 +2064,10 @@ const EventsList = ({setScreen,setSelectedEvent,events,createEvent,duplicateEven
         actions={<>
           {/* View toggle */}
           <div style={{display:'flex',border:`1px solid ${C.border}`,borderRadius:8,overflow:'hidden',flexShrink:0}}>
-            <button onClick={()=>setView('calendar')} style={{padding:'6px 12px',border:'none',background:view==='calendar'?C.rosaPale:'transparent',color:view==='calendar'?C.rosa:C.gray,cursor:'pointer',fontSize:12,fontWeight:view==='calendar'?600:400,display:'flex',alignItems:'center',gap:4,transition:'all 0.15s'}}>
+            <button onClick={()=>setView('calendar')} style={{padding:'6px 12px',border:'none',background:view==='calendar'?C.rosaPale:'transparent',color:view==='calendar'?C.rosaText:C.gray,cursor:'pointer',fontSize:12,fontWeight:view==='calendar'?600:400,display:'flex',alignItems:'center',gap:4,transition:'all 0.15s'}}>
               📅 Calendar
             </button>
-            <button onClick={()=>setView('list')} style={{padding:'6px 12px',border:'none',borderLeft:`1px solid ${C.border}`,background:view==='list'?C.rosaPale:'transparent',color:view==='list'?C.rosa:C.gray,cursor:'pointer',fontSize:12,fontWeight:view==='list'?600:400,display:'flex',alignItems:'center',gap:4,transition:'all 0.15s'}}>
+            <button onClick={()=>setView('list')} style={{padding:'6px 12px',border:'none',borderLeft:`1px solid ${C.border}`,background:view==='list'?C.rosaPale:'transparent',color:view==='list'?C.rosaText:C.gray,cursor:'pointer',fontSize:12,fontWeight:view==='list'?600:400,display:'flex',alignItems:'center',gap:4,transition:'all 0.15s'}}>
               ☰ List
             </button>
           </div>
@@ -1967,9 +2085,9 @@ const EventsList = ({setScreen,setSelectedEvent,events,createEvent,duplicateEven
             </label>
           )}
           {[['all','All events'],['wedding','Weddings'],['quince','Quinceañeras'],['other','Other']].map(([f,lbl])=>(
-            <button key={f} onClick={()=>setListFilter(f)} style={{fontSize:12,padding:'5px 14px',borderRadius:999,border:`1px solid ${listFilter===f?C.rosa:C.border}`,background:listFilter===f?C.rosaPale:'transparent',color:listFilter===f?C.rosa:C.gray,cursor:'pointer',fontWeight:listFilter===f?500:400}}>{lbl}</button>
+            <button key={f} onClick={()=>setListFilter(f)} style={{fontSize:12,padding:'5px 14px',borderRadius:999,border:`1px solid ${listFilter===f?C.rosa:C.border}`,background:listFilter===f?C.rosaPale:'transparent',color:listFilter===f?C.rosaText:C.gray,cursor:'pointer',fontWeight:listFilter===f?500:400}}>{lbl}</button>
           ))}
-          <button onClick={()=>setListFilter('waitlist')} style={{fontSize:12,padding:'5px 14px',borderRadius:999,border:`1px solid ${listFilter==='waitlist'?C.amber:C.border}`,background:listFilter==='waitlist'?C.amberBg:'transparent',color:listFilter==='waitlist'?C.amber:C.gray,cursor:'pointer',fontWeight:listFilter==='waitlist'?500:400,display:'flex',alignItems:'center',gap:5}}>
+          <button onClick={()=>setListFilter('waitlist')} style={{fontSize:12,padding:'5px 14px',borderRadius:999,border:`1px solid ${listFilter==='waitlist'?C.amber:C.border}`,background:listFilter==='waitlist'?C.amberBg:'transparent',color:listFilter==='waitlist'?C.warningText:C.gray,cursor:'pointer',fontWeight:listFilter==='waitlist'?500:400,display:'flex',alignItems:'center',gap:5}}>
             <span>Waitlist</span>
             {waitlistCount>0&&<span style={{minWidth:18,height:18,borderRadius:999,background:listFilter==='waitlist'?C.amber:'#9ca3af',color:'#fff',fontSize:10,fontWeight:700,display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'0 5px'}}>{waitlistCount}</span>}
           </button>
@@ -1992,19 +2110,9 @@ const EventsList = ({setScreen,setSelectedEvent,events,createEvent,duplicateEven
         <div className="page-scroll" style={{flex:1,overflowY:'auto',padding:20,display:'flex',flexDirection:'column',gap:10}}>
           {filtered.length===0&&(
             listFilter==='all'&&events.length===0 ? (
-              <div style={{textAlign:'center',padding:'60px 20px',color:C.gray,maxWidth:440,margin:'40px auto',background:C.white,borderRadius:16,border:`1px dashed ${C.border}`}}>
-                <div style={{fontSize:48,marginBottom:16}}>💍</div>
-                <div style={{fontSize:16,fontWeight:600,color:C.ink,marginBottom:6}}>No events yet</div>
-                <div style={{fontSize:13,color:C.gray,marginBottom:24,lineHeight:1.6}}>Create your first event to get started tracking clients, milestones, and appointments.</div>
-                <button onClick={()=>setShowNew(true)} style={{padding:'10px 24px',borderRadius:10,border:'none',background:C.rosa,color:C.white,fontSize:13,fontWeight:600,cursor:'pointer'}}>+ Create your first event</button>
-              </div>
+              <EmptyState icon="💍" title="No events yet" subtitle="Create your first event to get started tracking clients, milestones, and appointments." action={()=>setShowNew(true)} actionLabel="+ Create your first event" style={{maxWidth:440,margin:'40px auto',background:C.white,borderRadius:16,border:`1px dashed ${C.border}`}}/>
             ) : (
-              <div style={{textAlign:'center',padding:'60px 20px',color:C.gray,maxWidth:400,margin:'40px auto'}}>
-                <div style={{fontSize:36,marginBottom:8}}>🔍</div>
-                <div style={{fontSize:14,fontWeight:500,color:C.ink,marginBottom:4}}>No events match your filters</div>
-                <div style={{fontSize:12,marginBottom:20}}>Try a different filter or clear your selection.</div>
-                <button onClick={()=>setListFilter('all')} style={{padding:'7px 18px',borderRadius:8,border:`1px solid ${C.border}`,background:C.white,color:C.gray,fontSize:12,cursor:'pointer',fontWeight:500}}>Clear filters</button>
-              </div>
+              <EmptyState icon="🔍" title="No events match your filters" subtitle="Try a different filter or clear your selection." action={()=>setListFilter('all')} actionLabel="Clear filters" style={{maxWidth:400,margin:'40px auto'}}/>
             )
           )}
           {filtered.map(ev=>(
@@ -2021,7 +2129,7 @@ const EventsList = ({setScreen,setSelectedEvent,events,createEvent,duplicateEven
       {/* Bulk action bar (list only) */}
       {anySelected&&view==='list'&&(
         <div style={{position:'fixed',bottom:16,left:'50%',transform:'translateX(-50%)',zIndex:200,background:C.white,borderRadius:999,boxShadow:'0 4px 24px rgba(0,0,0,0.18)',padding:'10px 18px',display:'flex',alignItems:'center',gap:10,maxWidth:600,border:`1px solid ${C.border}`}}>
-          <span style={{fontSize:13,fontWeight:600,color:C.rosa,whiteSpace:'nowrap'}}>✓ {selectedIds.size} selected</span>
+          <span style={{fontSize:13,fontWeight:600,color:C.rosaText,whiteSpace:'nowrap'}}>✓ {selectedIds.size} selected</span>
           <div style={{position:'relative'}}>
             <button onClick={()=>{setShowStatusMenu(s=>!s);setShowCoordMenu(false);}} disabled={bulkWorking} style={{padding:'6px 14px',borderRadius:999,border:`1px solid ${C.border}`,background:C.grayBg,color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>Change status ▾</button>
             {showStatusMenu&&(
@@ -2045,7 +2153,7 @@ const EventsList = ({setScreen,setSelectedEvent,events,createEvent,duplicateEven
             </div>
           )}
           <button onClick={bulkExport} disabled={bulkWorking} style={{padding:'6px 14px',borderRadius:999,border:`1px solid ${C.border}`,background:C.grayBg,color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>Export CSV</button>
-          <button onClick={clearSelection} style={{padding:'6px 10px',borderRadius:999,border:'none',background:'none',color:C.gray,fontSize:18,cursor:'pointer',lineHeight:1,marginLeft:4}}>×</button>
+          <button onClick={clearSelection} aria-label="Clear selection" style={{padding:'6px 10px',borderRadius:999,border:'none',background:'none',color:C.gray,fontSize:18,cursor:'pointer',lineHeight:1,marginLeft:4,minHeight:32,minWidth:32}}>×</button>
         </div>
       )}
     </div>

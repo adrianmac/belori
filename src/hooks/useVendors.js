@@ -19,14 +19,18 @@ export function useVendors() {
       .channel('vendors-rt-' + boutique.id)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vendors', filter: 'boutique_id=eq.' + boutique.id }, () => fetchVendors())
       .subscribe()
-    return () => supabase.removeChannel(channel)
+    return () => {
+      channel.unsubscribe()
+      supabase.removeChannel(channel)
+    }
   }, [boutique?.id])
 
   async function fetchVendors() {
     setLoading(true)
-    const { data, err } = await supabase
+    const { data, error: err } = await supabase
       .from('vendors')
       .select('*')
+      .eq('boutique_id', boutique.id)
       .order('name', { ascending: true })
     if (err) setError(err.message)
     else setVendors(data || [])
@@ -49,6 +53,7 @@ export function useVendors() {
       .from('vendors')
       .update(updates)
       .eq('id', id)
+      .eq('boutique_id', boutique.id)
       .select()
       .single()
     if (err) return { error: err }
@@ -61,6 +66,7 @@ export function useVendors() {
       .from('vendors')
       .delete()
       .eq('id', id)
+      .eq('boutique_id', boutique.id)
     if (err) return { error: err }
     setVendors(v => v.filter(x => x.id !== id))
     return {}

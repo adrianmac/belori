@@ -9,7 +9,7 @@ import { useInventory } from '../hooks/useInventory'
 const STATUS_CONFIG = {
   draft:      { label: 'Draft',      bg: C.grayBg,   color: C.gray },
   sent:       { label: 'Sent',       bg: C.blueBg,   color: C.blue },
-  partial:    { label: 'Partial',    bg: C.amberBg,  color: C.amber },
+  partial:    { label: 'Partial',    bg: C.amberBg,  color: C.warningText },
   received:   { label: 'Received',   bg: C.greenBg,  color: C.green },
   cancelled:  { label: 'Cancelled',  bg: '#FEE2E2',  color: C.red },
 }
@@ -214,7 +214,7 @@ function CreatePOModal({ vendors, inventory, onSave, onClose }) {
               {/* Add row + total */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderTop: `1px solid ${C.border}`, background: C.ivory }}>
                 <button onClick={addItem}
-                  style={{ fontSize: 12, fontWeight: 600, color: C.rosa, background: 'none', border: `1px solid ${C.rosa}`, borderRadius: 7, padding: '5px 12px', cursor: 'pointer' }}>
+                  style={{ fontSize: 12, fontWeight: 600, color: C.rosaText, background: 'none', border: `1px solid ${C.rosa}`, borderRadius: 7, padding: '5px 12px', cursor: 'pointer' }}>
                   + Add item
                 </button>
                 <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
@@ -263,6 +263,8 @@ function PODetailPanel({ po, onClose, onUpdatePO, onReceivePO, onDeletePO }) {
   const [receiveMode, setReceiveMode] = useState(false)
   const [receivedQtys, setReceivedQtys] = useState({})
   const [saving, setSaving] = useState(false)
+  const [cancelConfirm, setCancelConfirm] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
 
   const cfg = STATUS_CONFIG[po.status] || STATUS_CONFIG.draft
 
@@ -295,7 +297,7 @@ function PODetailPanel({ po, onClose, onUpdatePO, onReceivePO, onDeletePO }) {
   }
 
   async function handleCancel() {
-    if (!window.confirm('Cancel this purchase order?')) return
+    setCancelConfirm(false)
     setSaving(true)
     const { error } = await onUpdatePO(po.id, { status: 'cancelled' })
     setSaving(false)
@@ -304,7 +306,7 @@ function PODetailPanel({ po, onClose, onUpdatePO, onReceivePO, onDeletePO }) {
   }
 
   async function handleDelete() {
-    if (!window.confirm('Delete this purchase order permanently?')) return
+    setDeleteConfirm(false)
     setSaving(true)
     const { error } = await onDeletePO(po.id)
     setSaving(false)
@@ -370,7 +372,7 @@ function PODetailPanel({ po, onClose, onUpdatePO, onReceivePO, onDeletePO }) {
               </button>
             )}
             {!receiveMode && (
-              <button onClick={handleCancel} disabled={saving}
+              <button onClick={() => setCancelConfirm(true)} disabled={saving}
                 style={{ padding: '6px 14px', borderRadius: 7, background: '#FEE2E2', color: C.red, border: `1px solid ${C.red}`, fontSize: 12, fontWeight: 600, cursor: saving ? 'default' : 'pointer' }}>
                 Cancel
               </button>
@@ -471,11 +473,56 @@ function PODetailPanel({ po, onClose, onUpdatePO, onReceivePO, onDeletePO }) {
 
       {/* Delete footer */}
       <div style={{ padding: '12px 20px', borderTop: `1px solid ${C.border}`, flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
-        <button onClick={handleDelete} disabled={saving}
+        <button onClick={() => setDeleteConfirm(true)} disabled={saving}
           style={{ padding: '7px 14px', borderRadius: 7, background: 'none', border: `1px solid ${C.border}`, color: C.gray, fontSize: 12, cursor: saving ? 'default' : 'pointer' }}>
           Delete PO
         </button>
       </div>
+      {cancelConfirm && (
+        <div role="presentation" onClick={e=>{if(e.target===e.currentTarget)setCancelConfirm(false);}}
+          style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1200,padding:16}}>
+          <div role="dialog" aria-modal="true" aria-labelledby="po-cancel-title"
+            style={{background:'#fff',borderRadius:16,width:360,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+            <div style={{padding:'20px 20px 12px',textAlign:'center'}}>
+              <div style={{fontSize:26,marginBottom:8}}>⚠️</div>
+              <div id="po-cancel-title" style={{fontSize:15,fontWeight:600,color:'#111',marginBottom:8}}>Cancel this purchase order?</div>
+            </div>
+            <div style={{padding:'12px 20px 20px',display:'flex',gap:8}}>
+              <button onClick={()=>setCancelConfirm(false)}
+                style={{flex:1,padding:'9px 16px',borderRadius:8,border:'1px solid #e5e5e5',background:'#fff',color:'#666',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                Keep
+              </button>
+              <button onClick={handleCancel}
+                style={{flex:1,padding:'9px 16px',borderRadius:8,border:'none',background:'#EF4444',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                Cancel PO
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {deleteConfirm && (
+        <div role="presentation" onClick={e=>{if(e.target===e.currentTarget)setDeleteConfirm(false);}}
+          style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1200,padding:16}}>
+          <div role="dialog" aria-modal="true" aria-labelledby="po-delete-title"
+            style={{background:'#fff',borderRadius:16,width:360,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+            <div style={{padding:'20px 20px 12px',textAlign:'center'}}>
+              <div style={{fontSize:26,marginBottom:8}}>🗑️</div>
+              <div id="po-delete-title" style={{fontSize:15,fontWeight:600,color:'#111',marginBottom:8}}>Delete this purchase order permanently?</div>
+              <div style={{fontSize:12,color:'var(--text-danger)',background:'var(--bg-danger)',borderRadius:8,padding:'8px 12px'}}>This cannot be undone.</div>
+            </div>
+            <div style={{padding:'12px 20px 20px',display:'flex',gap:8}}>
+              <button onClick={()=>setDeleteConfirm(false)}
+                style={{flex:1,padding:'9px 16px',borderRadius:8,border:'1px solid #e5e5e5',background:'#fff',color:'#666',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                Cancel
+              </button>
+              <button onClick={handleDelete}
+                style={{flex:1,padding:'9px 16px',borderRadius:8,border:'none',background:'var(--color-danger)',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -575,7 +622,7 @@ export default function PurchaseOrders({ filterVendorId, goScreen }) {
                 padding: '5px 13px', borderRadius: 7, border: 'none', cursor: 'pointer',
                 fontSize: 12, fontWeight: active ? 600 : 400,
                 background: active ? (cfg ? cfg.bg : C.rosaPale) : 'transparent',
-                color: active ? (cfg ? cfg.color : C.rosa) : C.gray,
+                color: active ? (cfg ? cfg.color : C.rosaText) : C.gray,
                 whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 5,
                 transition: 'all 0.12s',
               }}

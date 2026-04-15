@@ -7,6 +7,7 @@ const SERIF = '"Playfair Display", Georgia, serif'
 const C = {
   rosa:     '#C9697A',
   rosaPale: '#FDF2F4',
+  rosaText: '#8B3A4A',
   ink:      '#1C1012',
   gray:     '#6B7280',
   white:    '#FFFFFF',
@@ -29,7 +30,7 @@ const inputSt = {
 function LBL({ children, required }) {
   return (
     <div style={{ fontSize: 12, fontWeight: 600, color: '#4A2030', marginBottom: 5, letterSpacing: 0.2 }}>
-      {children}{required && <span style={{ color: C.rosa, marginLeft: 2 }}>*</span>}
+      {children}{required && <span style={{ color: C.rosaText, marginLeft: 2 }}>*</span>}
     </div>
   )
 }
@@ -184,7 +185,7 @@ export default function DataDeletionPage() {
               </p>
               <div style={{
                 padding: '10px 14px', background: C.rosaPale, borderRadius: 8,
-                marginBottom: 16, fontSize: 14, fontWeight: 600, color: C.rosa,
+                marginBottom: 16, fontSize: 14, fontWeight: 600, color: C.rosaText,
                 border: `1px solid #F0C4CB`,
               }}>
                 {email}
@@ -267,7 +268,7 @@ export default function DataDeletionPage() {
               </p>
               <a href="/" style={{
                 display: 'inline-block', padding: '10px 24px',
-                background: C.rosaPale, color: C.rosa,
+                background: C.rosaPale, color: C.rosaText,
                 borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none',
               }}>
                 ← Back to home
@@ -279,7 +280,7 @@ export default function DataDeletionPage() {
         {/* Footer */}
         <div style={{ textAlign: 'center', marginTop: 24, fontSize: 12, color: '#9CA3AF' }}>
           Powered by{' '}
-          <a href="https://belori.app" target="_blank" rel="noopener noreferrer" style={{ color: C.rosa, textDecoration: 'none' }}>
+          <a href="https://belori.app" target="_blank" rel="noopener noreferrer" style={{ color: C.rosaText, textDecoration: 'none' }}>
             Belori
           </a>
           {' '}· Your privacy matters to us

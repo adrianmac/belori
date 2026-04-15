@@ -135,7 +135,7 @@ const ProductCard = ({ item, onAdd }) => (
     onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.boxShadow='none';}}>
     <div style={{fontSize:12,fontWeight:500,color:C.ink,lineHeight:1.3}}>{item.name}</div>
     <div style={{fontSize:10,color:C.gray,padding:'2px 7px',borderRadius:999,background:C.ivory}}>{item.category}</div>
-    <div style={{fontSize:14,fontWeight:700,color:C.rosa,marginTop:'auto'}}>{fmt(item.price)}</div>
+    <div style={{fontSize:14,fontWeight:700,color:C.rosaText,marginTop:'auto'}}>{fmt(item.price)}</div>
   </button>
 );
 
@@ -346,7 +346,7 @@ export default function POSPage({ inventory = [], clients = [], events = [] }) {
             {POS_CATS.map(cat => (
               <button key={cat} onClick={() => { setActiveCat(cat); if (cat==='Custom') setShowCustom(true); }}
                 style={{padding:'6px 14px',borderRadius:999,border:`1px solid ${activeCat===cat?C.rosa:C.border}`,
-                  background:activeCat===cat?C.rosaPale:'transparent',color:activeCat===cat?C.rosa:C.gray,
+                  background:activeCat===cat?C.rosaPale:'transparent',color:activeCat===cat?C.rosaText:C.gray,
                   fontSize:12,fontWeight:activeCat===cat?600:400,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0}}>
                 {cat}
               </button>
@@ -453,9 +453,9 @@ export default function POSPage({ inventory = [], clients = [], events = [] }) {
               <div style={{fontSize:11,color:C.gray,marginBottom:4}}>Link to client (optional)</div>
               {selectedClient ? (
                 <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',background:C.rosaPale,borderRadius:8,border:`1px solid ${C.rosa}`}}>
-                  <span style={{flex:1,fontSize:12,fontWeight:500,color:C.rosa}}>{selectedClient.name}</span>
+                  <span style={{flex:1,fontSize:12,fontWeight:500,color:C.rosaText}}>{selectedClient.name}</span>
                   <button onClick={clearClient}
-                    style={{background:'none',border:'none',color:C.rosa,cursor:'pointer',fontSize:16,lineHeight:1}}>×</button>
+                    style={{background:'none',border:'none',color:C.rosaText,cursor:'pointer',fontSize:16,lineHeight:1}}>×</button>
                 </div>
               ) : (
                 <input
@@ -504,7 +504,7 @@ export default function POSPage({ inventory = [], clients = [], events = [] }) {
                 {PAYMENT_METHODS.map(m => (
                   <button key={m} onClick={() => setPaymentMethod(m)}
                     style={{padding:'5px 12px',borderRadius:8,border:`1.5px solid ${paymentMethod===m?C.rosa:C.border}`,
-                      background:paymentMethod===m?C.rosaPale:C.white,color:paymentMethod===m?C.rosa:C.gray,
+                      background:paymentMethod===m?C.rosaPale:C.white,color:paymentMethod===m?C.rosaText:C.gray,
                       fontSize:12,fontWeight:paymentMethod===m?600:400,cursor:'pointer'}}>
                     {m}
                   </button>

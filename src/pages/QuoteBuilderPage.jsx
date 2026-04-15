@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { C, fmt, EVT_TYPES } from '../lib/colors';
 import { Topbar, PrimaryBtn, GhostBtn, useToast, inputSt, LBL } from '../lib/ui.jsx';
 import { useAuth } from '../context/AuthContext';
@@ -130,7 +130,7 @@ function SmsModal({ quoteData, boutique, pdfUrl, total, onClose }) {
         </div>
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {!quoteData._clientPhone && (
-            <div style={{ background: C.amberBg, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: C.amber }}>
+            <div style={{ background: C.amberBg, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: C.warningText }}>
               No phone number on file for this client. Copy the message and send it manually.
             </div>
           )}
@@ -219,7 +219,7 @@ function QuotePreview({ quoteData, boutique, subtotal, discountAmt, total }) {
       <div style={{ padding: '18px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
         {/* Client info */}
         <div>
-          <div style={{ fontSize: 9, fontWeight: 700, color: C.rosa, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'sans-serif' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: C.rosaText, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'sans-serif' }}>
             Client Information
           </div>
           <PreviewRow label="Client" value={quoteData.client_name || '—'} />
@@ -231,7 +231,7 @@ function QuotePreview({ quoteData, boutique, subtotal, discountAmt, total }) {
         {/* Line items */}
         {hasLineItems && (
           <div>
-            <div style={{ fontSize: 9, fontWeight: 700, color: C.rosa, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'sans-serif' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: C.rosaText, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'sans-serif' }}>
               Services &amp; Pricing
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, fontFamily: 'sans-serif' }}>
@@ -273,7 +273,7 @@ function QuotePreview({ quoteData, boutique, subtotal, discountAmt, total }) {
                 borderTop: `2px solid ${C.rosa}`, paddingTop: 7, marginTop: 3,
               }}>
                 <span>Total</span>
-                <span style={{ color: C.rosa }}>{fmtMoney(total)}</span>
+                <span style={{ color: C.rosaText }}>{fmtMoney(total)}</span>
               </div>
             </div>
           </div>
@@ -282,7 +282,7 @@ function QuotePreview({ quoteData, boutique, subtotal, discountAmt, total }) {
         {/* Payment schedule */}
         {quoteData.milestones.length > 0 && (
           <div>
-            <div style={{ fontSize: 9, fontWeight: 700, color: C.rosa, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'sans-serif' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: C.rosaText, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'sans-serif' }}>
               Payment Schedule
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, fontFamily: 'sans-serif' }}>
@@ -309,7 +309,7 @@ function QuotePreview({ quoteData, boutique, subtotal, discountAmt, total }) {
         {/* Notes */}
         {quoteData.notes && (
           <div>
-            <div style={{ fontSize: 9, fontWeight: 700, color: C.rosa, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6, fontFamily: 'sans-serif' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: C.rosaText, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6, fontFamily: 'sans-serif' }}>
               Notes &amp; Terms
             </div>
             <div style={{ fontSize: 11, color: C.inkLight, lineHeight: 1.65, fontFamily: 'sans-serif' }}>{quoteData.notes}</div>
@@ -346,6 +346,44 @@ export default function QuoteBuilderPage() {
   const [showSmsModal, setShowSmsModal] = useState(false);
   const [nextLineId, setNextLineId] = useState(2);
   const [nextMsId, setNextMsId] = useState(1);
+  const [editingId, setEditingId] = useState(null); // non-null when editing an existing quote
+
+  // ── Load existing quote from sessionStorage (set by BillingScreen "Edit quote") ──
+  useEffect(() => {
+    const editId = sessionStorage.getItem('belori_edit_quote_id');
+    if (!editId) return;
+    sessionStorage.removeItem('belori_edit_quote_id');
+    setEditingId(editId);
+    supabase
+      .from('quotes')
+      .select('*')
+      .eq('id', editId)
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) return;
+        // Map DB row → quoteData shape
+        const lineItems = Array.isArray(data.line_items) && data.line_items.length > 0
+          ? data.line_items.map((li, i) => ({ id: i + 1, description: li.description || '', qty: li.qty ?? 1, unit_price: li.unit_price ?? 0 }))
+          : [{ id: 1, description: '', qty: 1, unit_price: 0 }];
+        const milestones = Array.isArray(data.milestones) ? data.milestones.map((m, i) => ({ id: i + 1, label: m.label || '', amount: m.amount ?? 0, due_offset_days: m.due_offset_days ?? 0 })) : [];
+        setNextLineId(lineItems.length + 1);
+        setNextMsId(milestones.length + 1);
+        setQuoteData({
+          event_id: data.event_id || '',
+          client_name: data.client_name || '',
+          event_type: data.event_type || 'wedding',
+          event_date: data.event_date || '',
+          venue: data.venue || '',
+          expires_at: data.expires_at || addDays(isoToday(), 30),
+          line_items: lineItems,
+          milestones,
+          discount_type: data.discount_type || 'fixed',
+          discount_value: data.discount_value ?? 0,
+          notes: data.notes || '',
+          _clientPhone: data._clientPhone || '',
+        });
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Derived totals ──────────────────────────────────────────────────────────
   const subtotal = useMemo(() => {
@@ -492,9 +530,15 @@ export default function QuoteBuilderPage() {
         pdf_url: pdfUrl || null,
         total,
       };
-      const { error } = await supabase.from('quotes').insert(payload);
+      let error;
+      if (editingId) {
+        // Update existing quote — preserve its quote_number and status
+        ({ error } = await supabase.from('quotes').update({ ...payload, status: undefined }).eq('id', editingId));
+      } else {
+        ({ error } = await supabase.from('quotes').insert(payload));
+      }
       if (error) throw error;
-      toast('Quote saved!');
+      toast(editingId ? 'Quote updated!' : 'Quote saved!');
     } catch (err) {
       toast('Failed to save: ' + String(err), 'error');
     } finally {
@@ -596,7 +640,10 @@ export default function QuoteBuilderPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: C.grayBg }}>
-      <Topbar title="Quote / Proposal Builder" subtitle="Create and send professional proposals to clients" />
+      <Topbar
+        title={editingId ? 'Edit Quote' : 'Quote / Proposal Builder'}
+        subtitle={editingId ? 'Update the existing proposal and save' : 'Create and send professional proposals to clients'}
+      />
 
       <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px' }}>
         <div style={{
@@ -625,8 +672,9 @@ export default function QuoteBuilderPage() {
 
               {!blankMode && (
                 <div>
-                  <div style={LBL}>Choose an event</div>
+                  <label htmlFor="qb-event-id" style={LBL}>Choose an event</label>
                   <select
+                    id="qb-event-id"
                     value={quoteData.event_id}
                     onChange={e => handleSelectEvent(e.target.value)}
                     style={inputSt}
@@ -649,8 +697,9 @@ export default function QuoteBuilderPage() {
             <div style={sectionCard}>
               <SectionHeader number={2} title="Quote Details" />
               <div style={{ marginBottom: 12 }}>
-                <div style={LBL}>Client name *</div>
+                <label htmlFor="qb-client-name" style={LBL}>Client name *</label>
                 <input
+                  id="qb-client-name"
                   style={inputSt}
                   value={quoteData.client_name}
                   onChange={e => set('client_name', e.target.value)}
@@ -659,16 +708,17 @@ export default function QuoteBuilderPage() {
               </div>
               <div style={fieldRow}>
                 <div>
-                  <div style={LBL}>Event type</div>
-                  <select style={inputSt} value={quoteData.event_type} onChange={e => set('event_type', e.target.value)}>
+                  <label htmlFor="qb-event-type" style={LBL}>Event type</label>
+                  <select id="qb-event-type" style={inputSt} value={quoteData.event_type} onChange={e => set('event_type', e.target.value)}>
                     {EVENT_TYPE_OPTIONS.map(o => (
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <div style={LBL}>Event date</div>
+                  <label htmlFor="qb-event-date" style={LBL}>Event date</label>
                   <input
+                    id="qb-event-date"
                     type="date"
                     style={inputSt}
                     value={quoteData.event_date}
@@ -678,8 +728,9 @@ export default function QuoteBuilderPage() {
               </div>
               <div style={fieldRow}>
                 <div>
-                  <div style={LBL}>Venue</div>
+                  <label htmlFor="qb-venue" style={LBL}>Venue</label>
                   <input
+                    id="qb-venue"
                     style={inputSt}
                     value={quoteData.venue}
                     onChange={e => set('venue', e.target.value)}
@@ -687,8 +738,9 @@ export default function QuoteBuilderPage() {
                   />
                 </div>
                 <div>
-                  <div style={LBL}>Quote expires</div>
+                  <label htmlFor="qb-expires-at" style={LBL}>Quote expires</label>
                   <input
+                    id="qb-expires-at"
                     type="date"
                     style={inputSt}
                     value={quoteData.expires_at}
@@ -766,15 +818,16 @@ export default function QuoteBuilderPage() {
                 style={{
                   background: 'none', border: `1.5px dashed ${C.border}`,
                   borderRadius: 7, padding: '7px 14px', fontSize: 12,
-                  color: C.rosa, cursor: 'pointer', width: '100%', marginBottom: 16,
+                  color: C.rosaText, cursor: 'pointer', width: '100%', marginBottom: 16,
                 }}
               >+ Add line item</button>
 
               {/* Discount row */}
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <div>
-                  <div style={LBL}>Discount type</div>
+                  <label htmlFor="qb-discount-type" style={LBL}>Discount type</label>
                   <select
+                    id="qb-discount-type"
                     style={{ ...inputSt, width: 120 }}
                     value={quoteData.discount_type}
                     onChange={e => set('discount_type', e.target.value)}
@@ -784,8 +837,9 @@ export default function QuoteBuilderPage() {
                   </select>
                 </div>
                 <div>
-                  <div style={LBL}>Discount value</div>
+                  <label htmlFor="qb-discount-value" style={LBL}>Discount value</label>
                   <input
+                    id="qb-discount-value"
                     type="number"
                     min={0}
                     step="0.01"
@@ -810,7 +864,7 @@ export default function QuoteBuilderPage() {
                   </div>
                 )}
                 <div style={{
-                  display: 'flex', gap: 40, fontSize: 16, fontWeight: 700, color: C.rosa,
+                  display: 'flex', gap: 40, fontSize: 16, fontWeight: 700, color: C.rosaText,
                   borderTop: `1px solid ${C.rosaLight}`, paddingTop: 7, marginTop: 2,
                 }}>
                   <span>Total</span><span>{fmtMoney(total)}</span>
@@ -873,7 +927,7 @@ export default function QuoteBuilderPage() {
                 style={{
                   background: 'none', border: `1.5px dashed ${C.border}`,
                   borderRadius: 7, padding: '7px 14px', fontSize: 12,
-                  color: C.rosa, cursor: 'pointer', width: '100%',
+                  color: C.rosaText, cursor: 'pointer', width: '100%',
                 }}
               >+ Add milestone</button>
             </div>

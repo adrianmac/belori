@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { C, fmt } from '../lib/colors';
-import { PrimaryBtn, GhostBtn, Badge, SvcTag, useToast } from '../lib/ui.jsx';
+import { PrimaryBtn, GhostBtn, Badge, SvcTag, useToast, SkeletonList, inputSt } from '../lib/ui.jsx';
 import { supabase } from '../lib/supabase';
 import ClientDetail from './clients/ClientDetail.jsx';
 import NewClientModal from '../components/modals/NewClientModal.jsx';
@@ -152,25 +152,20 @@ const BulkMessageModal = ({ clients, boutiqueName, boutiqueId, onClose }) => {
   };
 
   const smsOver160 = channel === 'sms' && template.length > 160;
-  const inputSt = {
-    width: '100%', padding: '8px 12px', border: `1px solid ${C.border}`,
-    borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box',
-    background: '#fff', fontFamily: 'inherit',
-  };
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-      <div style={{ background: '#fff', borderRadius: 16, maxWidth: '90vw', width: 620, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.18)', overflow: 'hidden' }}>
+      <div role="dialog" aria-modal="true" aria-labelledby="clients-bulk-message-title" style={{ background: '#fff', borderRadius: 16, maxWidth: '90vw', width: 620, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.18)', overflow: 'hidden' }}>
 
         {/* Header */}
         <div style={{ padding: '18px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <div>
-            <div style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>Bulk message clients</div>
+            <div id="clients-bulk-message-title" style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>Bulk message clients</div>
             <div style={{ fontSize: 11, color: C.gray, marginTop: 2 }}>
               {results ? `${results.filter(r => r.status === 'sent').length} sent · ${results.filter(r => r.status === 'failed').length} failed` : `${selected.size} client${selected.size !== 1 ? 's' : ''} selected`}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray }}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, padding: '4px 8px', minHeight: 32, minWidth: 32 }}>×</button>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -182,7 +177,7 @@ const BulkMessageModal = ({ clients, boutiqueName, boutiqueId, onClose }) => {
                 <div key={r.clientId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, background: r.status === 'sent' ? 'var(--bg-success)' : 'var(--bg-danger)', border: `1px solid ${r.status === 'sent' ? 'var(--color-success)' : 'var(--color-danger)'}20` }}>
                   <span style={{ fontSize: 14 }}>{r.status === 'sent' ? '✓' : '✗'}</span>
                   <span style={{ fontSize: 13, fontWeight: 500, color: C.ink, flex: 1 }}>{r.name}</span>
-                  <span style={{ fontSize: 11, color: r.status === 'sent' ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 600, textTransform: 'uppercase' }}>{r.status}</span>
+                  <span style={{ fontSize: 11, color: r.status === 'sent' ? 'var(--text-success)' : 'var(--text-danger)', fontWeight: 600, textTransform: 'uppercase' }}>{r.status}</span>
                 </div>
               ))}
             </div>
@@ -232,7 +227,7 @@ const BulkMessageModal = ({ clients, boutiqueName, boutiqueId, onClose }) => {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {QUICK_TEMPLATES.map(t => (
                       <button key={t.label} onClick={() => setTemplate(t.body)}
-                        style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid ${C.border}`, background: template === t.body ? C.rosaPale : '#fff', color: template === t.body ? C.rosa : C.gray, fontSize: 11, cursor: 'pointer', fontWeight: 500 }}>
+                        style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid ${C.border}`, background: template === t.body ? C.rosaPale : '#fff', color: template === t.body ? C.rosaText : C.gray, fontSize: 11, cursor: 'pointer', fontWeight: 500 }}>
                         {t.label}
                       </button>
                     ))}
@@ -243,7 +238,7 @@ const BulkMessageModal = ({ clients, boutiqueName, boutiqueId, onClose }) => {
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: 11, fontWeight: 600, color: C.gray, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Message</div>
-                    <div style={{ fontSize: 10, color: smsOver160 ? 'var(--color-danger)' : C.gray }}>
+                    <div style={{ fontSize: 10, color: smsOver160 ? 'var(--text-danger)' : C.gray }}>
                       {template.length} chars{smsOver160 ? ' — over 160 (multi-part SMS)' : ''}
                     </div>
                   </div>
@@ -355,7 +350,7 @@ function TreeNode({ node, onSelectClient }) {
           {hasChildren && <div style={{ fontSize: 10, color: C.gray }}>{node.children.length} referral{node.children.length > 1 ? 's' : ''}</div>}
         </div>
         {node.client.loyalty_points > 0 && (
-          <span style={{ fontSize: 10, color: C.rosa, flexShrink: 0 }}>⭐ {node.client.loyalty_points} pts</span>
+          <span style={{ fontSize: 10, color: C.rosaText, flexShrink: 0 }}>⭐ {node.client.loyalty_points} pts</span>
         )}
       </div>
       {expanded && hasChildren && node.children.map((child, i) => (
@@ -466,17 +461,16 @@ const ClientImportModal = ({ onClose, createClient }) => {
     if (count > 0) toast(`${count} client${count !== 1 ? 's' : ''} imported`);
   };
 
-  const inputSt = { width: '100%', padding: '8px 12px', border: `1px solid #E5E7EB`, borderRadius: 8, fontSize: 13, outline: 'none', boxSizing: 'border-box', background: '#fff', fontFamily: 'inherit' };
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-      <div style={{ background: '#fff', borderRadius: 16, width: 560, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+      <div role="dialog" aria-modal="true" aria-labelledby="clients-import-csv-title" style={{ background: '#fff', borderRadius: 16, width: 560, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
         <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontWeight: 600, fontSize: 16, color: C.ink }}>Import clients from CSV</div>
+            <div id="clients-import-csv-title" style={{ fontWeight: 600, fontSize: 16, color: C.ink }}>Import clients from CSV</div>
             <div style={{ fontSize: 11, color: C.gray, marginTop: 2 }}>Step {step} of 3 · {step === 1 ? 'Upload file' : step === 2 ? 'Review & confirm' : 'Complete'}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1, padding: '4px 8px', minHeight: 32, minWidth: 32 }}>×</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
           {step === 1 && (
@@ -487,7 +481,7 @@ const ClientImportModal = ({ onClose, createClient }) => {
                 <div style={{ fontSize: 36, marginBottom: 10 }}>📁</div>
                 <div style={{ fontSize: 14, fontWeight: 500, color: C.ink, marginBottom: 4 }}>Drag & drop your CSV file here</div>
                 <div style={{ fontSize: 12, color: C.gray, marginBottom: 16 }}>CSV format · Max 500 clients</div>
-                <div style={{ display: 'inline-block', padding: '8px 20px', borderRadius: 8, background: C.rosaPale, color: C.rosa, fontSize: 13, fontWeight: 500 }}>Choose file</div>
+                <div style={{ display: 'inline-block', padding: '8px 20px', borderRadius: 8, background: C.rosaPale, color: C.rosaText, fontSize: 13, fontWeight: 500 }}>Choose file</div>
                 <input type="file" accept=".csv,.tsv" style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
               </label>
               <div style={{ fontSize: 11, color: C.gray, textAlign: 'center', lineHeight: 1.7 }}>
@@ -501,8 +495,8 @@ const ClientImportModal = ({ onClose, createClient }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                 {[
-                  { label: 'Ready to import', val: valid.length, col: 'var(--color-success)', bg: 'var(--bg-success)' },
-                  { label: 'Rows with errors', val: errors.length, col: errors.length ? 'var(--color-danger)' : C.gray, bg: errors.length ? 'var(--bg-danger)' : C.grayBg },
+                  { label: 'Ready to import', val: valid.length, col: 'var(--text-success)', bg: 'var(--bg-success)' },
+                  { label: 'Rows with errors', val: errors.length, col: errors.length ? 'var(--text-danger)' : C.gray, bg: errors.length ? 'var(--bg-danger)' : C.grayBg },
                   { label: 'Total rows', val: totalRows, col: C.ink, bg: C.ivory },
                 ].map(s => (
                   <div key={s.label} style={{ background: s.bg, borderRadius: 8, padding: 12, textAlign: 'center' }}>
@@ -513,9 +507,9 @@ const ClientImportModal = ({ onClose, createClient }) => {
               </div>
               {errors.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-danger)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Errors — will be skipped</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-danger)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Errors — will be skipped</div>
                   {errors.slice(0, 5).map((e, i) => (
-                    <div key={i} style={{ fontSize: 11, color: 'var(--color-danger)', background: 'var(--bg-danger)', padding: '6px 10px', borderRadius: 6, marginBottom: 4 }}>Row {e.row}: {e.errors.join(' · ')}</div>
+                    <div key={i} style={{ fontSize: 11, color: 'var(--text-danger)', background: 'var(--bg-danger)', padding: '6px 10px', borderRadius: 6, marginBottom: 4 }}>Row {e.row}: {e.errors.join(' · ')}</div>
                   ))}
                   {errors.length > 5 && <div style={{ fontSize: 11, color: C.gray }}>{errors.length - 5} more errors…</div>}
                 </div>
@@ -545,7 +539,7 @@ const ClientImportModal = ({ onClose, createClient }) => {
               <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
               <div style={{ fontSize: 18, fontWeight: 600, color: C.ink, marginBottom: 8 }}>Import complete!</div>
               <div style={{ fontSize: 13, color: C.gray, marginBottom: 4 }}>{imported} client{imported !== 1 ? 's' : ''} added</div>
-              {errors.length > 0 && <div style={{ fontSize: 12, color: 'var(--color-danger)' }}>{errors.length} row{errors.length !== 1 ? 's' : ''} skipped due to errors</div>}
+              {errors.length > 0 && <div style={{ fontSize: 12, color: 'var(--text-danger)' }}>{errors.length} row{errors.length !== 1 ? 's' : ''} skipped due to errors</div>}
             </div>
           )}
         </div>
@@ -613,14 +607,14 @@ const BulkSmsModal = ({ clients, boutiqueName, boutiqueId, onClose, toast }) => 
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:300,padding:16}}>
-      <div style={{background:C.white,borderRadius:16,width:480,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="clients-bulk-sms-title" style={{background:C.white,borderRadius:16,width:480,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
         <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Send SMS to {eligible.length} client{eligible.length!==1?'s':''}</span>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <span id="clients-bulk-sms-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Send SMS to {eligible.length} client{eligible.length!==1?'s':''}</span>
+          <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
         </div>
         <div style={{padding:20,display:'flex',flexDirection:'column',gap:14}}>
           {clients.length > eligible.length && (
-            <div style={{fontSize:12,color:C.amber,background:C.amberBg,padding:'8px 12px',borderRadius:8}}>
+            <div style={{fontSize:12,color:C.warningText,background:C.amberBg,padding:'8px 12px',borderRadius:8}}>
               {clients.length - eligible.length} client{clients.length-eligible.length!==1?'s':''} skipped (no phone on file)
             </div>
           )}
@@ -678,10 +672,10 @@ const BulkAddTagModal = ({ boutiqueId, selectedIds, onClose, toast }) => {
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:300,padding:16}}>
-      <div style={{background:C.white,borderRadius:16,width:400,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="clients-bulk-tag-title" style={{background:C.white,borderRadius:16,width:400,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
         <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Add tag to {selectedIds.length} client{selectedIds.length!==1?'s':''}</span>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <span id="clients-bulk-tag-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Add tag to {selectedIds.length} client{selectedIds.length!==1?'s':''}</span>
+          <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
         </div>
         <div style={{padding:20,display:'flex',flexDirection:'column',gap:10}}>
           {tags.length === 0 ? (
@@ -704,7 +698,7 @@ const BulkAddTagModal = ({ boutiqueId, selectedIds, onClose, toast }) => {
   );
 };
 
-const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClient, updateClient, adjustLoyaltyPoints, redeemPoints, adjustPoints, mergeClients, inventory }) => {
+const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoading, createClient, updateClient, adjustLoyaltyPoints, redeemPoints, adjustPoints, mergeClients, inventory }) => {
   const toast = useToast();
   const { boutique: clBoutique } = useAuth();
   const rawClients = liveClients;
@@ -813,39 +807,47 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
     clearBulkSelection();
   };
 
-  const filtered = rawClients.filter(cl => {
-    if (debouncedSearch) {
-      const q = debouncedSearch.toLowerCase();
-      const name = (cl.name || `${cl.firstName || ''} ${cl.lastName || ''}`).toLowerCase();
-      if (!name.includes(q) && !(cl.phone || '').includes(q)) return false;
-    }
-    if (filter === 'vip') return ['vip', 'diamond'].includes(cl.tier || 'new');
-    if (filter === 'loyal') return (cl.tier || 'new') === 'loyal';
-    if (filter === 'new') return (cl.tier || 'new') === 'new';
-    if (filter === 'overdue') return cl.hasOverdue;
-    if (filter === 'returning') return (cl.totalEvents || cl.events?.length || 0) > 1;
-    if (tierFilter !== 'all') {
-      const pts = cl.loyalty_points || 0;
-      const t = getTier(pts, loyaltyTiers);
-      if (t.name !== tierFilter) return false;
-    }
-    return true;
-  });
-
-  const vipCount = rawClients.filter(c => ['vip', 'diamond'].includes(c.tier || 'new')).length;
-  const lifetimeRev = rawClients.reduce((s, c) => s + (c.totalSpent || (c.events || []).reduce((es, e) => es + Number(e.total || 0), 0)), 0);
-  const returningCount = rawClients.filter(c => (c.totalEvents || c.events?.length || 0) > 1).length;
-  const overdueCount = rawClients.filter(c => c.hasOverdue).length;
+  if (clientsLoading && !rawClients?.length) return <SkeletonList count={5} style={{padding:'0 16px',marginTop:16}}/>;
 
   const todayStr = new Date().toISOString().slice(0, 10);
+
+  const { filtered, vipCount, lifetimeRev, returningCount, overdueCount } = useMemo(() => {
+    const clients = rawClients || [];
+    const filtered = clients.filter(cl => {
+      if (debouncedSearch) {
+        const q = debouncedSearch.toLowerCase();
+        const name = (cl.name || `${cl.firstName || ''} ${cl.lastName || ''}`).toLowerCase();
+        if (!name.includes(q) && !(cl.phone || '').includes(q)) return false;
+      }
+      if (filter === 'vip') return ['vip', 'diamond'].includes(cl.tier || 'new');
+      if (filter === 'loyal') return (cl.tier || 'new') === 'loyal';
+      if (filter === 'new') return (cl.tier || 'new') === 'new';
+      if (filter === 'overdue') return cl.hasOverdue;
+      if (filter === 'returning') return (cl.totalEvents || cl.events?.length || 0) > 1;
+      if (tierFilter !== 'all') {
+        const pts = cl.loyalty_points || 0;
+        const t = getTier(pts, loyaltyTiers);
+        if (t.name !== tierFilter) return false;
+      }
+      return true;
+    });
+    return {
+      filtered,
+      vipCount: clients.filter(c => ['vip', 'diamond'].includes(c.tier || 'new')).length,
+      lifetimeRev: clients.reduce((s, c) => s + (c.totalSpent || (c.events || []).reduce((es, e) => es + Number(e.total || 0), 0)), 0),
+      returningCount: clients.filter(c => (c.totalEvents || c.events?.length || 0) > 1).length,
+      overdueCount: clients.filter(c => c.hasOverdue).length,
+    };
+  }, [rawClients, debouncedSearch, filter, tierFilter, loyaltyTiers]);
+
   const handleSort = col => {
     if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortCol(col); setSortDir('asc'); }
   };
   const sortIcon = col => sortCol === col
-    ? <span style={{color:C.rosa,fontSize:8,marginLeft:3,lineHeight:1}}>{sortDir==='asc'?'▲':'▼'}</span>
+    ? <span style={{color:C.rosaText,fontSize:8,marginLeft:3,lineHeight:1}}>{sortDir==='asc'?'▲':'▼'}</span>
     : <span style={{color:'#D1D5DB',fontSize:8,marginLeft:3,lineHeight:1}}>⇅</span>;
-  const sortedFiltered = [...filtered].sort((a, b) => {
+  const sortedFiltered = useMemo(() => [...filtered].sort((a, b) => {
     let av, bv;
     switch (sortCol) {
       case 'name':      av = (a.name||'').toLowerCase(); bv = (b.name||'').toLowerCase(); break;
@@ -869,7 +871,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
       return sortDir === 'asc' ? r : -r;
     }
     return sortDir === 'asc' ? av - bv : bv - av;
-  });
+  }), [filtered, sortCol, sortDir, todayStr]);
 
   const paginatedSorted = sortedFiltered.slice(0, page * PAGE_SIZE);
   const paginatedFiltered = filtered.slice(0, page * PAGE_SIZE);
@@ -900,11 +902,11 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ display: 'flex', border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
             {[['list', '☰'], ['grid', '⊞']].map(([v, icon]) => (
-              <button key={v} onClick={() => { setView(v); setShowTree(false); }} style={{ padding: '7px 12px', border: 'none', background: !showTree && view === v ? C.rosaPale : C.white, color: !showTree && view === v ? C.rosa : C.gray, cursor: 'pointer', fontSize: 14 }}>{icon}</button>
+              <button key={v} onClick={() => { setView(v); setShowTree(false); }} style={{ padding: '7px 12px', border: 'none', background: !showTree && view === v ? C.rosaPale : C.white, color: !showTree && view === v ? C.rosaText : C.gray, cursor: 'pointer', fontSize: 14 }}>{icon}</button>
             ))}
           </div>
           {rawClients.some(c => c.referred_by) && (
-            <button onClick={() => setShowTree(t => !t)} style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${showTree ? C.rosa : C.border}`, background: showTree ? C.rosaPale : '#fff', fontSize: 12, color: showTree ? C.rosa : C.gray, cursor: 'pointer', fontWeight: 500 }}>🌳 Referral tree</button>
+            <button onClick={() => setShowTree(t => !t)} style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${showTree ? C.rosa : C.border}`, background: showTree ? C.rosaPale : '#fff', fontSize: 12, color: showTree ? C.rosaText : C.gray, cursor: 'pointer', fontWeight: 500 }}>🌳 Referral tree</button>
           )}
           <button onClick={() => setShowBulk(true)} style={{padding:'7px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'#fff',fontSize:12,color:C.gray,cursor:'pointer',fontWeight:500}}>📣 Bulk message</button>
           <GhostBtn label="Find duplicates" onClick={() => { const groups = findDuplicates(); setMergeGroups(groups); setShowMerge(true); }} />
@@ -914,7 +916,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
       </div>
       {/* STAT STRIP */}
       <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, padding: '16px 20px', background: C.ivory, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-        {[{ label: 'Total clients', val: String(rawClients.length), col: C.ink }, { label: 'VIP clients', val: String(vipCount), col: vipCount > 0 ? '#B45309' : C.gray }, { label: 'Lifetime revenue', val: fmt(lifetimeRev), col: 'var(--color-success)' }, { label: 'Returning clients', val: String(returningCount), col: returningCount > 0 ? C.purple : C.gray }].map((s, i) => (
+        {[{ label: 'Total clients', val: String(rawClients.length), col: C.ink }, { label: 'VIP clients', val: String(vipCount), col: vipCount > 0 ? '#B45309' : C.gray }, { label: 'Lifetime revenue', val: fmt(lifetimeRev), col: 'var(--text-success)' }, { label: 'Returning clients', val: String(returningCount), col: returningCount > 0 ? C.purple : C.gray }].map((s, i) => (
           <div key={s.label} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: '16px', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
             <div style={{ fontSize: 22, fontWeight: 600, color: s.col, lineHeight: 1, marginBottom: 6 }}>{s.val}</div>
             <div style={{ fontSize: 12, color: C.gray, fontWeight: 500 }}>{s.label}</div>
@@ -935,7 +937,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
           <select
             value={tierFilter}
             onChange={e => setTierFilter(e.target.value)}
-            style={{ padding: '6px 10px', borderRadius: 999, border: `1px solid ${tierFilter !== 'all' ? C.rosa : C.border}`, background: tierFilter !== 'all' ? C.rosaPale : C.white, color: tierFilter !== 'all' ? C.rosa : C.gray, fontSize: 12, cursor: 'pointer', fontWeight: 500, outline: 'none' }}>
+            style={{ padding: '6px 10px', borderRadius: 999, border: `1px solid ${tierFilter !== 'all' ? C.rosa : C.border}`, background: tierFilter !== 'all' ? C.rosaPale : C.white, color: tierFilter !== 'all' ? C.rosaText : C.gray, fontSize: 12, cursor: 'pointer', fontWeight: 500, outline: 'none' }}>
             <option value="all">All tiers</option>
             {loyaltyTiers.map(t => (
               <option key={t.name} value={t.name}>{tierMedal(t.name)} {t.name}</option>
@@ -965,7 +967,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
               <div style={{ fontSize: 16, fontWeight: 500, color: C.ink, marginBottom: 8 }}>No clients match your search</div>
               <div style={{ fontSize: 13, color: C.gray, maxWidth: 300, margin: '0 auto 20px' }}>Try adjusting your search terms or filters.</div>
               <button onClick={() => { setSearch(''); setFilter('all'); setTierFilter('all'); }}
-                style={{ fontSize: 13, fontWeight: 500, color: C.rosa, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
+                style={{ fontSize: 13, fontWeight: 500, color: C.rosaText, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
                 Clear filters
               </button>
             </div>
@@ -1002,7 +1004,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
                   ].map(col => (
                     <th key={col.key}
                       onClick={() => col.s && handleSort(col.key)}
-                      style={{ padding: '9px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: sortCol===col.key ? C.rosa : C.gray, letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', width: col.w, minWidth: col.w, cursor: col.s ? 'pointer' : 'default', userSelect: 'none', background: sortCol===col.key ? C.rosaPale : C.white, borderRight: `1px solid ${C.border}`, transition: 'background 0.12s' }}
+                      style={{ padding: '9px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: sortCol===col.key ? C.rosaText : C.gray, letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', width: col.w, minWidth: col.w, cursor: col.s ? 'pointer' : 'default', userSelect: 'none', background: sortCol===col.key ? C.rosaPale : C.white, borderRight: `1px solid ${C.border}`, transition: 'background 0.12s' }}
                       onMouseEnter={e => { if (col.s && sortCol !== col.key) e.currentTarget.style.background = C.ivory; }}
                       onMouseLeave={e => { if (sortCol !== col.key) e.currentTarget.style.background = C.white; }}>
                       {col.label}{col.s && sortIcon(col.key)}
@@ -1167,7 +1169,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
 
                       {/* Events */}
                       <td style={{ ...tdBase, textAlign:'center' }}>
-                        <span style={{ fontSize:13, fontWeight:600, color: evCount > 1 ? C.rosa : evCount === 1 ? C.ink : C.gray }}>{evCount || DASH}</span>
+                        <span style={{ fontSize:13, fontWeight:600, color: evCount > 1 ? C.rosaText : evCount === 1 ? C.ink : C.gray }}>{evCount || DASH}</span>
                       </td>
 
                       {/* Spent / LTV */}
@@ -1216,9 +1218,9 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
                       {/* Status */}
                       <td style={{ padding:'7px 12px' }}>
                         {cl.hasOverdue
-                          ? <span style={{padding:'2px 7px',borderRadius:999,fontSize:9,fontWeight:700,background:'var(--bg-danger)',color:'var(--color-danger)',whiteSpace:'nowrap',textTransform:'uppercase'}}>Overdue</span>
+                          ? <span style={{padding:'2px 7px',borderRadius:999,fontSize:9,fontWeight:700,background:'var(--bg-danger)',color:'var(--text-danger)',whiteSpace:'nowrap',textTransform:'uppercase'}}>Overdue</span>
                           : evCount > 0
-                            ? <span style={{padding:'2px 7px',borderRadius:999,fontSize:9,fontWeight:700,background:'var(--bg-success)',color:'var(--color-success)',whiteSpace:'nowrap',textTransform:'uppercase'}}>Active</span>
+                            ? <span style={{padding:'2px 7px',borderRadius:999,fontSize:9,fontWeight:700,background:'var(--bg-success)',color:'var(--text-success)',whiteSpace:'nowrap',textTransform:'uppercase'}}>Active</span>
                             : DASH}
                       </td>
                     </tr>
@@ -1257,7 +1259,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
                     <span style={{ fontSize: 14, lineHeight: 1 }} title={getTier(cl.loyalty_points||0, loyaltyTiers).name}>{tierMedal(getTier(cl.loyalty_points||0, loyaltyTiers).name)}</span>
                   </div>
                   <span style={{ padding: '2px 8px', borderRadius: 999, fontSize: 10, fontWeight: 600, background: tc.bg, color: tc.col }}>{tc.label}</span>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-success)', marginTop: 12 }}>{fmt(spent)}</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-success)', marginTop: 12 }}>{fmt(spent)}</div>
                   <div style={{ fontSize: 11, color: C.gray, marginTop: 4 }}>Last: {cl.lastActivity || '—'}</div>
                 </div>
               );
@@ -1297,13 +1299,13 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
       )}
       {showMerge && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-          <div style={{background:C.white,borderRadius:16,width:520,maxHeight:'88dvh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
+          <div role="dialog" aria-modal="true" aria-labelledby="clients-merge-title" style={{background:C.white,borderRadius:16,width:520,maxHeight:'88dvh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
             <div style={{padding:'16px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
               <div>
-                <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Duplicate clients</span>
+                <span id="clients-merge-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Duplicate clients</span>
                 <div style={{fontSize:12,color:C.gray,marginTop:1}}>{mergeGroups.length} potential duplicate{mergeGroups.length!==1?'s':''} found</div>
               </div>
-              <button onClick={()=>{setShowMerge(false);setSelectedMerge(null);}} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray}}>×</button>
+              <button onClick={()=>{setShowMerge(false);setSelectedMerge(null);}} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:'12px 20px',display:'flex',flexDirection:'column',gap:12}}>
               {mergeGroups.length===0&&(
@@ -1315,7 +1317,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
               )}
               {mergeGroups.map((group,gi)=>(
                 <div key={gi} style={{border:`1px solid ${C.border}`,borderRadius:10,padding:'12px 14px'}}>
-                  <div style={{fontSize:11,color:C.rosa,fontWeight:600,marginBottom:10,textTransform:'uppercase',letterSpacing:'0.05em'}}>{group.reason}</div>
+                  <div style={{fontSize:11,color:C.rosaText,fontWeight:600,marginBottom:10,textTransform:'uppercase',letterSpacing:'0.05em'}}>{group.reason}</div>
                   <div style={{display:'flex',flexDirection:'column',gap:8}}>
                     {group.clients.map(cl=>(
                       <div key={cl.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:8,border:`2px solid ${selectedMerge?.keep===cl.id&&selectedMerge?.groupIdx===gi?C.rosa:C.border}`,cursor:'pointer',transition:'border-color 0.15s'}}
@@ -1324,13 +1326,13 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
                           if(prev.keep===cl.id) return null;
                           return {keep:cl.id,remove:group.clients.find(c=>c.id!==cl.id)?.id,groupIdx:gi};
                         })}>
-                        <div style={{width:34,height:34,borderRadius:'50%',background:C.rosaPale,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600,color:C.rosa,flexShrink:0}}>{cl.name?.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+                        <div style={{width:34,height:34,borderRadius:'50%',background:C.rosaPale,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600,color:C.rosaText,flexShrink:0}}>{cl.name?.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:13,fontWeight:500,color:C.ink}}>{cl.name}</div>
                           <div style={{fontSize:11,color:C.gray}}>{cl.phone} · {cl.email}</div>
                         </div>
                         {selectedMerge?.keep===cl.id&&selectedMerge?.groupIdx===gi&&(
-                          <span style={{fontSize:10,padding:'2px 8px',borderRadius:8,background:C.rosaPale,color:C.rosa,fontWeight:600}}>KEEP</span>
+                          <span style={{fontSize:10,padding:'2px 8px',borderRadius:8,background:C.rosaPale,color:C.rosaText,fontWeight:600}}>KEEP</span>
                         )}
                       </div>
                     ))}
@@ -1394,7 +1396,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
               <div style={{fontSize:13,fontWeight:600,color:C.ink}}>Client added!</div>
               <div style={{fontSize:12,color:C.gray,marginTop:2}}>Ready to book their first event?</div>
             </div>
-            <button onClick={()=>setShowBookEvent(false)} style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:16,lineHeight:1,padding:0,flexShrink:0}}>×</button>
+            <button onClick={()=>setShowBookEvent(false)} aria-label="Close" style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:16,lineHeight:1,padding:'4px 8px',flexShrink:0,minHeight:32,minWidth:32}}>×</button>
           </div>
           <div style={{display:'flex',gap:8}}>
             <button onClick={()=>setShowBookEvent(false)} style={{flex:1,padding:'7px 0',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,fontSize:12,cursor:'pointer'}}>Not now</button>
@@ -1405,7 +1407,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
       {/* Floating bulk action bar */}
       {anyBulkSelected && (
         <div style={{position:'fixed',bottom:16,left:'50%',transform:'translateX(-50%)',zIndex:200,background:C.white,borderRadius:999,boxShadow:'0 4px 24px rgba(0,0,0,0.18)',padding:'10px 18px',display:'flex',alignItems:'center',gap:10,maxWidth:600,border:`1px solid ${C.border}`}}>
-          <span style={{fontSize:13,fontWeight:600,color:C.rosa,whiteSpace:'nowrap'}}>✓ {bulkSelected.size} selected</span>
+          <span style={{fontSize:13,fontWeight:600,color:C.rosaText,whiteSpace:'nowrap'}}>✓ {bulkSelected.size} selected</span>
           <button onClick={bulkExportClients} disabled={bulkWorking}
             style={{padding:'6px 14px',borderRadius:999,border:`1px solid ${C.border}`,background:C.grayBg,color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>
             Export CSV
@@ -1418,8 +1420,8 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, createClie
             style={{padding:'6px 14px',borderRadius:999,border:`1px solid ${C.border}`,background:C.grayBg,color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>
             Add tag
           </button>
-          <button onClick={clearBulkSelection}
-            style={{padding:'6px 10px',borderRadius:999,border:'none',background:'none',color:C.gray,fontSize:18,cursor:'pointer',lineHeight:1,marginLeft:4}}>
+          <button onClick={clearBulkSelection} aria-label="Clear selection"
+            style={{padding:'6px 10px',borderRadius:999,border:'none',background:'none',color:C.gray,fontSize:18,cursor:'pointer',lineHeight:1,marginLeft:4,minHeight:32,minWidth:32}}>
             ×
           </button>
         </div>

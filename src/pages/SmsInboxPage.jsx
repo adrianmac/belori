@@ -305,7 +305,7 @@ function ConversationPanel({ client }) {
       }}>
         <div style={{
           width: 38, height: 38, borderRadius: '50%',
-          background: C.rosaPale, color: C.rosa,
+          background: C.rosaPale, color: C.rosaText,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontWeight: 700, fontSize: 14, flexShrink: 0,
         }}>

@@ -238,7 +238,7 @@ export default function RoadmapPage() {
                   cursor: 'pointer',
                   fontSize: 13,
                   fontWeight: active ? 600 : 400,
-                  color: active ? C.rosa : C.gray,
+                  color: active ? C.rosaText : C.gray,
                   borderRadius: '8px 8px 0 0',
                   marginBottom: -1,
                   transition: 'all 0.15s',
@@ -250,7 +250,7 @@ export default function RoadmapPage() {
                 <span style={{
                   fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 999,
                   background: active ? C.rosaPale : C.grayBg,
-                  color: active ? C.rosa : labelColor,
+                  color: active ? C.rosaText : labelColor,
                   border: `1px solid ${active ? C.rosa + '44' : C.border}`,
                 }}>
                   {r.date}

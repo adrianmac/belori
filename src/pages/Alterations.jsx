@@ -21,10 +21,10 @@ const MEASUREMENT_FIELDS=[
   {key:'heel',label:'Shoe heel height',unit:'in'},
 ];
 const STATUS_OPTS=[
-  {id:'measurement_needed',label:'Measurement needed',color:'var(--color-info)'},
-  {id:'in_progress',label:'In progress',color:'var(--color-warning)'},
-  {id:'fitting_scheduled',label:'Fitting scheduled',color:'#7C3AED'},
-  {id:'complete',label:'Complete',color:'var(--color-success)'},
+  {id:'measurement_needed',label:'Measurement needed',color:'var(--text-info)'},
+  {id:'in_progress',label:'In progress',color:'var(--text-warning)'},
+  {id:'fitting_scheduled',label:'Fitting scheduled',color:C.purple},
+  {id:'complete',label:'Complete',color:'var(--text-success)'},
 ];
 
 // ─── JOB TIMER ────────────────────────────────────────────────────────────────
@@ -70,17 +70,17 @@ function JobTimer({ job, logTimeEntry }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
         <span style={{ fontSize: 11, color: C.gray }}>
           ⏱ {totalHours > 0 ? `${totalHours}h ` : ''}{totalMins}m total
-          {effectiveRate && <span style={{ marginLeft: 6, color: 'var(--color-success)', fontWeight: 600 }}>${effectiveRate}/hr</span>}
+          {effectiveRate && <span style={{ marginLeft: 6, color: 'var(--text-success)', fontWeight: 600 }}>${effectiveRate}/hr</span>}
         </span>
         <div style={{ display: 'flex', gap: 4 }}>
           {!running ? (
             <button onClick={e => { e.stopPropagation(); start(); }}
-              style={{ fontSize: 10, padding: '2px 8px', background: C.rosaPale, color: C.rosa, border: `1px solid ${C.rosa}`, borderRadius: 5, cursor: 'pointer', fontWeight: 600 }}>
+              style={{ fontSize: 10, padding: '2px 8px', background: C.rosaPale, color: C.rosaText, border: `1px solid ${C.rosa}`, borderRadius: 5, cursor: 'pointer', fontWeight: 600 }}>
               ▶ Start
             </button>
           ) : (
             <button onClick={e => { e.stopPropagation(); stop(); }}
-              style={{ fontSize: 10, padding: '2px 8px', background: '#FEE2E2', color: '#DC2626', border: '1px solid #DC2626', borderRadius: 5, cursor: 'pointer', fontWeight: 600 }}>
+              style={{ fontSize: 10, padding: '2px 8px', background: C.redBg, color: C.danger, border: `1px solid ${C.danger}`, borderRadius: 5, cursor: 'pointer', fontWeight: 600 }}>
               ■ {fmtElapsed}
             </button>
           )}
@@ -124,8 +124,8 @@ const WorkItemsPicker = ({value, onChange}) => (
             onKeyDown={e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();toggle();}}}
             tabIndex={0}
             aria-pressed={selected}
-            style={{padding:'6px 14px',borderRadius:999,border:`1.5px solid ${selected?C.rosa:C.border}`,background:selected?C.rosaPale:C.white,color:selected?C.rosa:C.gray,cursor:'pointer',fontSize:13,fontWeight:selected?600:500,transition:'all 0.1s'}}>
-            {w}{WORK_HINTS[w]&&<span style={{color:selected?C.rosaLight:'#D1D5DB',marginLeft:6,fontSize:11,fontWeight:400}}>{WORK_HINTS[w]}</span>}
+            style={{padding:'6px 14px',borderRadius:999,border:`1.5px solid ${selected?C.rosa:C.border}`,background:selected?C.rosaPale:C.white,color:selected?C.rosaText:C.gray,cursor:'pointer',fontSize:13,fontWeight:selected?600:500,transition:'all 0.1s'}}>
+            {w}{WORK_HINTS[w]&&<span style={{color:selected?C.rosaLight:C.borderDark,marginLeft:6,fontSize:11,fontWeight:400}}>{WORK_HINTS[w]}</span>}
           </button>
         );
       })}
@@ -181,8 +181,8 @@ const InlineNewClient = ({onCreate, onDone}) => {
     onDone(data);
   };
   return (
-    <div style={{background:'#F0FDF4',border:'1px solid #BBF7D0',borderRadius:12,padding:16,display:'flex',flexDirection:'column',gap:10}}>
-      <div style={{fontSize:12,fontWeight:600,color:'#15803D',marginBottom:2}}>➕ New client</div>
+    <div style={{background:C.greenBg,border:`1px solid ${C.success}`,borderRadius:12,padding:16,display:'flex',flexDirection:'column',gap:10}}>
+      <div style={{fontSize:12,fontWeight:600,color:C.green,marginBottom:2}}>➕ New client</div>
       <input value={name} onChange={e=>setName(e.target.value)} placeholder="Full name *"
         style={{...inputSt,padding:'9px 12px',borderRadius:8,fontSize:13}}/>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
@@ -191,14 +191,14 @@ const InlineNewClient = ({onCreate, onDone}) => {
         <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email (optional)"
           style={{...inputSt,padding:'9px 12px',borderRadius:8,fontSize:13}}/>
       </div>
-      {err&&<div style={{fontSize:12,color:'var(--color-danger)'}}>{err}</div>}
+      {err&&<div style={{fontSize:12,color:'var(--text-danger)'}}>{err}</div>}
       <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
         <button type="button" onClick={()=>onDone(null)}
           style={{padding:'7px 14px',background:'none',border:`1px solid ${C.border}`,borderRadius:8,fontSize:12,cursor:'pointer',color:C.gray}}>
           Cancel
         </button>
         <button type="button" onClick={save} disabled={saving}
-          style={{padding:'7px 14px',background:'#15803D',border:'none',borderRadius:8,fontSize:12,fontWeight:600,color:'#fff',cursor:'pointer',opacity:saving?0.7:1}}>
+          style={{padding:'7px 14px',background:C.green,border:'none',borderRadius:8,fontSize:12,fontWeight:600,color:'#fff',cursor:'pointer',opacity:saving?0.7:1}}>
           {saving?'Saving…':'Create client'}
         </button>
       </div>
@@ -257,11 +257,11 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16,backdropFilter:'blur(4px)'}}>
-      <div style={{background:C.white,borderRadius:20,width:600,maxHeight:'92vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="alterations-newjob-title" style={{background:C.white,borderRadius:20,width:600,maxHeight:'92vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         {/* Header */}
         <div style={{padding:'24px 30px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexShrink:0}}>
           <div>
-            <div style={{fontWeight:600,fontSize:18,color:C.ink,marginBottom:4}}>New alteration job</div>
+            <div id="alterations-newjob-title" style={{fontWeight:600,fontSize:18,color:C.ink,marginBottom:4}}>New alteration job</div>
             <div style={{fontSize:13,color:C.gray}}>Enter garment details, work items, and measurements.</div>
           </div>
           <button onClick={onClose} aria-label="Close" title="Close" style={{background:'none',border:'none',fontSize:24,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
@@ -271,11 +271,11 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
           {/* Client — required */}
           <div>
             <label htmlFor="alteration-field-client" style={{...LBL,marginBottom:8,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <span>Client <span style={{color:'var(--color-danger)'}}>*</span></span>
+              <span>Client <span style={{color:'var(--text-danger)'}}>*</span></span>
               {!showNewClient&&createClient&&(
                 <button type="button" onClick={()=>setShowNewClient(true)}
                   aria-label="Add new client" title="Add new client"
-                  style={{background:'none',border:'none',color:C.rosa,fontSize:12,fontWeight:600,cursor:'pointer',padding:0}}>
+                  style={{background:'none',border:'none',color:C.rosaText,fontSize:12,fontWeight:600,cursor:'pointer',padding:0}}>
                   ➕ New client
                 </button>
               )}
@@ -294,13 +294,13 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
             <div style={{...LBL,marginBottom:10,textTransform:'uppercase',letterSpacing:'0.06em'}}>Garment type</div>
             <div style={{display:'flex',gap:10}}>
               {[['boutique','Boutique dress (from inventory)'],['byog',"Client's own garment (BYOG)"]].map(([v,l])=>(
-                <button key={v} type="button" onClick={()=>setGarmentType(v)} style={{flex:1,padding:'12px',borderRadius:12,border:`1.5px solid ${garmentType===v?C.rosa:C.border}`,background:garmentType===v?C.rosaPale:'transparent',color:garmentType===v?C.rosa:C.gray,cursor:'pointer',fontSize:13,fontWeight:garmentType===v?600:500,transition:'all 0.15s'}}>{l}</button>
+                <button key={v} type="button" onClick={()=>setGarmentType(v)} style={{flex:1,padding:'12px',borderRadius:12,border:`1.5px solid ${garmentType===v?C.rosa:C.border}`,background:garmentType===v?C.rosaPale:'transparent',color:garmentType===v?C.rosaText:C.gray,cursor:'pointer',fontSize:13,fontWeight:garmentType===v?600:500,transition:'all 0.15s'}}>{l}</button>
               ))}
             </div>
           </div>
           {/* Garment description */}
           <div>
-            <label htmlFor="alteration-field-garment" style={{...LBL,marginBottom:8}}>Garment description <span style={{color:'var(--color-danger)'}}>*</span></label>
+            <label htmlFor="alteration-field-garment" style={{...LBL,marginBottom:8}}>Garment description <span style={{color:'var(--text-danger)'}}>*</span></label>
             <input id="alteration-field-garment" value={garmentDesc} onChange={e=>setGarmentDesc(e.target.value)}
               placeholder={garmentType==='boutique'?'e.g. Bridal gown #BB-047 · Ivory A-line':"e.g. Client's own bridesmaid dress (×4)"}
               style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
@@ -326,7 +326,7 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
               </select>
             </div>
             <div>
-              <label htmlFor="alteration-field-price" style={{...LBL,marginBottom:8,display:'block'}}>Quoted price ($) <span style={{color:'var(--color-danger)'}}>*</span></label>
+              <label htmlFor="alteration-field-price" style={{...LBL,marginBottom:8,display:'block'}}>Quoted price ($) <span style={{color:'var(--text-danger)'}}>*</span></label>
               <input id="alteration-field-price" type="number" value={quotedPrice} onChange={e=>setQuotedPrice(e.target.value)}
                 placeholder="280" style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
             </div>
@@ -343,7 +343,7 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
               placeholder="Any additional notes for the team..."
               style={{...inputSt,padding:'12px 14px',borderRadius:10,resize:'vertical'}}/>
           </div>
-          {err&&<div style={{fontSize:13,color:'var(--color-danger)',background:'var(--bg-danger)',padding:'10px 14px',borderRadius:10}}>{err}</div>}
+          {err&&<div style={{fontSize:13,color:'var(--text-danger)',background:'var(--bg-danger)',padding:'10px 14px',borderRadius:10}}>{err}</div>}
         </div>
         {/* Footer */}
         <div style={{padding:'16px 30px',background:C.ivory,borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'flex-end',gap:12,flexShrink:0}}>
@@ -370,7 +370,7 @@ function LaborCostRow({ job }) {
   const hasPrice = job.price > 0;
   const timeLabel = fmtMinutes(totalMins);
   const rate = hasPrice ? (job.price / (totalMins / 60)).toFixed(2) : null;
-  const unpricedColor = '#D97706'; // amber-600
+  const unpricedColor = C.amber;
 
   return (
     <div style={{
@@ -383,7 +383,7 @@ function LaborCostRow({ job }) {
       </span>
       {rate && (
         <span style={{ color: C.gray, marginLeft: 2 }}>
-          · <span style={{ color: '#4B5563', fontWeight: 600 }}>${rate}/hr</span>
+          · <span style={{ color: C.ink, fontWeight: 600 }}>${rate}/hr</span>
         </span>
       )}
       {!hasPrice && (
@@ -483,12 +483,12 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16,backdropFilter:'blur(4px)'}}>
-      <div style={{background:C.white,borderRadius:20,width:640,maxHeight:'92vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="alterations-editjob-title" style={{background:C.white,borderRadius:20,width:640,maxHeight:'92vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         {/* Header */}
         <div style={{padding:'24px 30px 0',borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16}}>
             <div>
-              <div style={{fontWeight:600,fontSize:18,color:C.ink,marginBottom:2}}>Edit alteration job</div>
+              <div id="alterations-editjob-title" style={{fontWeight:600,fontSize:18,color:C.ink,marginBottom:2}}>Edit alteration job</div>
               <div style={{fontSize:13,color:C.gray}}>{job.garment}</div>
             </div>
             <button onClick={onClose} aria-label="Close" title="Close" style={{background:'none',border:'none',fontSize:24,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
@@ -497,7 +497,7 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
           <div style={{display:'flex',gap:0}}>
             {SECTIONS.map(s=>(
               <button key={s.id} onClick={()=>setActiveSection(s.id)}
-                style={{padding:'10px 20px',background:'none',border:'none',borderBottom:`2px solid ${activeSection===s.id?C.rosa:'transparent'}`,color:activeSection===s.id?C.rosa:C.gray,fontWeight:activeSection===s.id?600:500,fontSize:13,cursor:'pointer',transition:'all 0.15s',display:'flex',alignItems:'center',gap:6}}>
+                style={{padding:'10px 20px',background:'none',border:'none',borderBottom:`2px solid ${activeSection===s.id?C.rosa:'transparent'}`,color:activeSection===s.id?C.rosaText:C.gray,fontWeight:activeSection===s.id?600:500,fontSize:13,cursor:'pointer',transition:'all 0.15s',display:'flex',alignItems:'center',gap:6}}>
                 {s.icon} {s.label}
                 {s.id==='measurements'&&hasMeasurements&&<span style={{fontSize:9,background:C.rosa,color:C.white,borderRadius:999,padding:'1px 5px',fontWeight:700}}>✓</span>}
                 {s.id==='photos'&&(beforeImageUrl||afterImageUrl)&&<span style={{fontSize:9,background:C.rosa,color:C.white,borderRadius:999,padding:'1px 5px',fontWeight:700}}>{[beforeImageUrl,afterImageUrl].filter(Boolean).length}</span>}
@@ -512,7 +512,7 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
           {activeSection==='details'&&<>
             {/* Client */}
             <div>
-              <label htmlFor="edit-alteration-client" style={{...LBL,marginBottom:8,display:'block'}}>Client <span style={{color:'var(--color-danger)'}}>*</span></label>
+              <label htmlFor="edit-alteration-client" style={{...LBL,marginBottom:8,display:'block'}}>Client <span style={{color:'var(--text-danger)'}}>*</span></label>
               <select id="edit-alteration-client" value={clientId} onChange={e=>setClientId(e.target.value)}
                 style={{...inputSt,padding:'12px 14px',borderRadius:10,cursor:'pointer'}}>
                 <option value="">Select a client…</option>
@@ -521,7 +521,7 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
             </div>
             {/* Garment */}
             <div>
-              <label htmlFor="edit-alteration-garment" style={{...LBL,marginBottom:8,display:'block'}}>Garment description <span style={{color:'var(--color-danger)'}}>*</span></label>
+              <label htmlFor="edit-alteration-garment" style={{...LBL,marginBottom:8,display:'block'}}>Garment description <span style={{color:'var(--text-danger)'}}>*</span></label>
               <input id="edit-alteration-garment" value={garmentDesc} onChange={e=>setGarmentDesc(e.target.value)}
                 placeholder="e.g. Bridal gown #BB-047 · Ivory A-line"
                 style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
@@ -579,7 +579,7 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
                   style={{textAlign:'left',padding:'14px 16px',borderRadius:12,border:`1.5px solid ${status===opt.id?C.rosa:C.border}`,background:status===opt.id?C.rosaPale:C.white,cursor:'pointer',transition:'all 0.15s',display:'flex',alignItems:'center',gap:12}}>
                   <span style={{width:10,height:10,borderRadius:'50%',background:opt.color,flexShrink:0,display:'inline-block'}}/>
                   <div>
-                    <div style={{fontSize:14,fontWeight:600,color:status===opt.id?C.rosa:C.ink}}>{opt.label}</div>
+                    <div style={{fontSize:14,fontWeight:600,color:status===opt.id?C.rosaText:C.ink}}>{opt.label}</div>
                     {opt.id===status&&<div style={{fontSize:12,color:C.gray,marginTop:2}}>Current status</div>}
                   </div>
                   {status===opt.id&&<span style={{marginLeft:'auto',fontSize:16}}>✓</span>}
@@ -592,7 +592,7 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
             <div style={{fontSize:13,color:C.gray,background:C.ivory,padding:'10px 14px',borderRadius:10,border:`1px solid ${C.border}`}}>
               Upload before and after photos to document the alteration work. Max 5 MB per image.
             </div>
-            {photoErr&&<div style={{fontSize:12,color:'var(--color-danger)',background:'var(--bg-danger)',padding:'10px 14px',borderRadius:10}}>{photoErr}</div>}
+            {photoErr&&<div style={{fontSize:12,color:'var(--text-danger)',background:'var(--bg-danger)',padding:'10px 14px',borderRadius:10}}>{photoErr}</div>}
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
               {[{slot:'before',label:'Before',url:beforeImageUrl,uploading:uploadingBefore,ref:beforeFileRef},{slot:'after',label:'After',url:afterImageUrl,uploading:uploadingAfter,ref:afterFileRef}].map(({slot,label,url,uploading,ref})=>(
                 <div key={slot}>
@@ -643,7 +643,7 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
             const displayM=totalMins%60;
             const hasPrice=job.price>0;
             const rate=hasPrice&&totalMins>0?(job.price/hours).toFixed(2):null;
-            const unpricedColor='#D97706';
+            const unpricedColor=C.amber;
             return (
               <div style={{display:'flex',flexDirection:'column',gap:16}}>
                 {totalMins===0&&entries.length===0?(
@@ -683,7 +683,7 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
                       </div>
                     )}
                     {!hasPrice&&totalMins>0&&(
-                      <div style={{padding:'10px 14px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:10,fontSize:12,color:'#92400E'}}>
+                      <div style={{padding:'10px 14px',background:C.amberBg,border:`1px solid #FDE68A`,borderRadius:10,fontSize:12,color:C.warningText}}>
                         ⚠️ No price set — go to the <strong>Details</strong> tab to add a quoted price and calculate the effective hourly rate.
                       </div>
                     )}
@@ -693,13 +693,13 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
             );
           })()}
 
-          {err&&<div style={{fontSize:13,color:'var(--color-danger)',background:'var(--bg-danger)',padding:'10px 14px',borderRadius:10}}>{err}</div>}
+          {err&&<div style={{fontSize:13,color:'var(--text-danger)',background:'var(--bg-danger)',padding:'10px 14px',borderRadius:10}}>{err}</div>}
         </div>
 
         {/* Confirm action banner */}
         {confirmAction&&(
           <div style={{padding:'14px 30px',background:confirmAction==='delete'?'var(--bg-danger)':'var(--bg-warning)',borderTop:`1px solid ${confirmAction==='delete'?'var(--color-danger)':'var(--color-warning)'}`,display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
-            <span style={{flex:1,fontSize:13,fontWeight:500,color:confirmAction==='delete'?'var(--color-danger)':'var(--color-warning)'}}>
+            <span style={{flex:1,fontSize:13,fontWeight:500,color:confirmAction==='delete'?'var(--text-danger)':'var(--text-warning)'}}>
               {confirmAction==='delete'?'⚠️ Permanently delete this job? This cannot be undone.':'Cancel this job? It will be marked as cancelled and removed from the active board.'}
             </span>
             <button onClick={()=>setConfirmAction(null)} style={{padding:'6px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:C.white,fontSize:12,cursor:'pointer',color:C.gray}}>No, go back</button>
@@ -717,13 +717,13 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
           <div style={{display:'flex',gap:8}}>
             {job.status!=='cancelled'&&onCancel&&(
               <button onClick={()=>setConfirmAction('cancel')}
-                style={{padding:'7px 12px',borderRadius:8,border:'1px solid var(--color-warning)',background:'var(--bg-warning)',color:'var(--color-warning)',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                style={{padding:'7px 12px',borderRadius:8,border:'1px solid var(--color-warning)',background:'var(--bg-warning)',color:'var(--text-warning)',fontSize:12,fontWeight:600,cursor:'pointer'}}>
                 🚫 Cancel job
               </button>
             )}
             {onDelete&&(
               <button onClick={()=>setConfirmAction('delete')}
-                style={{padding:'7px 12px',borderRadius:8,border:'1px solid var(--color-danger)',background:'var(--bg-danger)',color:'var(--color-danger)',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                style={{padding:'7px 12px',borderRadius:8,border:'1px solid var(--color-danger)',background:'var(--bg-danger)',color:'var(--text-danger)',fontSize:12,fontWeight:600,cursor:'pointer'}}>
                 🗑️ Delete
               </button>
             )}
@@ -785,10 +785,10 @@ const MyJobsSidebar = ({ jobs, staff, onOpenJob }) => {
   }
 
   const ALT_COLORS = {
-    measurement_needed: { bg: 'var(--bg-info)', col: 'var(--color-info)' },
-    in_progress: { bg: 'var(--bg-warning)', col: 'var(--color-warning)' },
-    fitting_scheduled: { bg: '#F5F3FF', col: '#7C3AED' },
-    complete: { bg: 'var(--bg-success)', col: 'var(--color-success)' },
+    measurement_needed: { bg: 'var(--bg-info)', col: 'var(--text-info)' },
+    in_progress: { bg: 'var(--bg-warning)', col: 'var(--text-warning)' },
+    fitting_scheduled: { bg: C.purplePale, col: C.purple },
+    complete: { bg: 'var(--bg-success)', col: 'var(--text-success)' },
     cancelled: { bg: C.grayBg, col: C.gray },
   };
 
@@ -945,26 +945,32 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
   const [draggedJob, setDraggedJob] = useState(null);
 
   const cols=[
-    {id:'measurement_needed',label:'Measurement needed',color:'var(--color-info)',bg:'var(--bg-info)'},
-    {id:'in_progress',label:'In progress',color:'var(--color-warning)',bg:'var(--bg-warning)'},
-    {id:'fitting_scheduled',label:'Fitting scheduled',color:'#7C3AED',bg:'#F5F3FF'},
-    {id:'complete',label:'Complete',color:'var(--color-success)',bg:'var(--bg-success)'},
+    {id:'measurement_needed',label:'Measurement needed',color:'var(--text-info)',bg:'var(--bg-info)'},
+    {id:'in_progress',label:'In progress',color:'var(--text-warning)',bg:'var(--bg-warning)'},
+    {id:'fitting_scheduled',label:'Fitting scheduled',color:C.purple,bg:C.purplePale},
+    {id:'complete',label:'Complete',color:'var(--text-success)',bg:'var(--bg-success)'},
     {id:'cancelled',label:'Cancelled',color:C.gray,bg:C.grayBg},
   ];
-  const ALT_STATUS_COLS={measurement_needed:{bg:'var(--bg-info)',col:'var(--color-info)'},in_progress:{bg:'var(--bg-warning)',col:'var(--color-warning)'},fitting_scheduled:{bg:'#F5F3FF',col:'#7C3AED'},complete:{bg:'var(--bg-success)',col:'var(--color-success)'},cancelled:{bg:C.grayBg,col:C.gray}};
+  const ALT_STATUS_COLS={measurement_needed:{bg:'var(--bg-info)',col:'var(--text-info)'},in_progress:{bg:'var(--bg-warning)',col:'var(--text-warning)'},fitting_scheduled:{bg:C.purplePale,col:C.purple},complete:{bg:'var(--bg-success)',col:'var(--text-success)'},cancelled:{bg:C.grayBg,col:C.gray}};
 
-  const filtered = data.filter(job => {
-    if(search){const q=search.toLowerCase();if(!job.client?.toLowerCase().includes(q)&&!job.garment?.toLowerCase().includes(q)&&!(job.work||[]).some(w=>w.toLowerCase().includes(q)))return false;}
-    if(filter==='urgent')return job.daysUntil<=7&&job.status!=='complete';
-    if(filter==='unassigned')return !job.seamstress&&job.status!=='complete';
-    if(staffFilter&&job.seamstress!==staffFilter)return false;
-    return true;
-  });
+  if (!data) return <div style={{ padding: 40, textAlign: 'center', color: C.gray }}>Loading…</div>;
 
-  const totalActive=data.filter(a=>a.status!=='complete').length;
-  const dueThisWeek=data.filter(a=>a.daysUntil<=7&&a.status!=='complete').length;
-  const unassigned=data.filter(a=>!a.seamstress&&a.status!=='complete').length;
-  const completed=data.filter(a=>a.status==='complete').length;
+  const { filtered, totalActive, dueThisWeek, unassigned, completed } = useMemo(() => {
+    const filtered = data.filter(job => {
+      if(search){const q=search.toLowerCase();if(!job.client?.toLowerCase().includes(q)&&!job.garment?.toLowerCase().includes(q)&&!(job.work||[]).some(w=>w.toLowerCase().includes(q)))return false;}
+      if(filter==='urgent')return job.daysUntil<=7&&job.status!=='complete';
+      if(filter==='unassigned')return !job.seamstress&&job.status!=='complete';
+      if(staffFilter&&job.seamstress!==staffFilter)return false;
+      return true;
+    });
+    return {
+      filtered,
+      totalActive: data.filter(a=>a.status!=='complete').length,
+      dueThisWeek: data.filter(a=>a.daysUntil<=7&&a.status!=='complete').length,
+      unassigned:  data.filter(a=>!a.seamstress&&a.status!=='complete').length,
+      completed:   data.filter(a=>a.status==='complete').length,
+    };
+  }, [data, search, filter, staffFilter]);
 
   const handleDragStart=(e,job)=>{setDraggedJob(job);e.dataTransfer.effectAllowed='move';setTimeout(()=>{if(e.target)e.target.style.opacity='0.5';},0);};
   const handleDragEnd=(e)=>{if(e.target)e.target.style.opacity='1';setDraggedJob(null);};
@@ -1049,24 +1055,24 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
       </div>
 
       {selectedJobs.size>0&&(
-        <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 20px',background:'#EFF6FF',borderBottom:'1px solid #BFDBFE',flexShrink:0,flexWrap:'wrap'}}>
-          <span style={{fontSize:12,fontWeight:500,color:'#1D4ED8'}}>{selectedJobs.size} job{selectedJobs.size!==1?'s':''} selected</span>
+        <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 20px',background:C.infoBg,borderBottom:`1px solid ${C.infoBorder}`,flexShrink:0,flexWrap:'wrap'}}>
+          <span style={{fontSize:12,fontWeight:500,color:C.blue}}>{selectedJobs.size} job{selectedJobs.size!==1?'s':''} selected</span>
           {staff?.length>0&&(
             <select disabled={bulkWorking} defaultValue=""
               onChange={e=>bulkAssign(e.target.value)}
-              style={{padding:'4px 10px',borderRadius:6,border:'1px solid #BFDBFE',fontSize:12,color:'#1D4ED8',background:'#EFF6FF',cursor:'pointer',minHeight:'unset'}}>
+              style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${C.infoBorder}`,fontSize:12,color:C.blue,background:C.infoBg,cursor:'pointer',minHeight:'unset'}}>
               <option value="" disabled>Assign to seamstress…</option>
               {staff.map(s=><option key={s.id||s.name} value={s.name}>{s.name}</option>)}
             </select>
           )}
           <select disabled={bulkWorking} defaultValue=""
             onChange={e=>bulkMoveStatus(e.target.value)}
-            style={{padding:'4px 10px',borderRadius:6,border:'1px solid #BFDBFE',fontSize:12,color:'#1D4ED8',background:'#EFF6FF',cursor:'pointer',minHeight:'unset'}}>
+            style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${C.infoBorder}`,fontSize:12,color:C.blue,background:C.infoBg,cursor:'pointer',minHeight:'unset'}}>
             <option value="" disabled>Move to status…</option>
             {STATUS_OPTS.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}
           </select>
           <button onClick={()=>setSelectedJobs(new Set())}
-            style={{marginLeft:'auto',background:'none',border:'none',fontSize:12,cursor:'pointer',color:'#6B7280',minHeight:'unset',minWidth:'unset'}}>
+            style={{marginLeft:'auto',background:'none',border:'none',fontSize:12,cursor:'pointer',color:C.gray,minHeight:'unset',minWidth:'unset'}}>
             Clear selection
           </button>
         </div>
@@ -1084,10 +1090,10 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
         const avgH=Math.floor(avgMinutes/60);const avgM=avgMinutes%60;
         if(weekMinutes===0&&jobsWithTime.length===0)return null;
         return (
-          <div style={{padding:'10px 20px',background:'#FFFBEB',borderBottom:'1px solid #FDE68A',flexShrink:0,display:'flex',gap:20,alignItems:'center',flexWrap:'wrap'}}>
-            <span style={{fontSize:12,fontWeight:700,color:'#92400E'}}>⏱ Time tracking</span>
-            {weekMinutes>0&&<span style={{fontSize:12,color:'#78350F'}}>This week: <strong>{weekHours>0?`${weekHours}h `:''}${weekMins}m</strong></span>}
-            {jobsWithTime.length>0&&<span style={{fontSize:12,color:'#78350F'}}>Avg per job: <strong>{avgH>0?`${avgH}h `:''}${avgM}m</strong> across {jobsWithTime.length} tracked job{jobsWithTime.length!==1?'s':''}</span>}
+          <div style={{padding:'10px 20px',background:C.amberBg,borderBottom:'1px solid #FDE68A',flexShrink:0,display:'flex',gap:20,alignItems:'center',flexWrap:'wrap'}}>
+            <span style={{fontSize:12,fontWeight:700,color:C.warningText}}>⏱ Time tracking</span>
+            {weekMinutes>0&&<span style={{fontSize:12,color:C.warningText}}>This week: <strong>{weekHours>0?`${weekHours}h `:''}${weekMins}m</strong></span>}
+            {jobsWithTime.length>0&&<span style={{fontSize:12,color:C.warningText}}>Avg per job: <strong>{avgH>0?`${avgH}h `:''}${avgM}m</strong> across {jobsWithTime.length} tracked job{jobsWithTime.length!==1?'s':''}</span>}
           </div>
         );
       })()}
@@ -1152,9 +1158,9 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
                     const hasMeas=job.measurements&&Object.entries(job.measurements).some(([k,v])=>k!=='notes'&&v);
                     return (
                       <div key={job.id} draggable onDragStart={e=>handleDragStart(e,job)} onDragEnd={handleDragEnd}
-                        style={{background:C.white,border:`1px solid ${isCritical?'var(--color-danger)':isNear?'#FCA5A5':C.border}`,borderLeftWidth:isCritical?4:1,borderRadius:12,padding:'16px',cursor:'grab',flexShrink:0,boxShadow:'0 1px 3px rgba(0,0,0,0.05)',transition:'transform 0.15s, box-shadow 0.15s',touchAction:'none'}}
+                        style={{background:C.white,border:`1px solid ${isCritical?'var(--color-danger)':isNear?C.dangerBorder:C.border}`,borderLeftWidth:isCritical?4:1,borderRadius:12,padding:'16px',cursor:'grab',flexShrink:0,boxShadow:'0 1px 3px rgba(0,0,0,0.05)',transition:'transform 0.15s, box-shadow 0.15s',touchAction:'none'}}
                         onMouseEnter={e=>{e.currentTarget.style.borderColor=isCritical?'var(--color-danger)':C.rosa;e.currentTarget.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';e.currentTarget.style.transform='translateY(-2px)';}}
-                        onMouseLeave={e=>{e.currentTarget.style.borderColor=isCritical?'var(--color-danger)':isNear?'#FCA5A5':C.border;e.currentTarget.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)';e.currentTarget.style.transform='none';}}>
+                        onMouseLeave={e=>{e.currentTarget.style.borderColor=isCritical?'var(--color-danger)':isNear?C.dangerBorder:C.border;e.currentTarget.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)';e.currentTarget.style.transform='none';}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                           <div style={{display:'flex',alignItems:'center',gap:0,flex:1,minWidth:0}}>
                             <input
@@ -1166,7 +1172,7 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
                             />
                             <span style={{fontSize:14,fontWeight:600,color:C.ink}}>{job.client||<span style={{color:C.gray,fontStyle:'italic'}}>No client</span>}</span>
                           </div>
-                          <span style={{fontSize:11,fontWeight:600,color:isCritical?'var(--color-danger)':job.status==='complete'?'var(--color-success)':C.gray,background:isCritical?'var(--bg-danger)':job.status==='complete'?'var(--bg-success)':C.grayBg,padding:'2px 8px',borderRadius:999}}>
+                          <span style={{fontSize:11,fontWeight:600,color:isCritical?'var(--text-danger)':job.status==='complete'?'var(--text-success)':C.gray,background:isCritical?'var(--bg-danger)':job.status==='complete'?'var(--bg-success)':C.grayBg,padding:'2px 8px',borderRadius:999}}>
                             {job.status==='complete'?'Done':`${job.daysUntil} days left`}
                           </span>
                         </div>
@@ -1185,7 +1191,7 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
                         )}
                         {/* Measurements badge */}
                         {hasMeas&&(
-                          <div style={{fontSize:11,color:'#7C3AED',background:'#F5F3FF',padding:'3px 8px',borderRadius:6,marginBottom:8,display:'inline-flex',alignItems:'center',gap:4}}>
+                          <div style={{fontSize:11,color:C.purple,background:C.purplePale,padding:'3px 8px',borderRadius:6,marginBottom:8,display:'inline-flex',alignItems:'center',gap:4}}>
                             📏 Measurements on file
                           </div>
                         )}
@@ -1198,9 +1204,9 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',paddingTop:12,borderTop:`1px dashed ${C.border}`}}>
                           <div style={{display:'flex',alignItems:'center',gap:6}}>
                             {job.seamstress?(
-                              <><Avatar initials={job.seamstress.split(' ').map(n=>n[0]).join('').slice(0,2)} size={24} bg='var(--bg-success)' color='var(--color-success)'/><span style={{fontSize:12,color:C.ink,fontWeight:500}}>{job.seamstress}</span></>
+                              <><Avatar initials={job.seamstress.split(' ').map(n=>n[0]).join('').slice(0,2)} size={24} bg='var(--bg-success)' color='var(--text-success)'/><span style={{fontSize:12,color:C.ink,fontWeight:500}}>{job.seamstress}</span></>
                             ):(
-                              <span style={{fontSize:12,color:'var(--color-warning)',fontWeight:500,padding:'2px 6px',background:'var(--bg-warning)',borderRadius:4}}>Unassigned</span>
+                              <span style={{fontSize:12,color:'var(--text-warning)',fontWeight:500,padding:'2px 6px',background:'var(--bg-warning)',borderRadius:4}}>Unassigned</span>
                             )}
                           </div>
                           <span style={{fontSize:13,fontWeight:600,color:C.ink}}>{job.price?fmt(job.price):''}</span>
@@ -1214,15 +1220,15 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
                             <button onClick={e=>{e.stopPropagation();handleStatusAdvance(job,nextStatus);}}
                               style={{flex:1,background:C.ivory,border:`1px solid ${C.border}`,padding:'5px 8px',color:C.gray,fontSize:10,fontWeight:600,cursor:'pointer',borderRadius:8,textAlign:'left',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',transition:'all 0.15s'}}
                               title={`Move to ${nextLabel}`}
-                              onMouseEnter={e=>{e.currentTarget.style.background='#F0FDF4';e.currentTarget.style.borderColor='var(--color-success)';e.currentTarget.style.color='var(--color-success)';}}
+                              onMouseEnter={e=>{e.currentTarget.style.background=C.greenBg;e.currentTarget.style.borderColor='var(--color-success)';e.currentTarget.style.color='var(--color-success)';}}
                               onMouseLeave={e=>{e.currentTarget.style.background=C.ivory;e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.gray;}}>
                               → {nextLabel}
                             </button>
                           )}
                           <button onClick={e=>{e.stopPropagation();setEditJob(job);}}
-                            style={{background:C.rosaPale,border:`1px solid ${C.rosaLight||C.border}`,padding:'5px 12px',color:C.rosa,fontSize:11,fontWeight:600,cursor:'pointer',borderRadius:8,transition:'all 0.15s',flexShrink:0}}
+                            style={{background:C.rosaPale,border:`1px solid ${C.rosaLight||C.border}`,padding:'5px 12px',color:C.rosaText,fontSize:11,fontWeight:600,cursor:'pointer',borderRadius:8,transition:'all 0.15s',flexShrink:0}}
                             onMouseEnter={e=>{e.currentTarget.style.background=C.rosa;e.currentTarget.style.color=C.white;}}
-                            onMouseLeave={e=>{e.currentTarget.style.background=C.rosaPale;e.currentTarget.style.color=C.rosa;}}>
+                            onMouseLeave={e=>{e.currentTarget.style.background=C.rosaPale;e.currentTarget.style.color=C.rosaText;}}>
                             ✏️ Edit job
                           </button>
                         </div>
@@ -1268,12 +1274,12 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
                 const rate=totalMins>0&&revenue>0?(revenue/(totalMins/60)).toFixed(2):null;
                 if(totalMins===0&&revenue===0)return null;
                 return (
-                  <div style={{display:'flex',gap:16,padding:'12px 16px',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:12,flexWrap:'wrap',alignItems:'center',marginBottom:4}}>
-                    <span style={{fontSize:12,fontWeight:700,color:'#92400E',flexShrink:0}}>📊 Period summary</span>
-                    <span style={{fontSize:12,color:'#78350F'}}>Jobs: <strong>{totalJobs}</strong></span>
-                    {totalMins>0&&<span style={{fontSize:12,color:'#78350F'}}>Hours logged: <strong>{totalH>0?`${totalH}h `:''}{ totalM}m</strong></span>}
-                    {revenue>0&&<span style={{fontSize:12,color:'#78350F'}}>Revenue: <strong>{fmt(revenue)}</strong></span>}
-                    {rate&&<span style={{fontSize:12,color:'#78350F'}}>Avg rate: <strong>${rate}/hr</strong></span>}
+                  <div style={{display:'flex',gap:16,padding:'12px 16px',background:C.amberBg,border:'1px solid #FDE68A',borderRadius:12,flexWrap:'wrap',alignItems:'center',marginBottom:4}}>
+                    <span style={{fontSize:12,fontWeight:700,color:C.warningText,flexShrink:0}}>📊 Period summary</span>
+                    <span style={{fontSize:12,color:C.warningText}}>Jobs: <strong>{totalJobs}</strong></span>
+                    {totalMins>0&&<span style={{fontSize:12,color:C.warningText}}>Hours logged: <strong>{totalH>0?`${totalH}h `:''}{ totalM}m</strong></span>}
+                    {revenue>0&&<span style={{fontSize:12,color:C.warningText}}>Revenue: <strong>{fmt(revenue)}</strong></span>}
+                    {rate&&<span style={{fontSize:12,color:C.warningText}}>Avg rate: <strong>${rate}/hr</strong></span>}
                   </div>
                 );
               })()}
@@ -1301,8 +1307,8 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
                     <div style={{minWidth:0}}>
                       <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
                         <span style={{fontSize:14,fontWeight:600,color:C.ink}}>{a.client||'—'}</span>
-                        {isUrgent&&<span style={{padding:'2px 6px',borderRadius:999,fontSize:9,fontWeight:600,background:'var(--bg-danger)',color:'var(--color-danger)'}}>Urgent</span>}
-                        {hasMeas&&<span style={{padding:'2px 6px',borderRadius:999,fontSize:9,fontWeight:600,background:'#F5F3FF',color:'#7C3AED'}}>📏</span>}
+                        {isUrgent&&<span style={{padding:'2px 6px',borderRadius:999,fontSize:9,fontWeight:600,background:'var(--bg-danger)',color:'var(--text-danger)'}}>Urgent</span>}
+                        {hasMeas&&<span style={{padding:'2px 6px',borderRadius:999,fontSize:9,fontWeight:600,background:C.purplePale,color:C.purple}}>📏</span>}
                       </div>
                       <div style={{fontSize:12,color:C.gray,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{a.garment}</div>
                     </div>
@@ -1310,18 +1316,18 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
                       {(a.work||[]).map(w=><span key={w} style={{fontSize:11,color:C.gray,background:C.ivory,border:`1px solid ${C.border}`,padding:'3px 8px',borderRadius:6}}>{w}</span>)}
                     </div>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      {a.seamstress?(<><Avatar initials={a.seamstress.split(' ').map(n=>n[0]).join('').slice(0,2)} size={28} bg='var(--bg-success)' color='var(--color-success)'/><span style={{fontSize:13,fontWeight:500,color:C.ink}}>{a.seamstress}</span></>):(<span style={{fontSize:12,color:'var(--color-warning)',fontWeight:500,background:'var(--bg-warning)',padding:'4px 8px',borderRadius:6}}>Unassigned</span>)}
+                      {a.seamstress?(<><Avatar initials={a.seamstress.split(' ').map(n=>n[0]).join('').slice(0,2)} size={28} bg='var(--bg-success)' color='var(--text-success)'/><span style={{fontSize:13,fontWeight:500,color:C.ink}}>{a.seamstress}</span></>):(<span style={{fontSize:12,color:'var(--text-warning)',fontWeight:500,background:'var(--bg-warning)',padding:'4px 8px',borderRadius:6}}>Unassigned</span>)}
                     </div>
                     <div><span style={{padding:'4px 10px',borderRadius:999,fontSize:11,fontWeight:600,background:sc.bg,color:sc.col,whiteSpace:'nowrap'}}>{a.status.replace(/_/g,' ')}</span></div>
                     <div style={{textAlign:'right'}}>
-                      <div style={{fontSize:14,fontWeight:600,color:isUrgent?'var(--color-danger)':a.status==='complete'?'var(--color-success)':C.ink}}>{a.status==='complete'?'Done':`${a.daysUntil}d`}</div>
-                      <div style={{fontSize:13,fontWeight:600,color:'var(--color-success)',marginTop:4}}>{a.price?fmt(a.price):'—'}</div>
+                      <div style={{fontSize:14,fontWeight:600,color:isUrgent?'var(--text-danger)':a.status==='complete'?'var(--text-success)':C.ink}}>{a.status==='complete'?'Done':`${a.daysUntil}d`}</div>
+                      <div style={{fontSize:13,fontWeight:600,color:'var(--text-success)',marginTop:4}}>{a.price?fmt(a.price):'—'}</div>
                     </div>
                     <div>
                       <button onClick={()=>setEditJob(a)}
-                        style={{padding:'6px 12px',background:C.rosaPale,border:'none',borderRadius:8,color:C.rosa,fontSize:12,fontWeight:600,cursor:'pointer'}}
+                        style={{padding:'6px 12px',background:C.rosaPale,border:'none',borderRadius:8,color:C.rosaText,fontSize:12,fontWeight:600,cursor:'pointer'}}
                         onMouseEnter={e=>{e.currentTarget.style.background=C.rosa;e.currentTarget.style.color=C.white;}}
-                        onMouseLeave={e=>{e.currentTarget.style.background=C.rosaPale;e.currentTarget.style.color=C.rosa;}}>
+                        onMouseLeave={e=>{e.currentTarget.style.background=C.rosaPale;e.currentTarget.style.color=C.rosaText;}}>
                         Edit
                       </button>
                     </div>

@@ -1047,7 +1047,7 @@ export default function Reports({ payments = [], events = [], clients = [], goSc
 
         {/* Stats row — 6 cards, responsive via injected CSS */}
         <div className="reports-stats">
-          {statCard('Revenue collected', fmt(totalRevenue), 'var(--color-success)')}
+          {statCard('Revenue collected', fmt(totalRevenue), 'var(--text-success)')}
           {statCard('Outstanding balance', fmt(outstanding), outstanding > 0 ? C.ink : C.gray)}
           {statCard('Overdue', fmt(overdue), overdue > 0 ? 'var(--color-danger)' : C.gray)}
           {statCard('Total contract value', fmt(totalContract), C.ink, `${events.length} events`)}
@@ -1179,7 +1179,7 @@ export default function Reports({ payments = [], events = [], clients = [], goSc
                 {topClients.map((r, i) => (
                   <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
                     <td style={{ padding: '10px 12px', color: C.ink }}>{r.client.name}</td>
-                    <td style={{ padding: '10px 12px', color: 'var(--color-success)', fontWeight: 500 }}>{fmt(r.rev)}</td>
+                    <td style={{ padding: '10px 12px', color: 'var(--text-success)', fontWeight: 500 }}>{fmt(r.rev)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1248,7 +1248,7 @@ export default function Reports({ payments = [], events = [], clients = [], goSc
                     <td style={{ padding: '10px 12px', color: C.gray }}>{TYPE_LABELS_PKG[pkg.event_type] || pkg.event_type || '—'}</td>
                     <td style={{ padding: '10px 12px', color: C.gray }}>{fmt(pkg.base_price || 0)}</td>
                     <td style={{ padding: '10px 12px', color: pkg.bookedCount > 0 ? C.ink : C.gray, fontWeight: pkg.bookedCount > 0 ? 600 : 400 }}>{pkg.bookedCount}</td>
-                    <td style={{ padding: '10px 12px', color: pkg.totalRevenue > 0 ? 'var(--color-success)' : C.gray, fontWeight: pkg.totalRevenue > 0 ? 500 : 400 }}>{pkg.totalRevenue > 0 ? fmt(pkg.totalRevenue) : '—'}</td>
+                    <td style={{ padding: '10px 12px', color: pkg.totalRevenue > 0 ? 'var(--text-success)' : C.gray, fontWeight: pkg.totalRevenue > 0 ? 500 : 400 }}>{pkg.totalRevenue > 0 ? fmt(pkg.totalRevenue) : '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1655,7 +1655,7 @@ export default function Reports({ payments = [], events = [], clients = [], goSc
                   {cohortRows.repeatList.length > 5 && (
                     <button
                       onClick={() => setShowAllRepeat(v => !v)}
-                      style={{ marginTop: 8, fontSize: 12, color: C.rosa, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}
+                      style={{ marginTop: 8, fontSize: 12, color: C.rosaText, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}
                     >
                       {showAllRepeat ? 'Show less' : `Show all ${cohortRows.repeatList.length} clients`}
                     </button>
@@ -2063,7 +2063,7 @@ export default function Reports({ payments = [], events = [], clients = [], goSc
                         >
                           <td style={{ padding: '9px 8px', color: C.ink, fontWeight: 500 }}>
                             {goScreen ? (
-                              <span style={{ color: C.rosa, textDecoration: 'underline', cursor: 'pointer' }}>{row.name}</span>
+                              <span style={{ color: C.rosaText, textDecoration: 'underline', cursor: 'pointer' }}>{row.name}</span>
                             ) : row.name}
                           </td>
                           <td style={{ padding: '9px 8px', color: C.gray }}>{row.lastEventLabel}</td>

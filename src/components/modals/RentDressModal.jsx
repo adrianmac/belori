@@ -60,11 +60,11 @@ export const RentDressModal = ({dress, events, clients, onClose, onRent}) => {
 
   return(
     <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-      <div style={{background:C.white,borderRadius:16,width:490,maxHeight:'90vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="rent-dress-title" style={{background:C.white,borderRadius:16,width:490,maxHeight:'90vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         {/* Header */}
         <div style={{padding:'18px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
           <div>
-            <div style={{fontSize:16,fontWeight:600,color:C.ink}}>Rent dress</div>
+            <div id="rent-dress-title" style={{fontSize:16,fontWeight:600,color:C.ink}}>Rent dress</div>
             <div style={{fontSize:12,color:C.gray,marginTop:2}}>#{dress.sku} · {dress.name} · Size {dress.size} · {dress.color}</div>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:10}}>
@@ -98,7 +98,7 @@ export const RentDressModal = ({dress, events, clients, onClose, onRent}) => {
                             <div style={{fontSize:13,fontWeight:500,color:C.ink,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{ev.client||'(no client)'}</div>
                             <div style={{fontSize:11,color:C.gray}}>{t.label} · {ev.date||ev.event_date}</div>
                           </div>
-                          {ev.services?.includes('dress_rental')&&<Badge text="Dress rental" bg={C.rosaPale} color={C.rosa}/>}
+                          {ev.services?.includes('dress_rental')&&<Badge text="Dress rental" bg={C.rosaPale} color={C.rosaText}/>}
                           <span style={{color:C.gray,fontSize:13}}>›</span>
                         </button>
                       );
@@ -117,7 +117,7 @@ export const RentDressModal = ({dress, events, clients, onClose, onRent}) => {
                         style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',borderRadius:9,border:`1.5px solid ${C.border}`,background:C.white,cursor:'pointer',textAlign:'left',width:'100%'}}
                         onMouseEnter={e=>e.currentTarget.style.borderColor=C.rosa}
                         onMouseLeave={e=>e.currentTarget.style.borderColor=C.border}>
-                        <div style={{width:32,height:32,borderRadius:'50%',background:C.rosaPale,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600,color:C.rosa,flexShrink:0}}>{(cl.name||'?')[0].toUpperCase()}</div>
+                        <div style={{width:32,height:32,borderRadius:'50%',background:C.rosaPale,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600,color:C.rosaText,flexShrink:0}}>{(cl.name||'?')[0].toUpperCase()}</div>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:13,fontWeight:500,color:C.ink}}>{cl.name}</div>
                           {cl.phone&&<div style={{fontSize:11,color:C.gray}}>{cl.phone}</div>}
@@ -140,7 +140,7 @@ export const RentDressModal = ({dress, events, clients, onClose, onRent}) => {
               <div style={{borderTop:`1px solid ${C.border}`,paddingTop:12,display:'flex',flexDirection:'column',gap:6}}>
                 {query&&(
                   <button onClick={()=>{setNewClient({name:query,phone:'',email:''});skipToWalkin();}}
-                    style={{padding:'10px 14px',borderRadius:9,border:`1.5px dashed ${C.rosa}`,background:C.rosaPale,color:C.rosa,cursor:'pointer',fontSize:13,fontWeight:500,textAlign:'left',width:'100%'}}>
+                    style={{padding:'10px 14px',borderRadius:9,border:`1.5px dashed ${C.rosa}`,background:C.rosaPale,color:C.rosaText,cursor:'pointer',fontSize:13,fontWeight:500,textAlign:'left',width:'100%'}}>
                     + New client "{query}" →
                   </button>
                 )}
@@ -167,7 +167,7 @@ export const RentDressModal = ({dress, events, clients, onClose, onRent}) => {
                   <div style={{fontSize:10,fontWeight:600,color:C.gray,letterSpacing:'0.08em',marginBottom:5}}>DRESS</div>
                   <div style={{fontSize:13,fontWeight:500,color:C.ink}}>{dress.name}</div>
                   <div style={{fontSize:11,color:C.gray}}>{dress.color} · Size {dress.size}</div>
-                  <div style={{fontSize:12,fontWeight:500,color:C.rosa,marginTop:4}}>{fmt(dress.price||0)}/rental</div>
+                  <div style={{fontSize:12,fontWeight:500,color:C.rosaText,marginTop:4}}>{fmt(dress.price||0)}/rental</div>
                 </div>
                 <div style={{background:C.ivory,borderRadius:10,padding:12}}>
                   <div style={{fontSize:10,fontWeight:600,color:C.gray,letterSpacing:'0.08em',marginBottom:5}}>{selEv?'EVENT':'CLIENT'}</div>
@@ -197,12 +197,12 @@ export const RentDressModal = ({dress, events, clients, onClose, onRent}) => {
               {/* Dates */}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                 <div>
-                  <div style={LBL}>Pickup date *</div>
-                  <input type="date" value={pickupDate} onChange={e=>setPickupDate(e.target.value)} style={inputSt}/>
+                  <label htmlFor="rent-dress-pickup-date" style={LBL}>Pickup date *</label>
+                  <input id="rent-dress-pickup-date" type="date" value={pickupDate} onChange={e=>setPickupDate(e.target.value)} style={inputSt}/>
                 </div>
                 <div>
-                  <div style={LBL}>Return date *</div>
-                  <input type="date" value={returnDate} onChange={e=>setReturnDate(e.target.value)} style={inputSt}/>
+                  <label htmlFor="rent-dress-return-date" style={LBL}>Return date *</label>
+                  <input id="rent-dress-return-date" type="date" value={returnDate} onChange={e=>setReturnDate(e.target.value)} style={inputSt}/>
                 </div>
               </div>
               {rentalDays&&<div style={{fontSize:11,color:C.gray,marginTop:-8}}>Rental period: {rentalDays} day{rentalDays!==1?'s':''}</div>}
@@ -210,20 +210,20 @@ export const RentDressModal = ({dress, events, clients, onClose, onRent}) => {
               {/* Deposit */}
               <div style={{background:'var(--bg-success)',borderRadius:10,padding:12,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <div>
-                  <div style={{fontSize:11,fontWeight:600,color:'var(--color-success)',marginBottom:2}}>Deposit due at pickup</div>
-                  <div style={{fontSize:22,fontWeight:700,color:'var(--color-success)',lineHeight:1}}>{fmt(dress.deposit||0)}</div>
+                  <div style={{fontSize:11,fontWeight:600,color:'var(--text-success)',marginBottom:2}}>Deposit due at pickup</div>
+                  <div style={{fontSize:22,fontWeight:700,color:'var(--text-success)',lineHeight:1}}>{fmt(dress.deposit||0)}</div>
                 </div>
                 <label style={{display:'flex',alignItems:'center',gap:6,cursor:'pointer'}}>
                   <input type="checkbox" checked={depositOk} onChange={e=>setDepositOk(e.target.checked)} style={{width:16,height:16,accentColor:'var(--color-success)'}}/>
-                  <span style={{fontSize:12,color:'var(--color-success)',fontWeight:500}}>Collected</span>
+                  <span style={{fontSize:12,color:'var(--text-success)',fontWeight:500}}>Collected</span>
                 </label>
               </div>
 
               <div>
-                <div style={LBL}>Notes (optional)</div>
-                <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Alterations needed, special care instructions…" style={{...inputSt,minHeight:52,resize:'vertical'}}/>
+                <label htmlFor="rent-dress-notes" style={LBL}>Notes (optional)</label>
+                <textarea id="rent-dress-notes" value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Alterations needed, special care instructions…" style={{...inputSt,minHeight:52,resize:'vertical'}}/>
               </div>
-              {err&&<div style={{fontSize:12,color:'var(--color-danger)'}}>{err}</div>}
+              {err&&<div style={{fontSize:12,color:'var(--text-danger)'}}>{err}</div>}
             </div>
             <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',gap:8,justifyContent:'space-between'}}>
               <GhostBtn label="← Back" onClick={()=>setStep(1)}/>

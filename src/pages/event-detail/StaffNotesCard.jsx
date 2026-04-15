@@ -6,7 +6,9 @@ const StaffNotesCard = ({
   notes,
   note,
   setNote,
-  handleAddNote
+  handleAddNote,
+  pinnedNoteIds = [],
+  onPin
 }) => {
   return (
     <Card>
@@ -15,16 +17,24 @@ const StaffNotesCard = ({
         <span style={{fontSize:11,color:C.gray}}>{notes.length} notes</span>
       </div>
       <div style={{padding:'0 16px'}}>
-        {notes.map((n, i, arr) => (
-          <div key={n.id || i} style={{paddingTop:12,paddingBottom:12,borderBottom:i<arr.length-1?`1px solid ${C.border}`:'none'}}>
-            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
-              <Avatar initials={n.author?.initials||n.init||'?'} size={22} bg={(n.author?.color||n.col||C.rosa)+'22'} color={n.author?.color||n.col||C.rosa}/>
-              <span style={{fontSize:11,fontWeight:500,color:C.ink}}>{n.author?.name||n.auth||'Staff'}</span>
-              <span style={{fontSize:10,color:C.gray}}>{n.created_at?new Date(n.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):n.time}</span>
+        {notes.map((n, i, arr) => {
+          const isPinned = pinnedNoteIds.includes(n.id);
+          return (
+            <div key={n.id || i} style={{paddingTop:12,paddingBottom:12,borderBottom:i<arr.length-1?`1px solid ${C.border}`:'none',display:'flex',gap:6,alignItems:'flex-start'}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+                  <Avatar initials={n.author?.initials||n.init||'?'} size={22} bg={(n.author?.color||n.col||C.rosa)+'22'} color={n.author?.color||n.col||C.rosa}/>
+                  <span style={{fontSize:11,fontWeight:500,color:C.ink}}>{n.author?.name||n.auth||'Staff'}</span>
+                  <span style={{fontSize:10,color:C.gray}}>{n.created_at?new Date(n.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):n.time}</span>
+                </div>
+                <div style={{fontSize:12,color:C.gray,lineHeight:1.55,paddingLeft:28}}>{n.text}</div>
+              </div>
+              {onPin && n.id && (
+                <button onClick={()=>onPin(n.id)} title={isPinned?'Unpin':'Pin'} style={{background:'none',border:'none',cursor:'pointer',fontSize:14,padding:'0 2px',flexShrink:0,color:isPinned?'#F59E0B':C.gray,opacity:isPinned?1:0.4,marginTop:2}}>📌</button>
+              )}
             </div>
-            <div style={{fontSize:12,color:C.gray,lineHeight:1.55,paddingLeft:28}}>{n.text}</div>
-          </div>
-        ))}
+          );
+        })}
         {notes.length === 0 && <div style={{padding:'16px 0',fontSize:12,color:C.gray,textAlign:'center'}}>No notes yet.</div>}
       </div>
       <div style={{padding:'10px 16px',borderTop:`1px solid ${C.border}`,display:'flex',gap:8}}>

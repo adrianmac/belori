@@ -216,9 +216,9 @@ const AddItemModal = ({onClose,onCreate,boutique}) => {
 
   return (
     <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-      <div style={{background:C.white,borderRadius:16,width:500,maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="inventory-additem-title" style={{background:C.white,borderRadius:16,width:500,maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'20px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <div style={{fontSize:16,fontWeight:600,color:C.ink}}>Add inventory item</div>
+          <div id="inventory-additem-title" style={{fontSize:16,fontWeight:600,color:C.ink}}>Add inventory item</div>
           <button onClick={onClose} aria-label="Close" title="Close" style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:'20px 24px'}}>
@@ -268,8 +268,8 @@ const AddItemModal = ({onClose,onCreate,boutique}) => {
 
           {/* Category & Identity */}
           <div style={{fontSize:10,fontWeight:600,color:C.gray,letterSpacing:'0.08em',marginBottom:10}}>CATEGORY & IDENTITY</div>
-          <div style={LBL}>Category *</div>
-          <select value={catId} onChange={e=>setCatId(e.target.value)} style={inputSt}>
+          <label htmlFor="inv-category" style={{...LBL,display:'block'}}>Category *</label>
+          <select id="inv-category" value={catId} onChange={e=>setCatId(e.target.value)} style={inputSt}>
             {Object.entries(INV_GROUPS).map(([gid,glabel])=>(
               <optgroup key={gid} label={glabel}>
                 {INV_CATS.filter(c=>c.group===gid).map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
@@ -278,22 +278,22 @@ const AddItemModal = ({onClose,onCreate,boutique}) => {
           </select>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:10}}>
             <div>
-              <div style={LBL}>Item name *</div>
-              <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Gold metal arch" style={inputSt}/>
+              <label htmlFor="inv-name" style={{...LBL,display:'block'}}>Item name *</label>
+              <input id="inv-name" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Gold metal arch" style={inputSt}/>
             </div>
             <div>
-              <div style={LBL}>SKU *</div>
-              <input value={sku} onChange={e=>setSku(e.target.value)} onFocus={autoSku} placeholder={`${cat.prefix}-001`} style={inputSt}/>
+              <label htmlFor="inv-sku" style={{...LBL,display:'block'}}>SKU *</label>
+              <input id="inv-sku" value={sku} onChange={e=>setSku(e.target.value)} onFocus={autoSku} placeholder={`${cat.prefix}-001`} style={inputSt}/>
             </div>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:10}}>
             <div>
-              <div style={LBL}>Color</div>
-              <input value={color} onChange={e=>setColor(e.target.value)} placeholder="e.g. Ivory, Gold" style={inputSt}/>
+              <label htmlFor="inv-color" style={{...LBL,display:'block'}}>Color</label>
+              <input id="inv-color" value={color} onChange={e=>setColor(e.target.value)} placeholder="e.g. Ivory, Gold" style={inputSt}/>
             </div>
             <div>
-              <div style={LBL}>Size / Dimensions</div>
-              <input value={sizeOrDim} onChange={e=>setSizeOrDim(e.target.value)} placeholder={cat.group==='gowns'?'e.g. 8':'e.g. 6ft×30in'} style={inputSt}/>
+              <label htmlFor="inv-size" style={{...LBL,display:'block'}}>Size / Dimensions</label>
+              <input id="inv-size" value={sizeOrDim} onChange={e=>setSizeOrDim(e.target.value)} placeholder={cat.group==='gowns'?'e.g. 8':'e.g. 6ft×30in'} style={inputSt}/>
             </div>
           </div>
 
@@ -303,22 +303,22 @@ const AddItemModal = ({onClose,onCreate,boutique}) => {
             <button key={v} onClick={()=>setTracking(v)} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'10px 12px',borderRadius:8,border:`2px solid ${tracking===v?C.rosa:C.border}`,background:tracking===v?C.rosaPale:C.white,cursor:'pointer',textAlign:'left',width:'100%',marginBottom:6}}>
               <div style={{width:14,height:14,borderRadius:'50%',border:`2px solid ${tracking===v?C.rosa:C.gray}`,background:tracking===v?C.rosa:'transparent',flexShrink:0,marginTop:2}}/>
               <div>
-                <div style={{fontSize:13,fontWeight:tracking===v?500:400,color:tracking===v?C.rosa:C.ink}}>{l}</div>
+                <div style={{fontSize:13,fontWeight:tracking===v?500:400,color:tracking===v?C.rosaText:C.ink}}>{l}</div>
                 <div style={{fontSize:11,color:C.gray}}>{d}</div>
               </div>
             </button>
           ))}
           {tracking==='quantity'&&(
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:6}}>
-              <div><div style={LBL}>Total quantity</div><input type="number" value={totalQty} onChange={e=>setTotalQty(e.target.value)} placeholder="85" style={inputSt}/></div>
-              <div><div style={LBL}>Alert when below</div><input type="number" value={minStock} onChange={e=>setMinStock(e.target.value)} placeholder="10" style={inputSt}/></div>
+              <div><label htmlFor="inv-totalqty" style={{...LBL,display:'block'}}>Total quantity</label><input id="inv-totalqty" type="number" value={totalQty} onChange={e=>setTotalQty(e.target.value)} placeholder="85" style={inputSt}/></div>
+              <div><label htmlFor="inv-minstock" style={{...LBL,display:'block'}}>Alert when below</label><input id="inv-minstock" type="number" value={minStock} onChange={e=>setMinStock(e.target.value)} placeholder="10" style={inputSt}/></div>
             </div>
           )}
           {tracking==='consumable'&&(
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginTop:6}}>
-              <div><div style={LBL}>In stock</div><input type="number" value={currentStock} onChange={e=>setCurrentStock(e.target.value)} placeholder="12" style={inputSt}/></div>
-              <div><div style={LBL}>Restock at</div><input type="number" value={restockPoint} onChange={e=>setRestockPoint(e.target.value)} placeholder="3" style={inputSt}/></div>
-              <div><div style={LBL}>Unit</div><select value={unit} onChange={e=>setUnit(e.target.value)} style={inputSt}><option>box</option><option>roll</option><option>pack</option><option>piece</option><option>set</option></select></div>
+              <div><label htmlFor="inv-currentstock" style={{...LBL,display:'block'}}>In stock</label><input id="inv-currentstock" type="number" value={currentStock} onChange={e=>setCurrentStock(e.target.value)} placeholder="12" style={inputSt}/></div>
+              <div><label htmlFor="inv-restockpoint" style={{...LBL,display:'block'}}>Restock at</label><input id="inv-restockpoint" type="number" value={restockPoint} onChange={e=>setRestockPoint(e.target.value)} placeholder="3" style={inputSt}/></div>
+              <div><label htmlFor="inv-unit" style={{...LBL,display:'block'}}>Unit</label><select id="inv-unit" value={unit} onChange={e=>setUnit(e.target.value)} style={inputSt}><option>box</option><option>roll</option><option>pack</option><option>piece</option><option>set</option></select></div>
             </div>
           )}
 
@@ -326,13 +326,13 @@ const AddItemModal = ({onClose,onCreate,boutique}) => {
           {tracking!=='consumable'&&(<>
             <div style={{fontSize:10,fontWeight:600,color:C.gray,letterSpacing:'0.08em',margin:'18px 0 10px'}}>PRICING</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
-              <div><div style={LBL}>Rental price</div><input type="number" value={price} onChange={e=>{setPrice(e.target.value);if(!deposit)setDeposit(String(Math.round(Number(e.target.value)*0.5)));}} placeholder="150" style={inputSt}/></div>
-              <div><div style={LBL}>Deposit</div><input type="number" value={deposit} onChange={e=>setDeposit(e.target.value)} placeholder="100" style={inputSt}/></div>
-              <div><div style={LBL}>Replacement cost</div><input type="number" value={replaceCost} onChange={e=>setReplaceCost(e.target.value)} placeholder="800" style={inputSt}/></div>
+              <div><label htmlFor="inv-price" style={{...LBL,display:'block'}}>Rental price</label><input id="inv-price" type="number" value={price} onChange={e=>{setPrice(e.target.value);if(!deposit)setDeposit(String(Math.round(Number(e.target.value)*0.5)));}} placeholder="150" style={inputSt}/></div>
+              <div><label htmlFor="inv-deposit" style={{...LBL,display:'block'}}>Deposit</label><input id="inv-deposit" type="number" value={deposit} onChange={e=>setDeposit(e.target.value)} placeholder="100" style={inputSt}/></div>
+              <div><label htmlFor="inv-replacecost" style={{...LBL,display:'block'}}>Replacement cost</label><input id="inv-replacecost" type="number" value={replaceCost} onChange={e=>setReplaceCost(e.target.value)} placeholder="800" style={inputSt}/></div>
             </div>
             <div style={{marginTop:10}}>
-              <div style={{...LBL}}>Restock alert at <span style={{fontWeight:400,color:C.gray}}>(optional)</span></div>
-              <input type="number" min="0" value={restockPoint||''} onChange={e=>setRestockPoint(e.target.value)} placeholder="e.g. 2" style={{...inputSt}}/>
+              <label htmlFor="inv-restockalert" style={{...LBL,display:'block'}}>Restock alert at <span style={{fontWeight:400,color:C.gray}}>(optional)</span></label>
+              <input id="inv-restockalert" type="number" min="0" value={restockPoint||''} onChange={e=>setRestockPoint(e.target.value)} placeholder="e.g. 2" style={{...inputSt}}/>
               <div style={{fontSize:11,color:C.gray,marginTop:3}}>Alert when available quantity falls to or below this number</div>
             </div>
           </>)}
@@ -341,13 +341,13 @@ const AddItemModal = ({onClose,onCreate,boutique}) => {
           <div style={{fontSize:10,fontWeight:600,color:C.gray,letterSpacing:'0.08em',margin:'18px 0 10px'}}>INITIAL CONDITION</div>
           <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:12}}>
             {['new','excellent','good','fair','needs_repair'].map(c=>(
-              <button key={c} onClick={()=>setCondition(c)} style={{padding:'5px 12px',borderRadius:999,border:`1.5px solid ${condition===c?C.rosa:C.border}`,background:condition===c?C.rosaPale:'transparent',color:condition===c?C.rosa:C.gray,fontSize:11,cursor:'pointer',fontWeight:condition===c?500:400}}>
+              <button key={c} onClick={()=>setCondition(c)} style={{padding:'5px 12px',borderRadius:999,border:`1.5px solid ${condition===c?C.rosa:C.border}`,background:condition===c?C.rosaPale:'transparent',color:condition===c?C.rosaText:C.gray,fontSize:11,cursor:'pointer',fontWeight:condition===c?500:400}}>
                 {c==='needs_repair'?'Needs repair':c.charAt(0).toUpperCase()+c.slice(1)}
               </button>
             ))}
           </div>
-          <div style={LBL}>Notes (optional)</div>
-          <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Any details about this item…"
+          <label htmlFor="inv-notes" style={{...LBL,display:'block'}}>Notes (optional)</label>
+          <textarea id="inv-notes" value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Any details about this item…"
             onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}}
             style={{...inputSt,minHeight:56,resize:'vertical'}}/>
           {err&&<div style={{fontSize:12,color:C.red,marginTop:8}}>{err}</div>}
@@ -430,9 +430,9 @@ const EditItemModal = ({item, onClose, onUpdate}) => {
 
   return(
     <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-      <div style={{background:'white',borderRadius:16,width:500,maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="inventory-edititem-title" style={{background:'white',borderRadius:16,width:500,maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'20px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <div style={{fontWeight:600,fontSize:16,color:C.ink}}>Edit item</div>
+          <div id="inventory-edititem-title" style={{fontWeight:600,fontSize:16,color:C.ink}}>Edit item</div>
           <button onClick={onClose} aria-label="Close" title="Close" style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:'20px 24px'}}>
@@ -465,8 +465,8 @@ const EditItemModal = ({item, onClose, onUpdate}) => {
 
           {/* Category & Identity */}
           <div style={{fontSize:10,fontWeight:600,color:C.gray,letterSpacing:'0.08em',marginBottom:10}}>CATEGORY & IDENTITY</div>
-          <div style={LBL}>Category</div>
-          <select value={catId} onChange={e=>setCatId(e.target.value)} style={inputSt}>
+          <label htmlFor="edit-inv-category" style={{...LBL,display:'block'}}>Category</label>
+          <select id="edit-inv-category" value={catId} onChange={e=>setCatId(e.target.value)} style={inputSt}>
             {Object.entries(INV_GROUPS).map(([gid,glabel])=>(
               <optgroup key={gid} label={glabel}>
                 {INV_CATS.filter(c=>c.group===gid).map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
@@ -474,12 +474,12 @@ const EditItemModal = ({item, onClose, onUpdate}) => {
             ))}
           </select>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:10}}>
-            <div><div style={LBL}>Item name *</div><input value={name} onChange={e=>setName(e.target.value)} style={inputSt}/></div>
-            <div><div style={LBL}>SKU *</div><input value={sku} onChange={e=>setSku(e.target.value)} style={inputSt}/></div>
+            <div><label htmlFor="edit-inv-name" style={{...LBL,display:'block'}}>Item name *</label><input id="edit-inv-name" value={name} onChange={e=>setName(e.target.value)} style={inputSt}/></div>
+            <div><label htmlFor="edit-inv-sku" style={{...LBL,display:'block'}}>SKU *</label><input id="edit-inv-sku" value={sku} onChange={e=>setSku(e.target.value)} style={inputSt}/></div>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:10}}>
-            <div><div style={LBL}>Color</div><input value={color} onChange={e=>setColor(e.target.value)} style={inputSt}/></div>
-            <div><div style={LBL}>Size / Dimensions</div><input value={sizeOrDim} onChange={e=>setSizeOrDim(e.target.value)} style={inputSt}/></div>
+            <div><label htmlFor="edit-inv-color" style={{...LBL,display:'block'}}>Color</label><input id="edit-inv-color" value={color} onChange={e=>setColor(e.target.value)} style={inputSt}/></div>
+            <div><label htmlFor="edit-inv-size" style={{...LBL,display:'block'}}>Size / Dimensions</label><input id="edit-inv-size" value={sizeOrDim} onChange={e=>setSizeOrDim(e.target.value)} style={inputSt}/></div>
           </div>
 
           {/* Tracking */}
@@ -487,20 +487,20 @@ const EditItemModal = ({item, onClose, onUpdate}) => {
           {[['individual','Single item','One unique unit'],['quantity','Quantity pool','Multiple units tracked as a total'],['consumable','Consumable','Used up, not returned']].map(([v,l,d])=>(
             <button key={v} onClick={()=>setTracking(v)} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'10px 12px',borderRadius:8,border:`2px solid ${tracking===v?C.rosa:C.border}`,background:tracking===v?C.rosaPale:'white',cursor:'pointer',textAlign:'left',width:'100%',marginBottom:6}}>
               <div style={{width:14,height:14,borderRadius:'50%',border:`2px solid ${tracking===v?C.rosa:C.gray}`,background:tracking===v?C.rosa:'transparent',flexShrink:0,marginTop:2}}/>
-              <div><div style={{fontSize:13,fontWeight:tracking===v?500:400,color:tracking===v?C.rosa:C.ink}}>{l}</div><div style={{fontSize:11,color:C.gray}}>{d}</div></div>
+              <div><div style={{fontSize:13,fontWeight:tracking===v?500:400,color:tracking===v?C.rosaText:C.ink}}>{l}</div><div style={{fontSize:11,color:C.gray}}>{d}</div></div>
             </button>
           ))}
           {tracking==='quantity'&&(
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:6}}>
-              <div><div style={LBL}>Total quantity</div><input type="number" value={totalQty} onChange={e=>setTotalQty(e.target.value)} style={inputSt}/></div>
-              <div><div style={LBL}>Alert when below</div><input type="number" value={minStock} onChange={e=>setMinStock(e.target.value)} style={inputSt}/></div>
+              <div><label htmlFor="edit-inv-totalqty" style={{...LBL,display:'block'}}>Total quantity</label><input id="edit-inv-totalqty" type="number" value={totalQty} onChange={e=>setTotalQty(e.target.value)} style={inputSt}/></div>
+              <div><label htmlFor="edit-inv-minstock" style={{...LBL,display:'block'}}>Alert when below</label><input id="edit-inv-minstock" type="number" value={minStock} onChange={e=>setMinStock(e.target.value)} style={inputSt}/></div>
             </div>
           )}
           {tracking==='consumable'&&(
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,marginTop:6}}>
-              <div><div style={LBL}>In stock</div><input type="number" value={currentStock} onChange={e=>setCurrentStock(e.target.value)} style={inputSt}/></div>
-              <div><div style={LBL}>Restock at</div><input type="number" value={restockPoint} onChange={e=>setRestockPoint(e.target.value)} style={inputSt}/></div>
-              <div><div style={LBL}>Unit</div><select value={unit} onChange={e=>setUnit(e.target.value)} style={inputSt}><option>box</option><option>roll</option><option>pack</option><option>piece</option><option>set</option></select></div>
+              <div><label htmlFor="edit-inv-currentstock" style={{...LBL,display:'block'}}>In stock</label><input id="edit-inv-currentstock" type="number" value={currentStock} onChange={e=>setCurrentStock(e.target.value)} style={inputSt}/></div>
+              <div><label htmlFor="edit-inv-restockpoint" style={{...LBL,display:'block'}}>Restock at</label><input id="edit-inv-restockpoint" type="number" value={restockPoint} onChange={e=>setRestockPoint(e.target.value)} style={inputSt}/></div>
+              <div><label htmlFor="edit-inv-unit" style={{...LBL,display:'block'}}>Unit</label><select id="edit-inv-unit" value={unit} onChange={e=>setUnit(e.target.value)} style={inputSt}><option>box</option><option>roll</option><option>pack</option><option>piece</option><option>set</option></select></div>
             </div>
           )}
 
@@ -508,13 +508,13 @@ const EditItemModal = ({item, onClose, onUpdate}) => {
           {tracking!=='consumable'&&(<>
             <div style={{fontSize:10,fontWeight:600,color:C.gray,letterSpacing:'0.08em',margin:'18px 0 10px'}}>PRICING</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
-              <div><div style={LBL}>Rental price</div><input type="number" value={price} onChange={e=>setPrice(e.target.value)} style={inputSt}/></div>
-              <div><div style={LBL}>Deposit</div><input type="number" value={deposit} onChange={e=>setDeposit(e.target.value)} style={inputSt}/></div>
-              <div><div style={LBL}>Replacement cost</div><input type="number" value={replaceCost} onChange={e=>setReplaceCost(e.target.value)} style={inputSt}/></div>
+              <div><label htmlFor="edit-inv-price" style={{...LBL,display:'block'}}>Rental price</label><input id="edit-inv-price" type="number" value={price} onChange={e=>setPrice(e.target.value)} style={inputSt}/></div>
+              <div><label htmlFor="edit-inv-deposit" style={{...LBL,display:'block'}}>Deposit</label><input id="edit-inv-deposit" type="number" value={deposit} onChange={e=>setDeposit(e.target.value)} style={inputSt}/></div>
+              <div><label htmlFor="edit-inv-replacecost" style={{...LBL,display:'block'}}>Replacement cost</label><input id="edit-inv-replacecost" type="number" value={replaceCost} onChange={e=>setReplaceCost(e.target.value)} style={inputSt}/></div>
             </div>
             <div style={{marginTop:10}}>
-              <div style={{...LBL}}>Restock alert at <span style={{fontWeight:400,color:C.gray}}>(optional)</span></div>
-              <input type="number" min="0" value={restockPoint||''} onChange={e=>setRestockPoint(e.target.value)} placeholder="e.g. 2" style={{...inputSt}}/>
+              <label htmlFor="edit-inv-restockalert" style={{...LBL,display:'block'}}>Restock alert at <span style={{fontWeight:400,color:C.gray}}>(optional)</span></label>
+              <input id="edit-inv-restockalert" type="number" min="0" value={restockPoint||''} onChange={e=>setRestockPoint(e.target.value)} placeholder="e.g. 2" style={{...inputSt}}/>
               <div style={{fontSize:11,color:C.gray,marginTop:3}}>Alert when available quantity falls to or below this number</div>
             </div>
           </>)}
@@ -523,13 +523,13 @@ const EditItemModal = ({item, onClose, onUpdate}) => {
           <div style={{fontSize:10,fontWeight:600,color:C.gray,letterSpacing:'0.08em',margin:'18px 0 10px'}}>CONDITION</div>
           <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:12}}>
             {['new','excellent','good','fair','needs_repair'].map(c=>(
-              <button key={c} onClick={()=>setCondition(c)} style={{padding:'5px 12px',borderRadius:999,border:`1.5px solid ${condition===c?C.rosa:C.border}`,background:condition===c?C.rosaPale:'transparent',color:condition===c?C.rosa:C.gray,fontSize:11,cursor:'pointer',fontWeight:condition===c?500:400}}>
+              <button key={c} onClick={()=>setCondition(c)} style={{padding:'5px 12px',borderRadius:999,border:`1.5px solid ${condition===c?C.rosa:C.border}`,background:condition===c?C.rosaPale:'transparent',color:condition===c?C.rosaText:C.gray,fontSize:11,cursor:'pointer',fontWeight:condition===c?500:400}}>
                 {c==='needs_repair'?'Needs repair':c.charAt(0).toUpperCase()+c.slice(1)}
               </button>
             ))}
           </div>
-          <div style={LBL}>Notes</div>
-          <textarea value={notes} onChange={e=>setNotes(e.target.value)}
+          <label htmlFor="edit-inv-notes" style={{...LBL,display:'block'}}>Notes</label>
+          <textarea id="edit-inv-notes" value={notes} onChange={e=>setNotes(e.target.value)}
             onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}}
             style={{...inputSt,minHeight:56,resize:'vertical'}}/>
           {err&&<div style={{fontSize:12,color:C.red,marginTop:8,background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7}}>{err}</div>}
@@ -631,7 +631,7 @@ const ItemDetailPanel = ({ item: d, SC, catIcon, onClose, onEdit, onQR, onRent, 
                 ); })()}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, textAlign: 'center' }}>
-                {[['Available', d.availQty, d.availQty < (d.minStock || 1) ? 'var(--color-danger)' : C.ink], ['Reserved', d.reservedQty || 0, C.ink], ['Out', d.outQty || 0, C.ink], ['Damaged', d.dmgQty || 0, d.dmgQty > 0 ? 'var(--color-danger)' : C.gray]].map(([l, v, col]) => (
+                {[['Available', d.availQty, d.availQty < (d.minStock || 1) ? 'var(--text-danger)' : C.ink], ['Reserved', d.reservedQty || 0, C.ink], ['Out', d.outQty || 0, C.ink], ['Damaged', d.dmgQty || 0, d.dmgQty > 0 ? 'var(--text-danger)' : C.gray]].map(([l, v, col]) => (
                   <div key={l}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: col }}>{v}</div>
                     <div style={{ fontSize: 10, color: C.gray }}>{l}</div>
@@ -646,11 +646,11 @@ const ItemDetailPanel = ({ item: d, SC, catIcon, onClose, onEdit, onQR, onRent, 
           {d.track === 'consumable' && (
             <div style={{ background: d.currentStock <= d.restockPoint ? '#FEF3C7' : C.ivory, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 6 }}>STOCK</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: d.currentStock <= d.restockPoint ? 'var(--color-warning)' : C.ink }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: d.currentStock <= d.restockPoint ? 'var(--text-warning)' : C.ink }}>
                 {d.currentStock} <span style={{ fontSize: 13, fontWeight: 400, color: C.gray }}>{d.unit}s in stock</span>
               </div>
               <div style={{ fontSize: 11, color: C.gray, marginTop: 4 }}>Restock at {d.restockPoint} · order {d.restockQty} {d.unit}s</div>
-              {d.currentStock <= d.restockPoint && <div style={{ marginTop: 8, fontSize: 12, color: 'var(--color-warning)', fontWeight: 600 }}>⚠ Restock needed</div>}
+              {d.currentStock <= d.restockPoint && <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-warning)', fontWeight: 600 }}>⚠ Restock needed</div>}
             </div>
           )}
 
@@ -661,8 +661,8 @@ const ItemDetailPanel = ({ item: d, SC, catIcon, onClose, onEdit, onQR, onRent, 
             <Row label="Size / Dimensions" value={d.size}/>
             <Row label="Condition" value={d.condition ? d.condition.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : null}/>
             <Row label="Last cleaned" value={d.last_cleaned}/>
-            {d.client && <Row label={d.status === 'rented' ? 'Rented to' : 'Reserved for'} value={d.client?.name || d.client} color={isOverdue ? 'var(--color-danger)' : 'var(--color-warning)'}/>}
-            {d.return_date && <Row label="Return date" value={new Date(d.return_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} color={isOverdue ? 'var(--color-danger)' : C.ink}/>}
+            {d.client && <Row label={d.status === 'rented' ? 'Rented to' : 'Reserved for'} value={d.client?.name || d.client} color={isOverdue ? 'var(--text-danger)' : 'var(--text-warning)'}/>}
+            {d.return_date && <Row label="Return date" value={new Date(d.return_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} color={isOverdue ? 'var(--text-danger)' : C.ink}/>}
             {d.pickup_date && <Row label="Pickup date" value={new Date(d.pickup_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}/>}
           </div>
 
@@ -696,7 +696,7 @@ const ItemDetailPanel = ({ item: d, SC, catIcon, onClose, onEdit, onQR, onRent, 
             <button onClick={() => onRent(d)} style={{ flex: 1, padding: '9px', minHeight: 44, borderRadius: 8, border: 'none', background: C.rosa, color: C.white, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Rent dress →</button>
           )}
           {isGown && DRESS_TRANSITIONS[d.status]?.next && (
-            <button onClick={() => onLifecycle(d)} style={{ flex: 1, padding: '9px', minHeight: 44, borderRadius: 8, border: 'none', background: C.rosaPale, color: C.rosa, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>{DRESS_TRANSITIONS[d.status].label}</button>
+            <button onClick={() => onLifecycle(d)} style={{ flex: 1, padding: '9px', minHeight: 44, borderRadius: 8, border: 'none', background: C.rosaPale, color: C.rosaText, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>{DRESS_TRANSITIONS[d.status].label}</button>
           )}
         </div>
       </div>
@@ -774,7 +774,7 @@ const AuditLogView = ({ entries, loading, onRefresh }) => {
         </select>
         <div style={{ display: 'flex', border: `1px solid ${C.border}`, borderRadius: 6, overflow: 'hidden', flexShrink: 0 }}>
           {[['today', 'Today'], ['week', 'This week'], ['month', 'This month'], ['all', 'All time']].map(([id, lbl]) => (
-            <button key={id} onClick={() => setDateFilter(id)} style={{ padding: '6px 12px', border: 'none', background: dateFilter === id ? C.rosaPale : 'transparent', color: dateFilter === id ? C.rosa : C.gray, cursor: 'pointer', fontSize: 11, fontWeight: dateFilter === id ? 600 : 400, borderRight: id !== 'all' ? `1px solid ${C.border}` : 'none' }}>
+            <button key={id} onClick={() => setDateFilter(id)} style={{ padding: '6px 12px', border: 'none', background: dateFilter === id ? C.rosaPale : 'transparent', color: dateFilter === id ? C.rosaText : C.gray, cursor: 'pointer', fontSize: 11, fontWeight: dateFilter === id ? 600 : 400, borderRight: id !== 'all' ? `1px solid ${C.border}` : 'none' }}>
               {lbl}
             </button>
           ))}
@@ -949,14 +949,14 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
   const attention=allData.filter(d=>(d.dmgQty>0)||(d.track==='consumable'&&d.currentStock<=d.restockPoint)||(d.status==='overdue'));
 
   const SC={
-    available:{bg:'var(--bg-success)',col:'var(--color-success)',label:'Available'},
-    reserved: {bg:'var(--bg-warning)',col:'var(--color-warning)',label:'Reserved'},
-    picked_up:{bg:'var(--bg-danger)',  col:'var(--color-danger)',  label:'Picked up'},
-    returned: {bg:'var(--bg-info)', col:'var(--color-info)', label:'Returned'},
-    cleaning: {bg:'var(--bg-info)', col:'var(--color-info)', label:'Cleaning'},
-    overdue:  {bg:'var(--bg-danger)',  col:'var(--color-danger)',  label:'Overdue'},
-    rented:   {bg:'var(--bg-danger)',  col:'var(--color-danger)',  label:'Rented out'},
-    low_stock:{bg:'var(--bg-warning)',col:'var(--color-warning)',label:'Low stock'},
+    available:{bg:'var(--bg-success)',col:'var(--text-success)',label:'Available'},
+    reserved: {bg:'var(--bg-warning)',col:'var(--text-warning)',label:'Reserved'},
+    picked_up:{bg:'var(--bg-danger)',  col:'var(--text-danger)',  label:'Picked up'},
+    returned: {bg:'var(--bg-info)', col:'var(--text-info)', label:'Returned'},
+    cleaning: {bg:'var(--bg-info)', col:'var(--text-info)', label:'Cleaning'},
+    overdue:  {bg:'var(--bg-danger)',  col:'var(--text-danger)',  label:'Overdue'},
+    rented:   {bg:'var(--bg-danger)',  col:'var(--text-danger)',  label:'Rented out'},
+    low_stock:{bg:'var(--bg-warning)',col:'var(--text-warning)',label:'Low stock'},
   };
 
   const catIcon=id=>INV_CATS.find(c=>c.id===id)?.icon||'📦';
@@ -998,7 +998,7 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
                 <div style={{height:'100%',width:`${Math.round(pct*100)}%`,background:pct>0.5?'var(--color-success)':pct>0.2?'var(--color-warning)':'var(--color-danger)',borderRadius:999}}/>
               </div>
               <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:C.gray}}>
-                <span style={{color:pct<0.2?'var(--color-danger)':C.gray}}>{d.availQty} avail of {d.totalQty}</span>
+                <span style={{color:pct<0.2?'var(--text-danger)':C.gray}}>{d.availQty} avail of {d.totalQty}</span>
                 <span>{d.reservedQty||0} reserved · {d.dmgQty||0} damaged</span>
               </div>
             </div>
@@ -1021,14 +1021,14 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
                 {isCSel&&<span style={{color:'#fff',fontSize:12,lineHeight:1,fontWeight:700}}>✓</span>}
               </div>
             ):<div style={{position:'absolute',top:8,left:8}}><Badge text={d.sku} bg="rgba(0,0,0,0.1)" color={C.ink}/></div>}
-            {low&&<div style={{position:'absolute',top:8,right:8}}><Badge text="Low stock" bg={C.amberBg} color={C.amber}/></div>}
+            {low&&<div style={{position:'absolute',top:8,right:8}}><Badge text="Low stock" bg={C.amberBg} color={C.warningText}/></div>}
           </div>
           <div style={{padding:'10px 12px'}}>
             <div style={{fontSize:13,fontWeight:500,color:C.ink,marginBottom:2}}>{d.name}</div>
             <div style={{fontSize:11,color:C.gray,marginBottom:6}}>Consumable · {d.color}</div>
-            <div style={{fontSize:13,fontWeight:500,color:low?'var(--color-danger)':C.ink}}>{d.currentStock} <span style={{fontSize:11,fontWeight:400,color:C.gray}}>{d.unit}s in stock</span></div>
+            <div style={{fontSize:13,fontWeight:500,color:low?'var(--text-danger)':C.ink}}>{d.currentStock} <span style={{fontSize:11,fontWeight:400,color:C.gray}}>{d.unit}s in stock</span></div>
             <div style={{fontSize:11,color:C.gray,marginTop:2}}>Restock at {d.restockPoint} {d.unit}s · order {d.restockQty}</div>
-            {low&&<div style={{marginTop:8,padding:'6px 10px',background:'#FEF3C7',borderRadius:6,fontSize:11,color:'var(--color-warning)',fontWeight:500}}>⚠ Order {d.restockQty} {d.unit}s now</div>}
+            {low&&<div style={{marginTop:8,padding:'6px 10px',background:'#FEF3C7',borderRadius:6,fontSize:11,color:'var(--text-warning)',fontWeight:500}}>⚠ Order {d.restockQty} {d.unit}s now</div>}
           </div>
         </div>
       );
@@ -1061,12 +1061,12 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
             <span style={{color:C.ink,fontWeight:500}}>{fmt(d.price||0)}<span style={{color:C.gray,fontWeight:400}}>/rental</span></span>
             {d.deposit>0&&<span style={{color:C.gray}}>Dep: {fmt(d.deposit||0)}</span>}
           </div>}
-          {d.client&&<div style={{fontSize:11,color:isOverdue?'var(--color-danger)':'var(--color-warning)',marginBottom:6}}>{d.status==='rented'?'Rented to':'Reserved for'}: {d.client?.name||d.client}{d.returnDate?` · Returns ${d.returnDate}`:''}</div>}
+          {d.client&&<div style={{fontSize:11,color:isOverdue?'var(--text-danger)':'var(--text-warning)',marginBottom:6}}>{d.status==='rented'?'Rented to':'Reserved for'}: {d.client?.name||d.client}{d.returnDate?` · Returns ${d.returnDate}`:''}</div>}
           {d.lastCleaned&&!d.client&&<div style={{fontSize:11,color:C.gray,marginBottom:6}}>Last cleaned: {d.lastCleaned}</div>}
           {isGown&&d.status==='available'
             ?<button onClick={e=>{e.stopPropagation();setRentDress(d);}} style={{width:'100%',marginTop:4,padding:'8px',borderRadius:7,border:`1px solid ${C.rosa}`,background:C.rosa,color:C.white,fontSize:11,fontWeight:600,cursor:'pointer'}}>Rent dress →</button>
             :isGown&&DRESS_TRANSITIONS[d.status]?.next
-            ?<button onClick={e=>{e.stopPropagation();setLifecycle(d);}} style={{width:'100%',marginTop:4,padding:'8px',borderRadius:7,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,fontSize:11,fontWeight:500,cursor:'pointer'}}>{DRESS_TRANSITIONS[d.status].label}</button>
+            ?<button onClick={e=>{e.stopPropagation();setLifecycle(d);}} style={{width:'100%',marginTop:4,padding:'8px',borderRadius:7,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,fontSize:11,fontWeight:500,cursor:'pointer'}}>{DRESS_TRANSITIONS[d.status].label}</button>
             :<div style={{marginTop:4,height:28}}/>}
         </div>
       </div>
@@ -1097,17 +1097,17 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
         <div style={{...colBase,width:120,fontSize:11,color:C.gray}}>{INV_CATS.find(c=>c.id===d.cat)?.label||d.cat}</div>
         <div style={{...colBase,width:130,flexDirection:'column',alignItems:'flex-start',gap:2}}>
           {d.track==='quantity'
-            ?<><span style={{fontSize:12,color:d.availQty<(d.minStock||1)?'var(--color-danger)':C.ink}}>{d.availQty}/{d.totalQty} avail</span>
+            ?<><span style={{fontSize:12,color:d.availQty<(d.minStock||1)?'var(--text-danger)':C.ink}}>{d.availQty}/{d.totalQty} avail</span>
               {d.minStock>0&&d.availQty!=null&&d.availQty<=0&&<span style={{fontSize:10,background:'#FEE2E2',color:'#DC2626',padding:'1px 5px',borderRadius:4,fontWeight:600}}>✕ Out</span>}
               {d.minStock>0&&d.availQty!=null&&d.availQty>0&&d.availQty<=d.minStock&&<span style={{fontSize:10,background:'#FEF2F2',color:'#DC2626',padding:'1px 5px',borderRadius:4,fontWeight:600}}>⚠ Low</span>}</>
             :d.track==='consumable'
-            ?<><span style={{fontSize:12,color:d.currentStock<=d.restockPoint?'var(--color-danger)':C.ink}}>{d.currentStock} {d.unit}s</span>
+            ?<><span style={{fontSize:12,color:d.currentStock<=d.restockPoint?'var(--text-danger)':C.ink}}>{d.currentStock} {d.unit}s</span>
               {d.minStock>0&&d.currentStock!=null&&d.currentStock<=0&&<span style={{fontSize:10,background:'#FEE2E2',color:'#DC2626',padding:'1px 5px',borderRadius:4,fontWeight:600}}>✕ Out</span>}
               {d.minStock>0&&d.currentStock!=null&&d.currentStock>0&&d.currentStock<=d.minStock&&<span style={{fontSize:10,background:'#FEF2F2',color:'#DC2626',padding:'1px 5px',borderRadius:4,fontWeight:600}}>⚠ Low</span>}</>
             :(()=>{const stock=d.availQty??d.currentStock??0;const threshold=d.restockPoint||d.minStock||0;return<><Badge text={s.label} bg={s.bg} color={s.col}/>{threshold>0&&stock<=threshold&&<span style={{fontSize:10,padding:'1px 6px',borderRadius:8,background:'#FEF3C7',color:'#92400E',fontWeight:600,marginLeft:4}}>Low stock</span>}</>;})()}
         </div>
         <div style={{...colBase,width:80,fontSize:12,color:C.ink,whiteSpace:'nowrap'}}>{d.track==='consumable'?'—':fmt(d.price||0)}</div>
-        <div style={{...colBase,flex:1,fontSize:11,color:C.gray}}>{d.client?.name||d.client||''}{d.track==='consumable'&&d.currentStock<=d.restockPoint?<span style={{color:'var(--color-warning)'}}>Restock needed</span>:''}</div>
+        <div style={{...colBase,flex:1,fontSize:11,color:C.gray}}>{d.client?.name||d.client||''}{d.track==='consumable'&&d.currentStock<=d.restockPoint?<span style={{color:'var(--text-warning)'}}>Restock needed</span>:''}</div>
         <div style={{...colBase,width:70}}>
           <button onClick={e=>{e.stopPropagation();setEditItem(d);}} style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,fontSize:11,cursor:'pointer',whiteSpace:'nowrap'}}
             onMouseEnter={e=>{e.currentTarget.style.borderColor=C.rosa;e.currentTarget.style.color=C.rosa;}}
@@ -1162,7 +1162,7 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
       {/* Main view tab switcher */}
       <div style={{padding:'0 20px',background:C.white,borderBottom:`1px solid ${C.border}`,display:'flex',gap:0,flexShrink:0}}>
         {[['inventory','Inventory'],['audit','📋 Audit Log']].map(([id,lbl])=>(
-          <button key={id} onClick={()=>setMainView(id)} style={{padding:'10px 18px',border:'none',borderBottom:`2px solid ${mainView===id?C.rosa:'transparent'}`,background:'transparent',color:mainView===id?C.rosa:C.gray,fontSize:13,fontWeight:mainView===id?600:400,cursor:'pointer'}}>
+          <button key={id} onClick={()=>setMainView(id)} style={{padding:'10px 18px',border:'none',borderBottom:`2px solid ${mainView===id?C.rosa:'transparent'}`,background:'transparent',color:mainView===id?C.rosaText:C.gray,fontSize:13,fontWeight:mainView===id?600:400,cursor:'pointer'}}>
             {lbl}
           </button>
         ))}
@@ -1233,13 +1233,13 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
         </button>
         <div style={{display:'flex',border:`1px solid ${C.border}`,borderRadius:6,overflow:'hidden',flexShrink:0}}>
           {[['grid','▦ Grid','Grid view'],['list','☰ List','List view'],['bycat','⊞ Category','Category view']].map(([v,lbl,ariaLbl])=>(
-            <button key={v} onClick={()=>setView(v)} aria-label={ariaLbl} title={ariaLbl} aria-pressed={view===v} style={{padding:'6px 12px',minHeight:44,minWidth:44,border:'none',background:view===v?C.rosaPale:'transparent',color:view===v?C.rosa:C.gray,cursor:'pointer',fontSize:11,fontWeight:view===v?600:400,borderRight:v!=='bycat'?`1px solid ${C.border}`:'none'}}>
+            <button key={v} onClick={()=>setView(v)} aria-label={ariaLbl} title={ariaLbl} aria-pressed={view===v} style={{padding:'6px 12px',minHeight:44,minWidth:44,border:'none',background:view===v?C.rosaPale:'transparent',color:view===v?C.rosaText:C.gray,cursor:'pointer',fontSize:11,fontWeight:view===v?600:400,borderRight:v!=='bycat'?`1px solid ${C.border}`:'none'}}>
               {lbl}
             </button>
           ))}
         </div>
         <button onClick={()=>{setBulkMode(b=>!b);setSelectedIds(new Set());setBulkStatus('');}}
-          style={{padding:'6px 12px',minHeight:44,borderRadius:6,border:`1px solid ${bulkMode?C.rosa:C.border}`,background:bulkMode?C.rosaPale:'transparent',color:bulkMode?C.rosa:C.gray,fontSize:11,fontWeight:bulkMode?600:400,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
+          style={{padding:'6px 12px',minHeight:44,borderRadius:6,border:`1px solid ${bulkMode?C.rosa:C.border}`,background:bulkMode?C.rosaPale:'transparent',color:bulkMode?C.rosaText:C.gray,fontSize:11,fontWeight:bulkMode?600:400,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
           {bulkMode?'✕ Cancel':'⊡ Select'}
         </button>
       </div>

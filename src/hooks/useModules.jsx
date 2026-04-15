@@ -44,7 +44,9 @@ export function ModuleProvider({ children }) {
 
   function isEnabled(id) {
     const def = MODULE_REGISTRY.find(m => m.id === id)
-    if (def?.isCore) return true
+    if (!def) return false
+    if (def.isCore) return true
+    if (!planAllows(planTier, def.plan)) return false
     return enabled.has(id)
   }
 

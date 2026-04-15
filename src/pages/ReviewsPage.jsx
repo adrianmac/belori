@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { C } from '../lib/colors';
-import { Topbar, PrimaryBtn, GhostBtn, inputSt, LBL, useToast } from '../lib/ui.jsx';
+import { Topbar, PrimaryBtn, GhostBtn, inputSt, LBL, useToast, ConfirmModal } from '../lib/ui.jsx';
 import { supabase } from '../lib/supabase.js';
 
 // ─── CONSTANTS ─────────────────────────────────────────────────────────────────
@@ -101,14 +101,15 @@ const LogReviewModal = ({ onClose, onSave, saving, clients, events }) => {
         <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Rating */}
           <div>
-            <div style={LBL}>Rating *</div>
-            <StarPicker value={form.rating} onChange={v => set('rating', v)} />
+            <div id="rev-rating-label" style={LBL}>Rating *</div>
+            <StarPicker value={form.rating} onChange={v => set('rating', v)} role="group" aria-labelledby="rev-rating-label" />
           </div>
 
           {/* Platform */}
           <div>
-            <div style={LBL}>Platform</div>
+            <label htmlFor="rev-platform" style={LBL}>Platform</label>
             <select
+              id="rev-platform"
               value={form.platform}
               onChange={e => set('platform', e.target.value)}
               style={inputSt}
@@ -119,8 +120,9 @@ const LogReviewModal = ({ onClose, onSave, saving, clients, events }) => {
 
           {/* Reviewer name */}
           <div>
-            <div style={LBL}>Reviewer Name</div>
+            <label htmlFor="rev-reviewer-name" style={LBL}>Reviewer Name</label>
             <input
+              id="rev-reviewer-name"
               style={inputSt}
               placeholder="e.g. Maria G."
               value={form.reviewer_name}
@@ -130,8 +132,9 @@ const LogReviewModal = ({ onClose, onSave, saving, clients, events }) => {
 
           {/* Review text */}
           <div>
-            <div style={LBL}>Review Text</div>
+            <label htmlFor="rev-review-text" style={LBL}>Review Text</label>
             <textarea
+              id="rev-review-text"
               style={{ ...inputSt, minHeight: 90, resize: 'vertical' }}
               placeholder="Paste or type the review…"
               value={form.review_text}
@@ -141,8 +144,9 @@ const LogReviewModal = ({ onClose, onSave, saving, clients, events }) => {
 
           {/* Review URL */}
           <div>
-            <div style={LBL}>Review URL (optional)</div>
+            <label htmlFor="rev-review-url" style={LBL}>Review URL (optional)</label>
             <input
+              id="rev-review-url"
               style={inputSt}
               placeholder="https://…"
               value={form.review_url}
@@ -152,8 +156,9 @@ const LogReviewModal = ({ onClose, onSave, saving, clients, events }) => {
 
           {/* Client */}
           <div>
-            <div style={LBL}>Client (optional)</div>
+            <label htmlFor="rev-client" style={LBL}>Client (optional)</label>
             <select
+              id="rev-client"
               value={form.client_id}
               onChange={e => { set('client_id', e.target.value); set('event_id', ''); }}
               style={inputSt}
@@ -167,8 +172,9 @@ const LogReviewModal = ({ onClose, onSave, saving, clients, events }) => {
 
           {/* Event */}
           <div>
-            <div style={LBL}>Event (optional)</div>
+            <label htmlFor="rev-event" style={LBL}>Event (optional)</label>
             <select
+              id="rev-event"
               value={form.event_id}
               onChange={e => set('event_id', e.target.value)}
               style={inputSt}
@@ -265,7 +271,7 @@ const ReviewCard = ({ review, onToggleFeatured, onDelete, onSaveResponse, events
             <Stars rating={review.rating} size={15} />
             <PlatformBadge platform={review.platform} />
             {review.is_featured && (
-              <span style={{ fontSize: 10, color: C.rosa, fontWeight: 600 }}>Featured</span>
+              <span style={{ fontSize: 10, color: C.rosaText, fontWeight: 600 }}>Featured</span>
             )}
           </div>
           <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -321,7 +327,7 @@ const ReviewCard = ({ review, onToggleFeatured, onDelete, onSaveResponse, events
           {truncated && (
             <button
               onClick={() => setExpanded(!expanded)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.rosa, fontSize: 12, marginLeft: 6, padding: 0 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.rosaText, fontSize: 12, marginLeft: 6, padding: 0 }}
             >
               {expanded ? 'Show less' : 'Read more'}
             </button>
@@ -348,7 +354,7 @@ const ReviewCard = ({ review, onToggleFeatured, onDelete, onSaveResponse, events
           <div style={{ fontSize: 12, color: C.ink, lineHeight: 1.5 }}>{review.response}</div>
           <button
             onClick={() => setShowResponse(true)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.rosa, fontSize: 11, padding: 0, marginTop: 6 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.rosaText, fontSize: 11, padding: 0, marginTop: 6 }}
           >
             Edit response
           </button>
@@ -416,9 +422,10 @@ const RequestTemplatesCard = ({ googleReviewUrl, onSaveGoogleUrl }) => {
       <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* Google review URL */}
         <div>
-          <div style={LBL}>Your Google Review Link</div>
+          <label htmlFor="rev-google-url" style={LBL}>Your Google Review Link</label>
           <div style={{ display: 'flex', gap: 8 }}>
             <input
+              id="rev-google-url"
               style={{ ...inputSt, flex: 1 }}
               placeholder="https://g.page/your-business/review"
               value={gUrl}
@@ -481,6 +488,7 @@ export default function ReviewsPage() {
   const [filterTab, setFilterTab] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // review id | null
 
   // ── Load data ────────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -569,12 +577,14 @@ export default function ReviewsPage() {
     setReviews(rv => rv.map(r => r.id === id ? { ...r, is_featured: isFeatured } : r));
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this review?')) return;
-    const { error } = await supabase.from('reviews').delete().eq('id', id);
+  const handleDelete = (id) => setDeleteConfirm(id);
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
+    const { error } = await supabase.from('reviews').delete().eq('id', deleteConfirm);
+    setDeleteConfirm(null);
     if (error) { toast('Failed to delete', 'error'); return; }
     toast('Review deleted');
-    setReviews(rv => rv.filter(r => r.id !== id));
+    setReviews(rv => rv.filter(r => r.id !== deleteConfirm));
   };
 
   const handleSaveResponse = async (id, responseText) => {
@@ -733,7 +743,7 @@ export default function ReviewsPage() {
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
                     padding: '12px 14px', fontSize: 13,
-                    color: active ? C.rosa : C.gray,
+                    color: active ? C.rosaText : C.gray,
                     borderBottom: active ? `2px solid ${C.rosa}` : '2px solid transparent',
                     fontWeight: active ? 500 : 400,
                     display: 'flex', alignItems: 'center', gap: 6,
@@ -744,7 +754,7 @@ export default function ReviewsPage() {
                   {count > 0 && (
                     <span style={{
                       fontSize: 10, background: active ? C.rosaPale : C.grayBg,
-                      color: active ? C.rosa : C.gray, borderRadius: 999,
+                      color: active ? C.rosaText : C.gray, borderRadius: 999,
                       padding: '1px 6px', fontWeight: 600,
                     }}>
                       {count}
@@ -796,6 +806,10 @@ export default function ReviewsPage() {
           clients={clients}
           events={events}
         />
+      )}
+      {deleteConfirm && (
+        <ConfirmModal title="Delete this review?" message="This cannot be undone." confirmLabel="Delete"
+          onConfirm={confirmDelete} onCancel={() => setDeleteConfirm(null)} />
       )}
     </div>
   );

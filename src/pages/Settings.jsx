@@ -21,6 +21,7 @@ import { useEvents } from '../hooks/useEvents';
 import { supabase } from '../lib/supabase';
 import { sendInngestEvent } from '../lib/inngest';
 import { useI18n } from '../lib/i18n/index.jsx';
+import { getLangPref, setLangPref as saveLangPref } from '../lib/i18n';
 import EmailTemplatesTab from './EmailTemplatesTab';
 import ContractBuilderTab from './ContractBuilderTab';
 
@@ -97,6 +98,59 @@ const LanguageToggle = () => {
     </Card>
   );
 };
+// ─── BILINGUAL LABEL TOGGLE (Settings → Display tab) ──────────────────────────
+const BilingualLabelToggle = () => {
+  const [langPref, setLangPref] = useState(getLangPref());
+
+  function handleLangChange(pref) {
+    saveLangPref(pref);
+    setLangPref(pref);
+  }
+
+  const pills = [
+    { id: 'bilingual', label: 'Bilingual / Bilingüe' },
+    { id: 'en',        label: 'English only' },
+  ];
+
+  return (
+    <Card>
+      <CardHead title="Label language / Idioma de etiquetas"/>
+      <div style={{padding:'0 16px 16px'}}>
+        <div style={{fontSize:12,color:C.gray,marginBottom:10}}>
+          Choose how appointment types, statuses, and actions are labeled throughout Belori
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          {pills.map(p => {
+            const active = langPref === p.id;
+            return (
+              <button
+                key={p.id}
+                onClick={() => handleLangChange(p.id)}
+                style={{
+                  background: active ? C.rosaText : C.grayBg,
+                  color: active ? '#fff' : C.gray,
+                  borderRadius: 20,
+                  padding: '5px 14px',
+                  fontWeight: active ? 600 : 400,
+                  cursor: 'pointer',
+                  border: 'none',
+                  fontSize: 13,
+                  transition: 'all 0.15s',
+                }}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{fontSize:11,color:C.gray,fontStyle:'italic',marginTop:8}}>
+          Bilingual mode shows English + Spanish side by side on labels. Saved to this browser.
+        </div>
+      </div>
+    </Card>
+  );
+};
+
 // ─── CURRENCY SELECTOR (Settings → Display tab) ──────────────────────────────
 const CURRENCIES = [
   { code:'USD', symbol:'$',   label:'US Dollar (USD)' },
@@ -393,7 +447,7 @@ const ModuleManager = () => {
             </div>
           ))}
           <div style={{marginLeft:'auto'}}>
-            <span style={{fontSize:11,fontWeight:600,padding:'4px 12px',borderRadius:12,background:C.rosaPale,color:C.rosa,textTransform:'capitalize'}}>{planTier} plan</span>
+            <span style={{fontSize:11,fontWeight:600,padding:'4px 12px',borderRadius:12,background:C.rosaPale,color:C.rosaText,textTransform:'capitalize'}}>{planTier} plan</span>
           </div>
         </div>
       </Card>
@@ -402,7 +456,7 @@ const ModuleManager = () => {
       <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}>
         {['all','enabled','disabled'].map(f=>(
           <button key={f} onClick={()=>setFilter(f)}
-            style={{padding:'5px 14px',borderRadius:20,border:`1.5px solid ${filter===f?C.rosa:C.border}`,background:filter===f?C.rosaPale:'transparent',color:filter===f?C.rosa:C.gray,cursor:'pointer',fontSize:12,fontWeight:filter===f?600:400,textTransform:'capitalize'}}>
+            style={{padding:'5px 14px',borderRadius:20,border:`1.5px solid ${filter===f?C.rosa:C.border}`,background:filter===f?C.rosaPale:'transparent',color:filter===f?C.rosaText:C.gray,cursor:'pointer',fontSize:12,fontWeight:filter===f?600:400,textTransform:'capitalize'}}>
             {f.charAt(0).toUpperCase()+f.slice(1)}
           </button>
         ))}
@@ -479,7 +533,7 @@ const ModuleManager = () => {
 
 // ─── BILLING TAB ─────────────────────────────────────────────────────────────
 const STATUS_LABELS = { trialing:'Trial', active:'Active', canceled:'Canceled', past_due:'Past due', incomplete:'Incomplete' };
-const STATUS_COLORS = { trialing:{bg:C.amberBg,color:C.amber}, active:{bg:C.greenBg,color:C.green}, canceled:{bg:C.grayBg,color:C.gray}, past_due:{bg:C.redBg,color:C.red}, incomplete:{bg:C.redBg,color:C.red} };
+const STATUS_COLORS = { trialing:{bg:C.amberBg,color:C.warningText}, active:{bg:C.greenBg,color:C.green}, canceled:{bg:C.grayBg,color:C.gray}, past_due:{bg:C.redBg,color:C.red}, incomplete:{bg:C.redBg,color:C.red} };
 
 const PLAN_LIMITS = {
   starter: { events: 50, staff: 1 },
@@ -653,7 +707,7 @@ const BillingTab = () => {
       </div>
 
       <div style={{fontSize:11,color:C.gray,textAlign:'center'}}>
-        Payments securely processed by Stripe. Cancel anytime. Questions? <a href="mailto:support@belori.app" style={{color:C.rosa}}>Contact support</a>
+        Payments securely processed by Stripe. Cancel anytime. Questions? <a href="mailto:support@belori.app" style={{color:C.rosaText}}>Contact support</a>
       </div>
     </div>
   );
@@ -693,13 +747,13 @@ const InviteStaffModal = ({onClose, sendInvite, toast, boutique}) => {
 
   return (
     <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-      <div style={{background:C.white,borderRadius:16,width:420,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="settings-invite-staff-title" style={{background:C.white,borderRadius:16,width:420,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Invite staff member</span>
+          <span id="settings-invite-staff-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Invite staff member</span>
           <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{padding:20,display:'flex',flexDirection:'column',gap:12}}>
-          {err&&<div style={{fontSize:12,color:'var(--color-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7}}>{err}</div>}
+          {err&&<div style={{fontSize:12,color:'var(--text-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7}}>{err}</div>}
           {inviteLink?(
             <>
               <div style={{fontSize:13,color:C.green,background:C.greenBg,padding:'10px 12px',borderRadius:8,fontWeight:500}}>✓ Invite link created</div>
@@ -717,9 +771,9 @@ const InviteStaffModal = ({onClose, sendInvite, toast, boutique}) => {
             </>
           ):(
             <>
-              <div><div style={{...LBL}}>Email</div><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="staff@boutique.com" style={{...inputSt}}/></div>
-              <div><div style={{...LBL}}>Role</div>
-                <select value={role} onChange={e=>setRole(e.target.value)} style={{...inputSt}}>
+              <div><label htmlFor="invite-email" style={LBL}>Email</label><input id="invite-email" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="staff@boutique.com" style={{...inputSt}}/></div>
+              <div><label htmlFor="invite-role" style={LBL}>Role</label>
+                <select id="invite-role" value={role} onChange={e=>setRole(e.target.value)} style={{...inputSt}}>
                   {ROLE_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
@@ -856,9 +910,9 @@ const AvailabilityModal = ({member, boutique, onClose, toast}) => {
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1100,padding:16}}>
-      <div style={{background:C.white,borderRadius:16,width:560,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="settings-staff-availability-title" style={{background:C.white,borderRadius:16,width:560,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,background:C.white,zIndex:1}}>
-          <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Availability — {member.name}</span>
+          <span id="settings-staff-availability-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Availability — {member.name}</span>
           <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{padding:20}}>
@@ -919,7 +973,7 @@ const AvailabilityModal = ({member, boutique, onClose, toast}) => {
                 <div style={{fontSize:12,fontWeight:600,color:C.ink,textTransform:'uppercase',letterSpacing:'0.05em'}}>Time off / block-out dates</div>
                 <button
                   onClick={() => setShowAddBlockout(v => !v)}
-                  style={{fontSize:11,padding:'4px 12px',borderRadius:7,border:`1.5px solid ${C.rosa}`,background:showAddBlockout?C.rosa:C.white,color:showAddBlockout?C.white:C.rosa,cursor:'pointer',fontWeight:500,minHeight:'unset',minWidth:'unset'}}
+                  style={{fontSize:11,padding:'4px 12px',borderRadius:7,border:`1.5px solid ${C.rosa}`,background:showAddBlockout?C.rosa:C.white,color:showAddBlockout?C.white:C.rosaText,cursor:'pointer',fontWeight:500,minHeight:'unset',minWidth:'unset'}}
                 >
                   {showAddBlockout ? 'Cancel' : '+ Add time off'}
                 </button>
@@ -1022,23 +1076,23 @@ const EditStaffModal = ({member, updateStaffMember, onClose, onSaved}) => {
   };
   return (
     <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-      <div style={{background:C.white,borderRadius:16,width:420,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="settings-edit-staff-title" style={{background:C.white,borderRadius:16,width:420,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Edit staff member</span>
+          <span id="settings-edit-staff-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Edit staff member</span>
           <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{padding:20,display:'flex',flexDirection:'column',gap:12}}>
-          {err&&<div style={{fontSize:12,color:'var(--color-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7}}>{err}</div>}
-          <div><div style={{...LBL}}>Full name</div><input value={name} onChange={e=>setName(e.target.value)} style={{...inputSt}}/></div>
-          <div><div style={{...LBL}}>Role</div>
-            <select value={role} onChange={e=>setRole(e.target.value)} style={{...inputSt}}>
+          {err&&<div style={{fontSize:12,color:'var(--text-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7}}>{err}</div>}
+          <div><label htmlFor="staff-name" style={LBL}>Full name</label><input id="staff-name" value={name} onChange={e=>setName(e.target.value)} style={{...inputSt}}/></div>
+          <div><label htmlFor="staff-role" style={LBL}>Role</label>
+            <select id="staff-role" value={role} onChange={e=>setRole(e.target.value)} style={{...inputSt}}>
               {STAFF_ROLES.map(r=><option key={r} value={r}>{r.charAt(0).toUpperCase()+r.slice(1).replace('_',' ')}</option>)}
             </select>
           </div>
           <div style={{borderTop:`1px solid ${C.border}`,paddingTop:12,marginTop:4}}>
             <div style={{fontSize:12,fontWeight:600,color:C.ink,marginBottom:10}}>Commission</div>
-            <div><div style={{...LBL}}>Commission type</div>
-              <select value={commType} onChange={e=>setCommType(e.target.value)} style={{...inputSt}}>
+            <div><label htmlFor="staff-commtype" style={LBL}>Commission type</label>
+              <select id="staff-commtype" value={commType} onChange={e=>setCommType(e.target.value)} style={{...inputSt}}>
                 <option value="none">None</option>
                 <option value="percent">Percentage of event total</option>
                 <option value="flat">Flat fee per event</option>
@@ -1046,9 +1100,9 @@ const EditStaffModal = ({member, updateStaffMember, onClose, onSaved}) => {
             </div>
             {commType==='percent'&&(
               <div style={{marginTop:10}}>
-                <div style={{...LBL}}>Percentage (%)</div>
+                <label htmlFor="staff-commperc" style={LBL}>Percentage (%)</label>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <input type="number" min="0" max="100" step="0.5" value={commPct}
+                  <input id="staff-commperc" type="number" min="0" max="100" step="0.5" value={commPct}
                     onChange={e=>setCommPct(e.target.value)}
                     style={{...inputSt,width:100}}/>
                   <span style={{fontSize:13,color:C.gray}}>% of event total</span>
@@ -1057,9 +1111,9 @@ const EditStaffModal = ({member, updateStaffMember, onClose, onSaved}) => {
             )}
             {commType==='flat'&&(
               <div style={{marginTop:10}}>
-                <div style={{...LBL}}>Flat amount ($)</div>
+                <label htmlFor="staff-commflat" style={LBL}>Flat amount ($)</label>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <input type="number" min="0" step="1" value={commFlat}
+                  <input id="staff-commflat" type="number" min="0" step="1" value={commFlat}
                     onChange={e=>setCommFlat(e.target.value)}
                     style={{...inputSt,width:100}}/>
                   <span style={{fontSize:13,color:C.gray}}>per event</span>
@@ -1100,7 +1154,7 @@ const DEFAULT_SMS_TEMPLATES = {
 const EmbedWidgetSection = ({ boutiqueId }) => {
   const toast = useToast();
   const [btnText, setBtnText] = useState('');
-  const origin = 'https://novela-olive.vercel.app';
+  const origin = import.meta.env.VITE_APP_URL || 'https://belori.app';
 
   const snippet = btnText.trim()
     ? `<script src="${origin}/embed.js" data-boutique-id="${boutiqueId || 'YOUR_BOUTIQUE_ID'}" data-button-text="${btnText.trim()}"><\/script>`
@@ -1380,7 +1434,7 @@ const ThemeToggle = () => {
                 flex: 1, padding: '9px 0', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: currentTheme === o.id ? 600 : 400,
                 border: `1.5px solid ${currentTheme === o.id ? C.rosa : C.border}`,
                 background: currentTheme === o.id ? C.rosaPale : C.white,
-                color: currentTheme === o.id ? C.rosa : C.gray,
+                color: currentTheme === o.id ? C.rosaText : C.gray,
                 transition: 'all 0.15s',
               }}>
               {o.id === 'light' ? '\uD83C\uDF24\uFE0F' : o.id === 'dark' ? '\uD83C\uDF19' : '\uD83D\uDCBB'} {o.label}
@@ -1650,7 +1704,7 @@ const IntegrationsTab = () => {
               <div style={{fontSize: 11, color: C.gray, fontStyle: 'italic'}}>
                 Tokens can be obtained from the{' '}
                 <a href="https://developer.intuit.com/app/developer/playground" target="_blank" rel="noopener noreferrer"
-                  style={{color: C.rosa}}>Intuit OAuth Playground</a>.
+                  style={{color: C.rosaText}}>Intuit OAuth Playground</a>.
               </div>
             </div>
           )}
@@ -1938,7 +1992,7 @@ function LocationsSection({ boutique }) {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 12 }}>
         <span style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>📍 Locations</span>
         <button onClick={() => { setShowAdd(!showAdd); setEditingId(null); setDraft({name:'',address:'',phone:'',email:'',timezone:'America/Chicago'}) }}
-          style={{ fontSize: 12, color: C.rosa, background: 'none', border: `1px solid ${C.rosa}`, borderRadius: 7, padding: '4px 10px', cursor: 'pointer' }}>
+          style={{ fontSize: 12, color: C.rosaText, background: 'none', border: `1px solid ${C.rosa}`, borderRadius: 7, padding: '4px 10px', cursor: 'pointer' }}>
           + Add location
         </button>
       </div>
@@ -1949,7 +2003,7 @@ function LocationsSection({ boutique }) {
             <div>
               <div style={{ display:'flex', alignItems:'center', gap: 6 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{loc.name}</span>
-                {loc.is_primary && <span style={{ fontSize: 10, background: C.rosaPale, color: C.rosa, padding: '1px 6px', borderRadius: 10, fontWeight: 600 }}>Primary</span>}
+                {loc.is_primary && <span style={{ fontSize: 10, background: C.rosaPale, color: C.rosaText, padding: '1px 6px', borderRadius: 10, fontWeight: 600 }}>Primary</span>}
               </div>
               {loc.address && <div style={{ fontSize: 11, color: C.gray, marginTop: 2 }}>{loc.address}</div>}
             </div>
@@ -2243,7 +2297,7 @@ const Settings = ({boutique, initialTab, setScreen}) => {
       }}>
         {TABS.map(tab=>(
           <button key={tab.id} onClick={()=>setActiveTab(tab.id)}
-            style={{padding:'12px 0 10px',background:'none',border:'none',borderBottom:`2px solid ${activeTab===tab.id?C.rosa:'transparent'}`,color:activeTab===tab.id?C.rosa:C.gray,fontSize:13,fontWeight:activeTab===tab.id?600:500,cursor:'pointer',transition:'all 0.2s',whiteSpace:'nowrap',marginTop:2,flexShrink:0}}>
+            style={{padding:'12px 0 10px',background:'none',border:'none',borderBottom:`2px solid ${activeTab===tab.id?C.rosa:'transparent'}`,color:activeTab===tab.id?C.rosaText:C.gray,fontSize:13,fontWeight:activeTab===tab.id?600:500,cursor:'pointer',transition:'all 0.2s',whiteSpace:'nowrap',marginTop:2,flexShrink:0}}>
             {tab.label}
           </button>
         ))}
@@ -2277,9 +2331,9 @@ const Settings = ({boutique, initialTab, setScreen}) => {
                       placeholder={profile.name?profile.name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').slice(0,30):'mi-boutique'}
                       style={{flex:1,padding:'8px 10px',border:'none',fontSize:13,color:C.ink,outline:'none',fontFamily:'monospace'}}/>
                   </div>
-                  {profile.slug&&<div style={{fontSize:11,color:'var(--color-success)',marginTop:4}}>✓ Booking page: <strong>{window.location.origin}/book/{profile.slug}</strong></div>}
-                  {!profile.slug&&profile.name&&<div style={{fontSize:11,color:C.gray,marginTop:4}}>Suggestion: <span style={{color:C.rosa,cursor:'pointer'}} onClick={()=>setProfile(p=>({...p,slug:p.name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').slice(0,40)}))}>use "{profile.name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').slice(0,40)}"</span></div>}
-                  {profile.slug&&<div style={{marginTop:6}}><a href={`/boutique/${profile.slug}`} target="_blank" rel="noopener noreferrer" style={{fontSize:12,color:C.rosa,textDecoration:'none',fontWeight:500}}>🔗 View public profile →</a></div>}
+                  {profile.slug&&<div style={{fontSize:11,color:'var(--text-success)',marginTop:4}}>✓ Booking page: <strong>{window.location.origin}/book/{profile.slug}</strong></div>}
+                  {!profile.slug&&profile.name&&<div style={{fontSize:11,color:C.gray,marginTop:4}}>Suggestion: <span style={{color:C.rosaText,cursor:'pointer'}} onClick={()=>setProfile(p=>({...p,slug:p.name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').slice(0,40)}))}>use "{profile.name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').slice(0,40)}"</span></div>}
+                  {profile.slug&&<div style={{marginTop:6}}><a href={`/boutique/${profile.slug}`} target="_blank" rel="noopener noreferrer" style={{fontSize:12,color:C.rosaText,textDecoration:'none',fontWeight:500}}>🔗 View public profile →</a></div>}
                 </div>
               </div>
               {/* Brand color */}
@@ -2526,7 +2580,7 @@ const Settings = ({boutique, initialTab, setScreen}) => {
                 <div style={{padding:'0 16px 16px',borderTop:`1px solid ${C.border}`,marginTop:4,paddingTop:14}}>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
                     <div style={{fontSize:12,fontWeight:600,color:C.ink}}>🗑️ Data deletion requests</div>
-                    <button onClick={()=>{if(!deletionLoaded)loadDeletionRequests();else loadDeletionRequests();}} style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',padding:0}}>
+                    <button onClick={()=>{if(!deletionLoaded)loadDeletionRequests();else loadDeletionRequests();}} style={{fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',padding:0}}>
                       {deletionLoaded?'Refresh':'Load requests'}
                     </button>
                   </div>
@@ -2618,13 +2672,13 @@ const Settings = ({boutique, initialTab, setScreen}) => {
                         <div style={{fontSize:13,fontWeight:500,color:C.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{inv.email}</div>
                         <div style={{fontSize:11,color:C.gray,textTransform:'capitalize'}}>{inv.role} · Expires {new Date(inv.expires_at).toLocaleDateString()}</div>
                       </div>
-                      <span style={{fontSize:11,padding:'3px 8px',borderRadius:999,background:C.amberBg,color:C.amber,fontWeight:500,flexShrink:0}}>Pending</span>
+                      <span style={{fontSize:11,padding:'3px 8px',borderRadius:999,background:C.amberBg,color:C.warningText,fontWeight:500,flexShrink:0}}>Pending</span>
                       <button onClick={async()=>{
                         const{error}=await cancelInvite(inv.id);
                         if(error) toast(error.message,'error');
                         else{setPendingInvites(p=>p.filter(x=>x.id!==inv.id));toast('Invite cancelled');}
                       }} style={{background:'none',border:`1px solid ${C.border}`,borderRadius:6,padding:'4px 10px',fontSize:11,color:C.gray,cursor:'pointer',flexShrink:0,minHeight:'unset',minWidth:'unset'}}
-                        onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--color-danger)';e.currentTarget.style.color='var(--color-danger)';}}
+                        onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--color-danger)';e.currentTarget.style.color='var(--text-danger)';}}
                         onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.gray;}}>
                         Cancel
                       </button>
@@ -2840,14 +2894,15 @@ const Settings = ({boutique, initialTab, setScreen}) => {
               <ThemeToggle/>
               <LayoutModeToggle/>
               <LanguageToggle/>
+              <BilingualLabelToggle/>
               <CurrencySelector/>
               <KioskModeCard/>
               <Card>
                 <CardHead title="Appointment defaults"/>
                 <div style={{padding:'0 16px 16px',display:'flex',flexDirection:'column',gap:12}}>
                   <div>
-                    <div style={{...LBL}}>Default appointment duration</div>
-                    <select value={automations.appointmentDuration||60} onChange={e=>handleAutomationsChange({appointmentDuration:Number(e.target.value)})} style={{...inputSt}}>
+                    <label htmlFor="auto-apptdur" style={LBL}>Default appointment duration</label>
+                    <select id="auto-apptdur" value={automations.appointmentDuration||60} onChange={e=>handleAutomationsChange({appointmentDuration:Number(e.target.value)})} style={{...inputSt}}>
                       <option value={30}>30 minutes</option>
                       <option value={45}>45 minutes</option>
                       <option value={60}>1 hour</option>
@@ -2856,8 +2911,8 @@ const Settings = ({boutique, initialTab, setScreen}) => {
                     </select>
                   </div>
                   <div>
-                    <div style={{...LBL}}>Booking buffer (time between appointments)</div>
-                    <select value={automations.bookingBuffer||15} onChange={e=>handleAutomationsChange({bookingBuffer:Number(e.target.value)})} style={{...inputSt}}>
+                    <label htmlFor="auto-buffer" style={LBL}>Booking buffer (time between appointments)</label>
+                    <select id="auto-buffer" value={automations.bookingBuffer||15} onChange={e=>handleAutomationsChange({bookingBuffer:Number(e.target.value)})} style={{...inputSt}}>
                       <option value={0}>No buffer</option>
                       <option value={15}>15 minutes</option>
                       <option value={30}>30 minutes</option>
@@ -3001,6 +3056,7 @@ const ContractsTab = ({ boutique }) => {
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const textareaRef = React.useRef(null);
 
   const initTemplates = () => {
@@ -3054,11 +3110,7 @@ const ContractsTab = ({ boutique }) => {
     });
   };
 
-  const resetToDefault = () => {
-    if (!window.confirm('Reset this template to the default text? This cannot be undone.')) return;
-    setTemplates(t => ({ ...t, [activeTemplate]: DEFAULT_CONTRACT_TEXT }));
-    setDirty(true);
-  };
+  const resetToDefault = () => setShowResetConfirm(true);
 
   const previewText = () => {
     let text = templates[activeTemplate] || '';
@@ -3102,7 +3154,7 @@ const ContractsTab = ({ boutique }) => {
                   padding: '11px 16px',
                   fontSize: 13,
                   fontWeight: activeTemplate === t.id ? 600 : 400,
-                  color: activeTemplate === t.id ? C.rosa : C.ink,
+                  color: activeTemplate === t.id ? C.rosaText : C.ink,
                   background: activeTemplate === t.id ? C.rosaPale : 'transparent',
                   borderLeft: `3px solid ${activeTemplate === t.id ? C.rosa : 'transparent'}`,
                   cursor: 'pointer',
@@ -3188,12 +3240,34 @@ const ContractsTab = ({ boutique }) => {
       </Card>
 
       {/* Preview modal */}
+      {showResetConfirm && (
+        <div role="presentation" onClick={e => { if (e.target === e.currentTarget) setShowResetConfirm(false); }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: 16 }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="reset-template-title"
+            style={{ background: C.white, borderRadius: 16, width: 380, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+            <div style={{ padding: '20px 20px 12px', textAlign: 'center' }}>
+              <div style={{ fontSize: 26, marginBottom: 8 }}>⚠️</div>
+              <div id="reset-template-title" style={{ fontSize: 15, fontWeight: 600, color: C.ink, marginBottom: 8 }}>Reset to default template?</div>
+              <div style={{ fontSize: 12, color: 'var(--text-danger)', background: 'var(--bg-danger)', borderRadius: 8, padding: '8px 12px' }}>
+                This cannot be undone.
+              </div>
+            </div>
+            <div style={{ padding: '12px 20px 20px', display: 'flex', gap: 8 }}>
+              <GhostBtn label="Cancel" onClick={() => setShowResetConfirm(false)} style={{ flex: 1 }} />
+              <button onClick={() => { setTemplates(t => ({ ...t, [activeTemplate]: DEFAULT_CONTRACT_TEXT })); setDirty(true); setShowResetConfirm(false); }}
+                style={{ flex: 1, padding: '9px 16px', borderRadius: 8, border: 'none', background: 'var(--color-danger)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                Reset template
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showPreview && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }}>
-          <div style={{ background: C.white, borderRadius: 16, width: '100%', maxWidth: 680, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="settings-contract-preview-title" style={{ background: C.white, borderRadius: 16, width: '100%', maxWidth: 680, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
             <div style={{ padding: '18px 24px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
               <div>
-                <div style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>Contract preview</div>
+                <div id="settings-contract-preview-title" style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>Contract preview</div>
                 <div style={{ fontSize: 11, color: C.gray, marginTop: 2 }}>Sample values substituted for template variables</div>
               </div>
               <button onClick={() => setShowPreview(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
@@ -3235,7 +3309,7 @@ const AllTemplatesTab = () => {
           return (
             <button key={t.id} onClick={() => setSub(t.id)} style={{
               padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${active ? C.rosa : C.border}`,
-              background: active ? C.rosaPale : C.white, color: active ? C.rosa : C.gray,
+              background: active ? C.rosaPale : C.white, color: active ? C.rosaText : C.gray,
               fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', transition: 'all .15s',
             }}>{t.label}</button>
           );
@@ -3371,7 +3445,7 @@ const TemplatesTab = () => {
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3,flexWrap:'wrap'}}>
                   <span style={{fontSize:13,fontWeight:600,color:C.ink}}>{tmpl.name}</span>
-                  <span style={{fontSize:11,padding:'2px 8px',borderRadius:9,background:tmpl.event_type?C.rosaPale:C.grayBg,color:tmpl.event_type?C.rosa:C.gray,fontWeight:500}}>
+                  <span style={{fontSize:11,padding:'2px 8px',borderRadius:9,background:tmpl.event_type?C.rosaPale:C.grayBg,color:tmpl.event_type?C.rosaText:C.gray,fontWeight:500}}>
                     {tmpl.event_type ? TMPL_EVENT_LABELS[tmpl.event_type] || tmpl.event_type : 'Any event'}
                   </span>
                 </div>
@@ -3518,7 +3592,7 @@ const ChecklistTemplatesTab = () => {
               ))}
               <button
                 onClick={addItem}
-                style={{fontSize:12,color:C.rosa,background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0,minHeight:'unset',marginTop:4}}>
+                style={{fontSize:12,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500,padding:0,minHeight:'unset',marginTop:4}}>
                 + Add item
               </button>
             </div>
@@ -3542,7 +3616,7 @@ const ChecklistTemplatesTab = () => {
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3,flexWrap:'wrap'}}>
                   <span style={{fontSize:13,fontWeight:600,color:C.ink}}>{tmpl.name}</span>
-                  <span style={{fontSize:11,padding:'2px 8px',borderRadius:9,background:C.rosaPale,color:C.rosa,fontWeight:500}}>
+                  <span style={{fontSize:11,padding:'2px 8px',borderRadius:9,background:C.rosaPale,color:C.rosaText,fontWeight:500}}>
                     {CHECKLIST_EVT_LABELS[tmpl.event_type] || tmpl.event_type}
                   </span>
                   <span style={{fontSize:11,color:C.gray}}>
@@ -3689,26 +3763,26 @@ const CreatePackageModal = ({pkg, onClose, onSave}) => {
 
   return (
     <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-      <div style={{background:C.white,borderRadius:16,width:480,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="settings-package-title" style={{background:C.white,borderRadius:16,width:480,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'20px 24px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <div style={{fontWeight:600,fontSize:16,color:C.ink}}>{pkg?'Edit package':'Create package'}</div>
+          <div id="settings-package-title" style={{fontWeight:600,fontSize:16,color:C.ink}}>{pkg?'Edit package':'Create package'}</div>
           <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:24,display:'flex',flexDirection:'column',gap:16}}>
           <div>
-            <div style={{...LBL}}>Package name</div>
-            <input value={name} onChange={e=>setName(e.target.value)} placeholder='e.g. "Full Service Wedding"' style={{...inputSt}}/>
+            <label htmlFor="pkg-name" style={LBL}>Package name</label>
+            <input id="pkg-name" value={name} onChange={e=>setName(e.target.value)} placeholder='e.g. "Full Service Wedding"' style={{...inputSt}}/>
           </div>
           <div>
-            <div style={{...LBL}}>Description <span style={{fontWeight:400,color:C.gray}}>(optional)</span></div>
-            <textarea value={description} onChange={e=>setDesc(e.target.value)} rows={2} placeholder="Brief description shown to staff" style={{...inputSt,resize:'vertical'}}/>
+            <label htmlFor="pkg-desc" style={LBL}>Description <span style={{fontWeight:400,color:C.gray}}>(optional)</span></label>
+            <textarea id="pkg-desc" value={description} onChange={e=>setDesc(e.target.value)} rows={2} placeholder="Brief description shown to staff" style={{...inputSt,resize:'vertical'}}/>
           </div>
           <div>
-            <div style={{...LBL,marginBottom:8}}>Services included</div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            <div id="pkg-services-label" style={{...LBL,marginBottom:8}}>Services included</div>
+            <div role="group" aria-labelledby="pkg-services-label" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
               {Object.entries(SVC_LABELS).map(([k,l])=>(
                 <button key={k} onClick={()=>toggleSvc(k)}
-                  style={{padding:'9px 12px',borderRadius:8,border:`1.5px solid ${services.includes(k)?C.rosa:C.border}`,background:services.includes(k)?C.rosaPale:'transparent',color:services.includes(k)?C.rosa:C.gray,cursor:'pointer',fontSize:12,fontWeight:services.includes(k)?600:400,textAlign:'left',transition:'all 0.15s'}}>
+                  style={{padding:'9px 12px',borderRadius:8,border:`1.5px solid ${services.includes(k)?C.rosa:C.border}`,background:services.includes(k)?C.rosaPale:'transparent',color:services.includes(k)?C.rosaText:C.gray,cursor:'pointer',fontSize:12,fontWeight:services.includes(k)?600:400,textAlign:'left',transition:'all 0.15s'}}>
                   {services.includes(k)?'✓ ':''}{l}
                 </button>
               ))}
@@ -3723,9 +3797,9 @@ const CreatePackageModal = ({pkg, onClose, onSave}) => {
               {customServices.length>0&&(
                 <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:8}}>
                   {customServices.map(s=>(
-                    <span key={s} style={{display:'inline-flex',alignItems:'center',gap:4,padding:'4px 10px',borderRadius:20,background:C.rosaPale,border:`1px solid ${C.rosa}`,fontSize:11,color:C.rosa,fontWeight:500}}>
+                    <span key={s} style={{display:'inline-flex',alignItems:'center',gap:4,padding:'4px 10px',borderRadius:20,background:C.rosaPale,border:`1px solid ${C.rosa}`,fontSize:11,color:C.rosaText,fontWeight:500}}>
                       {s}
-                      <button onClick={()=>toggleSvc(s)} style={{background:'none',border:'none',cursor:'pointer',color:C.rosa,fontSize:13,lineHeight:1,padding:0}}>×</button>
+                      <button onClick={()=>toggleSvc(s)} style={{background:'none',border:'none',cursor:'pointer',color:C.rosaText,fontSize:13,lineHeight:1,padding:0}}>×</button>
                     </span>
                   ))}
                 </div>
@@ -3733,19 +3807,19 @@ const CreatePackageModal = ({pkg, onClose, onSave}) => {
             </div>
           </div>
           <div>
-            <div style={{...LBL,marginBottom:8}}>Apply to event type</div>
-            <div style={{display:'flex',gap:8}}>
+            <div id="pkg-eventtype-label" style={{...LBL,marginBottom:8}}>Apply to event type</div>
+            <div role="group" aria-labelledby="pkg-eventtype-label" style={{display:'flex',gap:8}}>
               {[['both','Wedding & Quinceañera'],['wedding','Weddings only'],['quince','Quinceañeras only']].map(([v,l])=>(
                 <button key={v} onClick={()=>setEventType(v)}
-                  style={{flex:1,padding:'8px 6px',borderRadius:7,border:`1.5px solid ${event_type===v?C.rosa:C.border}`,background:event_type===v?C.rosaPale:'transparent',color:event_type===v?C.rosa:C.gray,cursor:'pointer',fontSize:11,fontWeight:event_type===v?600:400,transition:'all 0.15s'}}>
+                  style={{flex:1,padding:'8px 6px',borderRadius:7,border:`1.5px solid ${event_type===v?C.rosa:C.border}`,background:event_type===v?C.rosaPale:'transparent',color:event_type===v?C.rosaText:C.gray,cursor:'pointer',fontSize:11,fontWeight:event_type===v?600:400,transition:'all 0.15s'}}>
                   {l}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <div style={{...LBL}}>Base price ($)</div>
-            <input type="number" min="0" step="0.01" value={base_price} onChange={e=>setPrice(e.target.value)} placeholder="6800" style={{...inputSt}}/>
+            <label htmlFor="pkg-price" style={LBL}>Base price ($)</label>
+            <input id="pkg-price" type="number" min="0" step="0.01" value={base_price} onChange={e=>setPrice(e.target.value)} placeholder="6800" style={{...inputSt}}/>
           </div>
           {err && <div style={{fontSize:12,color:'#dc2626',background:'#fef2f2',padding:'8px 12px',borderRadius:7,border:'1px solid #fecaca'}}>{err}</div>}
         </div>
@@ -3897,7 +3971,7 @@ const BookingRequestsTab = () => {
         <div style={{padding:'0 16px 8px',display:'flex',gap:6,flexWrap:'wrap'}}>
           {['all','pending','contacted','converted','declined'].map(f=>(
             <button key={f} onClick={()=>setFilter(f)}
-              style={{padding:'4px 12px',borderRadius:20,border:`1px solid ${filter===f?C.rosa:C.border}`,background:filter===f?C.rosaPale:'#fff',color:filter===f?C.rosa:C.gray,fontSize:12,fontWeight:filter===f?600:400,cursor:'pointer',minHeight:'unset',minWidth:'unset',textTransform:'capitalize'}}>
+              style={{padding:'4px 12px',borderRadius:20,border:`1px solid ${filter===f?C.rosa:C.border}`,background:filter===f?C.rosaPale:'#fff',color:filter===f?C.rosaText:C.gray,fontSize:12,fontWeight:filter===f?600:400,cursor:'pointer',minHeight:'unset',minWidth:'unset',textTransform:'capitalize'}}>
               {f === 'all' ? `All (${requests.length})` : `${STATUS_CFG[f]?.label} (${requests.filter(r=>r.status===f).length})`}
             </button>
           ))}

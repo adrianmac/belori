@@ -39,20 +39,20 @@ export function generatePaymentPlan({ totalAmount, depositAmount, installmentCou
   return milestones
 }
 
-export function usePayments() {
+export function usePayments({ enabled = true } = {}) {
   const { boutique } = useAuth()
   const [payments, setPayments] = useState([])
   const [refunds, setRefunds] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!boutique) return
+    if (!boutique || !enabled) return
     fetchPayments()
     fetchRefunds()
-  }, [boutique?.id])
+  }, [boutique?.id, enabled])
 
   useEffect(() => {
-    if (!boutique) return
+    if (!boutique || !enabled) return
     const channel = supabase
       .channel('payment-milestones-rt-' + boutique.id)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_milestones', filter: 'boutique_id=eq.' + boutique.id }, () => fetchPayments())
@@ -61,7 +61,7 @@ export function usePayments() {
       channel.unsubscribe()
       supabase.removeChannel(channel)
     }
-  }, [boutique?.id])
+  }, [boutique?.id, enabled])
 
   async function fetchRefunds() {
     const { data } = await supabase
@@ -69,6 +69,7 @@ export function usePayments() {
       .select('*')
       .eq('boutique_id', boutique.id)
       .order('refunded_at', { ascending: false })
+      .limit(200) // unbounded refund history grows forever; history > 200 requires dedicated report
     if (data) setRefunds(data)
   }
 
@@ -88,19 +89,21 @@ export function usePayments() {
       if (!error && data) {
         const today = new Date()
         setPayments(data.map(p => {
-          const due = p.due_date ? new Date(p.due_date) : null
+          const due = p.due_date ? new Date(p.due_date + 'T12:00:00') : null
           const daysLate = due && due < today
             ? Math.ceil((today - due) / (1000 * 60 * 60 * 24))
             : 0
           return {
             ...p,
             status: daysLate > 0 ? 'overdue' : 'pending',
-            client: p.event?.client?.name?.split(' ')[0] + ' ' + (p.event?.client?.name?.split(' ').slice(-1)[0]?.[0] || '') + '.' || '',
+            client: p.event?.client?.name
+              ? p.event.client.name.split(' ')[0] + ' ' + (p.event.client.name.split(' ').slice(-1)[0]?.[0] || '') + '.'
+              : '',
             clientFull: p.event?.client?.name || '',
             clientPhone: p.event?.client?.phone || '',
             client_id: p.event?.client_id || null,
-            event: p.event
-              ? `${p.event.type === 'wedding' ? 'Wedding' : 'Quinceañera'} ${new Date(p.event.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+            event: p.event?.event_date
+              ? `${p.event.type === 'wedding' ? 'Wedding' : 'Quinceañera'} ${new Date(p.event.event_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
               : '',
             due: due?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) || '',
             daysLate,
@@ -126,6 +129,17 @@ export function usePayments() {
     return { data, error }
   }
 
+  async function createMilestones(payloads) {
+    const rows = payloads.map(p => ({ ...p, boutique_id: boutique.id }))
+    const { data, error } = await supabase
+      .from('payment_milestones')
+      .insert(rows)
+      .select()
+
+    if (!error) await fetchPayments()
+    return { data, error }
+  }
+
   async function logRefund({ event_id, milestone_id, amount, reason, refunded_at, void_milestone = false }) {
     const { error } = await supabase.from('payment_refunds').insert({
       boutique_id: boutique.id,
@@ -136,32 +150,29 @@ export function usePayments() {
       refunded_at: refunded_at || new Date().toISOString().slice(0, 10),
     })
     if (!error) {
-      // Optionally void (un-pay) the milestone and recalculate event.paid
       if (void_milestone && milestone_id) {
         await supabase
           .from('payment_milestones')
           .update({ status: 'pending', paid_date: null, last_reminded_at: null })
           .eq('id', milestone_id)
           .eq('boutique_id', boutique.id)
-
-        // Recalculate event.paid from remaining paid milestones
-        const { data: allMs } = await supabase
-          .from('payment_milestones')
-          .select('amount, status')
-          .eq('event_id', event_id)
-          .eq('boutique_id', boutique.id)
-
-        if (allMs) {
-          const newPaid = allMs
-            .filter(m => m.status === 'paid')
-            .reduce((s, m) => s + Number(m.amount || 0), 0)
-          await supabase
-            .from('events')
-            .update({ paid: newPaid })
-            .eq('id', event_id)
-            .eq('boutique_id', boutique.id)
-        }
       }
+
+      // Always recalculate event.paid from remaining paid milestones minus all refunds
+      const [{ data: allMs }, { data: allRefunds }] = await Promise.all([
+        supabase.from('payment_milestones').select('amount, status').eq('event_id', event_id).eq('boutique_id', boutique.id),
+        supabase.from('payment_refunds').select('amount').eq('event_id', event_id).eq('boutique_id', boutique.id),
+      ])
+      if (allMs) {
+        const totalPaid = allMs.filter(m => m.status === 'paid').reduce((s, m) => s + Number(m.amount || 0), 0)
+        const totalRefunded = (allRefunds || []).reduce((s, r) => s + Number(r.amount || 0), 0)
+        await supabase
+          .from('events')
+          .update({ paid: Math.max(0, totalPaid - totalRefunded) })
+          .eq('id', event_id)
+          .eq('boutique_id', boutique.id)
+      }
+
       await fetchPayments()
       await fetchRefunds()
     }
@@ -170,9 +181,10 @@ export function usePayments() {
 
   async function logTip({ event_id, amount }) {
     const tipAmt = Number(amount)
+    if (!Number.isFinite(tipAmt) || tipAmt <= 0) return { error: { message: 'Invalid tip amount' } }
     const { data: ev } = await supabase.from('events').select('tip,paid').eq('id', event_id).eq('boutique_id', boutique.id).single()
     const { error } = await supabase.from('events').update({
-      tip: (Number(ev?.tip) || 0) + tipAmt,
+      tip:  (Number(ev?.tip)  || 0) + tipAmt,
       paid: (Number(ev?.paid) || 0) + tipAmt,
     }).eq('id', event_id).eq('boutique_id', boutique.id)
     if (!error) await fetchPayments()
@@ -292,5 +304,5 @@ export function usePayments() {
     return { error }
   }
 
-  return { payments, refunds, loading, createMilestone, markPaid, logReminder, deleteMilestone, logRefund, logTip, refetch: fetchPayments }
+  return { payments, refunds, loading, createMilestone, createMilestones, markPaid, logReminder, deleteMilestone, logRefund, logTip, refetch: fetchPayments }
 }

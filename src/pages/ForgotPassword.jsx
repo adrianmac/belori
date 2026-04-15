@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
 
 const C = {
-  rosa: '#C9697A', ink: '#1C1012', gray: '#6B7280', border: '#E5E7EB',
+  rosa: '#C9697A', rosaText: '#8B3A4A', ink: '#1C1012', gray: '#6B7280', border: '#E5E7EB',
   white: '#FFFFFF', ivory: '#F8F4F0', red: '#B91C1C', redBg: '#FEE2E2',
   green: '#15803D', greenBg: '#DCFCE7',
 }
@@ -50,7 +50,7 @@ export default function ForgotPassword() {
               We sent a password reset link to <strong>{email}</strong>.<br />
               Click the link in the email to set a new password.
             </div>
-            <Link to="/login" style={{ color: C.rosa, fontSize: 13, fontWeight: 500, textDecoration: 'none' }}>
+            <Link to="/login" style={{ color: C.rosaText, fontSize: 13, fontWeight: 500, textDecoration: 'none' }}>
               ← Back to sign in
             </Link>
           </div>
@@ -87,7 +87,7 @@ export default function ForgotPassword() {
             </button>
           </form>
           <div style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: C.gray }}>
-            <Link to="/login" style={{ color: C.rosa, fontWeight: 500, textDecoration: 'none' }}>← Back to sign in</Link>
+            <Link to="/login" style={{ color: C.rosaText, fontWeight: 500, textDecoration: 'none' }}>← Back to sign in</Link>
           </div>
         </div>
       </div>

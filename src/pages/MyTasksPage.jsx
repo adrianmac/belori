@@ -138,7 +138,7 @@ function TaskCard({ task, onToggleDone }) {
             <span style={{
               fontSize: 10, padding: '2px 7px', borderRadius: 999,
               background: task._sourceType === 'event' ? C.rosaPale : C.blueBg,
-              color: task._sourceType === 'event' ? C.rosa : C.blue,
+              color: task._sourceType === 'event' ? C.rosaText : C.blue,
               fontWeight: 500, whiteSpace: 'nowrap',
             }}>{task._source}</span>
           )}

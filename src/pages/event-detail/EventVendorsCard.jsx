@@ -74,8 +74,8 @@ export default function EventVendorsCard({ eventId }) {
                   </div>
                   {v.contact_name && <div style={{ fontSize: 12, color: C.gray }}>{v.contact_name}</div>}
                   <div style={{ display: 'flex', gap: 12, marginTop: 4, flexWrap: 'wrap' }}>
-                    {v.phone && <a href={`tel:${v.phone}`} style={{ fontSize: 12, color: C.rosa, textDecoration: 'none' }}>📞 {v.phone}</a>}
-                    {v.email && <a href={`mailto:${v.email}`} style={{ fontSize: 12, color: C.rosa, textDecoration: 'none' }}>✉️ {v.email}</a>}
+                    {v.phone && <a href={`tel:${v.phone}`} style={{ fontSize: 12, color: C.rosaText, textDecoration: 'none' }}>📞 {v.phone}</a>}
+                    {v.email && <a href={`mailto:${v.email}`} style={{ fontSize: 12, color: C.rosaText, textDecoration: 'none' }}>✉️ {v.email}</a>}
                     {ev.fee > 0 && <span style={{ fontSize: 12, color: C.gray }}>Fee: ${Number(ev.fee).toLocaleString()}</span>}
                   </div>
                   {ev.notes && <div style={{ fontSize: 11, color: C.gray, marginTop: 4, fontStyle: 'italic' }}>{ev.notes}</div>}

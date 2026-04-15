@@ -5,11 +5,50 @@ import { useLayoutMode } from "../hooks/useLayoutMode.jsx";
 
 // ─── SHARED STYLE OBJECTS ──────────────────────────────────────────────────
 export const inputSt = {width:'100%',padding:'8px 10px',borderRadius:7,border:`1px solid ${C.border}`,fontSize:13,color:C.ink,boxSizing:'border-box',outline:'none',background:C.white};
-export const LBL = {fontSize:12,color:C.gray,marginBottom:4};
+// LBL is intentionally kept for backward compat. Prefer <label htmlFor="…" style={LBL}> over <div style={LBL}>
+export const LBL = {fontSize:12,color:C.gray,marginBottom:4,display:'block'};
+
+// ─── FOCUS TRAP ────────────────────────────────────────────────────────────
+// Traps keyboard focus within a modal container and restores it on close.
+// Usage: const trapRef = useFocusTrap(isOpen);  <div ref={trapRef} ...>
+export function useFocusTrap(isOpen) {
+  const ref = useRef(null);
+  const previousFocus = useRef(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    previousFocus.current = document.activeElement;
+    const el = ref.current;
+    if (!el) return;
+    // Focus first focusable element
+    const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+    const first = el.querySelectorAll(FOCUSABLE)[0];
+    if (first) first.focus();
+    const handleKeyDown = (e) => {
+      if (e.key !== 'Tab') return;
+      const focusable = [...el.querySelectorAll(FOCUSABLE)].filter(n => !n.closest('[aria-hidden="true"]'));
+      if (!focusable.length) { e.preventDefault(); return; }
+      const firstEl = focusable[0];
+      const lastEl  = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === firstEl) { e.preventDefault(); lastEl.focus(); }
+      } else {
+        if (document.activeElement === lastEl) { e.preventDefault(); firstEl.focus(); }
+      }
+    };
+    el.addEventListener('keydown', handleKeyDown);
+    return () => {
+      el.removeEventListener('keydown', handleKeyDown);
+      if (previousFocus.current && typeof previousFocus.current.focus === 'function') {
+        previousFocus.current.focus();
+      }
+    };
+  }, [isOpen]);
+  return ref;
+}
 
 // ─── SHARED UI ATOMS ───────────────────────────────────────────────────────
-export const Avatar = ({initials,size=32,bg=C.rosaPale,color=C.rosa}) => (
-  <div style={{width:size,height:size,borderRadius:'50%',background:bg,color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:size*0.34,fontWeight:500,flexShrink:0}}>
+export const Avatar = ({initials,size=32,bg=C.rosaPale,color=C.rosaText,label}) => (
+  <div role="img" aria-label={label || initials} style={{width:size,height:size,borderRadius:'50%',background:bg,color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:size*0.34,fontWeight:500,flexShrink:0}}>
     {initials}
   </div>
 );
@@ -34,24 +73,37 @@ export const EventTypeBadge = ({type}) => {
   const t = EVT_TYPES[type] || {label:type, bg:C.grayBg, col:C.gray};
   return <Badge text={t.label} bg={t.bg} color={t.col}/>;
 };
-export const ProgressBar = ({paid,total,height=5}) => (
-  <div style={{height,background:C.border,borderRadius:3,overflow:'hidden',flexShrink:0}}>
-    <div style={{height:'100%',width:`${Math.min(100,pct(paid,total))}%`,background:'var(--color-success)',borderRadius:3,transition:'width 0.4s'}}/>
-  </div>
-);
+export const ProgressBar = ({paid,total,height=5}) => {
+  const pctVal = Math.min(100, pct(paid, total));
+  return (
+    <div
+      role="progressbar"
+      aria-valuenow={pctVal}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`${pctVal}% paid`}
+      style={{height,background:C.border,borderRadius:3,overflow:'hidden',flexShrink:0}}
+    >
+      <div style={{height:'100%',width:`${pctVal}%`,background:'var(--color-success)',borderRadius:3,transition:'width 0.4s'}}/>
+    </div>
+  );
+};
 export const Card = ({children,style={}}) => (
   <div style={{background:C.white,border:`1px solid ${C.border}`,borderRadius:'var(--card-radius)',overflow:'hidden',boxShadow:'var(--card-shadow, none)',...style}}>
     {children}
   </div>
 );
-export const CardHead = ({title,action,onAction}) => {
+export const CardHead = ({title,sub,action,onAction}) => {
   const { isTablet } = useLayoutMode();
   return (
     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'var(--card-head-padding)',borderBottom:`1px solid ${C.border}`}}>
-      <span style={{fontSize:'var(--text-card-title)',fontWeight:500,color:C.ink}}>{title}</span>
+      <div>
+        <div style={{fontWeight:600,fontSize:'var(--text-card-title,13px)',color:'var(--ink,#1C1012)'}}>{title}</div>
+        {sub && <div style={{fontSize:11,color:'#6B7280',marginTop:2,fontWeight:400}}>{sub}</div>}
+      </div>
       {action&&(isTablet
-        ?<button onClick={onAction} style={{fontSize:12,color:C.rosa,fontWeight:500,background:'none',border:`1px solid ${C.rosa}`,borderRadius:8,padding:'6px 12px',cursor:'pointer',minHeight:36,minWidth:'unset',lineHeight:1}}>{action}</button>
-        :<span onClick={onAction} style={{fontSize:12,color:C.rosa,cursor:'pointer',fontWeight:500}}>{action} →</span>
+        ?<button onClick={onAction} style={{fontSize:12,color:C.rosaText,fontWeight:500,background:'none',border:`1px solid ${C.rosa}`,borderRadius:8,padding:'6px 12px',cursor:'pointer',minHeight:36,minWidth:'unset',lineHeight:1}}>{action}</button>
+        :<button onClick={onAction} style={{fontSize:12,color:C.rosaText,cursor:'pointer',fontWeight:500,background:'none',border:'none',padding:0}}>{action} <span aria-hidden="true">→</span></button>
       )}
     </div>
   );
@@ -68,7 +120,8 @@ export const GhostBtn = ({label,onClick,style={},className='',colorScheme='prima
 );
 export const StatusDot = ({status}) => {
   const colors={paid:'var(--color-success)',overdue:'var(--color-danger)',pending:'var(--color-warning)',upcoming:'var(--color-info)'};
-  return <div style={{width:8,height:8,borderRadius:'50%',background:colors[status]||C.gray,flexShrink:0,marginTop:4}}/>;
+  const label = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown';
+  return <div role="img" aria-label={label} title={label} style={{width:8,height:8,borderRadius:'50%',background:colors[status]||C.gray,flexShrink:0,marginTop:4}}/>;
 };
 
 export function EmptyState({ icon = '📭', title, subtitle, action, actionLabel, style = {} }) {
@@ -78,12 +131,12 @@ export function EmptyState({ icon = '📭', title, subtitle, action, actionLabel
       padding: '48px 24px', textAlign: 'center', ...style
     }}>
       <div style={{ fontSize: 40, marginBottom: 12, lineHeight: 1 }}>{icon}</div>
-      {title && <div style={{ fontSize: 14, fontWeight: 600, color: '#1C1012', marginBottom: 6 }}>{title}</div>}
-      {subtitle && <div style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, maxWidth: 280 }}>{subtitle}</div>}
+      {title && <div style={{ fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 6 }}>{title}</div>}
+      {subtitle && <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.5, maxWidth: 280 }}>{subtitle}</div>}
       {action && actionLabel && (
         <button onClick={action} style={{
           marginTop: 16, padding: '8px 20px', borderRadius: 8, border: 'none',
-          background: '#C9697A', color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer'
+          background: C.rosaSolid, color: C.white, fontSize: 13, fontWeight: 500, cursor: 'pointer'
         }}>{actionLabel}</button>
       )}
     </div>
@@ -102,10 +155,10 @@ export const ToastProvider=({children})=>{
   return(
     <ToastCtx.Provider value={show}>
       {children}
-      <div style={{position:'fixed',bottom:80,right:20,zIndex:9999,display:'flex',flexDirection:'column',gap:8}}>
+      <div aria-live="polite" aria-atomic="false" role="status" style={{position:'fixed',bottom:80,right:20,zIndex:9999,display:'flex',flexDirection:'column',gap:8}}>
         {toasts.map(t=>(
-          <div key={t.id} style={{padding:'10px 16px',borderRadius:10,background:t.type==='success'?'var(--color-success)':t.type==='warn'?'var(--color-warning)':C.ink,color:C.white,fontSize:13,fontWeight:500,boxShadow:'0 4px 16px rgba(0,0,0,0.15)',animation:'slideIn 0.25s ease-out',maxWidth:340}}>
-            {t.type==='success'?'✓ ':t.type==='warn'?'⚠ ':''}{t.msg}
+          <div key={t.id} role={t.type==='error'?'alert':'status'} style={{padding:'10px 16px',borderRadius:10,background:t.type==='success'?'var(--color-success)':t.type==='warn'?'var(--color-warning)':C.ink,color:C.white,fontSize:13,fontWeight:500,boxShadow:'0 4px 16px rgba(0,0,0,0.15)',animation:'slideIn 0.25s ease-out',maxWidth:340}}>
+            <span aria-hidden="true">{t.type==='success'?'✓ ':t.type==='warn'?'⚠ ':''}</span>{t.msg}
           </div>
         ))}
       </div>
@@ -214,7 +267,15 @@ export const icons = {
   clients: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.3"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>,
   alterations: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13M8 1v2M8 13v2M1 8h2M13 8h2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>,
   rentals: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1c-2 0-5 1.5-5 5v6l5 3 5-3V6c0-3.5-3-5-5-5Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>,
-  planning: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10 5 11.5l.5-3.5L3 5.5 6.5 5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>,
+  planning: (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="2" width="10" height="12" rx="1.5"/>
+      <path d="M6 2v1.5a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5V2"/>
+      <line x1="5.5" y1="7" x2="10.5" y2="7"/>
+      <line x1="5.5" y1="9.5" x2="10.5" y2="9.5"/>
+      <line x1="5.5" y1="12" x2="8.5" y2="12"/>
+    </svg>
+  ),
   inventory: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="7" width="14" height="7" rx="1" stroke="currentColor" strokeWidth="1.3"/><path d="M3 7V5a5 5 0 0 1 10 0v2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>,
   payments: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.3"/><path d="M1 7h14" stroke="currentColor" strokeWidth="1.3"/></svg>,
   settings: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M3 13l1.4-1.4M11.6 4.4L13 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>,
@@ -250,6 +311,44 @@ export const icons = {
   help:        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="7"/><path d="M6 6a2 2 0 1 1 2 2v1"/><circle cx="8" cy="12" r="0.6" fill="currentColor" stroke="none"/></svg>,
   activity:    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M1 8h2.5l2-5 2.5 9 2-6 1.5 3H15"/></svg>,
 };
+
+// ─── CONFIRM MODAL ─────────────────────────────────────────────────────────
+// A reusable accessible confirmation dialog with focus trap + Escape to close.
+// Props: title, message, confirmLabel, onConfirm, onCancel, danger (bool)
+export function ConfirmModal({ title, message, confirmLabel = 'Confirm', onConfirm, onCancel, danger = true }) {
+  const trapRef = useFocusTrap(true);
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onCancel(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onCancel]);
+  const confirmBg = danger ? 'var(--color-danger)' : C.rosaSolid;
+  return (
+    <div role="presentation" onClick={e => { if (e.target === e.currentTarget) onCancel(); }}
+      style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1200,padding:16}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" ref={trapRef}
+        style={{background:'#fff',borderRadius:16,width:380,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+        <div style={{padding:'20px 20px 12px',textAlign:'center'}}>
+          {danger && <div style={{width:44,height:44,borderRadius:'50%',background:'var(--bg-danger)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px'}}>
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1Zm0 4v4m0 2.5v.5" stroke="var(--color-danger)" strokeWidth="1.4" strokeLinecap="round"/></svg>
+          </div>}
+          <div id="confirm-modal-title" style={{fontSize:15,fontWeight:600,color:'#111',marginBottom:message?8:0}}>{title}</div>
+          {message && <div style={{fontSize:13,color:'#666'}}>{message}</div>}
+        </div>
+        <div style={{padding:'12px 20px 20px',display:'flex',gap:8}}>
+          <button onClick={onCancel}
+            style={{flex:1,padding:'9px 16px',borderRadius:8,border:'1px solid #e5e5e5',background:'#fff',color:'#666',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+            Cancel
+          </button>
+          <button onClick={onConfirm}
+            style={{flex:1,padding:'9px 16px',borderRadius:8,border:'none',background:confirmBg,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── TOPBAR COMPONENTS ─────────────────────────────────────────────────────
 export const ModeIndicatorBtn = () => {
@@ -334,11 +433,11 @@ export const AlertBanner = ({msg,action,onAction}) => {
   return (
     <div style={{background:'var(--bg-warning)',borderBottom:true?`1px solid var(--color-warning)`:'none',padding:isTablet?'11px 18px':'10px 20px',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none" style={{flexShrink:0}}><circle cx="8" cy="8" r="7" stroke='var(--color-warning)' strokeWidth="1.2"/><path d="M8 5v3M8 11v.5" stroke='var(--color-warning)' strokeWidth="1.4" strokeLinecap="round"/></svg>
-      <span style={{fontSize:isTablet?13:12,color:'var(--color-warning)',flex:1,lineHeight:1.4}}>{msg}</span>
+      <span style={{fontSize:isTablet?13:12,color:'var(--text-warning)',flex:1,lineHeight:1.4}}>{msg}</span>
       {action&&(isTablet?
         <button onClick={onAction} style={{height:44,padding:'0 16px',background:'var(--color-warning)',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0,minHeight:'unset',minWidth:'unset'}}>{action}</button>
         :
-        <span onClick={onAction} style={{fontSize:12,color:'var(--color-warning)',fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>{action} →</span>
+        <span onClick={onAction} style={{fontSize:12,color:'var(--text-warning)',fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>{action} →</span>
       )}
     </div>
   );

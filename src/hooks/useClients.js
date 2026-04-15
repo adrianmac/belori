@@ -105,27 +105,28 @@ export function useClients() {
     return { error }
   }
 
-  async function adjustLoyaltyPoints(clientId, newPoints, delta, reason) {
-    const { error } = await supabase
-      .from('clients')
-      .update({ loyalty_points: newPoints })
-      .eq('id', clientId)
-      .eq('boutique_id', boutique.id)
-
-    if (!error) {
-      await supabase.from('loyalty_transactions').insert({
-        boutique_id: boutique.id,
-        client_id: clientId,
-        delta,
-        type: 'adjust',
-        reason: reason || null,
-      })
-      await fetchClients()
-    }
-    return { error }
+  // Atomic loyalty point adjustment — uses a DB function to avoid
+  // read-modify-write races that would corrupt point balances.
+  async function _atomicPointsRpc(clientId, delta, type, reason) {
+    const { data, error } = await supabase.rpc('adjust_loyalty_points', {
+      p_client_id: clientId,
+      p_delta:     delta,
+      p_type:      type,
+      p_reason:    reason || null,
+    })
+    if (!error) await fetchClients()
+    return { error, newTotal: data?.new_total }
   }
 
-  async function redeemPoints({ client_id, points, note, event_id }) {
+  async function adjustLoyaltyPoints(clientId, _newPoints, delta, reason) {
+    // _newPoints arg retained for API compatibility but ignored — DB computes atomically
+    return _atomicPointsRpc(clientId, delta, 'adjust', reason)
+  }
+
+  async function redeemPoints({ client_id, points, note, event_id: _eventId }) {
+    // Pre-check balance to surface a friendly error before hitting the DB.
+    // The actual deduction is still atomic — GREATEST(0, ...) in the DB function
+    // means we can't go negative even if two redeem calls race.
     const { data: cl } = await supabase
       .from('clients')
       .select('loyalty_points')
@@ -137,53 +138,12 @@ export function useClients() {
       return { error: { message: 'Insufficient points' } }
     }
 
-    const { error: upErr } = await supabase
-      .from('clients')
-      .update({ loyalty_points: cl.loyalty_points - points })
-      .eq('id', client_id)
-      .eq('boutique_id', boutique.id)
-
-    if (upErr) return { error: upErr }
-
-    const { error: txErr } = await supabase.from('loyalty_transactions').insert({
-      boutique_id: boutique.id,
-      client_id,
-      delta: -points,
-      type: 'redeem',
-      reason: note || 'Points redeemed',
-      event_id: event_id || null,
-      redeemed_by: boutique.name,
-    })
-
-    await fetchClients()
-    return { error: txErr, dollarValue: points / 100 }
+    const { error, newTotal } = await _atomicPointsRpc(client_id, -points, 'redeem', note || 'Points redeemed')
+    return { error, dollarValue: points / 100, newTotal }
   }
 
   async function adjustPoints({ client_id, delta, note }) {
-    const { data: cl } = await supabase
-      .from('clients')
-      .select('loyalty_points')
-      .eq('id', client_id)
-      .eq('boutique_id', boutique.id)
-      .single()
-
-    const newTotal = Math.max(0, (cl?.loyalty_points || 0) + delta)
-
-    await supabase
-      .from('clients')
-      .update({ loyalty_points: newTotal })
-      .eq('id', client_id)
-      .eq('boutique_id', boutique.id)
-
-    await supabase.from('loyalty_transactions').insert({
-      boutique_id: boutique.id,
-      client_id,
-      delta,
-      type: 'adjust',
-      reason: note || 'Manual adjustment',
-    })
-
-    await fetchClients()
+    await _atomicPointsRpc(client_id, delta, 'adjust', note || 'Manual adjustment')
   }
 
   // Merge: reassign all data from `removeId` to `keepId`, then delete `removeId`
@@ -197,16 +157,16 @@ export function useClients() {
       { table: 'loyalty_transactions', col: 'client_id' },
       { table: 'client_tag_assignments',col: 'client_id' },
     ]
-    for (const { table, col } of tables) {
-      await supabase.from(table).update({ [col]: keepId }).eq(col, removeId).eq('boutique_id', boutique.id)
-    }
-    // Also reassign inventory rentals
-    await supabase.from('inventory').update({ client_id: keepId }).eq('client_id', removeId).eq('boutique_id', boutique.id)
-    // Merge loyalty points on the kept client
-    if (mergedPoints > 0) {
-      await supabase.from('clients').update({ loyalty_points: mergedPoints }).eq('id', keepId).eq('boutique_id', boutique.id)
-    }
-    // Delete the removed client
+    await Promise.all([
+      ...tables.map(({ table, col }) =>
+        supabase.from(table).update({ [col]: keepId }).eq(col, removeId).eq('boutique_id', boutique.id)
+      ),
+      supabase.from('inventory').update({ client_id: keepId }).eq('client_id', removeId).eq('boutique_id', boutique.id),
+      ...(mergedPoints > 0
+        ? [supabase.from('clients').update({ loyalty_points: mergedPoints }).eq('id', keepId).eq('boutique_id', boutique.id)]
+        : []),
+    ])
+    // Delete the removed client after all reassignments complete
     const { error } = await supabase.from('clients').delete().eq('id', removeId).eq('boutique_id', boutique.id)
     if (!error) await fetchClients()
     return { error }
@@ -368,7 +328,7 @@ export function useClientTagsData(clientId) {
   async function fetchAll() {
     const [defsRes, assignRes] = await Promise.all([
       supabase.from('client_tag_definitions').select('*').eq('boutique_id', boutique.id).order('name'),
-      supabase.from('client_tag_assignments').select('tag_id').eq('client_id', clientId),
+      supabase.from('client_tag_assignments').select('tag_id').eq('boutique_id', boutique.id).eq('client_id', clientId),
     ])
     if (defsRes.data) setTagDefs(defsRes.data)
     if (assignRes.data) setClientTagIds(assignRes.data.map(a => a.tag_id))
@@ -378,7 +338,7 @@ export function useClientTagsData(clientId) {
     const isActive = clientTagIds.includes(tagId)
     if (isActive) {
       await supabase.from('client_tag_assignments').delete()
-        .eq('client_id', clientId).eq('tag_id', tagId)
+        .eq('boutique_id', boutique.id).eq('client_id', clientId).eq('tag_id', tagId)
     } else {
       await supabase.from('client_tag_assignments').insert({
         client_id: clientId, tag_id: tagId, boutique_id: boutique.id,
@@ -429,7 +389,7 @@ export function useClientEvents(clientId) {
     const { error } = await supabase.from('payment_milestones').update({
       status: 'paid',
       paid_date,
-    }).eq('id', milestoneId)
+    }).eq('id', milestoneId).eq('boutique_id', boutique.id)
     if (!error) await fetch()
     return { error }
   }

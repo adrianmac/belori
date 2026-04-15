@@ -347,13 +347,13 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     const {entries,loading}=useInventoryAudit(dress?.id);
     return(
       <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1010,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-        <div style={{background:C.white,borderRadius:16,width:520,maxHeight:'80vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+        <div role="dialog" aria-modal="true" aria-labelledby="dressrentals-history-title" style={{background:C.white,borderRadius:16,width:520,maxHeight:'80vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
           <div style={{padding:'18px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
             <div>
-              <div style={{fontSize:15,fontWeight:600,color:C.ink}}>Audit history</div>
+              <div id="dressrentals-history-title" style={{fontSize:15,fontWeight:600,color:C.ink}}>Audit history</div>
               <div style={{fontSize:11,color:C.gray,marginTop:2}}>{dress.name} · #{dress.sku}</div>
             </div>
-            <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer'}}>×</button>
+            <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
           </div>
           <div style={{flex:1,overflowY:'auto',padding:'4px 0',boxShadow:'inset 0 -8px 8px -8px rgba(0,0,0,0.15)'}}>
             {loading&&<div style={{textAlign:'center',padding:32,color:C.gray,fontSize:12}}>Loading…</div>}
@@ -418,10 +418,10 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
 
     // Action button
     let actionBtn=null;
-    if(d.status==='available')actionBtn=<button onClick={e=>{e.stopPropagation();setNewRentalInitDress(d);setNewRentalOpen(true);}} style={{width:'100%',padding:'8px',borderRadius:7,border:`1px solid ${C.rosa}`,background:'transparent',color:C.rosa,fontSize:11,fontWeight:500,cursor:'pointer'}}>Reserve for event</button>;
+    if(d.status==='available')actionBtn=<button onClick={e=>{e.stopPropagation();setNewRentalInitDress(d);setNewRentalOpen(true);}} style={{width:'100%',padding:'8px',borderRadius:7,border:`1px solid ${C.rosa}`,background:'transparent',color:C.rosaText,fontSize:11,fontWeight:500,cursor:'pointer'}}>Reserve for event</button>;
     else if(d.status==='reserved')actionBtn=<button onClick={e=>{e.stopPropagation();setPickupDress(d);}} style={{width:'100%',padding:'8px',borderRadius:7,border:`1px solid var(--color-primary)`,background:'transparent',color:'var(--color-primary)',fontSize:11,fontWeight:500,cursor:'pointer'}}>Mark picked up</button>;
-    else if(over)actionBtn=<button onClick={e=>{e.stopPropagation();setReturnDress(d);}} style={{width:'100%',padding:'8px',borderRadius:7,border:`1px solid var(--color-danger)`,background:'transparent',color:'var(--color-danger)',fontSize:11,fontWeight:600,cursor:'pointer'}}>Log return — OVERDUE</button>;
-    else if(d.status==='rented'||d.status==='picked_up')actionBtn=<button onClick={e=>{e.stopPropagation();setReturnDress(d);}} style={{width:'100%',padding:'8px',borderRadius:7,border:`1px solid var(--color-success)`,background:'transparent',color:'var(--color-success)',fontSize:11,fontWeight:500,cursor:'pointer'}}>Log return</button>;
+    else if(over)actionBtn=<button onClick={e=>{e.stopPropagation();setReturnDress(d);}} style={{width:'100%',padding:'8px',borderRadius:7,border:`1px solid var(--color-danger)`,background:'transparent',color:'var(--text-danger)',fontSize:11,fontWeight:600,cursor:'pointer'}}>Log return — OVERDUE</button>;
+    else if(d.status==='rented'||d.status==='picked_up')actionBtn=<button onClick={e=>{e.stopPropagation();setReturnDress(d);}} style={{width:'100%',padding:'8px',borderRadius:7,border:`1px solid var(--color-success)`,background:'transparent',color:'var(--text-success)',fontSize:11,fontWeight:500,cursor:'pointer'}}>Log return</button>;
     else if(d.status==='cleaning')actionBtn=<button onClick={e=>{e.stopPropagation();handleMarkCleaned(d);}} style={{width:'100%',padding:'8px',borderRadius:7,border:`1px solid var(--color-primary)`,background:'transparent',color:'var(--color-primary)',fontSize:11,fontWeight:500,cursor:'pointer'}}>Mark cleaned</button>;
 
     return(
@@ -464,10 +464,10 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     const dueLabel=d.returnDate||d.return_date||'';
 
     let actionBtn=null;
-    if(d.status==='available')actionBtn=<button onClick={e=>{e.stopPropagation();setNewRentalInitDress(d);setNewRentalOpen(true);}} style={{padding:'5px 12px',borderRadius:7,border:`1px solid ${C.rosa}`,background:'transparent',color:C.rosa,fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>Reserve</button>;
+    if(d.status==='available')actionBtn=<button onClick={e=>{e.stopPropagation();setNewRentalInitDress(d);setNewRentalOpen(true);}} style={{padding:'5px 12px',borderRadius:7,border:`1px solid ${C.rosa}`,background:'transparent',color:C.rosaText,fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>Reserve</button>;
     else if(d.status==='reserved')actionBtn=<button onClick={e=>{e.stopPropagation();setPickupDress(d);}} style={{padding:'5px 12px',borderRadius:7,border:`1px solid var(--color-primary)`,background:'transparent',color:'var(--color-primary)',fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>Mark picked up</button>;
-    else if(over)actionBtn=<button onClick={e=>{e.stopPropagation();setReturnDress(d);}} style={{padding:'5px 12px',borderRadius:7,border:`1px solid var(--color-danger)`,background:'transparent',color:'var(--color-danger)',fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>Log return</button>;
-    else if(d.status==='rented'||d.status==='picked_up')actionBtn=<button onClick={e=>{e.stopPropagation();setReturnDress(d);}} style={{padding:'5px 12px',borderRadius:7,border:`1px solid var(--color-success)`,background:'transparent',color:'var(--color-success)',fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>Log return</button>;
+    else if(over)actionBtn=<button onClick={e=>{e.stopPropagation();setReturnDress(d);}} style={{padding:'5px 12px',borderRadius:7,border:`1px solid var(--color-danger)`,background:'transparent',color:'var(--text-danger)',fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>Log return</button>;
+    else if(d.status==='rented'||d.status==='picked_up')actionBtn=<button onClick={e=>{e.stopPropagation();setReturnDress(d);}} style={{padding:'5px 12px',borderRadius:7,border:`1px solid var(--color-success)`,background:'transparent',color:'var(--text-success)',fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>Log return</button>;
     else if(d.status==='cleaning')actionBtn=<button onClick={e=>{e.stopPropagation();handleMarkCleaned(d);}} style={{padding:'5px 12px',borderRadius:7,border:`1px solid var(--color-primary)`,background:'transparent',color:'var(--color-primary)',fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>Mark cleaned</button>;
 
     return(
@@ -558,7 +558,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
           </div>
         )}
         {section==='overdue'&&(
-          <div style={{background:'var(--bg-danger)',borderRadius:6,padding:'4px 10px',fontSize:11,fontWeight:600,color:'var(--color-danger)',flexShrink:0}}>
+          <div style={{background:'var(--bg-danger)',borderRadius:6,padding:'4px 10px',fontSize:11,fontWeight:600,color:'var(--text-danger)',flexShrink:0}}>
             {late}d late · {fmt(Math.min(late*LATE_FEE_PER_DAY,750))} fee
           </div>
         )}
@@ -582,7 +582,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
             <button onClick={()=>setDamageAssessDress(d)} style={{padding:'6px 10px',borderRadius:6,border:`1px solid ${C.red}`,background:C.redBg,color:C.red,fontSize:11,fontWeight:600,cursor:'pointer'}}>⚠ Damage</button>
           )}
           {section==='overdue'&&(
-            <button onClick={()=>handleChargeLaterFee(d)} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${C.amber}`,background:C.amberBg,color:C.amber,fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>💰 Charge late fee</button>
+            <button onClick={()=>handleChargeLaterFee(d)} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${C.amber}`,background:C.amberBg,color:C.warningText,fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>💰 Charge late fee</button>
           )}
           {section==='overdue'&&clientPhone&&(
             <button onClick={()=>{if(/Mobi|Android/i.test(navigator.userAgent))window.location.href=`tel:${clientPhone}`;else{navigator.clipboard.writeText(clientPhone);toast('Phone copied: '+clientPhone);}}} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,fontSize:11,cursor:'pointer'}}>📞 Call</button>
@@ -620,17 +620,17 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
           </div>
         </div>
         <div style={{textAlign:'right',flexShrink:0,minWidth:80}}>
-          <div style={{fontSize:12,fontWeight:over?700:500,color:over?'var(--color-danger)':today?'var(--color-warning)':C.gray}}>
+          <div style={{fontSize:12,fontWeight:over?700:500,color:over?'var(--text-danger)':today?'var(--text-warning)':C.gray}}>
             {over?`${late}d overdue`:today?'Due today':`${daysLeft}d left`}
           </div>
           <div style={{fontSize:11,color:C.gray}}>Due {dueLabel}</div>
-          {over&&<div style={{fontSize:10,color:'var(--color-danger)',marginTop:2}}>Fee: {fmt(Math.min(late*LATE_FEE_PER_DAY,750))}</div>}
+          {over&&<div style={{fontSize:10,color:'var(--text-danger)',marginTop:2}}>Fee: {fmt(Math.min(late*LATE_FEE_PER_DAY,750))}</div>}
         </div>
         <div style={{display:'flex',gap:6,flexShrink:0,flexWrap:'wrap',justifyContent:'flex-end'}}>
-          <button onClick={()=>setReturnDress(d)} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${over?'var(--color-danger)':'var(--color-success)'}`,background:'transparent',color:over?'var(--color-danger)':'var(--color-success)',fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>✅ Return clean</button>
+          <button onClick={()=>setReturnDress(d)} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${over?'var(--color-danger)':'var(--color-success)'}`,background:'transparent',color:over?'var(--text-danger)':'var(--text-success)',fontSize:11,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>✅ Return clean</button>
           <button onClick={e=>{e.stopPropagation();setDamageAssessDress(d);}} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${C.red}`,background:C.redBg,color:C.red,fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>⚠ Damage</button>
           {over&&(
-            <button onClick={()=>handleChargeLaterFee(d)} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${C.amber}`,background:C.amberBg,color:C.amber,fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>💰 Charge fee</button>
+            <button onClick={()=>handleChargeLaterFee(d)} style={{padding:'6px 12px',borderRadius:6,border:`1px solid ${C.amber}`,background:C.amberBg,color:C.warningText,fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>💰 Charge fee</button>
           )}
           {over&&clientPhone&&(
             <button onClick={()=>{if(/Mobi|Android/i.test(navigator.userAgent))window.location.href=`tel:${clientPhone}`;else{navigator.clipboard.writeText(clientPhone);toast('Phone copied');}}} style={{padding:'6px 10px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,fontSize:11,cursor:'pointer'}}>📞</button>
@@ -651,10 +651,10 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     const found=manualSku?allGowns.find(d=>d.sku.toLowerCase()===manualSku.toLowerCase()):null;
     return(
       <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-        <div style={{background:C.white,borderRadius:16,width:400,padding:0,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
+        <div role="dialog" aria-modal="true" aria-labelledby="dressrentals-qrscan-title" style={{background:C.white,borderRadius:16,width:400,padding:0,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
           <div style={{padding:'18px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div style={{fontSize:16,fontWeight:600,color:C.ink}}>Scan QR / Enter SKU</div>
-            <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer'}}>×</button>
+            <div id="dressrentals-qrscan-title" style={{fontSize:16,fontWeight:600,color:C.ink}}>Scan QR / Enter SKU</div>
+            <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
           </div>
           <div style={{padding:24,textAlign:'center'}}>
             <div style={{width:120,height:120,margin:'0 auto 16px',background:C.ivory,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',fontSize:48}}>📷</div>
@@ -669,7 +669,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
                   <button onClick={()=>{setDetailDress(found);onClose();}} style={{marginTop:8,padding:'6px 16px',borderRadius:6,border:`1px solid ${C.rosa}`,background:C.rosa,color:C.white,fontSize:12,cursor:'pointer'}}>View dress →</button>
                 </div>
               )}
-              {manualSku.length>=3&&!found&&<div style={{fontSize:12,color:'var(--color-danger)',marginTop:8}}>No dress found with SKU "{manualSku}"</div>}
+              {manualSku.length>=3&&!found&&<div style={{fontSize:12,color:'var(--text-danger)',marginTop:8}}>No dress found with SKU "{manualSku}"</div>}
             </div>
           </div>
         </div>
@@ -734,19 +734,19 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     const STEPS=['Select dress','Link to event','Pricing','Confirm'];
     return(
       <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-        <div style={{background:C.white,borderRadius:16,width:540,maxHeight:'90vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+        <div role="dialog" aria-modal="true" aria-labelledby="dressrentals-newrental-title" style={{background:C.white,borderRadius:16,width:540,maxHeight:'90vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
           {/* Header + progress */}
           <div style={{padding:'18px 24px 12px',borderBottom:`1px solid ${C.border}`}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-              <div style={{fontSize:16,fontWeight:600,color:C.ink}}>New rental</div>
-              <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer'}}>×</button>
+              <div id="dressrentals-newrental-title" style={{fontSize:16,fontWeight:600,color:C.ink}}>New rental</div>
+              <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
             </div>
             <div style={{display:'flex',alignItems:'center'}}>
               {STEPS.map((s,i)=>(
                 <React.Fragment key={s}>
                   <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2,flexShrink:0}}>
                     <div style={{width:10,height:10,borderRadius:'50%',background:step>i+1||step===i+1?C.rosa:'#E5E7EB'}}/>
-                    <div style={{fontSize:9,color:step===i+1?C.rosa:C.gray,fontWeight:step===i+1?600:400,whiteSpace:'nowrap'}}>{s}</div>
+                    <div style={{fontSize:9,color:step===i+1?C.rosaText:C.gray,fontWeight:step===i+1?600:400,whiteSpace:'nowrap'}}>{s}</div>
                   </div>
                   {i<STEPS.length-1&&<div style={{flex:1,height:1,background:step>i+1?C.rosa:'#E5E7EB',margin:'0 4px',marginBottom:12}}/>}
                 </React.Fragment>
@@ -774,13 +774,13 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
                       <div style={{padding:'8px 10px'}}>
                         <div style={{fontSize:11,fontWeight:500,color:C.ink,marginBottom:1}}>{d.name}</div>
                         <div style={{fontSize:9,color:C.gray}}>{d.color}{d.size?` · Sz ${d.size}`:''}</div>
-                        <div style={{fontSize:12,fontWeight:600,color:selDress?.id===d.id?C.rosa:C.ink,marginTop:4}}>{fmt(d.price||0)}</div>
+                        <div style={{fontSize:12,fontWeight:600,color:selDress?.id===d.id?C.rosaText:C.ink,marginTop:4}}>{fmt(d.price||0)}</div>
                       </div>
                     </div>
                   ))}
                 </div>
               }
-              {err&&<div style={{marginTop:10,fontSize:12,color:'var(--color-danger)'}}>{err}</div>}
+              {err&&<div style={{marginTop:10,fontSize:12,color:'var(--text-danger)'}}>{err}</div>}
             </div>
             <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
               <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose}/>
@@ -793,11 +793,11 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
               {selDress&&<div style={{background:C.ivory,borderRadius:8,padding:'8px 12px',display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
                 <GownSilhouette color={selDress.color} size={20}/>
                 <div style={{flex:1}}><div style={{fontSize:12,fontWeight:500,color:C.ink}}>{selDress.name}</div><div style={{fontSize:10,color:C.gray}}>#{selDress.sku} · {selDress.color} · Sz {selDress.size}</div></div>
-                {!initialDress&&<button onClick={()=>setStep(1)} style={{fontSize:11,color:C.rosa,background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Change</button>}
+                {!initialDress&&<button onClick={()=>setStep(1)} style={{fontSize:11,color:C.rosaText,background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Change</button>}
               </div>}
               <div style={{display:'flex',gap:6,marginBottom:14}}>
                 {[['event','Link to event'],['walkin','Walk-in rental']].map(([id,l])=>(
-                  <button key={id} onClick={()=>setLinkMode(id)} style={{flex:1,padding:'8px',borderRadius:8,border:`1.5px solid ${linkMode===id?C.rosa:C.border}`,background:linkMode===id?C.rosaPale:'transparent',color:linkMode===id?C.rosa:C.gray,cursor:'pointer',fontSize:12,fontWeight:linkMode===id?500:400}}>{l}</button>
+                  <button key={id} onClick={()=>setLinkMode(id)} style={{flex:1,padding:'8px',borderRadius:8,border:`1.5px solid ${linkMode===id?C.rosa:C.border}`,background:linkMode===id?C.rosaPale:'transparent',color:linkMode===id?C.rosaText:C.gray,cursor:'pointer',fontSize:12,fontWeight:linkMode===id?500:400}}>{l}</button>
                 ))}
               </div>
               {linkMode==='event'?(
@@ -807,7 +807,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
                     {filtEvs.map(ev=>{const t=EVT_TYPES[ev.type]||{bg:C.grayBg,col:C.gray,icon:'📅'};return(
                       <button key={ev.id} onClick={()=>{setSelEvent(selEvent?.id===ev.id?null:ev);autoFillDates(ev.event_date||ev.eventDate);}} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',borderRadius:8,border:`1.5px solid ${selEvent?.id===ev.id?C.rosa:C.border}`,background:selEvent?.id===ev.id?C.rosaPale:C.white,cursor:'pointer',textAlign:'left'}}>
                         <div style={{width:26,height:26,borderRadius:6,background:t.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,flexShrink:0}}>{t.icon}</div>
-                        <div><div style={{fontSize:12,fontWeight:500,color:selEvent?.id===ev.id?C.rosa:C.ink}}>{ev.client||'(no client)'}</div><div style={{fontSize:10,color:C.gray}}>{EVT_TYPES[ev.type]?.label||ev.type} · {ev.event_date||ev.date}</div></div>
+                        <div><div style={{fontSize:12,fontWeight:500,color:selEvent?.id===ev.id?C.rosaText:C.ink}}>{ev.client||'(no client)'}</div><div style={{fontSize:10,color:C.gray}}>{EVT_TYPES[ev.type]?.label||ev.type} · {ev.event_date||ev.date}</div></div>
                       </button>
                     );})}
                     {filtEvs.length===0&&s2Query&&<div style={{fontSize:12,color:C.gray,padding:'8px 0',textAlign:'center'}}>No events found for "{s2Query}"</div>}
@@ -815,27 +815,27 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
                 </div>
               ):(
                 <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:14}}>
-                  <div><div style={LBL}>Client name *</div><input value={wiName} onChange={e=>setWiName(e.target.value)} placeholder="Full name" style={inputSt}/></div>
-                  <div><div style={LBL}>Phone</div><input value={wiPhone} onChange={e=>setWiPhone(e.target.value)} placeholder="+1 555 000-0000" style={inputSt}/></div>
+                  <div><label htmlFor="dr-winame" style={{...LBL,display:'block'}}>Client name *</label><input id="dr-winame" value={wiName} onChange={e=>setWiName(e.target.value)} placeholder="Full name" style={inputSt}/></div>
+                  <div><label htmlFor="dr-wiphone" style={{...LBL,display:'block'}}>Phone</label><input id="dr-wiphone" value={wiPhone} onChange={e=>setWiPhone(e.target.value)} placeholder="+1 555 000-0000" style={inputSt}/></div>
                   <div><div style={{...LBL,marginBottom:6}}>Purpose</div>
                     <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
                       {['Prom','Photo shoot','Party','Themed event','Other'].map(p=>(
-                        <button key={p} onClick={()=>setWiPurpose(wiPurpose===p?'':p)} style={{padding:'4px 10px',borderRadius:999,border:`1px solid ${wiPurpose===p?C.rosa:C.border}`,background:wiPurpose===p?C.rosaPale:'transparent',color:wiPurpose===p?C.rosa:C.gray,cursor:'pointer',fontSize:11}}>{p}</button>
+                        <button key={p} onClick={()=>setWiPurpose(wiPurpose===p?'':p)} style={{padding:'4px 10px',borderRadius:999,border:`1px solid ${wiPurpose===p?C.rosa:C.border}`,background:wiPurpose===p?C.rosaPale:'transparent',color:wiPurpose===p?C.rosaText:C.gray,cursor:'pointer',fontSize:11}}>{p}</button>
                       ))}
                     </div>
                   </div>
                 </div>
               )}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-                <div><div style={LBL}>Pickup date *</div><input type="date" value={pickupDate} onChange={e=>{
+                <div><label htmlFor="dr-pickupdate" style={{...LBL,display:'block'}}>Pickup date *</label><input id="dr-pickupdate" type="date" value={pickupDate} onChange={e=>{
                   const val=e.target.value;
                   setPickupDate(val);
                   if(val){const d=new Date(val+'T12:00:00');d.setDate(d.getDate()+3);setReturnDate(d.toISOString().split('T')[0]);}
                 }} style={inputSt}/></div>
-                <div><div style={LBL}>Return due *</div><input type="date" value={returnDate} onChange={e=>setReturnDate(e.target.value)} style={inputSt}/></div>
+                <div><label htmlFor="dr-returndate" style={{...LBL,display:'block'}}>Return due *</label><input id="dr-returndate" type="date" value={returnDate} onChange={e=>setReturnDate(e.target.value)} style={inputSt}/></div>
               </div>
               {rentalDays&&<div style={{fontSize:11,color:C.gray,marginTop:4}}>{rentalDays} day rental period</div>}
-              {err&&<div style={{marginTop:8,fontSize:12,color:'var(--color-danger)'}}>{err}</div>}
+              {err&&<div style={{marginTop:8,fontSize:12,color:'var(--text-danger)'}}>{err}</div>}
             </div>
             <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
               {!initialDress?<GhostBtn label="← Back" onClick={()=>setStep(1)}/>:<GhostBtn label="Cancel" colorScheme="danger" onClick={onClose}/>}
@@ -865,16 +865,16 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
               <div style={{display:'flex',gap:16,fontSize:11,color:C.gray}}>
                 <span>Pickup: <strong style={{color:C.ink}}>{pickupDate}</strong></span>
                 <span>Return: <strong style={{color:C.ink}}>{returnDate}</strong></span>
-                {rentalDays&&<span style={{color:C.rosa}}>{rentalDays}d rental</span>}
+                {rentalDays&&<span style={{color:C.rosaText}}>{rentalDays}d rental</span>}
               </div>
-              <div><div style={LBL}>Rental fee ($)</div><input type="number" value={fee} onChange={e=>setFee(e.target.value)} style={inputSt}/></div>
-              <div><div style={LBL}>Security deposit ($)</div><input type="number" value={dep} onChange={e=>setDep(e.target.value)} style={inputSt}/></div>
+              <div><label htmlFor="dr-fee" style={{...LBL,display:'block'}}>Rental fee ($)</label><input id="dr-fee" type="number" value={fee} onChange={e=>setFee(e.target.value)} style={inputSt}/></div>
+              <div><label htmlFor="dr-deposit" style={{...LBL,display:'block'}}>Security deposit ($)</label><input id="dr-deposit" type="number" value={dep} onChange={e=>setDep(e.target.value)} style={inputSt}/></div>
               <div style={{background:C.ivory,borderRadius:8,padding:'10px 14px',display:'flex',flexDirection:'column',gap:5}}>
                 <div style={{display:'flex',justifyContent:'space-between',fontSize:12}}><span style={{color:C.gray}}>Rental fee</span><span style={{fontWeight:500}}>{fmt(Number(fee)||0)}</span></div>
                 <div style={{display:'flex',justifyContent:'space-between',fontSize:12}}><span style={{color:C.gray}}>Security deposit</span><span style={{fontWeight:500}}>{fmt(Number(dep)||0)}</span></div>
-                <div style={{borderTop:`1px solid ${C.border}`,paddingTop:5,display:'flex',justifyContent:'space-between',fontSize:13,fontWeight:700}}><span>Total due</span><span style={{color:C.rosa}}>{fmt((Number(fee)||0)+(Number(dep)||0))}</span></div>
+                <div style={{borderTop:`1px solid ${C.border}`,paddingTop:5,display:'flex',justifyContent:'space-between',fontSize:13,fontWeight:700}}><span>Total due</span><span style={{color:C.rosaText}}>{fmt((Number(fee)||0)+(Number(dep)||0))}</span></div>
               </div>
-              <div><div style={LBL}>Notes (optional)</div><textarea value={notes} onChange={e=>setNotes(e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} rows={2} placeholder="Alterations needed, special instructions…" style={{...inputSt,resize:'vertical'}}/></div>
+              <div><label htmlFor="dr-rentalnotes" style={{...LBL,display:'block'}}>Notes (optional)</label><textarea id="dr-rentalnotes" value={notes} onChange={e=>setNotes(e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} rows={2} placeholder="Alterations needed, special instructions…" style={{...inputSt,resize:'vertical'}}/></div>
             </div>
             <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
               <GhostBtn label="← Back" onClick={()=>setStep(2)}/>
@@ -908,10 +908,10 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
                   </div>
                 ))}
                 <div style={{borderTop:`1px solid ${C.border}`,paddingTop:7,display:'flex',justifyContent:'space-between',fontSize:14,fontWeight:700}}>
-                  <span>Total due</span><span style={{color:C.rosa}}>{fmt((Number(fee)||0)+(Number(dep)||0))}</span>
+                  <span>Total due</span><span style={{color:C.rosaText}}>{fmt((Number(fee)||0)+(Number(dep)||0))}</span>
                 </div>
               </div>
-              {err&&<div style={{fontSize:12,color:'var(--color-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7}}>{err}</div>}
+              {err&&<div style={{fontSize:12,color:'var(--text-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7}}>{err}</div>}
             </div>
             <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
               <GhostBtn label="← Back" onClick={()=>setStep(3)}/>
@@ -943,9 +943,9 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     ];
     if(sent) return(
       <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1002,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-        <div style={{background:C.white,borderRadius:20,width:460,padding:32,textAlign:'center',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+        <div role="dialog" aria-modal="true" aria-labelledby="dressrentals-invoicesent-title" style={{background:C.white,borderRadius:20,width:460,padding:32,textAlign:'center',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
           <div style={{width:52,height:52,borderRadius:'50%',background:'var(--bg-success)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,margin:'0 auto 16px'}}>✓</div>
-          <div style={{fontSize:16,fontWeight:700,color:C.ink,marginBottom:8}}>Invoice sent!</div>
+          <div id="dressrentals-invoicesent-title" style={{fontSize:16,fontWeight:700,color:C.ink,marginBottom:8}}>Invoice sent!</div>
           <div style={{fontSize:12,color:C.gray,marginBottom:4}}>{invNum} sent to <strong>{email||rental.clientEmail||'client'}</strong></div>
           <div style={{fontSize:11,color:C.gray,marginBottom:24}}>Total: ${total.toFixed(2)}</div>
           <button onClick={onClose} style={{padding:'10px 28px',borderRadius:8,background:C.rosa,color:C.white,border:'none',cursor:'pointer',fontSize:13,fontWeight:600}}>Done</button>
@@ -954,13 +954,13 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     );
     return(
       <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1002,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-        <div style={{background:C.white,borderRadius:20,width:520,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+        <div role="dialog" aria-modal="true" aria-labelledby="dressrentals-invoice-title" style={{background:C.white,borderRadius:20,width:520,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
           <div style={{padding:'20px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <div>
-              <div style={{fontSize:15,fontWeight:700,color:C.ink}}>Create invoice</div>
+              <div id="dressrentals-invoice-title" style={{fontSize:15,fontWeight:700,color:C.ink}}>Create invoice</div>
               <div style={{fontSize:11,color:C.gray,marginTop:2}}>{invNum} · {rental.client}</div>
             </div>
-            <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer'}}>×</button>
+            <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
           </div>
           {/* Line items */}
           <div style={{padding:'16px 24px'}}>
@@ -1003,9 +1003,9 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
           </div>
           {/* Send */}
           <div style={{padding:'0 24px 24px'}}>
-            <div style={{fontSize:11,fontWeight:600,color:C.gray,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:8}}>Send to</div>
+            <label htmlFor="dr-invoiceemail" style={{fontSize:11,fontWeight:600,color:C.gray,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:8,display:'block'}}>Send to</label>
             <div style={{display:'flex',gap:8}}>
-              <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="client@email.com" style={{...inputSt,margin:0,flex:1,fontSize:13}}/>
+              <input id="dr-invoiceemail" value={email} onChange={e=>setEmail(e.target.value)} placeholder="client@email.com" style={{...inputSt,margin:0,flex:1,fontSize:13}}/>
               <button onClick={()=>{if(!email.trim()){toast('Please enter a valid email address','warn');return;}setSent(true);}} style={{padding:'9px 18px',borderRadius:8,background:C.rosa,color:C.white,border:'none',cursor:'pointer',fontSize:13,fontWeight:600,flexShrink:0}}>Send</button>
             </div>
             <button onClick={()=>{toast('Invoice #'+invNum+' created — PDF generating…','info');onClose();}} style={{width:'100%',marginTop:10,padding:'9px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,cursor:'pointer',fontSize:12}}>
@@ -1042,7 +1042,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
         <div style={{borderTop:'1px dashed #ccc',margin:'8px 0'}}/>
         <div style={{fontSize:9,color:C.gray}}>Pickup: {rental.pickupDate}</div>
         <div style={{fontSize:9,color:C.gray}}>Return due: {rental.returnDate}</div>
-        <div style={{fontSize:9,color:'var(--color-danger)',marginTop:2}}>Late fee: $25/day after return date</div>
+        <div style={{fontSize:9,color:'var(--text-danger)',marginTop:2}}>Late fee: $25/day after return date</div>
         <div style={{borderTop:'1px dashed #ccc',margin:'8px 0'}}/>
         <div style={{fontSize:9,color:C.gray,marginBottom:16}}>Client signature: ___________________</div>
         <div style={{textAlign:'center',fontSize:8,color:C.gray}}>belori.app</div>
@@ -1051,14 +1051,14 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     const LetterPreview=()=>(
       <div style={{fontFamily:'serif',fontSize:11,color:C.ink,background:C.white,border:`1px solid ${C.border}`,borderRadius:8,padding:24,lineHeight:1.7}}>
         <div style={{display:'flex',justifyContent:'space-between',marginBottom:16,paddingBottom:12,borderBottom:`2px solid ${C.rosa}`}}>
-          <div><div style={{fontSize:16,fontWeight:700,color:C.rosa}}>{(bq?.name||'Boutique').toUpperCase()}</div><div style={{fontSize:9,color:C.gray}}>{bq?.address||''}{bq?.phone?<><br/>{bq.phone}</>:''}{bq?.email?<> · {bq.email}</>:''}</div></div>
+          <div><div style={{fontSize:16,fontWeight:700,color:C.rosaText}}>{(bq?.name||'Boutique').toUpperCase()}</div><div style={{fontSize:9,color:C.gray}}>{bq?.address||''}{bq?.phone?<><br/>{bq.phone}</>:''}{bq?.email?<> · {bq.email}</>:''}</div></div>
           <div style={{textAlign:'right'}}><div style={{fontSize:11,fontWeight:600}}>RENTAL AGREEMENT</div><div style={{fontSize:9,color:C.gray}}>Date: {new Date().toLocaleDateString()}</div></div>
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:12}}>
           <div><div style={{fontSize:9,fontWeight:600,color:C.gray,textTransform:'uppercase'}}>Client</div><div style={{fontSize:11}}>{rental.client}</div></div>
           <div><div style={{fontSize:9,fontWeight:600,color:C.gray,textTransform:'uppercase'}}>Event</div><div style={{fontSize:11}}>{rental.event||'Wedding'} · {rental.eventDate||rental.pickupDate}</div></div>
           <div><div style={{fontSize:9,fontWeight:600,color:C.gray,textTransform:'uppercase'}}>Dress</div><div style={{fontSize:11}}>{rental.dress.name}</div></div>
-          <div><div style={{fontSize:9,fontWeight:600,color:C.gray,textTransform:'uppercase'}}>Return due</div><div style={{fontSize:11,color:'var(--color-danger)'}}>{rental.returnDate}</div></div>
+          <div><div style={{fontSize:9,fontWeight:600,color:C.gray,textTransform:'uppercase'}}>Return due</div><div style={{fontSize:11,color:'var(--text-danger)'}}>{rental.returnDate}</div></div>
         </div>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:11,marginBottom:12}}>
           <thead><tr style={{background:C.grayBg}}><th style={{textAlign:'left',padding:'6px 8px',borderBottom:`1px solid ${C.border}`}}>Item</th><th style={{textAlign:'right',padding:'6px 8px',borderBottom:`1px solid ${C.border}`}}>Amount</th></tr></thead>
@@ -1081,24 +1081,24 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
         <div style={{textAlign:'center'}}>
           <div style={{fontFamily:'monospace',fontSize:18,fontWeight:700,color:C.ink}}>#{rental.dress.sku||'—'}</div>
           <div style={{fontSize:9,color:C.ink,lineHeight:1.3,marginTop:2}}>{rental.dress.name}</div>
-          <div style={{fontSize:10,fontWeight:600,color:C.rosa,marginTop:4}}>{rental.client}</div>
+          <div style={{fontSize:10,fontWeight:600,color:C.rosaText,marginTop:4}}>{rental.client}</div>
           <div style={{fontSize:8,color:C.gray,marginTop:2}}>Event: {rental.eventDate||rental.pickupDate}</div>
-          <div style={{fontSize:8,color:'var(--color-danger)',fontWeight:600,marginTop:2}}>Return: {rental.returnDate}</div>
+          <div style={{fontSize:8,color:'var(--text-danger)',fontWeight:600,marginTop:2}}>Return: {rental.returnDate}</div>
         </div>
         <div style={{textAlign:'center',fontSize:6,color:C.gray,letterSpacing:'1px',textTransform:'uppercase'}}>BELORI</div>
       </div>
     );
     return(
       <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1002,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-        <div style={{background:C.white,borderRadius:20,width:520,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+        <div role="dialog" aria-modal="true" aria-labelledby="dressrentals-printreceipt-title" style={{background:C.white,borderRadius:20,width:520,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
           <div style={{padding:'18px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div style={{fontSize:15,fontWeight:700,color:C.ink}}>Print receipt</div>
-            <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer'}}>×</button>
+            <div id="dressrentals-printreceipt-title" style={{fontSize:15,fontWeight:700,color:C.ink}}>Print receipt</div>
+            <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
           </div>
           {/* Format tabs */}
           <div style={{display:'flex',gap:0,borderBottom:`1px solid ${C.border}`}}>
             {tabs.map(t=>(
-              <button key={t.k} onClick={()=>setFmt(t.k)} style={{flex:1,padding:'10px 8px',border:'none',background:fmt===t.k?C.rosaPale:C.white,color:fmt===t.k?C.rosa:C.gray,fontWeight:fmt===t.k?600:400,fontSize:12,cursor:'pointer',borderBottom:fmt===t.k?`2px solid ${C.rosa}`:'2px solid transparent',transition:'all 0.15s'}}>
+              <button key={t.k} onClick={()=>setFmt(t.k)} style={{flex:1,padding:'10px 8px',border:'none',background:fmt===t.k?C.rosaPale:C.white,color:fmt===t.k?C.rosaText:C.gray,fontWeight:fmt===t.k?600:400,fontSize:12,cursor:'pointer',borderBottom:fmt===t.k?`2px solid ${C.rosa}`:'2px solid transparent',transition:'all 0.15s'}}>
                 {t.label}
               </button>
             ))}
@@ -1145,9 +1145,9 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     useEffect(()=>{if(estTotal>0&&!quotedPrice)setQuotedPrice(String(estTotal));},[selected]);
     if(saved) return(
       <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1002,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-        <div style={{background:C.white,borderRadius:20,width:440,padding:32,textAlign:'center',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+        <div role="dialog" aria-modal="true" aria-labelledby="dressrentals-altsaved-title" style={{background:C.white,borderRadius:20,width:440,padding:32,textAlign:'center',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
           <div style={{width:52,height:52,borderRadius:'50%',background:'#EDE9FE',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,margin:'0 auto 16px'}}>✂️</div>
-          <div style={{fontSize:16,fontWeight:700,color:C.ink,marginBottom:8}}>Alteration job created</div>
+          <div id="dressrentals-altsaved-title" style={{fontSize:16,fontWeight:700,color:C.ink,marginBottom:8}}>Alteration job created</div>
           <div style={{fontSize:12,color:C.gray,marginBottom:4}}>{selected.map(k=>ALTERATION_WORK_ITEMS.find(i=>i.key===k)?.label).join(' · ')}</div>
           <div style={{fontSize:11,color:C.gray,marginBottom:4}}>Seamstress: {staff.find(s=>s.id===seamstress_id)?.name||'Unassigned'} · Due: {deadline}</div>
           <div style={{fontSize:13,fontWeight:600,color:C.ink,marginBottom:24}}>Quoted: ${parseFloat(quotedPrice||0).toFixed(2)}</div>
@@ -1157,10 +1157,10 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     );
     return(
       <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1002,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-        <div style={{background:C.white,borderRadius:20,width:500,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+        <div role="dialog" aria-modal="true" aria-labelledby="dressrentals-addalt-title" style={{background:C.white,borderRadius:20,width:500,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
           <div style={{padding:'18px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div style={{fontSize:15,fontWeight:700,color:C.ink}}>Add alteration job</div>
-            <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer'}}>×</button>
+            <div id="dressrentals-addalt-title" style={{fontSize:15,fontWeight:700,color:C.ink}}>Add alteration job</div>
+            <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
           </div>
           <div style={{padding:'16px 24px',display:'flex',flexDirection:'column',gap:14}}>
             {/* Pre-filled context */}
@@ -1182,7 +1182,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
                   const on=selected.includes(item.key);
                   return(
                     <button key={item.key} onClick={()=>toggleItem(item.key)}
-                      style={{padding:'6px 12px',borderRadius:20,border:`1.5px solid ${on?C.rosa:C.border}`,background:on?C.rosaPale:C.white,color:on?C.rosa:C.gray,fontSize:12,cursor:'pointer',fontWeight:on?600:400,transition:'all 0.15s'}}>
+                      style={{padding:'6px 12px',borderRadius:20,border:`1.5px solid ${on?C.rosa:C.border}`,background:on?C.rosaPale:C.white,color:on?C.rosaText:C.gray,fontSize:12,cursor:'pointer',fontWeight:on?600:400,transition:'all 0.15s'}}>
                       {on&&'✓ '}{item.label} <span style={{fontSize:10,opacity:0.7}}>${item.est}</span>
                     </button>
                   );
@@ -1192,29 +1192,29 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
             </div>
             {/* Seamstress */}
             <div>
-              <div style={{fontSize:11,fontWeight:600,color:C.gray,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>Seamstress</div>
-              <select value={seamstress_id} onChange={e=>setSeamstressId(e.target.value)} style={{...inputSt,margin:0,fontSize:13}}>
+              <label htmlFor="dr-seamstress" style={{fontSize:11,fontWeight:600,color:C.gray,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6,display:'block'}}>Seamstress</label>
+              <select id="dr-seamstress" value={seamstress_id} onChange={e=>setSeamstressId(e.target.value)} style={{...inputSt,margin:0,fontSize:13}}>
                 <option value="">Unassigned</option>
                 {staff.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
             {/* Deadline */}
             <div>
-              <div style={{fontSize:11,fontWeight:600,color:C.gray,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>Must be done by</div>
-              <input type="date" value={deadline} onChange={e=>setDeadline(e.target.value)} style={{...inputSt,margin:0,fontSize:13}}/>
+              <label htmlFor="dr-deadline" style={{fontSize:11,fontWeight:600,color:C.gray,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6,display:'block'}}>Must be done by</label>
+              <input id="dr-deadline" type="date" value={deadline} onChange={e=>setDeadline(e.target.value)} style={{...inputSt,margin:0,fontSize:13}}/>
               <div style={{fontSize:10,color:C.gray,marginTop:4}}>Auto-set to 5 days before event date</div>
             </div>
             {/* Notes */}
             <div>
-              <div style={{fontSize:11,fontWeight:600,color:C.gray,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>Work notes</div>
-              <textarea value={notes} onChange={e=>setNotes(e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder="e.g. Take in waist 1.5 inches. Hem to floor." rows={3} style={{...inputSt,margin:0,fontSize:12,resize:'vertical',height:72}}/>
+              <label htmlFor="dr-worknotes" style={{fontSize:11,fontWeight:600,color:C.gray,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6,display:'block'}}>Work notes</label>
+              <textarea id="dr-worknotes" value={notes} onChange={e=>setNotes(e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder="e.g. Take in waist 1.5 inches. Hem to floor." rows={3} style={{...inputSt,margin:0,fontSize:12,resize:'vertical',height:72}}/>
             </div>
             {/* Quoted price */}
             <div>
-              <div style={{fontSize:11,fontWeight:600,color:C.gray,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6}}>Quoted price</div>
+              <label htmlFor="dr-quotedprice" style={{fontSize:11,fontWeight:600,color:C.gray,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6,display:'block'}}>Quoted price</label>
               <div style={{display:'flex',alignItems:'center',gap:0}}>
                 <span style={{padding:'9px 10px',background:C.grayBg,border:`1px solid ${C.border}`,borderRight:'none',borderRadius:'8px 0 0 8px',fontSize:13,color:C.gray}}>$</span>
-                <input type="number" value={quotedPrice} onChange={e=>setQuotedPrice(e.target.value)} placeholder="0.00" style={{...inputSt,margin:0,fontSize:13,borderRadius:'0 8px 8px 0',borderLeft:'none',flex:1}}/>
+                <input id="dr-quotedprice" type="number" value={quotedPrice} onChange={e=>setQuotedPrice(e.target.value)} placeholder="0.00" style={{...inputSt,margin:0,fontSize:13,borderRadius:'0 8px 8px 0',borderLeft:'none',flex:1}}/>
               </div>
             </div>
             {/* Save */}
@@ -1250,10 +1250,10 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     const [sub,setSub]=useState(null); // 'invoice'|'print'|'alteration'
     return(
       <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:1001,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-        <div style={{background:C.white,borderRadius:20,width:500,padding:32,boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+        <div role="dialog" aria-modal="true" aria-labelledby="dressrentals-rentalok-title" style={{background:C.white,borderRadius:20,width:500,padding:32,boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
           <div style={{textAlign:'center',marginBottom:24}}>
             <div style={{width:52,height:52,borderRadius:'50%',background:C.greenBg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,margin:'0 auto 12px'}}>✓</div>
-            <div style={{fontSize:17,fontWeight:700,color:C.ink,marginBottom:6}}>Rental reserved successfully</div>
+            <div id="dressrentals-rentalok-title" style={{fontSize:17,fontWeight:700,color:C.ink,marginBottom:6}}>Rental reserved successfully</div>
             <div style={{fontSize:12,color:C.gray,lineHeight:1.7}}>
               <strong>{rental.dress.name}</strong> is now reserved for <strong>{rental.client}</strong>.<br/>
               Pickup: {rental.pickupDate} · Return due: {rental.returnDate}
@@ -1293,10 +1293,10 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     const filtered=q?all.filter(d=>(d.name+' '+d.sku+' '+(d.client?.name||d.client||'')).toLowerCase().includes(q.toLowerCase())):all;
     return(
       <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-        <div style={{background:C.white,borderRadius:16,width:440,maxHeight:'80vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+        <div role="dialog" aria-modal="true" aria-labelledby="dressrentals-logreturnsearch-title" style={{background:C.white,borderRadius:16,width:440,maxHeight:'80vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
           <div style={{padding:'18px 24px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div style={{fontSize:15,fontWeight:600,color:C.ink}}>Select dress to return</div>
-            <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer'}}>×</button>
+            <div id="dressrentals-logreturnsearch-title" style={{fontSize:15,fontWeight:600,color:C.ink}}>Select dress to return</div>
+            <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
           </div>
           <div style={{padding:'12px 20px 8px'}}><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search dress or client…" autoFocus style={{...inputSt,margin:0}}/></div>
           <div style={{flex:1,overflowY:'auto'}}>
@@ -1339,7 +1339,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
             <div style={{position:'relative',height:200,overflow:'hidden',flexShrink:0}}>
               <img src={dress.image_url} alt={dress.name} style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/>
               <div style={{position:'absolute',inset:0,background:'linear-gradient(to bottom,rgba(0,0,0,0.0) 50%,rgba(0,0,0,0.5) 100%)'}}/>
-              <button onClick={onClose} style={{position:'absolute',top:12,right:12,background:'rgba(0,0,0,0.45)',border:'none',borderRadius:'50%',width:28,height:28,color:'#fff',fontSize:18,cursor:'pointer',lineHeight:'28px',textAlign:'center'}}>×</button>
+              <button onClick={onClose} aria-label="Close" style={{position:'absolute',top:12,right:12,background:'rgba(0,0,0,0.45)',border:'none',borderRadius:'50%',width:32,height:32,color:'#fff',fontSize:18,cursor:'pointer',lineHeight:'32px',textAlign:'center'}}>×</button>
               <div style={{position:'absolute',bottom:12,left:16,right:48}}>
                 <div style={{fontSize:16,fontWeight:600,color:'#fff'}}>{dress.name}</div>
                 <div style={{fontSize:12,color:'rgba(255,255,255,0.8)'}}>#{dress.sku} · {clientName}</div>
@@ -1351,7 +1351,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
                 <div style={{fontSize:16,fontWeight:600,color:C.ink}}>{dress.name}</div>
                 <div style={{fontSize:12,color:C.gray}}>#{dress.sku} · {clientName}</div>
               </div>
-              <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,color:C.gray,cursor:'pointer'}}>×</button>
+              <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:22,color:C.gray,cursor:'pointer',padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
             </div>
           )}
 
@@ -1525,7 +1525,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
           </div>
           <div style={{display:'flex',gap:4}}>
             {[['all','All'],['bridal','Bridal'],['quince','Quinceañera'],['veil','Veil']].map(([id,l])=>(
-              <button key={id} onClick={()=>setAvCat(id)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${avCat===id?C.rosa:C.border}`,background:avCat===id?C.rosaPale:'transparent',color:avCat===id?C.rosa:C.gray,fontSize:11,fontWeight:avCat===id?500:400,cursor:'pointer'}}>{l}</button>
+              <button key={id} onClick={()=>setAvCat(id)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${avCat===id?C.rosa:C.border}`,background:avCat===id?C.rosaPale:'transparent',color:avCat===id?C.rosaText:C.gray,fontSize:11,fontWeight:avCat===id?500:400,cursor:'pointer'}}>{l}</button>
             ))}
           </div>
         </div>
@@ -1576,7 +1576,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
                   <div key={i} style={{
                     width:COL_W,flexShrink:0,padding:'4px 0',textAlign:'center',
                     fontSize:10,fontWeight:isToday?700:400,
-                    color:isToday?C.rosa:weekend?C.inkLight:C.gray,
+                    color:isToday?C.rosaText:weekend?C.inkLight:C.gray,
                     background:isToday?C.rosaPale:weekend?'#F5F4F3':'transparent',
                     borderLeft:`1px solid ${isToday?C.rosa:C.border}`,
                     position:'relative',
@@ -1731,7 +1731,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
           <div style={{fontSize:11,fontWeight:600,color:C.gray,letterSpacing:'0.08em'}}>MAINTENANCE LOG</div>
           {tableExists&&!showForm&&(
-            <button onClick={()=>setShowForm(true)} style={{padding:'4px 12px',borderRadius:6,border:`1px solid ${C.rosa}`,background:'transparent',color:C.rosa,fontSize:11,fontWeight:500,cursor:'pointer'}}>+ Log entry</button>
+            <button onClick={()=>setShowForm(true)} style={{padding:'4px 12px',borderRadius:6,border:`1px solid ${C.rosa}`,background:'transparent',color:C.rosaText,fontSize:11,fontWeight:500,cursor:'pointer'}}>+ Log entry</button>
           )}
         </div>
 
@@ -1746,28 +1746,28 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
           <div style={{background:C.ivory,borderRadius:10,padding:14,marginBottom:12,display:'flex',flexDirection:'column',gap:10}}>
             <div style={{fontSize:12,fontWeight:600,color:C.ink}}>New maintenance entry</div>
             <div>
-              <div style={LBL}>Type</div>
-              <select value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))} style={{...inputSt,margin:0}}>
+              <label htmlFor="rent-maint-type" style={LBL}>Type</label>
+              <select id="rent-maint-type" value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))} style={{...inputSt,margin:0}}>
                 {Object.entries(TYPE_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}
               </select>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
               <div>
-                <div style={LBL}>Date</div>
-                <input type="date" value={form.performed_at} onChange={e=>setForm(f=>({...f,performed_at:e.target.value}))} style={{...inputSt,margin:0}}/>
+                <label htmlFor="rent-maint-date" style={LBL}>Date</label>
+                <input id="rent-maint-date" type="date" value={form.performed_at} onChange={e=>setForm(f=>({...f,performed_at:e.target.value}))} style={{...inputSt,margin:0}}/>
               </div>
               <div>
-                <div style={LBL}>Cost ($)</div>
-                <input type="number" placeholder="0.00" value={form.cost} onChange={e=>setForm(f=>({...f,cost:e.target.value}))} style={{...inputSt,margin:0}}/>
+                <label htmlFor="rent-maint-cost" style={LBL}>Cost ($)</label>
+                <input id="rent-maint-cost" type="number" placeholder="0.00" value={form.cost} onChange={e=>setForm(f=>({...f,cost:e.target.value}))} style={{...inputSt,margin:0}}/>
               </div>
             </div>
             <div>
-              <div style={LBL}>Performed by</div>
-              <input placeholder="Staff name" value={form.performed_by} onChange={e=>setForm(f=>({...f,performed_by:e.target.value}))} style={{...inputSt,margin:0}}/>
+              <label htmlFor="rent-maint-by" style={LBL}>Performed by</label>
+              <input id="rent-maint-by" placeholder="Staff name" value={form.performed_by} onChange={e=>setForm(f=>({...f,performed_by:e.target.value}))} style={{...inputSt,margin:0}}/>
             </div>
             <div>
-              <div style={LBL}>Notes</div>
-              <textarea rows={2} placeholder="Details about the work done…" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} style={{...inputSt,margin:0,resize:'vertical'}}/>
+              <label htmlFor="rent-maint-notes" style={LBL}>Notes</label>
+              <textarea id="rent-maint-notes" rows={2} placeholder="Details about the work done…" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} style={{...inputSt,margin:0,resize:'vertical'}}/>
             </div>
             <div style={{display:'flex',gap:8}}>
               <button onClick={handleSave} disabled={saving} style={{flex:1,padding:'8px',borderRadius:8,background:C.rosa,color:C.white,border:'none',cursor:'pointer',fontSize:12,fontWeight:600,opacity:saving?0.7:1}}>{saving?'Saving…':'Save entry'}</button>
@@ -1842,7 +1842,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
           {id:'availability',label:'📅 Availability'},
           {id:'history',label:'History'},
         ].map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:'10px 16px',border:'none',borderBottom:`2px solid ${tab===t.id?C.rosa:'transparent'}`,background:'transparent',color:tab===t.id?C.rosa:C.gray,fontSize:13,fontWeight:tab===t.id?600:400,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:'10px 16px',border:'none',borderBottom:`2px solid ${tab===t.id?C.rosa:'transparent'}`,background:'transparent',color:tab===t.id?C.rosaText:C.gray,fontSize:13,fontWeight:tab===t.id?600:400,cursor:'pointer',display:'flex',alignItems:'center',gap:6}}>
             {t.label}
             {t.badge>0&&<span style={{background:t.badgeRed?C.red:C.grayBg,color:t.badgeRed?C.white:C.gray,fontSize:10,fontWeight:600,padding:'1px 7px',borderRadius:999}}>{t.badge}</span>}
           </button>
@@ -1863,18 +1863,18 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
               </div>
               <div style={{display:'flex',gap:4}}>
                 {[['all','All'],['available','Available'],['cleaning','Cleaning']].map(([s,l])=>(
-                  <button key={s} onClick={()=>setStatusFilter(s)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${statusFilter===s?C.rosa:C.border}`,background:statusFilter===s?C.rosaPale:'transparent',color:statusFilter===s?C.rosa:C.gray,fontSize:11,fontWeight:statusFilter===s?500:400,cursor:'pointer'}}>{l}</button>
+                  <button key={s} onClick={()=>setStatusFilter(s)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${statusFilter===s?C.rosa:C.border}`,background:statusFilter===s?C.rosaPale:'transparent',color:statusFilter===s?C.rosaText:C.gray,fontSize:11,fontWeight:statusFilter===s?500:400,cursor:'pointer'}}>{l}</button>
                 ))}
               </div>
               <div style={{display:'flex',gap:4}}>
                 {[['all','All'],['bridal','Bridal'],['quince','Quinceañera']].map(([id,l])=>(
-                  <button key={id} onClick={()=>setCatFilter(id)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${catFilter===id?C.rosa:C.border}`,background:catFilter===id?C.rosaPale:'transparent',color:catFilter===id?C.rosa:C.gray,fontSize:11,fontWeight:catFilter===id?500:400,cursor:'pointer'}}>{l}</button>
+                  <button key={id} onClick={()=>setCatFilter(id)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${catFilter===id?C.rosa:C.border}`,background:catFilter===id?C.rosaPale:'transparent',color:catFilter===id?C.rosaText:C.gray,fontSize:11,fontWeight:catFilter===id?500:400,cursor:'pointer'}}>{l}</button>
                 ))}
               </div>
               {/* View toggle */}
               <div style={{display:'flex',border:`1px solid ${C.border}`,borderRadius:8,overflow:'hidden',flexShrink:0}}>
-                <button onClick={()=>setCatalogView('grid')} title="Grid view" style={{padding:'5px 10px',border:'none',background:catalogView==='grid'?C.rosaPale:'transparent',color:catalogView==='grid'?C.rosa:C.gray,cursor:'pointer',fontSize:14,lineHeight:1}}>⊞</button>
-                <button onClick={()=>setCatalogView('list')} title="List view" style={{padding:'5px 10px',border:'none',borderLeft:`1px solid ${C.border}`,background:catalogView==='list'?C.rosaPale:'transparent',color:catalogView==='list'?C.rosa:C.gray,cursor:'pointer',fontSize:14,lineHeight:1}}>☰</button>
+                <button onClick={()=>setCatalogView('grid')} title="Grid view" style={{padding:'5px 10px',border:'none',background:catalogView==='grid'?C.rosaPale:'transparent',color:catalogView==='grid'?C.rosaText:C.gray,cursor:'pointer',fontSize:14,lineHeight:1}}>⊞</button>
+                <button onClick={()=>setCatalogView('list')} title="List view" style={{padding:'5px 10px',border:'none',borderLeft:`1px solid ${C.border}`,background:catalogView==='list'?C.rosaPale:'transparent',color:catalogView==='list'?C.rosaText:C.gray,cursor:'pointer',fontSize:14,lineHeight:1}}>☰</button>
               </div>
             </div>
 
@@ -1883,7 +1883,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
               <div style={{display:'flex',alignItems:'center',gap:6,padding:'7px 12px',borderRadius:8,background:C.grayBg,marginBottom:12,fontSize:12,color:C.gray}}>
                 <span>👗</span>
                 <span>{counts.rented+counts.reserved} dress{counts.rented+counts.reserved!==1?'es':''} currently rented or reserved — view them in</span>
-                <button onClick={()=>setTab('active')} style={{padding:0,border:'none',background:'none',color:C.rosa,fontWeight:600,fontSize:12,cursor:'pointer',textDecoration:'underline'}}>Active rentals →</button>
+                <button onClick={()=>setTab('active')} style={{padding:0,border:'none',background:'none',color:C.rosaText,fontWeight:600,fontSize:12,cursor:'pointer',textDecoration:'underline'}}>Active rentals →</button>
               </div>
             )}
 
@@ -2056,9 +2056,9 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
       {/* Late fee inline confirm modal (Task 1) */}
       {lateFeeConfirm&&(
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1010,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-          <div style={{background:C.white,borderRadius:14,width:360,padding:24,boxShadow:'0 20px 60px rgba(0,0,0,0.18)',textAlign:'center'}}>
+          <div role="dialog" aria-modal="true" aria-labelledby="dressrentals-latefee-title" style={{background:C.white,borderRadius:14,width:360,padding:24,boxShadow:'0 20px 60px rgba(0,0,0,0.18)',textAlign:'center'}}>
             <div style={{fontSize:28,marginBottom:10}}>💰</div>
-            <div style={{fontSize:15,fontWeight:600,color:C.ink,marginBottom:6}}>Charge late return fee?</div>
+            <div id="dressrentals-latefee-title" style={{fontSize:15,fontWeight:600,color:C.ink,marginBottom:6}}>Charge late return fee?</div>
             <div style={{fontSize:13,color:C.gray,marginBottom:4}}>
               {fmt(lateFeeConfirm.feeAmount)} for {lateFeeConfirm.daysLate} day{lateFeeConfirm.daysLate!==1?'s':''} late
             </div>

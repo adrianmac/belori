@@ -3,7 +3,12 @@
  *
  * Sends events to Inngest via the inngest-send edge function,
  * keeping INNGEST_EVENT_KEY server-side.
+ *
+ * Auth: passes the current Supabase session JWT so the edge function
+ * can reject unauthenticated callers.
  */
+
+import { supabase } from './supabase'
 
 const SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inngest-send`
 
@@ -16,9 +21,18 @@ const SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inngest-send
  */
 export async function sendInngestEvent(name, data = {}) {
   try {
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+    if (!token) {
+      console.warn('[inngest] No auth session — skipping event:', name)
+      return
+    }
     await fetch(SEND_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
       body: JSON.stringify({ name, data }),
     })
   } catch (err) {

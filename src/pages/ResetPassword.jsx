@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useNavigate, Link } from 'react-router-dom'
 
 const C = {
-  rosa: '#C9697A', ink: '#1C1012', gray: '#6B7280', border: '#E5E7EB',
+  rosa: '#C9697A', rosaText: '#8B3A4A', ink: '#1C1012', gray: '#6B7280', border: '#E5E7EB',
   white: '#FFFFFF', ivory: '#F8F4F0', red: '#B91C1C', redBg: '#FEE2E2',
 }
 const inp = { width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 14, color: C.ink, outline: 'none', boxSizing: 'border-box' }
@@ -62,7 +62,7 @@ export default function ResetPassword() {
                 {error || 'Verifying reset link…'}
               </div>
               {error && (
-                <Link to="/forgot-password" style={{ color: C.rosa, fontSize: 13, fontWeight: 500, textDecoration: 'none', marginTop: 16, display: 'block' }}>
+                <Link to="/forgot-password" style={{ color: C.rosaText, fontSize: 13, fontWeight: 500, textDecoration: 'none', marginTop: 16, display: 'block' }}>
                   Request a new link →
                 </Link>
               )}

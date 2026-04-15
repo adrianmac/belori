@@ -2,18 +2,18 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
-export function useAlterations() {
+export function useAlterations({ enabled = true } = {}) {
   const { boutique } = useAuth()
   const [alterations, setAlterations] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!boutique) return
+    if (!boutique || !enabled) return
     fetchAlterations()
-  }, [boutique?.id])
+  }, [boutique?.id, enabled])
 
   useEffect(() => {
-    if (!boutique) return
+    if (!boutique || !enabled) return
     const channel = supabase
       .channel('alteration-jobs-rt-' + boutique.id)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'alteration_jobs', filter: 'boutique_id=eq.' + boutique.id }, () => fetchAlterations())
@@ -22,7 +22,7 @@ export function useAlterations() {
       channel.unsubscribe()
       supabase.removeChannel(channel)
     }
-  }, [boutique?.id])
+  }, [boutique?.id, enabled])
 
   async function fetchAlterations() {
     setLoading(true)
@@ -37,6 +37,8 @@ export function useAlterations() {
       `)
       .eq('boutique_id', boutique.id)
       .order('created_at', { ascending: false })
+      // Limit to most recent 300 jobs — older history can be added via a "History" tab
+      .limit(300)
 
     if (!error && data) {
       setAlterations(data.map(job => {

@@ -16,7 +16,7 @@ import { useLayoutMode } from '../hooks/useLayoutMode.jsx'
 function countdownConfig(daysUntil) {
   if (daysUntil <= 0)  return { text: 'Today!', bg: C.redBg,   color: C.red   }
   if (daysUntil <= 7)  return { text: `${daysUntil}d`, bg: C.redBg,   color: C.red   }
-  if (daysUntil <= 30) return { text: `${daysUntil}d`, bg: C.amberBg, color: C.amber }
+  if (daysUntil <= 30) return { text: `${daysUntil}d`, bg: C.amberBg, color: C.warningText }
   return                      { text: `${daysUntil}d`, bg: C.blueBg,  color: C.blue  }
 }
 
@@ -123,7 +123,7 @@ function SectionCard({ title, action, onAction, children }) {
         <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{title}</span>
         {action && (
           <button onClick={onAction} style={{
-            fontSize: 12, color: C.rosa, background: 'none', border: 'none',
+            fontSize: 12, color: C.rosaText, background: 'none', border: 'none',
             cursor: 'pointer', fontWeight: 500, padding: '2px 6px',
           }}>{action}</button>
         )}
@@ -319,7 +319,7 @@ function AppointmentsSection({ event, boutique, staff, createAppointment, onRefe
         <div key={i} style={{
           display: 'flex', alignItems: 'center', gap: 8,
           padding: '7px 10px', borderRadius: 8,
-          background: C.amberBg, color: C.amber,
+          background: C.amberBg, color: C.warningText,
           fontSize: 12, fontWeight: 500,
           marginBottom: 6,
         }}>
@@ -365,14 +365,14 @@ function AppointmentsSection({ event, boutique, staff, createAppointment, onRefe
         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <div>
-              <div style={LBL}>Type</div>
-              <select value={type} onChange={e => setType(e.target.value)} style={{ ...inputSt }}>
+              <label htmlFor="eplan-appt-type" style={LBL}>Type</label>
+              <select id="eplan-appt-type" value={type} onChange={e => setType(e.target.value)} style={{ ...inputSt }}>
                 {APPT_TYPES.map(t => <option key={t} value={t}>{apptTypeLabel(t)}</option>)}
               </select>
             </div>
             <div>
-              <div style={LBL}>Staff</div>
-              <select value={staffId} onChange={e => setStaffId(e.target.value)} style={{ ...inputSt }}>
+              <label htmlFor="eplan-appt-staff" style={LBL}>Staff</label>
+              <select id="eplan-appt-staff" value={staffId} onChange={e => setStaffId(e.target.value)} style={{ ...inputSt }}>
                 <option value="">— Unassigned —</option>
                 {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
@@ -380,12 +380,12 @@ function AppointmentsSection({ event, boutique, staff, createAppointment, onRefe
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <div>
-              <div style={LBL}>Date</div>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ ...inputSt }} />
+              <label htmlFor="eplan-appt-date" style={LBL}>Date</label>
+              <input id="eplan-appt-date" type="date" value={date} onChange={e => setDate(e.target.value)} style={{ ...inputSt }} />
             </div>
             <div>
-              <div style={LBL}>Time</div>
-              <input type="time" value={time} onChange={e => setTime(e.target.value)} style={{ ...inputSt }} />
+              <label htmlFor="eplan-appt-time" style={LBL}>Time</label>
+              <input id="eplan-appt-time" type="time" value={time} onChange={e => setTime(e.target.value)} style={{ ...inputSt }} />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -547,7 +547,7 @@ function NotesSection({ eventId }) {
       {notes.length > 3 && !expanded && (
         <button
           onClick={() => setExpanded(true)}
-          style={{ fontSize: 12, color: C.rosa, background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0' }}
+          style={{ fontSize: 12, color: C.rosaText, background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0' }}
         >Show {notes.length - 3} more notes</button>
       )}
 
@@ -749,7 +749,7 @@ export default function EventPlanning({ setScreen, setSelectedEvent }) {
           </span>
         )}
         {totalOverdue > 0 && (
-          <span style={{ fontSize: 12, color: C.amber, fontWeight: 600, background: C.amberBg, padding: '2px 8px', borderRadius: 6 }}>
+          <span style={{ fontSize: 12, color: C.warningText, fontWeight: 600, background: C.amberBg, padding: '2px 8px', borderRadius: 6 }}>
             {fmt(totalOverdue)} overdue
           </span>
         )}
@@ -781,7 +781,7 @@ export default function EventPlanning({ setScreen, setSelectedEvent }) {
                 style={{
                   flex: '1 1 0', padding: '10px 6px', fontSize: 11, fontWeight: 600,
                   border: 'none', background: 'none', cursor: 'pointer',
-                  color: filter === f.id ? C.rosa : C.gray,
+                  color: filter === f.id ? C.rosaText : C.gray,
                   borderBottom: filter === f.id ? `2px solid ${C.rosa}` : '2px solid transparent',
                   whiteSpace: 'nowrap',
                   transition: 'color 0.12s, border-color 0.12s',

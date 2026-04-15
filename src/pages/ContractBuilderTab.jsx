@@ -141,11 +141,12 @@ const GenerateModal = ({ template, boutique, onClose }) => {
         <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Event picker */}
           <div>
-            <div style={LBL}>Select an event</div>
+            <label htmlFor="cbt-event" style={LBL}>Select an event</label>
             {loading ? (
               <div style={{ fontSize: 13, color: C.gray }}>Loading events…</div>
             ) : (
               <select
+                id="cbt-event"
                 value={selectedEventId}
                 onChange={e => setSelectedEventId(e.target.value)}
                 style={{ ...inputSt }}>
@@ -269,8 +270,9 @@ const EditPanel = ({ template, onSave, onCancel, onDelete, saving, boutique }) =
 
         {/* Name */}
         <div>
-          <div style={LBL}>Template name</div>
+          <label htmlFor="cbt-name" style={LBL}>Template name</label>
           <input
+            id="cbt-name"
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             placeholder="e.g. Standard Wedding Contract"
@@ -281,10 +283,10 @@ const EditPanel = ({ template, onSave, onCancel, onDelete, saving, boutique }) =
         {/* Body */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <div style={LBL}>Contract body</div>
+            <label htmlFor="cbt-body" style={LBL}>Contract body</label>
             <button
               onClick={() => setShowPreview(p => !p)}
-              style={{ background: 'none', border: 'none', fontSize: 12, color: C.rosa, cursor: 'pointer', padding: 0 }}>
+              style={{ background: 'none', border: 'none', fontSize: 12, color: C.rosaText, cursor: 'pointer', padding: 0 }}>
               {showPreview ? 'Edit' : 'Preview (sample data)'}
             </button>
           </div>
@@ -314,6 +316,7 @@ const EditPanel = ({ template, onSave, onCancel, onDelete, saving, boutique }) =
             </pre>
           ) : (
             <textarea
+              id="cbt-body"
               ref={bodyRef}
               value={form.body}
               onChange={e => setForm(f => ({ ...f, body: e.target.value }))}

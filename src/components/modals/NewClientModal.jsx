@@ -47,22 +47,22 @@ const NewClientModal = ({ onClose, createClient, onSuccess }) => {
         </div>
         <div style={{flex:1,overflowY:'auto',padding:24,display:'flex',flexDirection:'column',gap:16}}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-            <div><div style={{...LBL}}>First name *</div><input value={newCl.firstName} onChange={e=>setNewCl(n=>({...n,firstName:e.target.value}))} placeholder="Sophia" style={{...inputSt}}/></div>
-            <div><div style={{...LBL}}>Last name *</div><input value={newCl.lastName} onChange={e=>setNewCl(n=>({...n,lastName:e.target.value}))} placeholder="Rodriguez" style={{...inputSt}}/></div>
+            <div><label htmlFor="ncl-first" style={LBL}>First name *</label><input id="ncl-first" value={newCl.firstName} onChange={e=>setNewCl(n=>({...n,firstName:e.target.value}))} placeholder="Sophia" style={{...inputSt}}/></div>
+            <div><label htmlFor="ncl-last" style={LBL}>Last name *</label><input id="ncl-last" value={newCl.lastName} onChange={e=>setNewCl(n=>({...n,lastName:e.target.value}))} placeholder="Rodriguez" style={{...inputSt}}/></div>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-            <div><div style={{...LBL}}>Phone *</div><input value={newCl.phone} onChange={e=>setNewCl(n=>({...n,phone:e.target.value}))} placeholder="(956) 555-0123" style={{...inputSt}} type="tel"/></div>
-            <div><div style={{...LBL}}>Email</div><input value={newCl.email} onChange={e=>setNewCl(n=>({...n,email:e.target.value}))} placeholder="email@example.com" style={{...inputSt}} type="email"/></div>
+            <div><label htmlFor="ncl-phone" style={LBL}>Phone *</label><input id="ncl-phone" value={newCl.phone} onChange={e=>setNewCl(n=>({...n,phone:e.target.value}))} placeholder="(956) 555-0123" style={{...inputSt}} type="tel"/></div>
+            <div><label htmlFor="ncl-email" style={LBL}>Email</label><input id="ncl-email" value={newCl.email} onChange={e=>setNewCl(n=>({...n,email:e.target.value}))} placeholder="email@example.com" style={{...inputSt}} type="email"/></div>
           </div>
-          <div><div style={{...LBL}}>Partner / honoree name</div><input value={newCl.partner} onChange={e=>setNewCl(n=>({...n,partner:e.target.value}))} placeholder="Wedding: partner · Quinceañera: honoree" style={{...inputSt}}/></div>
+          <div><label htmlFor="ncl-partner" style={LBL}>Partner / honoree name</label><input id="ncl-partner" value={newCl.partner} onChange={e=>setNewCl(n=>({...n,partner:e.target.value}))} placeholder="Wedding: partner · Quinceañera: honoree" style={{...inputSt}}/></div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-            <div><div style={{...LBL}}>Preferred language</div><select value={newCl.language} onChange={e=>setNewCl(n=>({...n,language:e.target.value}))} style={{...inputSt}}><option value="en">English</option><option value="es">Spanish</option><option value="both">Both</option></select></div>
-            <div><div style={{...LBL}}>How found us</div><select value={newCl.howFound} onChange={e=>setNewCl(n=>({...n,howFound:e.target.value}))} style={{...inputSt}}><option value="">Select…</option>{Object.entries(HOW_FOUND_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
+            <div><label htmlFor="ncl-lang" style={LBL}>Preferred language</label><select id="ncl-lang" value={newCl.language} onChange={e=>setNewCl(n=>({...n,language:e.target.value}))} style={{...inputSt}}><option value="en">English</option><option value="es">Spanish</option><option value="both">Both</option></select></div>
+            <div><label htmlFor="ncl-howfound" style={LBL}>How found us</label><select id="ncl-howfound" value={newCl.howFound} onChange={e=>setNewCl(n=>({...n,howFound:e.target.value}))} style={{...inputSt}}><option value="">Select…</option>{Object.entries(HOW_FOUND_LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
           </div>
-          <div><div style={{...LBL}}>Referred by <span style={{fontWeight:400,color:'#9CA3AF'}}>(optional — person's name)</span></div><input value={newCl.referredBy} onChange={e=>setNewCl(n=>({...n,referredBy:e.target.value}))} placeholder="e.g. Maria Lopez" style={{...inputSt}}/></div>
+          <div><label htmlFor="ncl-referred" style={LBL}>Referred by <span style={{fontWeight:400,color:'#9CA3AF'}}>(optional — person's name)</span></label><input id="ncl-referred" value={newCl.referredBy} onChange={e=>setNewCl(n=>({...n,referredBy:e.target.value}))} placeholder="e.g. Maria Lopez" style={{...inputSt}}/></div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-            <div><div style={{...LBL}}>Birthday <span style={{fontWeight:400,color:'#9CA3AF'}}>(optional)</span></div><input value={newCl.birthday} onChange={e=>setNewCl(n=>({...n,birthday:e.target.value}))} type="date" style={{...inputSt}}/></div>
-            <div><div style={{...LBL}}>Anniversary <span style={{fontWeight:400,color:'#9CA3AF'}}>(optional)</span></div><input value={newCl.anniversary} onChange={e=>setNewCl(n=>({...n,anniversary:e.target.value}))} type="date" style={{...inputSt}}/></div>
+            <div><label htmlFor="ncl-birthday" style={LBL}>Birthday <span style={{fontWeight:400,color:'#9CA3AF'}}>(optional)</span></label><input id="ncl-birthday" value={newCl.birthday} onChange={e=>setNewCl(n=>({...n,birthday:e.target.value}))} type="date" style={{...inputSt}}/></div>
+            <div><label htmlFor="ncl-anniversary" style={LBL}>Anniversary <span style={{fontWeight:400,color:'#9CA3AF'}}>(optional)</span></label><input id="ncl-anniversary" value={newCl.anniversary} onChange={e=>setNewCl(n=>({...n,anniversary:e.target.value}))} type="date" style={{...inputSt}}/></div>
           </div>
         </div>
         <div style={{padding:'16px 24px',borderTop:`1px solid ${C.border}`,background:C.grayBg,display:'flex',justifyContent:'flex-end',gap:12}}>

@@ -22,7 +22,7 @@ export const QRModal = ({dress, onClose}) => {
           <div style={{fontSize:10,color:C.gray,textAlign:'center',wordBreak:'break-all'}}>{url.slice(0,40)}…</div>
           <div style={{display:'flex',gap:8,width:'100%'}}>
             <a href={qrSrc} download={`qr-${dress.sku}.png`} style={{flex:1,textAlign:'center',padding:'9px',borderRadius:8,border:`1px solid ${C.border}`,color:C.gray,fontSize:12,cursor:'pointer',textDecoration:'none'}}>Download PNG</a>
-            <button onClick={()=>window.print()} style={{flex:1,padding:'9px',borderRadius:8,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosa,fontSize:12,cursor:'pointer',fontWeight:500}}>Print label</button>
+            <button onClick={()=>window.print()} style={{flex:1,padding:'9px',borderRadius:8,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,fontSize:12,cursor:'pointer',fontWeight:500}}>Print label</button>
           </div>
         </div>
       </div>

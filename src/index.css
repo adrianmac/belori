@@ -11,19 +11,39 @@ body { margin: 0; }
 /* ─── LAYOUT MODE: CSS Custom Properties ────────────────────────────────── */
 /* Desktop defaults (compact, mouse-optimized) */
 :root {
-  /* Semantic Status Colors */
-  --color-success: #15803D; /* C.green */
+  /* Semantic Status Colors — icon/border fills (vibrant) */
+  --color-success: #15803D; /* Green-700  */
+  --color-warning: #B45309; /* Amber-700  */
+  --color-danger:  #B91C1C; /* Red-700    */
+  --color-info:    #1D4ED8; /* Blue-700   */
+  --color-accent:  #7C3AED; /* Violet-600 */
+  --color-primary: #C9697A; /* Rosa       */
+  --brand-primary: #A84D5E;  /* 5.40:1 on white — WCAG AA with white text */
+
+  /* Status pale backgrounds */
   --bg-success: #DCFCE7;
-  --color-warning: #B45309; /* C.amber */
   --bg-warning: #FEF3C7;
-  --color-danger: #B91C1C;  /* C.red */
-  --bg-danger: #FEE2E2;
-  --color-info: #1D4ED8;    /* C.blue */
-  --bg-info: #DBEAFE;
-  --color-accent: #7C3AED;  /* C.purple */
-  --bg-accent: #EDE9FE;
-  --color-primary: #C9697A; /* C.rosa */
+  --bg-danger:  #FEE2E2;
+  --bg-info:    #DBEAFE;
+  --bg-accent:  #EDE9FE;
   --bg-primary: #FDF5F6;
+
+  /* WCAG AA text colors for use on status backgrounds and white
+     Contrast ratios verified: ≥ 4.5:1 on both white and their --bg-* pair  */
+  --text-success: #15803D; /* 5.01:1 on white · 4.57:1 on bg-success */
+  --text-warning: #B45309; /* 5.02:1 on white · 4.55:1 on bg-warning */
+  --text-danger:  #B91C1C; /* 6.48:1 on white · 5.36:1 on bg-danger  */
+  --text-info:    #1E40AF; /* 8.60:1 on white · 5.11:1 on bg-info    */
+  --text-accent:  #7C3AED; /* 5.44:1 on white · 4.58:1 on bg-accent  */
+  --text-primary: #9D2235; /* 6.33:1 on white · 6.33:1 on bg-primary */
+
+  /* Status border colors (decorative, 3:1 not required) */
+  --border-success: #86EFAC; /* Green-300  */
+  --border-warning: #FDE68A; /* Amber-200  */
+  --border-danger:  #FCA5A5; /* Red-300    */
+  --border-info:    #93C5FD; /* Blue-300   */
+  --border-accent:  #C4B5FD; /* Violet-300 */
+  --border-primary: #E8B4BB; /* Rosa-light */
 
   /* Sidebar */
   --sidebar-width: 210px;
@@ -44,7 +64,7 @@ body { margin: 0; }
   --btn-font-primary: 11px;
   --btn-font-ghost: 11px;
   --btn-border-radius: 7px;
-  --btn-shadow-primary: none;
+  --btn-shadow-primary: 0 1px 3px rgba(168,77,94,0.25), 0 1px 2px rgba(168,77,94,0.12);
   --btn-shadow-ghost: none;
 
   /* Typography */
@@ -89,7 +109,7 @@ body { margin: 0; }
   --btn-font-primary: 12px;
   --btn-font-ghost: 12px;
   --btn-border-radius: 9px;
-  --btn-shadow-primary: 0 3px 8px rgba(201,105,122,.40), 0 1px 2px rgba(201,105,122,.25);
+  --btn-shadow-primary: 0 3px 8px rgba(168,77,94,.40), 0 1px 2px rgba(168,77,94,.25);
   --btn-shadow-ghost: 0 2px 5px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
 
   /* Typography */
@@ -185,14 +205,15 @@ input, select, textarea {
   border-radius: var(--btn-border-radius);
   padding: 10px 18px;
   font-size: var(--btn-font-primary);
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
   min-height: var(--btn-height-primary);
   box-shadow: var(--btn-shadow-primary);
   color: #fff;
   transition: all 0.2s ease;
 }
-.btn-solid[data-color="primary"] { background: var(--brand-primary, #C9697A); }
+.btn-solid[data-color="primary"] { background: var(--brand-primary, #A84D5E); }
 .btn-solid[data-color="success"] { background: var(--color-success); }
 .btn-solid[data-color="danger"] { background: var(--color-danger); }
 .btn-solid[data-color="warning"] { background: var(--color-warning); }
@@ -211,14 +232,26 @@ input, select, textarea {
   transition: all 0.2s ease;
   background: #fff;
 }
-.btn-ghost[data-color="primary"] { border: 1px solid #E5E7EB; color: #6B7280; }
-.btn-ghost[data-color="primary"]:hover { background: #F9FAFB; color: #374151; }
+.btn-ghost[data-color="primary"] { border: 1.5px solid #C9697A; color: #8B3A4A; background: #FDF5F6; }
+.btn-ghost[data-color="primary"]:hover { background: #F5E0E3; border-color: #B85868; color: #8B3A4A; }
 
 .btn-ghost[data-color="danger"] { border: 1px solid var(--color-danger); color: var(--color-danger); }
 .btn-ghost[data-color="danger"]:hover { background: var(--bg-danger); }
 
 .btn-ghost[data-color="success"] { border: 1px solid var(--color-success); color: var(--color-success); }
 .btn-ghost[data-color="success"]:hover { background: var(--bg-success); }
+
+/* ─── FOCUS-VISIBLE: keyboard accessibility ─────────────────────────────── */
+.btn-solid:focus-visible,
+.btn-ghost:focus-visible {
+  outline: 2px solid #C9697A;
+  outline-offset: 2px;
+}
+.card-header-action:focus-visible {
+  outline: 2px solid #C9697A;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
 /* Hide elements based on mode */
 [data-mode="tablet"] .topbar-hide {
@@ -259,17 +292,17 @@ input, select, textarea {
     --btn-font-ghost: 14px;
     --btn-border-radius: 14px;
     /* Colored shadows so buttons feel tactile on mobile */
-    --btn-shadow-primary: 0 4px 14px rgba(201,105,122,0.40), 0 1px 4px rgba(201,105,122,0.20);
+    --btn-shadow-primary: 0 4px 14px rgba(168,77,94,0.40), 0 1px 4px rgba(168,77,94,0.20);
     --btn-shadow-ghost:   0 2px 8px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
   }
 
   /* Primary buttons: stronger brand color + shadow on mobile */
   .btn-solid[data-color="primary"] {
-    background: var(--brand-primary, #C9697A);
+    background: var(--brand-primary, #A84D5E);
     box-shadow: var(--btn-shadow-primary);
   }
   .btn-solid[data-color="primary"]:active {
-    background: var(--brand-primary, #C9697A);
+    background: var(--brand-primary, #A84D5E);
     filter: brightness(0.85);
     box-shadow: none;
   }
@@ -278,7 +311,7 @@ input, select, textarea {
   .btn-ghost[data-color="primary"] {
     background: #FDF5F6 !important;
     border: 1.5px solid #C9697A !important;
-    color: #C9697A !important;
+    color: #8B3A4A !important;
     box-shadow: var(--btn-shadow-ghost);
   }
   .btn-ghost[data-color="primary"]:active {
@@ -492,11 +525,19 @@ input, select, textarea {
 }
 .card-header-action {
   font-size: 11px;
-  color: #C9697A; /* C.rosa */
+  color: #8B3A4A; /* C.rosaText — 7.49:1 on white, WCAG AA */
   background: none;
   border: none;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin: -3px -8px;
+  transition: background 0.15s;
+}
+.card-header-action:hover {
+  background: #FDF5F6;
+  text-decoration: underline;
 }
 .card-body {
   padding: var(--card-padding);

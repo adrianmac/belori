@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { C, fmt, EVT_TYPES } from '../lib/colors'
-import { Topbar, inputSt, LBL } from '../lib/ui.jsx'
+import { Topbar, inputSt, LBL, ConfirmModal } from '../lib/ui.jsx'
 import { useExpenses } from '../hooks/useExpenses'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -13,7 +13,7 @@ const CATEGORIES = [
   { key: 'rent',       label: 'Rent',        color: C.gray,    bg: C.grayBg   },
   { key: 'utilities',  label: 'Utilities',   color: '#C2410C', bg: '#FFF7ED'  },
   { key: 'flowers',    label: 'Flowers',     color: '#9D174D', bg: '#FDF2F8'  },
-  { key: 'alterations',label: 'Alterations', color: C.amber,   bg: C.amberBg  },
+  { key: 'alterations',label: 'Alterations', color: C.warningText,   bg: C.amberBg  },
   { key: 'other',      label: 'Other',       color: C.gray,    bg: C.grayBg   },
 ]
 const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.key, c]))
@@ -147,7 +147,7 @@ function ExpenseModal({ editExpense, events, onSave, onClose, saving }) {
         <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Description */}
           <div>
-            <label style={lbl}>Description <span style={{ color: C.rosa }}>*</span></label>
+            <label style={lbl}>Description <span style={{ color: C.rosaText }}>*</span></label>
             <input
               type="text"
               placeholder="e.g. Flower delivery for June wedding"
@@ -161,7 +161,7 @@ function ExpenseModal({ editExpense, events, onSave, onClose, saving }) {
           {/* Amount + Date */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label style={lbl}>Amount <span style={{ color: C.rosa }}>*</span></label>
+              <label style={lbl}>Amount <span style={{ color: C.rosaText }}>*</span></label>
               <input
                 type="number"
                 min="0"
@@ -173,7 +173,7 @@ function ExpenseModal({ editExpense, events, onSave, onClose, saving }) {
               />
             </div>
             <div>
-              <label style={lbl}>Date <span style={{ color: C.rosa }}>*</span></label>
+              <label style={lbl}>Date <span style={{ color: C.rosaText }}>*</span></label>
               <input
                 type="date"
                 value={form.date}
@@ -185,7 +185,7 @@ function ExpenseModal({ editExpense, events, onSave, onClose, saving }) {
 
           {/* Category */}
           <div>
-            <label style={lbl}>Category <span style={{ color: C.rosa }}>*</span></label>
+            <label style={lbl}>Category <span style={{ color: C.rosaText }}>*</span></label>
             <select value={form.category} onChange={e => set('category', e.target.value)} style={fld}>
               {CATEGORIES.map(c => (
                 <option key={c.key} value={c.key}>{c.label}</option>
@@ -264,7 +264,7 @@ function AllTab({ expenses, range, setRange, events, onEdit, onDelete, onAdd, se
 
   const pillSt = (active) => ({
     padding: '5px 13px', borderRadius: 20, border: `1px solid ${active ? C.rosa : C.border}`,
-    background: active ? C.rosaPale : C.white, color: active ? C.rosa : C.gray,
+    background: active ? C.rosaPale : C.white, color: active ? C.rosaText : C.gray,
     fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer', whiteSpace: 'nowrap',
   })
 
@@ -307,7 +307,7 @@ function AllTab({ expenses, range, setRange, events, onEdit, onDelete, onAdd, se
             <div style={{ fontSize: 36, marginBottom: 12 }}>📋</div>
             <div style={{ fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 6 }}>No expenses found</div>
             <div style={{ fontSize: 13, color: C.gray, marginBottom: 16 }}>Try adjusting your filters or add a new expense.</div>
-            <button onClick={onAdd} style={{ background: 'none', border: 'none', color: C.rosa, fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
+            <button onClick={onAdd} style={{ background: 'none', border: 'none', color: C.rosaText, fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}>
               + Add Expense
             </button>
           </div>
@@ -370,7 +370,7 @@ function AllTab({ expenses, range, setRange, events, onEdit, onDelete, onAdd, se
                     {linkedEvent ? (
                       <button
                         onClick={() => { if (setScreen && setSelectedEvent) { setSelectedEvent(linkedEvent.id); setScreen('event_detail') } }}
-                        style={{ background: 'none', border: 'none', color: C.rosa, cursor: 'pointer', fontSize: 12, fontWeight: 500, padding: 0, textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%', display: 'block', textAlign: 'left' }}
+                        style={{ background: 'none', border: 'none', color: C.rosaText, cursor: 'pointer', fontSize: 12, fontWeight: 500, padding: 0, textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%', display: 'block', textAlign: 'left' }}
                       >
                         {linkedEvent.client?.name || EVT_TYPES[linkedEvent.type]?.label || linkedEvent.type}
                       </button>
@@ -442,7 +442,7 @@ function ByCategoryTab({ expenses, range, setRange }) {
 
   const pillSt = (active) => ({
     padding: '5px 13px', borderRadius: 20, border: `1px solid ${active ? C.rosa : C.border}`,
-    background: active ? C.rosaPale : C.white, color: active ? C.rosa : C.gray,
+    background: active ? C.rosaPale : C.white, color: active ? C.rosaText : C.gray,
     fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer',
   })
 
@@ -610,7 +610,7 @@ function ByEventTab({ expenses, events, range, setRange, setScreen, setSelectedE
 
   const pillSt = (active) => ({
     padding: '5px 13px', borderRadius: 20, border: `1px solid ${active ? C.rosa : C.border}`,
-    background: active ? C.rosaPale : C.white, color: active ? C.rosa : C.gray,
+    background: active ? C.rosaPale : C.white, color: active ? C.rosaText : C.gray,
     fontSize: 12, fontWeight: active ? 600 : 400, cursor: 'pointer',
   })
 
@@ -679,7 +679,7 @@ function ByEventTab({ expenses, events, range, setRange, setScreen, setSelectedE
                     <>
                       <button
                         onClick={() => { if (setScreen && setSelectedEvent) { setSelectedEvent(ev.id); setScreen('event_detail') } }}
-                        style={{ background: 'none', border: 'none', color: C.rosa, cursor: 'pointer', fontSize: 13, fontWeight: 600, padding: 0, textDecoration: 'underline', textAlign: 'left' }}
+                        style={{ background: 'none', border: 'none', color: C.rosaText, cursor: 'pointer', fontSize: 13, fontWeight: 600, padding: 0, textDecoration: 'underline', textAlign: 'left' }}
                       >
                         {eventLabel}
                       </button>
@@ -737,6 +737,7 @@ export default function ExpensesPage({ events = [], setScreen, setSelectedEvent 
   const [showModal, setShowModal] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(null) // expense id | null
 
   // ── Stat computations ──────────────────────────────────────────────────────
   const thisMonth = useMemo(() => getThisMonthExpenses(expenses), [expenses])
@@ -767,9 +768,11 @@ export default function ExpensesPage({ events = [], setScreen, setSelectedEvent 
 
   const handleEdit = (e) => { setEditTarget(e); setShowModal(true) }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this expense?')) return
-    await deleteExpense(id)
+  const handleDelete = (id) => setDeleteConfirm(id)
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return
+    await deleteExpense(deleteConfirm)
+    setDeleteConfirm(null)
   }
 
   // ── Styles ─────────────────────────────────────────────────────────────────
@@ -878,6 +881,10 @@ export default function ExpensesPage({ events = [], setScreen, setSelectedEvent 
           onClose={() => { setShowModal(false); setEditTarget(null) }}
           saving={saving}
         />
+      )}
+      {deleteConfirm && (
+        <ConfirmModal title="Delete this expense?" message="This cannot be undone." confirmLabel="Delete"
+          onConfirm={confirmDelete} onCancel={() => setDeleteConfirm(null)} />
       )}
     </div>
   )

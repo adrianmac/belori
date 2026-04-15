@@ -14,7 +14,7 @@ const PERMISSIONS = {
   },
   coordinator: {
     pages: new Set([
-      'dashboard','calendar','staff_calendar','events','event_detail','clients','alterations',
+      'dashboard','calendar','schedule','events','event_detail','clients','alterations',
       'inventory','inv_full','payments','settings','planning','reports',
       'measurements','vendors','dress_catalog','fb_beo','floorplan',
       'pos','retail','staff_sched','waitlist','photo_gallery',
@@ -25,16 +25,16 @@ const PERMISSIONS = {
   },
   front_desk: {
     pages: new Set([
-      'dashboard','calendar','events','event_detail','clients','inventory','settings','wedding_planner','roadmap','my_tasks',
+      'dashboard','calendar','schedule','events','event_detail','clients','inventory','settings','wedding_planner','roadmap','my_tasks',
     ]),
     settingsTabs: new Set(['display']),
   },
   seamstress: {
-    pages: new Set(['dashboard','calendar','alterations','settings','roadmap','my_tasks']),
+    pages: new Set(['dashboard','calendar','schedule','alterations','settings','roadmap','my_tasks']),
     settingsTabs: new Set(['display']),
   },
   decorator: {
-    pages: new Set(['dashboard','calendar','inv_full','inventory','settings','roadmap','my_tasks']),
+    pages: new Set(['dashboard','calendar','schedule','inv_full','inventory','settings','roadmap','my_tasks']),
     settingsTabs: new Set(['display']),
   },
 }

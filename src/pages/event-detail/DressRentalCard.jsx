@@ -65,7 +65,7 @@ const DressRentalCard = ({
               <div style={{fontSize:10,color:C.gray,fontFamily:'monospace',marginBottom:6}}>#{dressRental.sku} · Size {dressRental.size} · {dressRental.color}</div>
               <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                 <span style={{fontSize:12,fontWeight:500,color:C.ink}}>{fmt(dressRental.fee)} rental</span>
-                <Badge text={dressRental.depositPaid?'Deposit paid':'Deposit pending'} bg={dressRental.depositPaid?'var(--bg-success)':'var(--bg-warning)'} color={dressRental.depositPaid?'var(--color-success)':'var(--color-warning)'}/>
+                <Badge text={dressRental.depositPaid?'Deposit paid':'Deposit pending'} bg={dressRental.depositPaid?'var(--bg-success)':'var(--bg-warning)'} color={dressRental.depositPaid?'var(--text-success)':'var(--text-warning)'}/>
                 <Badge text={dressRental.status==='reserved'?'Reserved':'Rented'} bg={C.grayBg} color={C.gray}/>
               </div>
             </div>
@@ -120,7 +120,7 @@ const DressRentalCard = ({
       ) : (
         <div style={{padding:'20px 16px',textAlign:'center',fontSize:12,color:C.gray}}>
           No dress reserved yet.<br/>
-          <span onClick={()=>setScreen('inventory')} style={{color:C.rosa,cursor:'pointer',fontWeight:500}}>Browse available dresses →</span>
+          <span onClick={()=>setScreen('inventory')} style={{color:C.rosaText,cursor:'pointer',fontWeight:500}}>Browse available dresses →</span>
         </div>
       )}
     </Card>

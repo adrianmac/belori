@@ -58,10 +58,10 @@ export const ImportModal = ({onClose, onImport}) => {
   };
   return (
     <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-      <div style={{background:C.white,borderRadius:16,width:560,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="import-title" style={{background:C.white,borderRadius:16,width:560,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'20px 24px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
-            <div style={{fontWeight:600,fontSize:16,color:C.ink}}>Import dress inventory</div>
+            <div id="import-title" style={{fontWeight:600,fontSize:16,color:C.ink}}>Import dress inventory</div>
             <div style={{fontSize:11,color:C.gray,marginTop:2}}>Step {step} of 3 · {step===1?'Upload file':step===2?'Review & confirm':'Complete'}</div>
           </div>
           <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
@@ -74,7 +74,7 @@ export const ImportModal = ({onClose, onImport}) => {
                 <div style={{fontSize:36,marginBottom:10}}>📁</div>
                 <div style={{fontSize:14,fontWeight:500,color:C.ink,marginBottom:4}}>Drag & drop your CSV file here</div>
                 <div style={{fontSize:12,color:C.gray,marginBottom:16}}>CSV format · Max 500 dresses</div>
-                <div style={{display:'inline-block',padding:'8px 20px',borderRadius:8,background:C.rosaPale,color:C.rosa,fontSize:13,fontWeight:500}}>Choose file</div>
+                <div style={{display:'inline-block',padding:'8px 20px',borderRadius:8,background:C.rosaPale,color:C.rosaText,fontSize:13,fontWeight:500}}>Choose file</div>
                 <input type="file" accept=".csv,.tsv" style={{display:'none'}} onChange={e=>handleFile(e.target.files[0])}/>
               </label>
               <div style={{fontSize:11,color:C.gray,textAlign:'center',lineHeight:1.6}}>
@@ -96,9 +96,9 @@ export const ImportModal = ({onClose, onImport}) => {
               </div>
               {errors.length>0&&(
                 <div>
-                  <div style={{fontSize:11,fontWeight:600,color:'var(--color-danger)',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.06em'}}>Errors — will be skipped</div>
+                  <div style={{fontSize:11,fontWeight:600,color:'var(--text-danger)',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.06em'}}>Errors — will be skipped</div>
                   {errors.slice(0,5).map((e,i)=>(
-                    <div key={i} style={{fontSize:11,color:'var(--color-danger)',background:'var(--bg-danger)',padding:'6px 10px',borderRadius:6,marginBottom:4}}>Row {e.row}: {e.errors.join(' · ')}</div>
+                    <div key={i} style={{fontSize:11,color:'var(--text-danger)',background:'var(--bg-danger)',padding:'6px 10px',borderRadius:6,marginBottom:4}}>Row {e.row}: {e.errors.join(' · ')}</div>
                   ))}
                   {errors.length>5&&<div style={{fontSize:11,color:C.gray}}>{errors.length-5} more errors…</div>}
                 </div>
@@ -128,7 +128,7 @@ export const ImportModal = ({onClose, onImport}) => {
               <div style={{fontSize:48,marginBottom:16}}>✅</div>
               <div style={{fontSize:18,fontWeight:600,color:C.ink,marginBottom:8}}>Import complete!</div>
               <div style={{fontSize:13,color:C.gray,marginBottom:4}}>{imported} dress{imported!==1?'es':''} added to inventory</div>
-              {errors.length>0&&<div style={{fontSize:12,color:'var(--color-danger)'}}>{errors.length} row{errors.length!==1?'s':''} skipped due to errors</div>}
+              {errors.length>0&&<div style={{fontSize:12,color:'var(--text-danger)'}}>{errors.length} row{errors.length!==1?'s':''} skipped due to errors</div>}
             </div>
           )}
         </div>
