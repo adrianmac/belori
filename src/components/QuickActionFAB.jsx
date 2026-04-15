@@ -189,6 +189,9 @@ export default function QuickActionFAB({ setScreen }) {
         <button
           onClick={() => setOpen(o => !o)}
           title="Quick actions"
+          aria-label="Quick actions"
+          aria-expanded={open}
+          aria-haspopup="true"
           style={{
             width: 56,
             height: 56,
