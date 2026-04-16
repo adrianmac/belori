@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import DOMPurify from 'dompurify'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -176,7 +177,7 @@ export default function SignContractPage() {
               {contract.body_html && /<[a-z][\s\S]*>/i.test(contract.body_html) ? (
                 <div
                   style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.8 }}
-                  dangerouslySetInnerHTML={{ __html: contract.body_html }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(contract.body_html) }}
                 />
               ) : (
                 <div style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>

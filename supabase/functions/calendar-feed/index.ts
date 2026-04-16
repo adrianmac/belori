@@ -163,24 +163,65 @@ Deno.serve(async (req: Request) => {
   }
 
   const url = new URL(req.url)
-  const boutiqueId = url.searchParams.get('boutique_id')
 
-  if (!boutiqueId) {
-    return new Response('Missing boutique_id parameter', { status: 400, headers: corsHeaders })
-  }
-
-  // Validate UUID format
-  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  if (!uuidRe.test(boutiqueId)) {
-    return new Response('Invalid boutique_id', { status: 400, headers: corsHeaders })
-  }
-
-  // Service-role client — bypasses RLS
+  // ── Service-role client (used only after auth is verified) ───────────────────
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     { auth: { persistSession: false } }
   )
+
+  // ── Auth: accept either a JWT Bearer token OR an opaque calendar_feed_token ──
+  // Option 1: opaque per-boutique token (for calendar app subscriptions)
+  const feedToken = url.searchParams.get('token')
+  // Option 2: JWT Bearer (for in-app usage)
+  const authHeader = req.headers.get('Authorization')
+
+  let boutiqueId: string | null = null
+
+  if (feedToken) {
+    // Resolve boutique from opaque token stored in boutiques.calendar_feed_token
+    const { data: bRow, error: bErr } = await supabase
+      .from('boutiques')
+      .select('id')
+      .eq('calendar_feed_token', feedToken)
+      .single()
+    if (bErr || !bRow) {
+      return new Response('Invalid or expired calendar token', { status: 401, headers: corsHeaders })
+    }
+    boutiqueId = bRow.id
+  } else if (authHeader?.startsWith('Bearer ')) {
+    // Verify JWT and resolve boutique from membership
+    const anonClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { auth: { persistSession: false } }
+    )
+    const { data: { user }, error: authErr } = await anonClient.auth.getUser(authHeader.replace('Bearer ', ''))
+    if (authErr || !user) {
+      return new Response('Unauthorized', { status: 401, headers: corsHeaders })
+    }
+    // Get boutique_id from URL param — must match user's membership
+    const paramBoutiqueId = url.searchParams.get('boutique_id')
+    if (!paramBoutiqueId) {
+      return new Response('Missing boutique_id parameter', { status: 400, headers: corsHeaders })
+    }
+    const { data: member } = await supabase
+      .from('boutique_members')
+      .select('boutique_id')
+      .eq('user_id', user.id)
+      .eq('boutique_id', paramBoutiqueId)
+      .single()
+    if (!member) {
+      return new Response('Forbidden', { status: 403, headers: corsHeaders })
+    }
+    boutiqueId = paramBoutiqueId
+  } else {
+    return new Response('Authentication required. Provide a Bearer token or a calendar feed token (?token=...)', {
+      status: 401,
+      headers: corsHeaders,
+    })
+  }
 
   // ── Fetch boutique (including feed tracking columns) ─────────────────────────
   const { data: boutique, error: boutiqueErr } = await supabase

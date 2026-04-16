@@ -6,22 +6,58 @@ const cors = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
 };
 
+// Service-role client for DB lookups after auth is verified
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
+// Anon client for JWT verification
+const anonClient = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_ANON_KEY")!,
+  { auth: { persistSession: false } }
+);
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
+  // ── Step 1: Verify JWT and resolve caller's boutique_id ────────────────────
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader) {
+  if (!authHeader?.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 
+  const { data: { user }, error: authErr } = await anonClient.auth.getUser(
+    authHeader.replace("Bearer ", "")
+  );
+  if (authErr || !user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  }
+
+  // Resolve caller's boutique membership
+  const { data: member } = await supabase
+    .from("boutique_members")
+    .select("boutique_id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!member) {
+    return new Response(JSON.stringify({ error: "Forbidden: no boutique membership" }), {
+      status: 403,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  }
+
+  const callerBoutiqueId = member.boutique_id;
+
+  // ── Step 2: Parse body ──────────────────────────────────────────────────────
   const { milestone_id } = await req.json();
   if (!milestone_id) {
     return new Response(JSON.stringify({ error: "milestone_id required" }), {
@@ -30,7 +66,7 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // Fetch milestone + event + client
+  // ── Step 3: Fetch milestone and verify boutique ownership ───────────────────
   const { data: milestone, error: mErr } = await supabase
     .from("payment_milestones")
     .select(`*, event:events(id, type, portal_token, boutique_id, client:clients(name, email))`)
@@ -40,6 +76,14 @@ Deno.serve(async (req: Request) => {
   if (mErr || !milestone) {
     return new Response(JSON.stringify({ error: "Milestone not found" }), {
       status: 404,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  }
+
+  // Enforce boutique ownership — caller must belong to the milestone's boutique
+  if (milestone.event?.boutique_id !== callerBoutiqueId) {
+    return new Response(JSON.stringify({ error: "Forbidden: milestone does not belong to your boutique" }), {
+      status: 403,
       headers: { ...cors, "Content-Type": "application/json" },
     });
   }

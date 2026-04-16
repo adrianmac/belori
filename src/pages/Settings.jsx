@@ -2385,12 +2385,17 @@ const Settings = ({boutique, initialTab, setScreen}) => {
                 <div style={{display:'flex',gap:6}}>
                   <input
                     readOnly
-                    value={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-feed?boutique_id=${boutique?.id}`}
+                    value={boutique?.calendar_feed_token
+                      ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-feed?token=${boutique.calendar_feed_token}`
+                      : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-feed?boutique_id=${boutique?.id}`}
                     style={{flex:1,...inputSt,fontSize:11,color:C.gray,background:C.ivory}}
                   />
                   <button
                     onClick={async()=>{
-                      try { await navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-feed?boutique_id=${boutique?.id}`); toast('Calendar URL copied!', 'success'); } catch { toast('Could not copy — please copy manually', 'warn'); }
+                      const url = boutique?.calendar_feed_token
+                        ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-feed?token=${boutique.calendar_feed_token}`
+                        : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-feed?boutique_id=${boutique?.id}`;
+                      try { await navigator.clipboard.writeText(url); toast('Calendar URL copied!', 'success'); } catch { toast('Could not copy — please copy manually', 'warn'); }
                     }}
                     style={{padding:'8px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:C.white,cursor:'pointer',fontSize:12,color:C.gray,whiteSpace:'nowrap',minHeight:'unset',minWidth:'unset',transition:'border-color 0.15s'}}
                     onMouseEnter={e=>{e.currentTarget.style.borderColor=C.rosa;e.currentTarget.style.color=C.rosa;}}
