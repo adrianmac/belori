@@ -42,6 +42,21 @@ function initVapid(): boolean {
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
+  // ── Auth check — only internal service-role callers are permitted ──────────
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...cors, 'Content-Type': 'application/json' },
+    })
+  }
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  if (authHeader !== `Bearer ${serviceKey}`) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), {
+      status: 403, headers: { ...cors, 'Content-Type': 'application/json' },
+    })
+  }
+  // ──────────────────────────────────────────────────────────────────────────
+
   let body: Record<string, unknown> = {}
   try {
     body = await req.json()
