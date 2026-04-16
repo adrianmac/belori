@@ -1,9 +1,20 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = [
+  'https://belori.app',
+  'https://www.belori.app',
+  ...(Deno.env.get('EXTRA_ALLOWED_ORIGINS') ?? '').split(',').filter(Boolean),
+]
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin') ?? ''
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
 }
 
 const supabaseUrl  = Deno.env.get('SUPABASE_URL') ?? ''
@@ -17,21 +28,21 @@ async function verifyJwt(token: string) {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: getCorsHeaders(req) })
 
   // Require a valid JWT — this endpoint calls the Anthropic API and must not be open
   const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '').trim() ?? ''
   if (!token) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     })
   }
   const user = await verifyJwt(token)
   if (!user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     })
   }
 
@@ -47,7 +58,7 @@ serve(async (req) => {
   if ((count ?? 0) >= 20) {
     return new Response(JSON.stringify({ error: 'Rate limit exceeded. Max 20 AI requests per hour.' }), {
       status: 429,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     })
   }
 
@@ -62,7 +73,7 @@ serve(async (req) => {
     if (!apiKey) {
       return new Response(JSON.stringify({ error: 'AI not configured' }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       })
     }
 
@@ -147,7 +158,7 @@ Return ONLY the contract text, no preamble or JSON.`
     } else {
       return new Response(JSON.stringify({ error: 'Unknown request type' }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       })
     }
 
@@ -169,12 +180,12 @@ Return ONLY the contract text, no preamble or JSON.`
     const text = data.content?.[0]?.text || ''
 
     return new Response(JSON.stringify({ result: text }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     })
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     })
   }
 })

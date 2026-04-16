@@ -20,6 +20,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-automation-key',
 }
 
+/** Escape user-supplied values before embedding in HTML email bodies. */
+function escHtml(s: unknown): string {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function isAutoEnabled(boutique: { automations?: Record<string, boolean> }, key: string): boolean {
@@ -403,16 +408,16 @@ async function runWeeklyDigest() {
       .eq('boutique_id', boutique.id).lt('due_date', today()).neq('status', 'paid')
 
     const eventRows = (events ?? []).map(ev =>
-      `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee">${fmtDate(ev.event_date)}</td><td style="padding:6px 12px;border-bottom:1px solid #eee">${ev.client?.name ?? '—'}</td><td style="padding:6px 12px;border-bottom:1px solid #eee">${ev.type ?? ''}</td></tr>`
+      `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee">${fmtDate(ev.event_date)}</td><td style="padding:6px 12px;border-bottom:1px solid #eee">${escHtml(ev.client?.name ?? '—')}</td><td style="padding:6px 12px;border-bottom:1px solid #eee">${escHtml(ev.type ?? '')}</td></tr>`
     ).join('')
     const overdueRows = (overduePayments ?? []).map(p =>
-      `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee">${p.event?.client?.name ?? '—'}</td><td style="padding:6px 12px;border-bottom:1px solid #eee">${p.label}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;color:#DC2626">${fmtMoney(Number(p.amount))}</td><td style="padding:6px 12px;border-bottom:1px solid #eee">${fmtDate(p.due_date)}</td></tr>`
+      `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee">${escHtml(p.event?.client?.name ?? '—')}</td><td style="padding:6px 12px;border-bottom:1px solid #eee">${escHtml(p.label)}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;color:#DC2626">${fmtMoney(Number(p.amount))}</td><td style="padding:6px 12px;border-bottom:1px solid #eee">${fmtDate(p.due_date)}</td></tr>`
     ).join('')
 
     await sendEmail({
       to: boutique.email,
       subject: `${boutique.name} — Weekly digest ${fmtDate(today())}`,
-      html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto"><h2 style="color:#C9697A">Good morning! Here's your weekly digest for ${boutique.name}</h2><h3>📅 Upcoming events (next 2 weeks)</h3>${eventRows ? `<table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr style="background:#FFF5F6"><th style="padding:8px 12px;text-align:left">Date</th><th style="padding:8px 12px;text-align:left">Client</th><th style="padding:8px 12px;text-align:left">Type</th></tr></thead><tbody>${eventRows}</tbody></table>` : '<p style="color:#999">No events in the next 2 weeks.</p>'}${overdueRows ? `<h3 style="color:#DC2626">⚠️ Overdue payments</h3><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th style="padding:8px 12px;text-align:left">Client</th><th>Milestone</th><th>Amount</th><th>Due</th></tr></thead><tbody>${overdueRows}</tbody></table>` : ''}</div>`,
+      html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto"><h2 style="color:#C9697A">Good morning! Here's your weekly digest for ${escHtml(boutique.name)}</h2><h3>📅 Upcoming events (next 2 weeks)</h3>${eventRows ? `<table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr style="background:#FFF5F6"><th style="padding:8px 12px;text-align:left">Date</th><th style="padding:8px 12px;text-align:left">Client</th><th style="padding:8px 12px;text-align:left">Type</th></tr></thead><tbody>${eventRows}</tbody></table>` : '<p style="color:#999">No events in the next 2 weeks.</p>'}${overdueRows ? `<h3 style="color:#DC2626">⚠️ Overdue payments</h3><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th style="padding:8px 12px;text-align:left">Client</th><th>Milestone</th><th>Amount</th><th>Due</th></tr></thead><tbody>${overdueRows}</tbody></table>` : ''}</div>`,
       text: `Weekly digest for ${boutique.name}\n\nUpcoming events: ${(events ?? []).length}\nOverdue payments: ${(overduePayments ?? []).length}`,
     })
   }
@@ -567,7 +572,7 @@ async function runOnboardingWelcome(data: { owner_email: string; boutique_name: 
   await sendEmail({
     to: owner_email,
     subject: `Welcome to Belori, ${boutique_name}! 🎉`,
-    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1C1012"><div style="background:#C9697A;padding:28px 32px;border-radius:12px 12px 0 0"><div style="font-size:22px;font-weight:600;color:#fff">Welcome to Belori! 💕</div><div style="font-size:14px;color:rgba(255,255,255,.85);margin-top:4px">You're in — let's make ${boutique_name} shine</div></div><div style="background:#fff;border:1px solid #E5E7EB;border-top:none;padding:28px 32px;border-radius:0 0 12px 12px"><p>Hi there!</p><p>Your <strong>${boutique_name}</strong> account is ready.</p><p><strong>Get started in 3 steps:</strong><br>1️⃣ Add your first client<br>2️⃣ Create an event<br>3️⃣ Set up payment milestones</p><a href="${appUrl}" style="display:inline-block;background:#C9697A;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;">Open your dashboard →</a></div></div>`,
+    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1C1012"><div style="background:#C9697A;padding:28px 32px;border-radius:12px 12px 0 0"><div style="font-size:22px;font-weight:600;color:#fff">Welcome to Belori! 💕</div><div style="font-size:14px;color:rgba(255,255,255,.85);margin-top:4px">You're in — let's make ${escHtml(boutique_name)} shine</div></div><div style="background:#fff;border:1px solid #E5E7EB;border-top:none;padding:28px 32px;border-radius:0 0 12px 12px"><p>Hi there!</p><p>Your <strong>${escHtml(boutique_name)}</strong> account is ready.</p><p><strong>Get started in 3 steps:</strong><br>1️⃣ Add your first client<br>2️⃣ Create an event<br>3️⃣ Set up payment milestones</p><a href="${appUrl}" style="display:inline-block;background:#C9697A;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;">Open your dashboard →</a></div></div>`,
     text: `Welcome to Belori!\n\nYour ${boutique_name} account is ready. Log in at ${appUrl}\n\n1. Add your first client\n2. Create an event\n3. Set up payment milestones\n\n— The Belori team`,
   })
 }
@@ -589,11 +594,11 @@ async function runStaffInvite(data: { email: string; boutique_name: string; role
     html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1C1012">
       <div style="background:#C9697A;padding:28px 32px;border-radius:12px 12px 0 0">
         <div style="font-size:22px;font-weight:600;color:#fff">You're invited! 🎉</div>
-        <div style="font-size:14px;color:rgba(255,255,255,.85);margin-top:4px">${boutique_name} wants you on their team</div>
+        <div style="font-size:14px;color:rgba(255,255,255,.85);margin-top:4px">${escHtml(boutique_name)} wants you on their team</div>
       </div>
       <div style="background:#fff;border:1px solid #E5E7EB;border-top:none;padding:28px 32px;border-radius:0 0 12px 12px">
         <p>Hi there!</p>
-        <p><strong>${boutique_name}</strong> has invited you to join their boutique on Belori as <strong>${roleLabel}</strong>.</p>
+        <p><strong>${escHtml(boutique_name)}</strong> has invited you to join their boutique on Belori as <strong>${escHtml(roleLabel)}</strong>.</p>
         <p>Click the button below to create your account and get started:</p>
         <a href="${invite_link}" style="display:inline-block;background:#C9697A;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;margin:8px 0;">Accept invitation →</a>
         <p style="margin-top:24px;font-size:12px;color:#9CA3AF">Or copy this link: <a href="${invite_link}" style="color:#C9697A">${invite_link}</a></p>

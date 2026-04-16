@@ -70,3 +70,26 @@ export function defaultSettingsTab(role) {
   const ALL_TABS = ['profile','staff','automations','packages','all_templates','modules','billing','webhooks','bookings','integrations','display','data']
   return ALL_TABS.find(t => canAccessSettingsTab(role, t)) ?? 'display'
 }
+
+/**
+ * Returns true if the role can create, edit, or delete records.
+ * front_desk / seamstress / decorator are read-only in the UI
+ * (server-side RLS enforces this for real, this is UX hygiene).
+ */
+export function canMutate(role) {
+  return role === 'owner' || role === 'coordinator'
+}
+
+/**
+ * Returns true if the role can manage staff members and invites.
+ */
+export function canManageStaff(role) {
+  return role === 'owner'
+}
+
+/**
+ * Returns true if the role can access billing settings.
+ */
+export function canManageBilling(role) {
+  return role === 'owner'
+}

@@ -1,10 +1,21 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey",
-};
+const ALLOWED_ORIGINS = [
+  'https://belori.app',
+  'https://www.belori.app',
+  ...(Deno.env.get('EXTRA_ALLOWED_ORIGINS') ?? '').split(',').filter(Boolean),
+]
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin') ?? ''
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey',
+    'Vary': 'Origin',
+  }
+}
 
 // Service-role client for DB lookups after auth is verified
 const supabase = createClient(
@@ -20,14 +31,14 @@ const anonClient = createClient(
 );
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: getCorsHeaders(req) });
 
   // ── Step 1: Verify JWT and resolve caller's boutique_id ────────────────────
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
@@ -37,7 +48,7 @@ Deno.serve(async (req: Request) => {
   if (authErr || !user) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
@@ -51,7 +62,7 @@ Deno.serve(async (req: Request) => {
   if (!member) {
     return new Response(JSON.stringify({ error: "Forbidden: no boutique membership" }), {
       status: 403,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
@@ -62,7 +73,7 @@ Deno.serve(async (req: Request) => {
   if (!milestone_id) {
     return new Response(JSON.stringify({ error: "milestone_id required" }), {
       status: 400,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
@@ -76,7 +87,7 @@ Deno.serve(async (req: Request) => {
   if (mErr || !milestone) {
     return new Response(JSON.stringify({ error: "Milestone not found" }), {
       status: 404,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
@@ -84,7 +95,7 @@ Deno.serve(async (req: Request) => {
   if (milestone.event?.boutique_id !== callerBoutiqueId) {
     return new Response(JSON.stringify({ error: "Forbidden: milestone does not belong to your boutique" }), {
       status: 403,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
@@ -99,7 +110,7 @@ Deno.serve(async (req: Request) => {
   if (!stripeKey) {
     return new Response(JSON.stringify({ error: "Stripe not configured" }), {
       status: 500,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
@@ -125,7 +136,7 @@ Deno.serve(async (req: Request) => {
   if (!priceData.id) {
     return new Response(JSON.stringify({ error: "Failed to create Stripe price", detail: priceData }), {
       status: 500,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
@@ -156,7 +167,7 @@ Deno.serve(async (req: Request) => {
   if (!linkData.url) {
     return new Response(JSON.stringify({ error: "Failed to create payment link", detail: linkData }), {
       status: 500,
-      headers: { ...cors, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
@@ -170,6 +181,6 @@ Deno.serve(async (req: Request) => {
     .eq("id", milestone_id);
 
   return new Response(JSON.stringify({ url: linkData.url, id: linkData.id }), {
-    headers: { ...cors, "Content-Type": "application/json" },
+    headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
   });
 });

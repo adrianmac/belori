@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { getDressQrUrl, generateQRSvg, generateQRDataUrl } from '../lib/qrUtils'
 
+const escHtml = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+
 const CAT_LABELS = {
   bridal_gown: 'Bridal', quince_gown: 'Quinceañera', veil: 'Veil',
   tiara: 'Tiara', jewelry: 'Jewelry', shoes: 'Shoes', bolero: 'Bolero',
@@ -54,7 +56,7 @@ const SingleQRModal = ({ dress, onClose }) => {
     const w = isLarge ? '3in' : '2in', h = isLarge ? '4in' : '2in'
     const qrSz = isLarge ? '2.2in' : '1.5in'
     const html = `
-      <html><head><title>QR Label — #${dress.sku}</title>
+      <html><head><title>QR Label — #${escHtml(dress.sku)}</title>
       <style>
         @page { size: ${w} ${h}; margin: 0; }
         body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
@@ -66,9 +68,9 @@ const SingleQRModal = ({ dress, onClose }) => {
       </style></head>
       <body><div class="label">
         <img src="${qrDataUrl}"/>
-        <div class="sku">#${dress.sku}</div>
-        <div class="name">${(dress.name||'').slice(0,24)}</div>
-        ${isLarge ? `<div class="name">Size ${dress.size||'—'} · ${CAT_LABELS[dress.category]||dress.category}</div>` : ''}
+        <div class="sku">#${escHtml(dress.sku)}</div>
+        <div class="name">${escHtml(dress.name).slice(0,24)}</div>
+        ${isLarge ? `<div class="name">Size ${escHtml(dress.size)||'—'} · ${escHtml(CAT_LABELS[dress.category]||dress.category)}</div>` : ''}
         <div class="brand">■ BELORI</div>
       </div></body></html>`
     const w_ = window.open('', '_blank')

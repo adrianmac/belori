@@ -3,14 +3,25 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'Belori <onboarding@resend.dev>'
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Content-Type': 'application/json',
+const ALLOWED_ORIGINS = [
+  'https://belori.app',
+  'https://www.belori.app',
+  ...(Deno.env.get('EXTRA_ALLOWED_ORIGINS') ?? '').split(',').filter(Boolean),
+]
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin') ?? ''
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' } })
+    return new Response('ok', { headers: { ...getCorsHeaders(req), 'Access-Control-Allow-Methods': 'POST, OPTIONS' } })
   }
 
   // Require service-role key or valid user JWT
@@ -22,7 +33,7 @@ serve(async (req) => {
   let user: { id: string } | null = null
 
   if (!token) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } })
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } })
   }
 
   if (!isServiceRole) {
@@ -30,7 +41,7 @@ serve(async (req) => {
     const anon = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!)
     const { data, error } = await anon.auth.getUser(token)
     if (error || !data.user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } })
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } })
     }
     user = data.user
   }
@@ -52,7 +63,7 @@ serve(async (req) => {
 
       if (!member) {
         return new Response(JSON.stringify({ error: 'Forbidden: no boutique membership' }), {
-          status: 403, headers: cors
+          status: 403, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
         })
       }
 
@@ -79,7 +90,7 @@ serve(async (req) => {
 
       if (!clientMatch && !memberMatch) {
         return new Response(JSON.stringify({ error: 'Forbidden: recipient is not a client or member of your boutique' }), {
-          status: 403, headers: cors
+          status: 403, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
         })
       }
     }
@@ -104,12 +115,12 @@ serve(async (req) => {
 
     const data = await res.json()
     return new Response(JSON.stringify(data), {
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       status: 200,
     })
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       status: 400,
     })
   }
