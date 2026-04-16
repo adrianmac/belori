@@ -155,7 +155,7 @@ const BoutiqueSwitcher = ({ boutique, boutiques = [], onSwitch }) => {
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(o => !o)}
+      <button aria-expanded={open} aria-label="Toggle boutique menu" onClick={() => setOpen(o => !o)}
         style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 1 }}>
         <div style={{ fontSize: 14, fontWeight: 500, color: C.ink }}>Belori</div>
         <div style={{ fontSize: 11, color: 'var(--brand-primary, #C9697A)', display: 'flex', alignItems: 'center', gap: 3, maxWidth: 130 }}>
@@ -389,7 +389,7 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
 
       {/* Search bar */}
       <div style={{ padding: '8px 10px', borderBottom: `1px solid ${C.border}` }}>
-        <button onClick={onSearch}
+        <button aria-label="Search" onClick={onSearch}
           style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', padding: '7px 10px', borderRadius: 8, border: `1px solid ${C.border}`, background: C.ivory, cursor: 'pointer', color: C.gray, fontSize: 12, minHeight: 'unset', minWidth: 'unset', transition: 'all 0.15s' }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = C.rosa; e.currentTarget.style.color = C.rosa; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.gray; }}>
@@ -475,8 +475,7 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
         </button>
 
         {/* Keyboard shortcuts help button */}
-        <button
-          onClick={() => onShortcuts && onShortcuts()}
+        <button aria-label="Keyboard shortcuts" onClick={() => onShortcuts && onShortcuts()}
           style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:13,padding:'4px 6px',borderRadius:6,display:'flex',alignItems:'center',gap:6,width:'100%',minHeight:'unset',minWidth:'unset'}}
           title="Keyboard shortcuts (?)"
           onMouseEnter={e=>{e.currentTarget.style.background=C.grayBg;e.currentTarget.style.color=C.ink;}}
@@ -585,7 +584,7 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
           );
         })}
         {/* More button */}
-        <button onClick={() => setShowMore(s => !s)}
+        <button aria-expanded={showMore} aria-label="More options" onClick={() => setShowMore(s => !s)}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
             color: (moreActive || showMore) ? 'var(--brand-primary, #C9697A)' : '#9CA3AF', fontSize: 10, fontWeight: (moreActive || showMore) ? 600 : 400,
             cursor: 'pointer', flex: 1, height: 60, padding: '0', transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent' }}>
