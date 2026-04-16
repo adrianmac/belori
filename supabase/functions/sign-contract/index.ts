@@ -49,6 +49,12 @@ Deno.serve(async (req: Request) => {
     })
   }
 
+  // Capture signer IP and user agent for audit trail
+  const signerIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers.get('cf-connecting-ip')
+    || 'unknown'
+  const signerUserAgent = req.headers.get('user-agent') || 'unknown'
+
   // Mark as signed
   const { error: updateError } = await supabase
     .from('contracts')
@@ -57,6 +63,8 @@ Deno.serve(async (req: Request) => {
       signed_at: new Date().toISOString(),
       signed_by_name: signed_by_name.trim(),
       signature_data,
+      signed_ip: signerIp,
+      signed_user_agent: signerUserAgent,
     })
     .eq('id', contract.id)
 

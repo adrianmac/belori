@@ -7,7 +7,7 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [boutique, setBoutique] = useState(null)
   const [boutiques, setBoutiques] = useState([])
-  const [myRole, setMyRole] = useState('owner')
+  const [myRole, setMyRole] = useState('front_desk')
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -18,10 +18,19 @@ export function AuthProvider({ children }) {
       else setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
-      if (session) loadBoutique(session.user.id)
-      else { setBoutique(null); setBoutiques([]); setMyRole('owner'); setMembers([]); setLoading(false) }
+      if (session) {
+        loadBoutique(session.user.id)
+      } else {
+        if (event === 'SIGNED_OUT') {
+          const keysToRemove = Object.keys(localStorage).filter(
+            k => k.startsWith('belori_') || k === 'activeBoutiqueId'
+          )
+          keysToRemove.forEach(k => localStorage.removeItem(k))
+        }
+        setBoutique(null); setBoutiques([]); setMyRole('front_desk'); setMembers([]); setLoading(false)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -40,7 +49,7 @@ export function AuthProvider({ children }) {
 
     if (all.length === 0) {
       setBoutique(null)
-      setMyRole('owner')
+      setMyRole('front_desk')
       setLoading(false)
       return
     }
@@ -51,7 +60,7 @@ export function AuthProvider({ children }) {
     setBoutique(active)
 
     const activeMember = validMembers.find(m => m.boutique.id === active.id)
-    setMyRole(activeMember?.role || 'owner')
+    setMyRole(activeMember?.role || 'front_desk')
     setLoading(false)
   }
 
@@ -61,7 +70,7 @@ export function AuthProvider({ children }) {
       setBoutique(b)
       localStorage.setItem('activeBoutiqueId', b.id)
       const m = members.find(m => m.boutique.id === id)
-      setMyRole(m?.role || 'owner')
+      setMyRole(m?.role || 'front_desk')
     }
   }
 
@@ -88,6 +97,10 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut() {
+    const keysToRemove = Object.keys(localStorage).filter(
+      k => k.startsWith('belori_') || k === 'activeBoutiqueId'
+    )
+    keysToRemove.forEach(k => localStorage.removeItem(k))
     await supabase.auth.signOut()
   }
 

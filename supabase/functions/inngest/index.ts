@@ -328,6 +328,12 @@ async function runReviewRequest() {
         : `Hi ${name}! Thank you for celebrating with ${boutique.name}! We hope everything was perfect. It was our honor to be part of your special day!\n\nReply STOP to opt out. Msg & data rates may apply.`
       await sendSms(e164, msg)
       await supabaseAdmin.from('events').update({ status: 'completed' }).eq('id', ev.id)
+      // Set portal token expiry to 90 days from now for completed events (SEC-024)
+      await supabaseAdmin
+        .from('events')
+        .update({ portal_token_expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString() })
+        .eq('id', ev.id)
+        .is('portal_token_expires_at', null)
       if (ev.client_id) {
         await supabaseAdmin.from('client_interactions').insert({
           boutique_id: boutique.id, client_id: ev.client_id,

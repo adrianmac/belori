@@ -42,6 +42,22 @@ function wishlistKey(bid) { return `catalog_wishlist_${bid}` }
 function loadWishlist(bid) { try { return JSON.parse(localStorage.getItem(wishlistKey(bid)) || '[]') } catch { return [] } }
 function saveWishlist(bid, ids) { try { localStorage.setItem(wishlistKey(bid), JSON.stringify(ids)) } catch {} }
 
+// ─── KIOSK RATE LIMIT ────────────────────────────────────────────────────────
+const KIOSK_RATE_KEY = 'belori_kiosk_last_booking'
+const KIOSK_COOLDOWN_MS = 5 * 60 * 1000 // 5 minutes
+
+function checkKioskRateLimit() {
+  const last = localStorage.getItem(KIOSK_RATE_KEY)
+  if (last && Date.now() - Number(last) < KIOSK_COOLDOWN_MS) {
+    const remaining = Math.ceil((KIOSK_COOLDOWN_MS - (Date.now() - Number(last))) / 1000)
+    throw new Error(`Please wait ${remaining} seconds before booking again.`)
+  }
+}
+
+function recordKioskBooking() {
+  localStorage.setItem(KIOSK_RATE_KEY, String(Date.now()))
+}
+
 // ─── GLOBAL STYLES ──────────────────────────────────────────────────────────
 const STYLE = `
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -114,6 +130,12 @@ function RequestSheet({ item, boutiqueId, onClose }) {
 
   async function submit() {
     if (!name.trim()) return
+    try {
+      checkKioskRateLimit()
+    } catch (err) {
+      alert(err.message)
+      return
+    }
     setSaving(true)
     const timeMap = { Morning: '10:00', Afternoon: '14:00', Evening: '18:00' }
     await supabase.from('appointments').insert({
@@ -127,6 +149,7 @@ function RequestSheet({ item, boutiqueId, onClose }) {
       note: `Try-on request: ${item.name}${notes ? ' · ' + notes : ''}`,
       status: 'scheduled',
     })
+    recordKioskBooking()
     setSaving(false)
     setDone(true)
   }

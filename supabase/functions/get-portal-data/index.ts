@@ -20,12 +20,19 @@ Deno.serve(async (req: Request) => {
   // Fetch the event by portal_token
   const { data: event, error: evErr } = await supabase
     .from('events')
-    .select('id, boutique_id, client_id, type, event_date, venue, guests, status, total, paid, inspiration_colors, inspiration_styles, inspiration_notes, inspiration_florals')
+    .select('id, boutique_id, client_id, type, event_date, venue, guests, status, total, paid, inspiration_colors, inspiration_styles, inspiration_notes, inspiration_florals, portal_token_expires_at')
     .eq('portal_token', token)
     .single();
 
   if (evErr || !event) {
     return new Response(JSON.stringify({ error: 'Portal not found' }), { status: 404, headers: { ...cors, 'Content-Type': 'application/json' } });
+  }
+
+  // Check portal token expiry
+  if (event.portal_token_expires_at && new Date(event.portal_token_expires_at) < new Date()) {
+    return new Response(JSON.stringify({ error: 'This portal link has expired. Please contact your boutique.' }), {
+      status: 410, headers: { ...cors, 'Content-Type': 'application/json' }
+    })
   }
 
   // Fetch boutique (public info only)

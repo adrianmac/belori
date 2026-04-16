@@ -10,6 +10,32 @@ function twimlReply(msg: string): Response {
   return new Response(xml, { headers: { 'Content-Type': 'text/xml' } })
 }
 
+/**
+ * Validate a Twilio webhook signature using HMAC-SHA1.
+ * Algorithm: sort POST params alphabetically, append key+value to the full URL,
+ * HMAC-SHA1 sign with auth token, base64-encode, compare to X-Twilio-Signature.
+ */
+async function validateTwilioSignature(
+  authToken: string,
+  signature: string,
+  url: string,
+  params: Record<string, string>
+): Promise<boolean> {
+  const sortedKeys = Object.keys(params).sort()
+  let str = url
+  for (const key of sortedKeys) {
+    str += key + params[key]
+  }
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw', encoder.encode(authToken),
+    { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(str))
+  const computed = btoa(String.fromCharCode(...new Uint8Array(sig)))
+  return computed === signature
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
@@ -23,19 +49,39 @@ Deno.serve(async (req: Request) => {
     // Twilio sends form-encoded data
     const contentType = req.headers.get('content-type') || ''
     let fromNumber = '', toNumber = '', body = '', messageSid = ''
+    let allParams: Record<string, string> = {}
 
     if (contentType.includes('application/x-www-form-urlencoded')) {
-      const params = new URLSearchParams(await req.text())
+      const rawText = await req.text()
+      const params = new URLSearchParams(rawText)
       fromNumber  = params.get('From') || ''
       toNumber    = params.get('To')   || ''
       body        = params.get('Body') || ''
       messageSid  = params.get('MessageSid') || ''
+      for (const [k, v] of params.entries()) {
+        allParams[k] = v
+      }
     } else {
       const data  = await req.json()
       fromNumber  = data.From || ''
       toNumber    = data.To   || ''
       body        = data.Body || ''
       messageSid  = data.MessageSid || ''
+      allParams   = data as Record<string, string>
+    }
+
+    // ── Twilio signature verification ───────────────────────────────────────
+    const authToken = Deno.env.get('TWILIO_AUTH_TOKEN')
+    if (authToken) {
+      const twilioSig = req.headers.get('x-twilio-signature') || ''
+      const requestUrl = req.url
+      const isValid = await validateTwilioSignature(authToken, twilioSig, requestUrl, allParams)
+      if (!isValid) {
+        console.warn('[sms-inbound] Invalid Twilio signature — request rejected')
+        return new Response('Forbidden', { status: 403 })
+      }
+    } else {
+      console.warn('[sms-inbound] TWILIO_AUTH_TOKEN not set — skipping signature verification (dev mode)')
     }
 
     if (!fromNumber || !body) {

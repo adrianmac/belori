@@ -8,10 +8,23 @@ export function useBoutique() {
 
   async function updateBoutique(updates) {
     if (!boutique) return { error: new Error('No boutique') }
+    const ALLOWED_FIELDS = [
+      'name', 'phone', 'email', 'address', 'instagram', 'booking_url', 'website',
+      'logo_url', 'color', 'currency', 'timezone', 'language',
+      'receipt_footer', 'receipt_header', 'receipt_show_logo',
+      'automations', 'calendar_feed_token',
+      'appointment_duration', 'booking_buffer',
+      'city', 'state', 'zip', 'country',
+      'display_mode', 'sidebar_collapsed',
+    ]
+    const safe = Object.fromEntries(
+      Object.entries(updates).filter(([k]) => ALLOWED_FIELDS.includes(k))
+    )
+    if (Object.keys(safe).length === 0) return { error: null }
     setSaving(true)
     const { error } = await supabase
       .from('boutiques')
-      .update(updates)
+      .update(safe)
       .eq('id', boutique.id)
     setSaving(false)
     return { error }

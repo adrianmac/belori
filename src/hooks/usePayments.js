@@ -119,6 +119,9 @@ export function usePayments({ enabled = true } = {}) {
   }
 
   async function createMilestone(payload) {
+    if (!payload.amount || Number(payload.amount) <= 0) {
+      throw new Error('Milestone amount must be greater than zero')
+    }
     const { data, error } = await supabase
       .from('payment_milestones')
       .insert({ ...payload, boutique_id: boutique.id })
@@ -130,6 +133,11 @@ export function usePayments({ enabled = true } = {}) {
   }
 
   async function createMilestones(payloads) {
+    for (const p of payloads) {
+      if (!p.amount || Number(p.amount) <= 0) {
+        throw new Error('Milestone amount must be greater than zero')
+      }
+    }
     const rows = payloads.map(p => ({ ...p, boutique_id: boutique.id }))
     const { data, error } = await supabase
       .from('payment_milestones')

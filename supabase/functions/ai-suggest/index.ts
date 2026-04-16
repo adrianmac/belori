@@ -35,6 +35,25 @@ serve(async (req) => {
     })
   }
 
+  // Rate limit: max 20 AI requests per user per hour
+  const adminClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } })
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const { count } = await adminClient
+    .from('ai_usage_log')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('created_at', oneHourAgo)
+
+  if ((count ?? 0) >= 20) {
+    return new Response(JSON.stringify({ error: 'Rate limit exceeded. Max 20 AI requests per hour.' }), {
+      status: 429,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
+  // Log this request before processing
+  await adminClient.from('ai_usage_log').insert({ user_id: user.id, created_at: new Date().toISOString() })
+
   try {
     const body = await req.json()
     const { type, eventType, clientName, eventDate, venue, guests, services, total, paid, daysUntil, overdueCount, prevOverdue, packages, deposit, boutiqueName, guestCount } = body
