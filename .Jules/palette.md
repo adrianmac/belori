@@ -1,0 +1,3 @@
+## 2023-10-27 - Icon-Only Button Accessibility Pattern
+**Learning:** Found a widespread pattern of icon-only buttons (like "×" close buttons, toggle arrows, search icons, and mobile menu icons) missing crucial `aria-label` and `aria-expanded` attributes across the application components and modals. The design heavily relies on inline styles and visual indicators (like SVG or text symbols), but screen readers would just announce "times" or nothing at all.
+**Action:** Applied a bulk update adding `aria-label="Close"` to all "×" modal buttons, and updated core navigation components (Sidebar) to use `aria-label` and `aria-expanded` attributes. Future components should always include an `aria-label` when the text content is purely visual or non-semantic.

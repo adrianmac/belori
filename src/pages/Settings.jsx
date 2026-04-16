@@ -750,7 +750,7 @@ const InviteStaffModal = ({onClose, sendInvite, toast, boutique}) => {
       <div role="dialog" aria-modal="true" aria-labelledby="settings-invite-staff-title" style={{background:C.white,borderRadius:16,width:420,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span id="settings-invite-staff-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Invite staff member</span>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{padding:20,display:'flex',flexDirection:'column',gap:12}}>
           {err&&<div style={{fontSize:12,color:'var(--text-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7}}>{err}</div>}
@@ -913,7 +913,7 @@ const AvailabilityModal = ({member, boutique, onClose, toast}) => {
       <div role="dialog" aria-modal="true" aria-labelledby="settings-staff-availability-title" style={{background:C.white,borderRadius:16,width:560,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,background:C.white,zIndex:1}}>
           <span id="settings-staff-availability-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Availability — {member.name}</span>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{padding:20}}>
           {loading ? (
@@ -1079,7 +1079,7 @@ const EditStaffModal = ({member, updateStaffMember, onClose, onSaved}) => {
       <div role="dialog" aria-modal="true" aria-labelledby="settings-edit-staff-title" style={{background:C.white,borderRadius:16,width:420,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <span id="settings-edit-staff-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Edit staff member</span>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{padding:20,display:'flex',flexDirection:'column',gap:12}}>
           {err&&<div style={{fontSize:12,color:'var(--text-danger)',background:'var(--bg-danger)',padding:'8px 12px',borderRadius:7}}>{err}</div>}
@@ -3766,7 +3766,7 @@ const CreatePackageModal = ({pkg, onClose, onSave}) => {
       <div role="dialog" aria-modal="true" aria-labelledby="settings-package-title" style={{background:C.white,borderRadius:16,width:480,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'20px 24px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div id="settings-package-title" style={{fontWeight:600,fontSize:16,color:C.ink}}>{pkg?'Edit package':'Create package'}</div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:24,display:'flex',flexDirection:'column',gap:16}}>
           <div>

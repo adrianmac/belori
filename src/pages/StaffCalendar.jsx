@@ -129,7 +129,7 @@ function ApptPopover({ appt, staffMap, onClose }) {
           <span style={{ fontSize: 16 }}>{icon}</span>
           <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{clientName !== '—' ? clientName : (appt.type || 'Appointment')}</span>
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1, padding: '0 2px' }}>×</button>
+        <button aria-label="Close" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1, padding: '0 2px' }}>×</button>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12, color: C.ink }}>
         <div style={{ display: 'flex', gap: 8 }}>

@@ -33,7 +33,7 @@ export default function KeyboardShortcutsModal({ onClose }) {
             <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Keyboard shortcuts</span>
             <div style={{fontSize:12,color:C.gray,marginTop:1}}>Press <kbd style={{background:C.grayBg,border:`1px solid ${C.border}`,borderRadius:4,padding:'1px 5px',fontSize:11}}>?</kbd> anytime to show this</div>
           </div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:'12px 20px 20px'}}>
           {SHORTCUTS.map((s, i) => {
