@@ -18,6 +18,10 @@ import LeadForm from './pages/LeadForm'
 import Questionnaire from './pages/Questionnaire'
 import BoutiqueProfilePage from './pages/BoutiqueProfilePage'
 import DataDeletionPage from './pages/DataDeletionPage'
+import TermsOfService from './pages/legal/TermsOfService'
+import PrivacyPolicy from './pages/legal/PrivacyPolicy'
+import SmsTerms from './pages/legal/SmsTerms'
+import DataProcessingAgreement from './pages/legal/DataProcessingAgreement'
 import KioskPage from './pages/KioskPage'
 import CatalogKioskPage from './pages/CatalogKioskPage'
 
@@ -70,6 +74,10 @@ export default function App() {
       <Route path="/questionnaire/:eventToken" element={<Questionnaire />} />
       <Route path="/boutique/:slug" element={<BoutiqueProfilePage />} />
       <Route path="/data-deletion" element={<DataDeletionPage />} />
+      <Route path="/terms" element={<TermsOfService />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/sms-terms" element={<SmsTerms />} />
+      <Route path="/dpa" element={<DataProcessingAgreement />} />
       <Route path="/kiosk" element={<KioskPage />} />
       <Route path="/catalog-kiosk" element={<CatalogKioskPage />} />
       <Route path="/onboarding" element={<SessionRoute><Onboarding /></SessionRoute>} />
