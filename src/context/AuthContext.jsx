@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
@@ -62,6 +63,12 @@ export function AuthProvider({ children }) {
     const activeMember = validMembers.find(m => m.boutique.id === active.id)
     setMyRole(activeMember?.role || 'front_desk')
     setLoading(false)
+
+    // Set Sentry user context so errors are tied to boutique + role
+    Sentry.setUser({ id: userId })
+    Sentry.setTag('boutique_id', active.id)
+    Sentry.setTag('boutique_name', active.name)
+    Sentry.setTag('role', activeMember?.role || 'front_desk')
   }
 
   function switchBoutique(id) {
@@ -101,6 +108,7 @@ export function AuthProvider({ children }) {
       k => k.startsWith('belori_') || k === 'activeBoutiqueId'
     )
     keysToRemove.forEach(k => localStorage.removeItem(k))
+    Sentry.setUser(null)  // Clear user context on sign-out
     await supabase.auth.signOut()
   }
 
