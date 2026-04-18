@@ -326,14 +326,14 @@ export function ConfirmModal({ title, message, confirmLabel = 'Confirm', onConfi
   return (
     <div role="presentation" onClick={e => { if (e.target === e.currentTarget) onCancel(); }}
       style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1200,padding:16}}>
-      <div role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" ref={trapRef}
+      <div role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby={message ? "confirm-modal-desc" : undefined} ref={trapRef}
         style={{background:'#fff',borderRadius:16,width:380,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
         <div style={{padding:'20px 20px 12px',textAlign:'center'}}>
           {danger && <div style={{width:44,height:44,borderRadius:'50%',background:'var(--bg-danger)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px'}}>
-            <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1Zm0 4v4m0 2.5v.5" stroke="var(--color-danger)" strokeWidth="1.4" strokeLinecap="round"/></svg>
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1Zm0 4v4m0 2.5v.5" stroke="var(--color-danger)" strokeWidth="1.4" strokeLinecap="round"/></svg>
           </div>}
           <div id="confirm-modal-title" style={{fontSize:15,fontWeight:600,color:'#111',marginBottom:message?8:0}}>{title}</div>
-          {message && <div style={{fontSize:13,color:'#666'}}>{message}</div>}
+          {message && <div id="confirm-modal-desc" style={{fontSize:13,color:'#666'}}>{message}</div>}
         </div>
         <div style={{padding:'12px 20px 20px',display:'flex',gap:8}}>
           <button onClick={onCancel}
@@ -355,11 +355,12 @@ export const ModeIndicatorBtn = () => {
   const { mode, toggle } = useLayoutMode();
   return (
     <button onClick={toggle} title={mode === 'tablet' ? 'Switch to desktop mode' : 'Switch to tablet mode'}
+      aria-label={mode === 'tablet' ? 'Switch to desktop mode' : 'Switch to tablet mode'}
       className="btn-icon" style={{border:`1px solid ${C.border}`,background:'transparent',borderRadius:8,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:C.gray,minHeight:32,minWidth:32,padding:0,boxShadow:'var(--btn-shadow-ghost)'}}>
       {mode === 'tablet' ? (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="12" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.3"/><path d="M6 13h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="1" width="12" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.3"/><path d="M6 13h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
       ) : (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.3"/><path d="M5 13h6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.3"/><path d="M5 13h6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
       )}
     </button>
   );
@@ -431,13 +432,13 @@ export function useAutoResize(ref) {
 export const AlertBanner = ({msg,action,onAction}) => {
   const { isTablet } = useLayoutMode();
   return (
-    <div style={{background:'var(--bg-warning)',borderBottom:true?`1px solid var(--color-warning)`:'none',padding:isTablet?'11px 18px':'10px 20px',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" style={{flexShrink:0}}><circle cx="8" cy="8" r="7" stroke='var(--color-warning)' strokeWidth="1.2"/><path d="M8 5v3M8 11v.5" stroke='var(--color-warning)' strokeWidth="1.4" strokeLinecap="round"/></svg>
+    <div role="alert" style={{background:'var(--bg-warning)',borderBottom:true?`1px solid var(--color-warning)`:'none',padding:isTablet?'11px 18px':'10px 20px',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" style={{flexShrink:0}} aria-hidden="true"><circle cx="8" cy="8" r="7" stroke='var(--color-warning)' strokeWidth="1.2"/><path d="M8 5v3M8 11v.5" stroke='var(--color-warning)' strokeWidth="1.4" strokeLinecap="round"/></svg>
       <span style={{fontSize:isTablet?13:12,color:'var(--text-warning)',flex:1,lineHeight:1.4}}>{msg}</span>
       {action&&(isTablet?
         <button onClick={onAction} style={{height:44,padding:'0 16px',background:'var(--color-warning)',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0,minHeight:'unset',minWidth:'unset'}}>{action}</button>
         :
-        <span onClick={onAction} style={{fontSize:12,color:'var(--text-warning)',fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>{action} →</span>
+        <button onClick={onAction} style={{fontSize:12,color:'var(--text-warning)',fontWeight:500,cursor:'pointer',whiteSpace:'nowrap',background:'none',border:'none',padding:0}}>{action} →</button>
       )}
     </div>
   );
