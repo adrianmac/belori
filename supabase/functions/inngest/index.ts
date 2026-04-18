@@ -56,6 +56,19 @@ function fmtMoney(n: number): string {
   return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 0 })
 }
 
+// ─── Per-boutique SMS rate limiter ───────────────────────────────────────────
+const SMS_CAP = parseInt(Deno.env.get('MAX_SMS_PER_BOUTIQUE_PER_RUN') ?? '50')
+const smsSentThisRun: Map<string, number> = new Map()
+
+function smsAllowed(boutiqueId: string): boolean {
+  const count = smsSentThisRun.get(boutiqueId) ?? 0
+  return count < SMS_CAP
+}
+
+function recordSmsSent(boutiqueId: string): void {
+  smsSentThisRun.set(boutiqueId, (smsSentThisRun.get(boutiqueId) ?? 0) + 1)
+}
+
 // ─── 1. 24-hour appointment reminder ─────────────────────────────────────────
 async function runSms24h() {
   const tomorrow = offsetDate(1)
@@ -91,7 +104,12 @@ async function runSms24h() {
       const client = appt.event?.client as { name?: string; phone?: string; comm_prefs?: { sms_opt_out?: boolean } } | undefined
       if (client?.comm_prefs?.sms_opt_out === true) continue
       const msg = `Hi ${name}! Reminder from ${boutique.name}: you have a ${appt.type?.replace(/_/g,' ')} tomorrow (${fmtDate(tomorrow)}). See you soon! 💐\n\nReply STOP to opt out. Msg & data rates may apply.`
-      await sendSms(e164, msg)
+      if (smsAllowed(boutique.id)) {
+        await sendSms(e164, msg)
+        recordSmsSent(boutique.id)
+      } else {
+        console.warn(`[inngest] SMS cap reached for boutique ${boutique.id} in this run`)
+      }
       if (clientId) {
         await supabaseAdmin.from('client_interactions').insert({
           boutique_id: boutique.id, client_id: clientId,
@@ -153,7 +171,12 @@ async function runSms2h() {
       if (client2h?.comm_prefs?.sms_opt_out === true) continue
       const time = appt.time ? appt.time.slice(0, 5) : ''
       const msg  = `Hi ${name}! Just a reminder — your ${appt.type?.replace(/_/g,' ')} at ${boutique.name} is in about 2 hours${time ? ` (${time})` : ''}. See you soon! 💐\n\nReply STOP to opt out. Msg & data rates may apply.`
-      await sendSms(e164, msg)
+      if (smsAllowed(boutique.id)) {
+        await sendSms(e164, msg)
+        recordSmsSent(boutique.id)
+      } else {
+        console.warn(`[inngest] SMS cap reached for boutique ${boutique.id} in this run`)
+      }
       if (clientId) {
         await supabaseAdmin.from('client_interactions').insert({
           boutique_id: boutique.id, client_id: clientId,
@@ -191,7 +214,12 @@ async function runPaymentReminder() {
       const payClient = m.event?.client as { name?: string; phone?: string; email?: string; comm_prefs?: { sms_opt_out?: boolean } } | undefined
       const e164  = phone ? toE164(phone) : null
       if (e164 && payClient?.comm_prefs?.sms_opt_out !== true) {
-        await sendSms(e164, `Hi ${name}! A friendly reminder from ${boutique.name}: your payment of ${fmtMoney(m.amount)} for "${m.label}" is due ${fmtDate(targetDate)}. Questions? Reply here. 💕\n\nReply STOP to opt out. Msg & data rates may apply.`)
+        if (smsAllowed(boutique.id)) {
+          await sendSms(e164, `Hi ${name}! A friendly reminder from ${boutique.name}: your payment of ${fmtMoney(m.amount)} for "${m.label}" is due ${fmtDate(targetDate)}. Questions? Reply here. 💕\n\nReply STOP to opt out. Msg & data rates may apply.`)
+          recordSmsSent(boutique.id)
+        } else {
+          console.warn(`[inngest] SMS cap reached for boutique ${boutique.id} in this run`)
+        }
       }
       if (email) {
         await sendEmail({
@@ -248,7 +276,12 @@ async function runOverdueAlerts() {
         const msg = daysLate === 1
           ? `Hi ${name}, your payment of ${fmtMoney(m.amount)} for "${m.label}" at ${boutique.name} was due yesterday. Please contact us to settle your balance. 💕\n\nReply STOP to opt out. Msg & data rates may apply.`
           : `Hi ${name}, your payment of ${fmtMoney(m.amount)} for "${m.label}" at ${boutique.name} is now ${daysLate} days overdue. Please reach out as soon as possible.\n\nReply STOP to opt out. Msg & data rates may apply.`
-        await sendSms(e164, msg)
+        if (smsAllowed(boutique.id)) {
+          await sendSms(e164, msg)
+          recordSmsSent(boutique.id)
+        } else {
+          console.warn(`[inngest] SMS cap reached for boutique ${boutique.id} in this run`)
+        }
       }
       if (m.event?.client_id) {
         await supabaseAdmin.from('client_interactions').insert({
@@ -290,7 +323,12 @@ async function runReturnReminder() {
       if (returnClient?.comm_prefs?.sms_opt_out === true) continue
       const e164  = phone ? toE164(phone) : null
       if (!e164) continue
-      await sendSms(e164, `Hi ${name}! Reminder from ${boutique.name}: your dress rental "${dress.name}" is due back in 2 days (${fmtDate(in48h)}). Thank you! 💕\n\nReply STOP to opt out. Msg & data rates may apply.`)
+      if (smsAllowed(boutique.id)) {
+        await sendSms(e164, `Hi ${name}! Reminder from ${boutique.name}: your dress rental "${dress.name}" is due back in 2 days (${fmtDate(in48h)}). Thank you! 💕\n\nReply STOP to opt out. Msg & data rates may apply.`)
+        recordSmsSent(boutique.id)
+      } else {
+        console.warn(`[inngest] SMS cap reached for boutique ${boutique.id} in this run`)
+      }
       if (dress.client_id) {
         await supabaseAdmin.from('client_interactions').insert({
           boutique_id: boutique.id, client_id: dress.client_id,
@@ -331,7 +369,12 @@ async function runReviewRequest() {
       const msg = reviewLink
         ? `Hi ${name}! Thank you for celebrating with ${boutique.name}! We hope everything was perfect. We'd love your review: ${reviewLink}\n\nReply STOP to opt out. Msg & data rates may apply.`
         : `Hi ${name}! Thank you for celebrating with ${boutique.name}! We hope everything was perfect. It was our honor to be part of your special day!\n\nReply STOP to opt out. Msg & data rates may apply.`
-      await sendSms(e164, msg)
+      if (smsAllowed(boutique.id)) {
+        await sendSms(e164, msg)
+        recordSmsSent(boutique.id)
+      } else {
+        console.warn(`[inngest] SMS cap reached for boutique ${boutique.id} in this run`)
+      }
       await supabaseAdmin.from('events').update({ status: 'completed' }).eq('id', ev.id)
       // Set portal token expiry to 90 days from now for completed events (SEC-024)
       await supabaseAdmin
@@ -378,7 +421,12 @@ async function runWinBack() {
       if (lastDate >= cutoff) continue          // active within 60 days — skip
       if (lastDate < tooStale) continue         // inactive 2+ years — skip
       const firstName = client.name?.split(' ')[0] ?? 'there'
-      await sendSms(e164, `Hi ${firstName}! We miss you at ${boutique.name} 💕 Whether you're planning a new event or just browsing, we'd love to see you. Reply to chat or visit us anytime!\n\nReply STOP to opt out. Msg & data rates may apply.`)
+      if (smsAllowed(boutique.id)) {
+        await sendSms(e164, `Hi ${firstName}! We miss you at ${boutique.name} 💕 Whether you're planning a new event or just browsing, we'd love to see you. Reply to chat or visit us anytime!\n\nReply STOP to opt out. Msg & data rates may apply.`)
+        recordSmsSent(boutique.id)
+      } else {
+        console.warn(`[inngest] SMS cap reached for boutique ${boutique.id} in this run`)
+      }
       await supabaseAdmin.from('client_interactions').insert({
         boutique_id: boutique.id, client_id: client.id,
         type: 'note', title: 'Win-back SMS sent',
@@ -459,7 +507,12 @@ async function runBirthdaySms() {
       if (!e164) continue
       const firstName = client.name?.split(' ')[0] ?? 'there'
       const msg = `🎂 Happy Birthday ${firstName}! Wishing you a wonderful day from all of us at ${boutique.name}! 💕\n\nReply STOP to opt out. Msg & data rates may apply.`
-      await sendSms(e164, msg)
+      if (smsAllowed(boutique.id)) {
+        await sendSms(e164, msg)
+        recordSmsSent(boutique.id)
+      } else {
+        console.warn(`[inngest] SMS cap reached for boutique ${boutique.id} in this run`)
+      }
       await supabaseAdmin.from('client_interactions').insert({
         boutique_id: boutique.id,
         client_id: client.id,
@@ -511,7 +564,12 @@ async function runAnniversarySms() {
       const years = now.getUTCFullYear() - new Date(client.anniversary_date).getUTCFullYear()
       const yearsStr = years > 0 ? `${years} year${years !== 1 ? 's' : ''}` : 'another year'
       const msg = `💕 Happy Anniversary ${firstName}! It's been ${yearsStr} since your special day. We hope the memories last forever! - ${boutique.name}\n\nReply STOP to opt out. Msg & data rates may apply.`
-      await sendSms(e164, msg)
+      if (smsAllowed(boutique.id)) {
+        await sendSms(e164, msg)
+        recordSmsSent(boutique.id)
+      } else {
+        console.warn(`[inngest] SMS cap reached for boutique ${boutique.id} in this run`)
+      }
       await supabaseAdmin.from('client_interactions').insert({
         boutique_id: boutique.id,
         client_id: client.id,
@@ -550,7 +608,12 @@ async function runAnniversarySms() {
       const yearsStr = `${years} year${years !== 1 ? 's' : ''}`
       const firstName = (weddingClient?.name || '').split(' ')[0] || 'there'
       const msg = `💕 Happy Anniversary ${firstName}! It's been ${yearsStr} since your special day. We hope the memories last forever! - ${boutique.name}\n\nReply STOP to opt out. Msg & data rates may apply.`
-      await sendSms(e164, msg)
+      if (smsAllowed(boutique.id)) {
+        await sendSms(e164, msg)
+        recordSmsSent(boutique.id)
+      } else {
+        console.warn(`[inngest] SMS cap reached for boutique ${boutique.id} in this run`)
+      }
       await supabaseAdmin.from('client_interactions').insert({
         boutique_id: boutique.id,
         client_id: wedding.client_id,

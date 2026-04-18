@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { C } from '../../lib/colors';
-import { PrimaryBtn, GhostBtn, inputSt, LBL, useToast } from '../../lib/ui.jsx';
+import { PrimaryBtn, GhostBtn, inputSt, LBL, useToast, useFocusTrap } from '../../lib/ui.jsx';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import {
@@ -337,6 +337,8 @@ function ConfirmStep({ selectedType, dateStr, timeStr, duration, staffId, staffL
 export default function AppointmentScheduler({ eventId, clientId, eventDate, onSave, onClose }) {
   const { boutique } = useAuth();
   const toast = useToast();
+  // Component is only rendered when open, so isOpen is always true
+  const trapRef = useFocusTrap(true);
 
   // If clientId is pre-provided (from EventDetail), skip the lookup step (step 0)
   const hasPreloadedClient = Boolean(clientId);
@@ -480,6 +482,7 @@ export default function AppointmentScheduler({ eventId, clientId, eventDate, onS
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
+        ref={trapRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="appt-scheduler-title"

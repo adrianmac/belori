@@ -3,7 +3,7 @@ import { C, fmt, pct, EVT_TYPES } from '../lib/colors';
 import { useAuth } from '../context/AuthContext';
 import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, SvcTag,
   Countdown, EventTypeBadge, ProgressBar, StatusDot, AlertBanner, useToast,
-  inputSt, LBL } from '../lib/ui.jsx';
+  inputSt, LBL, useFocusTrap } from '../lib/ui.jsx';
 import { getPriorityAlert, getCountdownConfig, DRESS_TRANSITIONS } from '../lib/urgency';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
 import { useModules } from '../hooks/useModules.jsx';
@@ -679,6 +679,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
 
   // ── New Rental 4-Step Modal
   const NewRentalModal4Step=({initialDress,onClose,onSuccess})=>{
+    const trapRef = useFocusTrap(true);
     const [step,setStep]=useState(initialDress?2:1);
     const [selDress,setSelDress]=useState(initialDress||null);
     const [s1Query,setS1Query]=useState('');
@@ -734,7 +735,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     const STEPS=['Select dress','Link to event','Pricing','Confirm'];
     return(
       <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-        <div role="dialog" aria-modal="true" aria-labelledby="dressrentals-newrental-title" style={{background:C.white,borderRadius:16,width:540,maxHeight:'90vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+        <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="dressrentals-newrental-title" style={{background:C.white,borderRadius:16,width:540,maxHeight:'90vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
           {/* Header + progress */}
           <div style={{padding:'18px 24px 12px',borderBottom:`1px solid ${C.border}`}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>

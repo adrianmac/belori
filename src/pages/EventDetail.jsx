@@ -3,7 +3,7 @@ import { C, fmt, pct, SVC_LABELS, SVC_COLORS, EVT_TYPES, TYPE_SVCS,
   TYPE_DEFAULT_SVCS, COLOR_PRESETS, STYLE_OPTIONS } from '../lib/colors';
 import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, SvcTag,
   Countdown, EventTypeBadge, ProgressBar, StatusDot, AlertBanner, useToast,
-  inputSt, LBL } from '../lib/ui.jsx';
+  inputSt, LBL, useFocusTrap } from '../lib/ui.jsx';
 import { getPriorityAlert, getCountdownConfig, DRESS_TRANSITIONS,
   ALTERATION_TRANSITIONS } from '../lib/urgency';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
@@ -389,6 +389,9 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
   const [showAddTask,setShowAddTask]=useState(false);
   const [showMarkPaid,setShowMarkPaid]=useState(null);
   const [showScheduleAppt,setShowScheduleAppt]=useState(false);
+  // Focus traps for major modals
+  const addTaskTrapRef    = useFocusTrap(showAddTask);
+  const editEventTrapRef  = useFocusTrap(showEditEvent);
   const [showAddService,setShowAddService]=useState(false);
   const [showAddMilestone,setShowAddMilestone]=useState(false);
   const [showEditRental,setShowEditRental]=useState(false);
@@ -3254,7 +3257,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
       {/* ── EDIT EVENT MODAL ── */}
       {showEditEvent&&(
         <div role="presentation" className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-          <div role="dialog" aria-modal="true" aria-labelledby="eventdetail-edit-event-title" style={{background:C.white,borderRadius:16,width:460,maxHeight:'88dvh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+          <div ref={editEventTrapRef} role="dialog" aria-modal="true" aria-labelledby="eventdetail-edit-event-title" style={{background:C.white,borderRadius:16,width:460,maxHeight:'88dvh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
             <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <span id="eventdetail-edit-event-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Edit event details</span>
               <button onClick={()=>setShowEditEvent(false)} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
@@ -3280,7 +3283,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
       {/* ── ADD TASK MODAL ── */}
       {showAddTask&&(
         <div role="presentation" className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-          <div role="dialog" aria-modal="true" aria-labelledby="eventdetail-add-task-title" style={{background:C.white,borderRadius:16,width:440,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+          <div ref={addTaskTrapRef} role="dialog" aria-modal="true" aria-labelledby="eventdetail-add-task-title" style={{background:C.white,borderRadius:16,width:440,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
             <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <span id="eventdetail-add-task-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Add task</span>
               <button onClick={()=>setShowAddTask(false)} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>

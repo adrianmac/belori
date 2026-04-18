@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { C, fmt } from '../lib/colors';
 import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, useToast,
-  inputSt, LBL, EmptyState } from '../lib/ui.jsx';
+  inputSt, LBL, EmptyState, useFocusTrap } from '../lib/ui.jsx';
 import { ALTERATION_TRANSITIONS } from '../lib/urgency';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
 import { supabase } from '../lib/supabase';
@@ -208,6 +208,7 @@ const InlineNewClient = ({onCreate, onDone}) => {
 
 // ─── NEW ALTERATION MODAL ────────────────────────────────────────────────────
 const NewAlterationModal = ({staff, clients: initialClients, createClient, onClose, onCreate}) => {
+  const trapRef = useFocusTrap(true);
   const [clientsList,setClientsList]=useState(initialClients||[]);
   const [garmentType,setGarmentType]=useState('boutique');
   const [garmentDesc,setGarmentDesc]=useState('');
@@ -257,7 +258,7 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
 
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16,backdropFilter:'blur(4px)'}}>
-      <div role="dialog" aria-modal="true" aria-labelledby="alterations-newjob-title" style={{background:C.white,borderRadius:20,width:600,maxHeight:'92vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="alterations-newjob-title" style={{background:C.white,borderRadius:20,width:600,maxHeight:'92vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         {/* Header */}
         <div style={{padding:'24px 30px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexShrink:0}}>
           <div>
