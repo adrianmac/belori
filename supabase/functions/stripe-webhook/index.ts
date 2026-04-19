@@ -38,8 +38,8 @@ Deno.serve(async (req) => {
         cryptoProvider
       )
     } catch (err) {
-      console.error(`Webhook signature verification failed: ${err.message}`)
-      return new Response(`Webhook Error: ${err.message}`, { status: 400 })
+      console.error(`Webhook signature verification failed: ${err?.message || String(err)}`)
+      return new Response(`Webhook Error: ${err?.message || String(err)}`, { status: 400 })
     }
 
     const supabaseServiceRole = createClient(
@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     })
   } catch (error) {
     console.error(error)
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error?.message || String(error) }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     })

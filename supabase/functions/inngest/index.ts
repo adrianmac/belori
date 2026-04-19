@@ -722,7 +722,7 @@ Deno.serve(async (req) => {
     })
   } catch (err) {
     console.error(`[automations] ${type} error:`, err)
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: err?.message || String(err) }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   }
