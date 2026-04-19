@@ -78,15 +78,30 @@ serve(async (req) => {
         .eq('email', recipientEmail)
         .maybeSingle()
 
-      // Or a staff member of the boutique
-      const { data: memberMatch } = clientMatch
-        ? { data: true }
-        : await admin
-            .from('boutique_members')
+      // Or a staff member of the boutique.
+      // boutique_members has no email column — emails live in auth.users.
+      // Get all user_ids for this boutique, then check auth.users by email.
+      let memberMatch: { id: string } | null = null
+      if (!clientMatch) {
+        const { data: boutiqueMembers } = await admin
+          .from('boutique_members')
+          .select('user_id')
+          .eq('boutique_id', member.boutique_id)
+
+        const userIds = (boutiqueMembers ?? []).map((m: any) => m.user_id as string)
+
+        if (userIds.length > 0) {
+          const { data: authUser } = await admin
+            .schema('auth')
+            .from('users')
             .select('id')
-            .eq('boutique_id', member.boutique_id)
             .eq('email', recipientEmail)
+            .in('id', userIds)
             .maybeSingle() as any
+
+          memberMatch = authUser ?? null
+        }
+      }
 
       if (!clientMatch && !memberMatch) {
         return new Response(JSON.stringify({ error: 'Forbidden: recipient is not a client or member of your boutique' }), {
