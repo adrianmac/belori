@@ -29,8 +29,16 @@ export default function BugReportButton({ currentScreen }) {
   const [form, setForm] = useState(EMPTY)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
   const dialogRef = useRef(null)
   const firstInputRef = useRef(null)
+
+  // Sync with mobile breakpoint so we stack above the BottomNav-offset FAB
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
 
   // ESC to close
   useEffect(() => {
@@ -79,7 +87,10 @@ export default function BugReportButton({ currentScreen }) {
 
   return (
     <>
-      {/* ── Floating trigger button ── */}
+      {/* ── Floating trigger button ──
+          Pinned to the right side, stacked above the QuickActionFAB so the
+          primary "+" action stays at thumb-level. On mobile the FAB is shifted
+          up by the BottomNav (88px vs 28px); mirror that offset here.        */}
       <button
         ref={triggerRef}
         onClick={() => { setForm(EMPTY); setSubmitted(false); setOpen(true) }}
@@ -87,8 +98,9 @@ export default function BugReportButton({ currentScreen }) {
         title="Report a bug"
         style={{
           position: 'fixed',
-          bottom: 28,
-          left: 20,
+          // FAB sits at 28/88 with a 56px primary button — stack above with a 12px gap.
+          bottom: (isMobile ? 88 : 28) + 56 + 12,
+          right: 20,
           zIndex: 950,
           width: 44,
           height: 44,
