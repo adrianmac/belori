@@ -467,6 +467,13 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
   },[]);
   // Dress recommendation engine — declared early so escape handler dep array can reference it
   const [dressSuggestionsOpen,setDressSuggestionsOpen]=useState(false);
+  // Modals referenced by the Escape handler below — declared before the effect
+  // to avoid a Temporal Dead Zone error on initial render. Also declared once
+  // each (do not redeclare later in the component).
+  const [showAIContractModal,setShowAIContractModal]=useState(false);
+  const [showMoodAddPopover,setShowMoodAddPopover]=useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showAddPartyMember,setShowAddPartyMember]=useState(false);
   // Global keyboard shortcuts
   useEffect(()=>{
     const handler = (e) => {
@@ -504,15 +511,14 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
   const [paymentRisk,setPaymentRisk]=useState(null); // {risk,reason,action}
   const [paymentRiskLoading,setPaymentRiskLoading]=useState(false);
   const [paymentRiskFetched,setPaymentRiskFetched]=useState(false);
-  // AI contract draft
-  const [showAIContractModal,setShowAIContractModal]=useState(false);
+  // AI contract draft (showAIContractModal declared above, before the Escape-handler effect)
   const [aiContractText,setAiContractText]=useState('');
   const [aiContractLoading,setAiContractLoading]=useState(false);
   const [aiContractCopied,setAiContractCopied]=useState(false);
   // Mood board
   const [moodBoard,setMoodBoard]=useState(null); // null = not loaded yet
   const [moodBoardLoading,setMoodBoardLoading]=useState(false);
-  const [showMoodAddPopover,setShowMoodAddPopover]=useState(false);
+  // showMoodAddPopover declared above, before the Escape-handler effect
   const [moodUrlInput,setMoodUrlInput]=useState('');
   const [moodUrlMode,setMoodUrlMode]=useState(false);
   const [editingCaptionId,setEditingCaptionId]=useState(null);
@@ -525,8 +531,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
   const [updatingApptId, setUpdatingApptId] = useState(null);
   // Payment receipt
   const [showReceipt, setShowReceipt] = useState(null); // milestone object or null
-  // Task template modal
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  // Task template modal (showTemplateModal declared above, before the Escape-handler effect)
   const [selectedTemplateTasks, setSelectedTemplateTasks] = useState([]);
   // Pinned notes (persisted in localStorage per event)
   const [pinnedNoteIds, setPinnedNoteIds] = useState(() => { try { return JSON.parse(localStorage.getItem(`belori_pins_${eventId}`) || '[]'); } catch { return []; } });
@@ -540,7 +545,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
   // Bridal Party
   const { members: bridalMembers, addMember: addBridalMember, updateMember: updateBridalMember, removeMember: removeBridalMember } = useBridalParty(eventId);
   const { guests: guestListData } = useGuests(eventId);
-  const [showAddPartyMember,setShowAddPartyMember]=useState(false);
+  // showAddPartyMember declared above, before the Escape-handler effect
   const [partyMemberDraft,setPartyMemberDraft]=useState({name:'',role:'bridesmaid',phone:'',email:'',dress_size:'',color_assigned:'',fitting_date:'',notes:''});
   const [partyMemberSaving,setPartyMemberSaving]=useState(false);
   const [clientSearchQuery,setClientSearchQuery]=useState('');
