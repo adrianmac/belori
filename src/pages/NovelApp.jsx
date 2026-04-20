@@ -44,8 +44,6 @@ const Settings      = lazy(() => import("./Settings"));
 const QRCodesPage   = lazy(() => import("./QRCodesPage"));
 const Reports           = lazy(() => import("./Reports"));
 const DataExport    = lazy(() => import("./DataExport"));
-const Calendar      = lazy(() => import("./Calendar"));
-const StaffCalendar = lazy(() => import("./StaffCalendar"));
 const RoadmapPage      = lazy(() => import("./RoadmapPage"));
 const ReportBuilder    = lazy(() => import("./ReportBuilder"));
 const PurchaseOrders   = lazy(() => import("./PurchaseOrders"));
@@ -53,7 +51,6 @@ const POSPage          = lazy(() => import("./POSPage"));
 const SmsInboxPage     = lazy(() => import("./SmsInboxPage"));
 const VendorsPage      = lazy(() => import('./VendorsPage'));
 const ExpensesPage     = lazy(() => import('./ExpensesPage'));
-const QuoteBuilderPage = lazy(() => import('./QuoteBuilderPage'));
 const ImportPage       = lazy(() => import('./ImportPage'));
 const CommissionsPage  = lazy(() => import('./CommissionsPage'));
 const PromoCodesPage   = lazy(() => import('./PromoCodesPage'));
@@ -65,7 +62,6 @@ const ClientLookupScreen  = lazy(() => import('./ClientLookupScreen'));
 const BillingScreen       = lazy(() => import('./BillingScreen'));
 const InvoiceCreateScreen = lazy(() => import('./InvoiceCreateScreen'));
 const ConsultationScreen  = lazy(() => import('./ConsultationScreen'));
-const AppointmentsScreen  = lazy(() => import('./AppointmentsScreen'));
 const ScheduleScreen      = lazy(() => import('./ScheduleScreen'));
 const BugReportsAdmin     = lazy(() => import('./BugReportsAdmin'));
 
@@ -289,7 +285,7 @@ export default function NovelApp() {
   }, [boutique?.id, boutique?.language]);
 
   // Legacy/renamed screen aliases — resolved here so render() never calls setState()
-  const SCREEN_ALIASES = { staff_calendar: 'schedule', appointments: 'schedule', invoices: 'billing' };
+  const SCREEN_ALIASES = { staff_calendar: 'schedule', appointments: 'schedule', invoices: 'billing', calendar: 'schedule', quote_builder: 'billing', invoice_detail: 'billing' };
 
   // Wrap setScreen to intercept settings navigation hints + enforce permissions
   const goScreen = useCallback((s) => {
@@ -383,8 +379,6 @@ export default function NovelApp() {
       case 'inv_full':      return en('decoration')     ? <Inventory inventory={inventory} updateDress={updateDress} createDress={createDress} events={events} updateEvent={updateEvent} clients={clients} setScreen={goScreen}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'qr_labels':     return <QRCodesPage setScreen={goScreen}/>;
       case 'schedule':      return <Suspense fallback={<PageLoading/>}><ScheduleScreen setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} staff={staff} clients={clients}/></Suspense>;
-      case 'calendar':      return <Calendar events={events} setScreen={goScreen} setSelectedEvent={setSelectedEvent} staff={staff} clients={clients}/>;
-      case 'staff_calendar': return null; // resolved to 'schedule' by goScreen alias
       case 'payments':      return <Payments payments={payments} paymentsLoading={paymentsLoading} markPaid={markPaid} logReminder={logReminder} deleteMilestone={deleteMilestone} createMilestone={createMilestone} setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events}/>;
       case 'settings':      return <Settings boutique={boutique} initialTab={settingsTab} setScreen={goScreen}/>;
       case 'reports':       return en('reports')        ? <Reports payments={payments} events={events} clients={clients} goScreen={goScreen}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
@@ -409,7 +403,6 @@ export default function NovelApp() {
       case 'commissions':   return <Suspense fallback={<PageLoading/>}><CommissionsPage /></Suspense>;
       case 'promo_codes':   return <Suspense fallback={<PageLoading/>}><PromoCodesPage /></Suspense>;
       case 'funnel':        return <Suspense fallback={<PageLoading/>}><FunnelPage /></Suspense>;
-      case 'quote_builder': return <Suspense fallback={<PageLoading/>}><QuoteBuilderPage /></Suspense>;
       case 'bulk_import':   return <Suspense fallback={<PageLoading/>}><ImportPage /></Suspense>;
       case 'accounting':    return en('accounting')     ? <AccountingScreen payments={payments} events={events}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'purchase_orders': return en('purchase_orders') ? <PurchaseOrders goScreen={goScreen}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
@@ -421,11 +414,8 @@ export default function NovelApp() {
       case 'activity_feed':  return <Suspense fallback={<PageLoading/>}><ActivityFeed setScreen={goScreen}/></Suspense>;
       case 'client_lookup':   return <Suspense fallback={<PageLoading/>}><ClientLookupScreen setScreen={goScreen}/></Suspense>;
       case 'billing':         return <Suspense fallback={<PageLoading/>}><BillingScreen setScreen={goScreen}/></Suspense>;
-      case 'invoices':        return null; // resolved to 'billing' by goScreen alias
       case 'invoice_create':  return <Suspense fallback={<PageLoading/>}><InvoiceCreateScreen setScreen={goScreen}/></Suspense>;
-      case 'invoice_detail':  return null; // detail is handled inline in BillingScreen; goScreen alias resolves if needed
       case 'consultation':    return <Suspense fallback={<PageLoading/>}><ConsultationScreen {...consultationProps} setScreen={goScreen}/></Suspense>;
-      case 'appointments':   return null; // resolved to 'schedule' by goScreen alias
       default:               return <Dashboard setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} payments={payments} inventory={inventory} boutique={boutique} clients={clients} staff={staff} alterations={alterations}/>;
     }
   };

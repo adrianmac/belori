@@ -6,92 +6,96 @@ import { canAccess, ROLE_LABELS } from '../lib/permissions.js';
 import { useI18n } from '../lib/i18n/index.jsx';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { injectCoutureFonts, D as Dtokens } from '../lib/couture.jsx';
 // Nav items shown in Focus Mode (core workflow only)
-const FOCUS_IDS = new Set(['dashboard', 'events', 'inventory', 'alterations', 'clients', 'schedule']);
+const FOCUS_IDS = new Set(['dashboard', 'events', 'inventory', 'alterations', 'clients', 'payments', 'schedule']);
 
 // ─── NAV STRUCTURE ──────────────────────────────────────────────────────────
 // Returns { topLevel, sections, allFlat }
-// topLevel: always-visible items
+// topLevel: always-visible items (kept to ≤8 for clarity)
 // sections: array of { key, label, items[] }
-// allFlat: all nav items (no dividers) — used by IconRail
+// allFlat: all nav items — used by IconRail
 function buildNavStructure(badges = {}, modules = {}, t = (k) => k) {
   const en = (k) => modules[k] === true;
 
-  // ── Always-visible top-level items ──────────────────────────────────────
+  // ── Core top-level items (8 max) ─────────────────────────────────────────
+  // Billing (invoices) and Activity moved to sections to reduce clutter.
   const topLevel = [
-    { id: 'dashboard',     label: t('nav_dashboard'), icon: 'overview' },
-    // ── Core workflows (items 2-4) — visually grouped ──
-    { id: 'events',        label: t('nav_events'),     icon: 'events',   core: true,
-      ...(badges.events    ? { badge: badges.events }    : {}),
-      ...(badges.tasks     ? { tasksBadge: badges.tasks } : {}) },
-    en('dress_rental') && { id: 'inventory',   label: 'Dress rentals',          icon: 'rentals',    core: true },
-    en('alterations')  && { id: 'alterations', label: t('nav_alterations'),     icon: 'alterations', core: true,
+    { id: 'dashboard',     label: t('nav_dashboard'),    icon: 'overview' },
+    // Core booking workflow
+    { id: 'events',        label: t('nav_events'),        icon: 'events',   core: true,
+      ...(badges.events ? { badge: badges.events } : {}),
+      ...(badges.tasks  ? { tasksBadge: badges.tasks } : {}) },
+    en('dress_rental') && { id: 'inventory',   label: 'Dress Rentals',  icon: 'rentals',     core: true },
+    en('alterations')  && { id: 'alterations', label: t('nav_alterations'), icon: 'alterations', core: true,
       ...(badges.alterations ? { badge: badges.alterations, badgeColor: 'var(--color-danger)' } : {}) },
-    // ── Secondary items ──
-    { id: 'clients',       label: t('nav_clients'),    icon: 'clients' },
-    { id: 'my_tasks',      label: 'My Tasks',          icon: 'mytasks',
+    // Client & schedule
+    { id: 'clients',       label: t('nav_clients'),       icon: 'clients' },
+    { id: 'schedule',      label: 'Schedule',             icon: 'calendar' },
+    // Money
+    { id: 'payments',      label: t('nav_payments'),      icon: 'payments',
+      ...(badges.payments ? { badge: badges.payments, badgeColor: 'var(--color-danger)' } : {}) },
+    // My Tasks with alert badge
+    { id: 'my_tasks',      label: 'My Tasks',             icon: 'mytasks',
       ...(badges.myTasks ? { badge: badges.myTasks, badgeColor: 'var(--color-danger)' } : {}) },
-    { id: 'schedule',      label: 'Schedule',               icon: 'calendar' },
-    { id: 'payments',      label: t('nav_payments'),   icon: 'payments',
-      ...(badges.payments  ? { badge: badges.payments, badgeColor: 'var(--color-danger)' } : {}) },
-    { id: 'activity_feed', label: 'Activity',           icon: 'activity' },
-    { id: 'billing',       label: 'Billing',            icon: 'payments',
-      ...(badges.invoices ? { badge: badges.invoices, badgeColor: '#DC2626' } : {}) },
-    { id: 'settings',      label: t('nav_settings'),   icon: 'settings' },
+    // Settings always last
+    { id: 'settings',      label: t('nav_settings'),      icon: 'settings' },
   ].filter(Boolean);
 
   // ── Collapsible: Operations ──────────────────────────────────────────────
   const opsItems = [
-    en('decoration') && { id: 'inv_full',     label: t('nav_inventory'),   icon: 'inventory',
+    en('decoration') && { id: 'inv_full',        label: t('nav_inventory'),    icon: 'inventory',
       ...(badges.inv_full ? { badge: badges.inv_full, badgeColor: '#D97706' } : {}) },
-    // alterations is now a top-level core workflow item — not listed here
-    en('vendors')            && { id: 'vendors',      label: t('nav_vendors'),     icon: 'vendors' },
-    // event_planning removed — merged into EventDetail coordinator role
-    en('floorplan')          && { id: 'floorplan',    label: 'Floorplan',          icon: 'floorplan' },
-    en('pos')                && { id: 'pos',           label: 'Point of sale',      icon: 'pos' },
-    en('retail')             && { id: 'retail',        label: 'Retail',             icon: 'retail' },
-    en('staff_sched')        && { id: 'staff_sched',   label: 'Staff schedule',     icon: 'staffsched' },
-    en('purchase_orders')    && { id: 'purchase_orders', label: 'Purchase Orders',  icon: 'purchase_orders' },
-    en('fb_beo')             && { id: 'fb_beo',        label: 'F&B / BEO',          icon: 'fbbeo' },
-    en('audit_ui')           && { id: 'audit_ui',      label: 'Audit log',          icon: 'auditlog' },
-    en('data_export')        && { id: 'data_export',   label: 'Data export',        icon: 'export' },
-    en('dress_catalog')      && { id: 'dress_catalog', label: 'Dress catalog',      icon: 'catalog' },
-    en('measurements')       && { id: 'measurements',  label: 'Measurements',       icon: 'measures' },
+    en('vendors')            && { id: 'vendors',        label: t('nav_vendors'),      icon: 'vendors' },
+    en('floorplan')          && { id: 'floorplan',      label: 'Floorplan',           icon: 'floorplan' },
+    en('pos')                && { id: 'pos',             label: 'Point of Sale',       icon: 'pos' },
+    en('retail')             && { id: 'retail',          label: 'Retail',              icon: 'retail' },
+    en('staff_sched')        && { id: 'staff_sched',     label: 'Staff Schedule',      icon: 'staffsched' },
+    en('purchase_orders')    && { id: 'purchase_orders', label: 'Purchase Orders',     icon: 'purchase_orders' },
+    en('fb_beo')             && { id: 'fb_beo',          label: 'F&B / BEO',           icon: 'fbbeo' },
+    en('audit_ui')           && { id: 'audit_ui',        label: 'Audit Log',           icon: 'auditlog' },
+    en('data_export')        && { id: 'data_export',     label: 'Data Export',         icon: 'export' },
+    en('dress_catalog')      && { id: 'dress_catalog',   label: 'Dress Catalog',       icon: 'catalog' },
+    en('measurements')       && { id: 'measurements',    label: 'Measurements',        icon: 'measures' },
   ].filter(Boolean);
 
   // ── Collapsible: Finance ─────────────────────────────────────────────────
+  // "Billing" moved here from top-level, renamed "Invoices" to distinguish from Payments
   const financeItems = [
-    en('expenses')           && { id: 'expenses',     label: t('nav_expenses'),    icon: 'expenses' },
-    { id: 'commissions',       label: 'Commissions',                               icon: 'commissions' },
-    en('online_payments')    && { id: 'online_pay',   label: 'Payment links',      icon: 'paylinks' },
-    { id: 'promo_codes',       label: 'Promo Codes',                               icon: 'promo' },
-    // quote_builder removed — Quotes are now inside the Billing screen (tab 2)
-    en('reports')            && { id: 'reports',      label: t('nav_reports'),     icon: 'reports' },
-    en('accounting')         && { id: 'accounting',   label: 'Accounting',         icon: 'accounting' },
+    { id: 'billing',          label: 'Invoices',            icon: 'payments',
+      ...(badges.invoices ? { badge: badges.invoices, badgeColor: '#DC2626' } : {}) },
+    en('expenses')           && { id: 'expenses',           label: t('nav_expenses'),     icon: 'expenses' },
+    { id: 'commissions',       label: 'Commissions',                                      icon: 'commissions' },
+    en('online_payments')    && { id: 'online_pay',         label: 'Payment Links',       icon: 'paylinks' },
+    { id: 'promo_codes',       label: 'Promo Codes',                                      icon: 'promo' },
+    en('reports')            && { id: 'reports',            label: t('nav_reports'),      icon: 'reports' },
+    en('accounting')         && { id: 'accounting',         label: 'Accounting',          icon: 'accounting' },
   ].filter(Boolean);
 
-  // ── Collapsible: Marketing ───────────────────────────────────────────────
+  // ── Collapsible: Marketing & Tools ───────────────────────────────────────
+  // Activity Feed moved here from top-level
   const marketingItems = [
-    en('waitlist')           && { id: 'waitlist',     label: 'Waitlist',           icon: 'waitlist' },
-    { id: 'sms_inbox',         label: 'SMS Inbox',                                 icon: 'sms' },
-    en('reviews')            && { id: 'reviews',      label: 'Reviews',            icon: 'reviews' },
-    { id: 'funnel',            label: 'Sales Funnel',                              icon: 'funnel' },
-    en('photo_gallery')      && { id: 'photo_gallery', label: 'Photo gallery',     icon: 'gallery' },
-    en('email_marketing')    && { id: 'email_mkt',    label: 'Email marketing',    icon: 'emailmkt' },
-    en('ticketing')          && { id: 'ticketing',    label: 'Ticketing',          icon: 'ticketing' },
+    { id: 'activity_feed',    label: 'Activity Feed',                                    icon: 'activity' },
+    { id: 'sms_inbox',        label: 'SMS Inbox',                                        icon: 'sms' },
+    { id: 'funnel',           label: 'Sales Funnel',                                     icon: 'funnel' },
+    en('waitlist')           && { id: 'waitlist',           label: 'Waitlist',            icon: 'waitlist' },
+    en('reviews')            && { id: 'reviews',            label: 'Reviews',             icon: 'reviews' },
+    en('photo_gallery')      && { id: 'photo_gallery',      label: 'Photo Gallery',       icon: 'gallery' },
+    en('email_marketing')    && { id: 'email_mkt',          label: 'Email Marketing',     icon: 'emailmkt' },
+    en('ticketing')          && { id: 'ticketing',          label: 'Ticketing',           icon: 'ticketing' },
   ].filter(Boolean);
 
   const sections = [];
-  if (opsItems.length)       sections.push({ key: 'operations', label: 'Operations', items: opsItems });
-  if (financeItems.length)   sections.push({ key: 'finance',    label: 'Finance',    items: financeItems });
-  if (marketingItems.length) sections.push({ key: 'marketing',  label: 'Marketing',  items: marketingItems });
+  if (opsItems.length)       sections.push({ key: 'operations', label: 'Operations',         items: opsItems });
+  if (financeItems.length)   sections.push({ key: 'finance',    label: 'Finance',            items: financeItems });
+  if (marketingItems.length) sections.push({ key: 'marketing',  label: 'Marketing & Tools',  items: marketingItems });
 
   // allFlat: for IconRail — top-level + section items, no dividers
   const allFlat = [
     ...topLevel,
     ...sections.flatMap(s => s.items),
-    { id: 'roadmap', label: "What's new", icon: 'roadmap' },
-    { id: 'help', label: 'Help', icon: 'help' },
+    { id: 'roadmap', label: "What's New", icon: 'roadmap' },
+    { id: 'help',    label: 'Help',        icon: 'help' },
   ];
 
   return { topLevel, sections, allFlat };
@@ -137,50 +141,86 @@ const BoutiqueSwitcher = ({ boutique, boutiques = [], onSwitch }) => {
 
   useEffect(() => {
     if (!open) return;
-    const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const clickHandler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const keyHandler = e => { if (e.key === 'Escape') { setOpen(false); } };
+    document.addEventListener('mousedown', clickHandler);
+    document.addEventListener('keydown', keyHandler);
+    return () => {
+      document.removeEventListener('mousedown', clickHandler);
+      document.removeEventListener('keydown', keyHandler);
+    };
   }, [open]);
 
   if (boutiques.length <= 1) {
     return (
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 500, color: C.ink }}>Belori</div>
-        <div style={{ fontSize: 11, color: C.gray, maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {boutique?.name || 'Your Boutique'}
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{
+          fontFamily: Dtokens.display, fontSize: 22, color: Dtokens.ink, lineHeight: 1,
+          letterSpacing: '0.005em',
+        }}>Belori</div>
+        <div style={{
+          fontFamily: Dtokens.sans, fontSize: 10, color: Dtokens.gold,
+          textTransform: 'uppercase', letterSpacing: '0.22em',
+          marginTop: 5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {boutique?.name || 'Atelier'}
         </div>
       </div>
     );
   }
 
+  const menuId = 'boutique-switcher-menu';
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(o => !o)}
-        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <div style={{ fontSize: 14, fontWeight: 500, color: C.ink }}>Belori</div>
-        <div style={{ fontSize: 11, color: 'var(--brand-primary, #C9697A)', display: 'flex', alignItems: 'center', gap: 3, maxWidth: 130 }}>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{boutique?.name || 'Your Boutique'}</span>
-          <span style={{ fontSize: 9, opacity: 0.7, flexShrink: 0 }}>{open ? '▲' : '▼'}</span>
+    <div ref={ref} style={{ position: 'relative', minWidth: 0, flex: 1 }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={menuId}
+        aria-label={`Switch boutique. Current: ${boutique?.name || 'Atelier'}`}
+        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+          textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 4, width: '100%' }}>
+        <div style={{
+          fontFamily: Dtokens.display, fontSize: 22, color: Dtokens.ink, lineHeight: 1,
+          letterSpacing: '0.005em',
+        }}>Belori</div>
+        <div style={{
+          fontFamily: Dtokens.sans, fontSize: 10, color: Dtokens.gold,
+          textTransform: 'uppercase', letterSpacing: '0.22em',
+          display: 'flex', alignItems: 'center', gap: 4,
+          overflow: 'hidden',
+        }}>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{boutique?.name || 'Atelier'}</span>
+          <span aria-hidden="true" style={{ fontSize: 8, opacity: 0.8, flexShrink: 0 }}>{open ? '▲' : '▼'}</span>
         </div>
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: C.white, border: `1px solid ${C.border}`, borderRadius: 10,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', minWidth: 180, zIndex: 500, overflow: 'hidden' }}>
-          <div style={{ padding: '8px 12px 6px', fontSize: 10, fontWeight: 500, color: C.gray, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+        <div
+          id={menuId}
+          role="menu"
+          aria-label="Switch boutique"
+          style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: C.white, border: `1px solid ${C.border}`, borderRadius: 2,
+            boxShadow: '0 8px 24px rgba(28,17,24,0.12)', minWidth: 200, zIndex: 500, overflow: 'hidden' }}>
+          <div style={{ padding: '10px 12px 8px', fontFamily: Dtokens.sans, fontSize: 9, fontWeight: 600, color: Dtokens.inkLight, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
             Switch boutique
           </div>
           {boutiques.map(b => (
-            <button key={b.id} onClick={() => { onSwitch(b.id); setOpen(false); }}
+            <button
+              key={b.id}
+              role="menuitemradio"
+              aria-checked={b.id === boutique?.id}
+              onClick={() => { onSwitch(b.id); setOpen(false); }}
               style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 12px',
-                background: b.id === boutique?.id ? 'var(--brand-pale, #FDF5F6)' : 'transparent',
+                background: b.id === boutique?.id ? Dtokens.goldLight : 'transparent',
                 border: 'none', cursor: 'pointer', textAlign: 'left', borderTop: `1px solid ${C.border}` }}>
-              <Avatar initials={(b.name || 'B').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()} size={26} bg={'var(--brand-pale, #FDF5F6)'} color={'var(--brand-primary, #C9697A)'} />
+              <Avatar initials={(b.name || 'B').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()} size={26} bg={Dtokens.goldLight} color={Dtokens.goldDark} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 500, color: b.id === boutique?.id ? 'var(--brand-primary, #C9697A)' : C.ink,
+                <div style={{ fontSize: 12, fontWeight: 500, color: b.id === boutique?.id ? Dtokens.goldDark : C.ink,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.name}</div>
-                {b.id === boutique?.id && <div style={{ fontSize: 10, color: 'var(--brand-primary, #C9697A)' }}>Active</div>}
+                {b.id === boutique?.id && <div style={{ fontSize: 10, color: Dtokens.goldDark }}>Active</div>}
               </div>
-              {b.id === boutique?.id && <span style={{ fontSize: 12, color: 'var(--brand-primary, #C9697A)' }}>✓</span>}
+              {b.id === boutique?.id && <span aria-hidden="true" style={{ fontSize: 12, color: Dtokens.goldDark }}>✓</span>}
             </button>
           ))}
         </div>
@@ -207,32 +247,36 @@ const NavItem = ({ item, active, onClick, indented = false }) => {
       paddingTop: 8, paddingBottom: 8,
       paddingRight: indented ? 10 : 10,
       paddingLeft: item.core ? (indented ? 17 : 7) : (indented ? 20 : 10),
-      borderRadius: 8, cursor: 'pointer', marginBottom: 1,
+      borderRadius: 2, cursor: 'pointer', marginBottom: 1,
       border: 'none',
       background: active
-        ? 'var(--brand-pale, #FDF5F6)'
+        ? Dtokens.goldLight
         : isCoreInactive
-          ? 'rgba(200,100,120,0.06)'
+          ? 'rgba(176,138,78,0.05)'
           : 'transparent',
       borderLeft: isCoreActive
-        ? `3px solid var(--brand-primary, #C9697A)`
+        ? `2px solid ${Dtokens.gold}`
         : isCoreInactive
-          ? `3px solid rgba(201,105,122,0.35)`
-          : '3px solid transparent',
-      color: active ? C.rosaText : C.gray,
+          ? `2px solid ${Dtokens.goldBorder}`
+          : '2px solid transparent',
+      color: active ? Dtokens.goldDark : Dtokens.inkMid,
       fontWeight: active ? 500 : 400,
       fontSize: 'var(--text-body)',
+      fontFamily: Dtokens.sans,
       minHeight: 'var(--nav-item-height)',
-      transition: 'all 0.15s',
+      transition: 'all 0.2s cubic-bezier(.22,.61,.36,1)',
+      letterSpacing: active ? '0.005em' : '0',
     }}
     onMouseEnter={e => {
       if (!active) {
-        e.currentTarget.style.background = isCoreInactive ? 'rgba(200,100,120,0.1)' : C.ivory;
+        e.currentTarget.style.background = isCoreInactive ? 'rgba(176,138,78,0.09)' : '#F8F4F0';
+        e.currentTarget.style.color = Dtokens.ink;
       }
     }}
     onMouseLeave={e => {
       if (!active) {
-        e.currentTarget.style.background = isCoreInactive ? 'rgba(200,100,120,0.06)' : 'transparent';
+        e.currentTarget.style.background = isCoreInactive ? 'rgba(176,138,78,0.05)' : 'transparent';
+        e.currentTarget.style.color = Dtokens.inkMid;
       }
     }}
   >
@@ -271,13 +315,14 @@ const CollapsibleSection = ({ sectionKey, label, items, screen, setScreen, open,
         }}
       >
         <span style={{
-          fontSize: 10, fontWeight: 600, color: hasActive ? 'var(--brand-primary, #C9697A)' : C.gray,
-          letterSpacing: '0.07em', textTransform: 'uppercase',
+          fontFamily: Dtokens.sans, fontSize: 10, fontWeight: 600,
+          color: hasActive ? Dtokens.gold : Dtokens.inkLight,
+          letterSpacing: '0.16em', textTransform: 'uppercase',
         }}>
           {label}
         </span>
         <span style={{
-          fontSize: 10, color: hasActive ? 'var(--brand-primary, #C9697A)' : C.gray,
+          fontSize: 9, color: hasActive ? Dtokens.gold : Dtokens.inkLight,
           display: 'inline-block',
           transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
           transition: 'transform 0.2s ease',
@@ -375,16 +420,24 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
     });
   }, []);
 
+  // Load couture fonts once when the sidebar mounts (first authenticated surface)
+  useEffect(() => { injectCoutureFonts(); }, []);
+
   return (
     <div className="sidebar-full" style={{ width: 'var(--sidebar-width)', background: 'var(--bg-sidebar, #FFFFFF)', borderRight: `1px solid var(--border-color, ${C.border})`, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-      {/* Logo + boutique */}
-      <div style={{ padding: '16px 16px 12px', borderBottom: `1px solid var(--border-color, ${C.border})` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, background: C.ink, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg viewBox="0 0 32 32" fill="none" style={{ width: 20, height: 20 }}><path d="M7 25V7l18 18V7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </div>
-          <BoutiqueSwitcher boutique={boutique} boutiques={boutiques} onSwitch={onSwitchBoutique} />
-        </div>
+      {/* Editorial wordmark */}
+      <div style={{
+        padding: '20px 16px 14px',
+        borderBottom: `1px solid var(--border-color, ${C.border})`,
+        position: 'relative',
+      }}>
+        <BoutiqueSwitcher boutique={boutique} boutiques={boutiques} onSwitch={onSwitchBoutique} />
+        {/* hairline gold rule — subtle editorial touch */}
+        <div aria-hidden="true" style={{
+          position: 'absolute', left: 16, right: 16, bottom: -1, height: 1,
+          background: `linear-gradient(90deg, transparent, ${Dtokens.gold} 50%, transparent)`,
+          opacity: 0.4,
+        }} />
       </div>
 
       {/* Search bar */}
@@ -401,10 +454,10 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
 
       {/* Focus mode banner */}
       {focusMode && (
-        <div style={{ margin: '6px 8px 0', background: 'rgba(201,105,122,0.08)', border: '1px solid rgba(201,105,122,0.25)', borderRadius: 8, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ margin: '6px 8px 0', background: Dtokens.goldLight, border: `1px solid ${Dtokens.goldBorder}`, borderRadius: 2, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 13 }}>⚡</span>
-          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--brand-primary, #C9697A)', flex: 1 }}>Focus Mode</span>
-          <span style={{ fontSize: 10, color: C.gray }}>Core only</span>
+          <span style={{ fontSize: 10, fontWeight: 600, color: Dtokens.goldDark, flex: 1, textTransform: 'uppercase', letterSpacing: '0.14em' }}>Focus Mode</span>
+          <span style={{ fontSize: 9, color: Dtokens.inkMid, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Core only</span>
         </div>
       )}
 
@@ -460,13 +513,15 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
           title={focusMode ? 'Exit Focus Mode' : 'Enter Focus Mode — show only core workflows'}
           style={{
             display: 'flex', alignItems: 'center', gap: 7,
-            width: '100%', padding: '7px 10px', borderRadius: 8,
-            border: `1px solid ${focusMode ? 'rgba(201,105,122,0.4)' : C.border}`,
-            background: focusMode ? 'rgba(201,105,122,0.08)' : C.ivory,
-            cursor: 'pointer', fontSize: 12, minHeight: 'unset', minWidth: 'unset',
-            color: focusMode ? 'var(--brand-primary, #C9697A)' : C.gray,
+            width: '100%', padding: '7px 10px', borderRadius: 2,
+            border: `1px solid ${focusMode ? Dtokens.goldBorder : Dtokens.border}`,
+            background: focusMode ? Dtokens.goldLight : '#F8F4F0',
+            cursor: 'pointer', fontSize: 11, minHeight: 'unset', minWidth: 'unset',
+            color: focusMode ? Dtokens.goldDark : Dtokens.inkMid,
             fontWeight: focusMode ? 500 : 400,
-            transition: 'all 0.15s',
+            fontFamily: Dtokens.sans,
+            textTransform: 'uppercase', letterSpacing: '0.14em',
+            transition: 'all 0.2s cubic-bezier(.22,.61,.36,1)',
           }}
         >
           <span style={{ fontSize: 14 }}>{focusMode ? '⚡' : '◎'}</span>
@@ -488,7 +543,7 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
 
         {/* Account row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Avatar initials={(boutique?.name || 'B').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()} size={28} bg={'var(--brand-pale, #FDF5F6)'} color={'var(--brand-primary, #C9697A)'} />
+          <Avatar initials={(boutique?.name || 'B').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()} size={28} bg={Dtokens.goldLight} color={Dtokens.goldDark} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: C.ink }}>My account</div>
             <div style={{ fontSize: 11, color: C.gray }}>{ROLE_LABELS[myRole] || 'Staff'}</div>
@@ -496,7 +551,7 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
           {/* Bell icon */}
           <button onClick={onAlerts} title="Alerts"
             aria-label={alertCount > 0 ? `Alerts — ${alertCount} unread` : 'Alerts'}
-            style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: alertCount > 0 ? 'var(--brand-primary, #C9697A)' : C.gray, padding: '4px', minHeight: 'unset', minWidth: 'unset', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: alertCount > 0 ? Dtokens.goldDark : C.gray, padding: '4px', minHeight: 'unset', minWidth: 'unset', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
             {alertCount > 0 && <span style={{ position: 'absolute', top: 0, right: 0, width: 16, height: 16, borderRadius: '50%', background: '#DC2626', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{alertCount > 9 ? '9+' : alertCount}</span>}
           </button>
@@ -521,19 +576,50 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
   const { t } = useI18n();
   ensureBottomNavStyle();
   const [showMore, setShowMore] = useState(false);
+  const moreMenuRef = useRef(null);
+  const moreTriggerRef = useRef(null);
+
+  // A11y: Escape closes, focus trap inside menu, return focus to trigger on close
+  useEffect(() => {
+    if (!showMore) return;
+    const handleKey = (e) => {
+      if (e.key === 'Escape') { setShowMore(false); return; }
+      if (e.key !== 'Tab') return;
+      const menu = moreMenuRef.current;
+      if (!menu) return;
+      const focusable = [...menu.querySelectorAll('button:not([disabled])')];
+      if (!focusable.length) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    // Focus first item on open
+    requestAnimationFrame(() => {
+      const first = moreMenuRef.current?.querySelector('button');
+      first?.focus();
+    });
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      // Return focus to the More button when closing
+      moreTriggerRef.current?.focus();
+    };
+  }, [showMore]);
 
   const BOTTOM_NAV_ITEMS = [
     { id: 'dashboard',   label: t('nav_dashboard'),   icon: 'overview' },
     { id: 'events',      label: t('nav_events'),      icon: 'events',      badge: badges.events      || 0 },
-    { id: 'alterations', label: t('nav_alterations'), icon: 'alterations', badge: badges.alterations || 0, badgeColor: '#DC2626' },
+    { id: 'clients',     label: t('nav_clients'),     icon: 'clients' },
     { id: 'payments',    label: t('nav_payments'),    icon: 'payments',    badge: badges.payments    || 0, badgeColor: '#DC2626' },
   ];
 
   const MORE_ITEMS = [
-    { id: 'clients',    label: t('nav_clients'),  icon: 'clients'  },
-    { id: 'inventory',  label: 'Dress Rentals',   icon: 'rentals'  },
-    { id: 'inv_full',   label: 'Inventory',       icon: 'inventory' },
-    { id: 'settings',   label: t('nav_settings'), icon: 'settings' },
+    { id: 'alterations', label: t('nav_alterations'), icon: 'alterations', badge: badges.alterations || 0, badgeColor: '#DC2626' },
+    { id: 'inventory',   label: 'Dress Rentals',      icon: 'rentals'  },
+    { id: 'schedule',    label: 'Schedule',            icon: 'calendar' },
+    { id: 'billing',     label: 'Invoices',            icon: 'payments' },
+    { id: 'my_tasks',    label: 'My Tasks',            icon: 'mytasks',  badge: badges.myTasks || 0, badgeColor: '#DC2626' },
+    { id: 'settings',    label: t('nav_settings'),     icon: 'settings' },
   ];
 
   const moreActive = MORE_ITEMS.some(i => i.id === screen);
@@ -543,19 +629,31 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
       {/* More menu popover */}
       {showMore && (
         <>
-          <div onClick={() => setShowMore(false)}
-            style={{ position: 'fixed', inset: 0, zIndex: 98 }} />
-          <div style={{ position: 'fixed', bottom: 'calc(60px + env(safe-area-inset-bottom, 0px))', left: '50%', transform: 'translateX(-50%)',
-            background: C.white, border: `1px solid ${C.border}`, borderRadius: 14,
-            boxShadow: '0 -4px 20px rgba(0,0,0,0.12)', zIndex: 99, minWidth: 220, overflow: 'hidden' }}>
+          <div
+            onClick={() => setShowMore(false)}
+            aria-hidden="true"
+            style={{ position: 'fixed', inset: 0, background: 'rgba(28,17,24,0.08)', zIndex: 98 }}
+          />
+          <div
+            ref={moreMenuRef}
+            role="menu"
+            aria-label="More navigation options"
+            aria-modal="true"
+            style={{ position: 'fixed', bottom: 'calc(60px + env(safe-area-inset-bottom, 0px))', left: '50%', transform: 'translateX(-50%)',
+              background: C.white, border: `1px solid ${C.border}`, borderRadius: 4,
+              boxShadow: '0 -8px 32px rgba(28,17,24,0.18)', zIndex: 99, minWidth: 220, overflow: 'hidden' }}>
             {MORE_ITEMS.map(item => {
               const act = screen === item.id;
               return (
-                <button key={item.id} onClick={() => { setScreen(item.id); setShowMore(false); }}
+                <button
+                  key={item.id}
+                  role="menuitem"
+                  aria-current={act ? 'page' : undefined}
+                  onClick={() => { setScreen(item.id); setShowMore(false); }}
                   style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '13px 18px',
-                    background: act ? 'var(--brand-pale, #FDF5F6)' : 'transparent',
+                    background: act ? Dtokens.goldLight : 'transparent',
                     border: 'none', borderBottom: `1px solid ${C.border}`, cursor: 'pointer',
-                    color: act ? 'var(--brand-primary, #C9697A)' : C.ink, fontWeight: act ? 600 : 400, fontSize: 14,
+                    color: act ? Dtokens.goldDark : C.ink, fontWeight: act ? 600 : 400, fontSize: 14,
                     WebkitTapHighlightColor: 'transparent' }}>
                   <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{icons[item.icon]}</span>
                   {item.label}
@@ -572,7 +670,7 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
           return (
             <button key={item.id} onClick={() => { setShowMore(false); setScreen(item.id); }}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
-                color: active ? 'var(--brand-primary, #C9697A)' : '#9CA3AF', fontSize: 10, fontWeight: active ? 600 : 400, cursor: 'pointer', flex: 1,
+                color: active ? Dtokens.goldDark : '#9CA3AF', fontSize: 10, fontWeight: active ? 600 : 400, cursor: 'pointer', flex: 1,
                 height: 60, padding: '0', transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent', position: 'relative' }}>
               <span style={{ fontSize: 20, lineHeight: 1, opacity: active ? 1 : 0.55, transition: 'opacity 0.15s' }}>{icons[item.icon]}</span>
               <span style={{ maxWidth: 56, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
@@ -585,11 +683,16 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
           );
         })}
         {/* More button */}
-        <button onClick={() => setShowMore(s => !s)}
+        <button
+          ref={moreTriggerRef}
+          onClick={() => setShowMore(s => !s)}
+          aria-haspopup="menu"
+          aria-expanded={showMore}
+          aria-label={showMore ? 'Close more navigation' : 'Open more navigation'}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
-            color: (moreActive || showMore) ? 'var(--brand-primary, #C9697A)' : '#9CA3AF', fontSize: 10, fontWeight: (moreActive || showMore) ? 600 : 400,
+            color: (moreActive || showMore) ? Dtokens.goldDark : '#9CA3AF', fontSize: 10, fontWeight: (moreActive || showMore) ? 600 : 400,
             cursor: 'pointer', flex: 1, height: 60, padding: '0', transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent' }}>
-          <span style={{ fontSize: 20, lineHeight: 1, opacity: (moreActive || showMore) ? 1 : 0.55, transition: 'opacity 0.15s', display:'flex', alignItems:'center', justifyContent:'center', width:22, height:22 }}>
+          <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1, opacity: (moreActive || showMore) ? 1 : 0.55, transition: 'opacity 0.15s', display:'flex', alignItems:'center', justifyContent:'center', width:22, height:22 }}>
             <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/></svg>
           </span>
           <span>More</span>
@@ -640,7 +743,7 @@ const IconRail = ({ screen, setScreen, onSignOut, boutique, boutiques = [], onSw
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 gap: 4, padding: '10px 4px', borderRadius: 12, cursor: 'pointer', width: '100%',
                 position: 'relative', transition: 'all 0.14s', border: 'none',
-                background: active ? 'var(--brand-pale, #FDF5F6)' : 'transparent',
+                background: active ? Dtokens.goldLight : 'transparent',
                 color: active ? C.rosaText : '#9CA3AF',
                 minHeight: 'unset', minWidth: 'unset' }}>
               <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

@@ -2,7 +2,7 @@ import React from 'react';
 import { C, fmt } from '../../lib/colors';
 import { Badge, inputSt, GhostBtn } from '../../lib/ui.jsx';
 
-export const HistoryTab = ({ liveInventory, search, setSearch, historyFilter, setHistoryFilter, toast }) => (
+export const HistoryTab = ({ liveInventory, search, setSearch, historyFilter, setHistoryFilter, historyFrom, setHistoryFrom, historyTo, setHistoryTo, toast }) => (
   <div style={{padding:20}}>
     {/* Stats strip */}
     <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:20}}>
@@ -23,11 +23,13 @@ export const HistoryTab = ({ liveInventory, search, setSearch, historyFilter, se
       </div>
     </div>
     {/* Filter bar */}
-    <div style={{display:'flex',gap:8,marginBottom:16,alignItems:'center'}}>
-      <div style={{flex:1,position:'relative'}}>
+    <div style={{display:'flex',gap:8,marginBottom:16,alignItems:'center',flexWrap:'wrap'}}>
+      <div style={{flex:1,position:'relative',minWidth:180}}>
         <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',color:C.gray,pointerEvents:'none',fontSize:13}}>🔍</span>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search dress, client…" style={{...inputSt,paddingLeft:30,margin:0,width:'100%'}}/>
       </div>
+      <input type="date" value={historyFrom} onChange={e=>setHistoryFrom(e.target.value)} title="From date" style={{...inputSt,margin:0,width:'auto',minWidth:130}} placeholder="From"/>
+      <input type="date" value={historyTo} onChange={e=>setHistoryTo(e.target.value)} title="To date" style={{...inputSt,margin:0,width:'auto',minWidth:130}} placeholder="To"/>
       <div style={{display:'flex',gap:4}}>
         {[['all','All time'],['month','This month'],['quarter','This quarter']].map(([id,l])=>(
           <button key={id} onClick={()=>setHistoryFilter(id)} style={{padding:'5px 12px',borderRadius:999,border:`1px solid ${historyFilter===id?C.rosa:C.border}`,background:historyFilter===id?C.rosaPale:'transparent',color:historyFilter===id?C.rosaText:C.gray,fontSize:11,cursor:'pointer'}}>{l}</button>
@@ -56,7 +58,11 @@ export const HistoryTab = ({ liveInventory, search, setSearch, historyFilter, se
           {liveInventory.filter(d=>{
             if(!['rented','reserved','picked_up','returned'].includes(d.status))return false;
             const q=search.toLowerCase();
-            return !q||(d.name+' '+(d.client?.name||d.client||'')+' '+d.sku).toLowerCase().includes(q);
+            if(q&&!(d.name+' '+(d.client?.name||d.client||'')+' '+d.sku).toLowerCase().includes(q))return false;
+            const rd=d.return_date||'';
+            if(historyFrom&&rd&&rd<historyFrom)return false;
+            if(historyTo&&rd&&rd>historyTo)return false;
+            return true;
           }).map(d=>(
             <tr key={d.id} style={{borderBottom:`1px solid ${C.border}`}} onMouseEnter={e=>e.currentTarget.style.background=C.ivory} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
               <td style={{padding:'10px 14px'}}>

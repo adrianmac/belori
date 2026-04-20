@@ -10,8 +10,11 @@ import { I18nProvider } from './lib/i18n/index.jsx'
 import App from './App.jsx'
 import './index.css'
 import { applyTheme, getTheme } from './lib/theme.js'
+import { injectCoutureFonts } from './lib/couture.jsx'
 
 applyTheme(getTheme())
+// Load couture typography at app start — available immediately on every surface
+injectCoutureFonts()
 
 // ─── Sentry error monitoring ──────────────────────────────────────────────────
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN

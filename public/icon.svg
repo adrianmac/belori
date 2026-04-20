@@ -1,4 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="40" fill="#C9697A"/>
-  <path d="M48 144V48l96 96V48" stroke="white" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <!-- Ink couture canvas (maskable-safe — content lives in center 60%) -->
+  <rect width="192" height="192" rx="42" ry="42" fill="#1C1118"/>
+  <!-- Gold hairline top accent -->
+  <rect x="28" y="28" width="136" height="2" fill="#B08A4E" opacity="0.9"/>
+  <!-- Italiana "B" — the house letter -->
+  <text x="96" y="122" text-anchor="middle"
+        font-family="Italiana, Didot, 'Bodoni 72', Georgia, serif"
+        font-size="112" fill="#FEFBF7"
+        letter-spacing="0.02em">B</text>
+  <!-- Diamond fleuron — the atelier mark -->
+  <path d="M96 148l10 10-10 10-10-10 10-10z" fill="#B08A4E" opacity="0.9"/>
 </svg>

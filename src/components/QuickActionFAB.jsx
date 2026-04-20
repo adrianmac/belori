@@ -54,7 +54,7 @@ const ALL_ACTIONS = [
     bg: '#D97706',
     bgPale: '#FEF3C7',
     event: null,
-    screen: 'staff_calendar',
+    screen: 'schedule',
     delay: 0,
     module: null, // always visible
   },
@@ -111,6 +111,8 @@ export default function QuickActionFAB({ setScreen }) {
       {open && (
         <div
           onClick={() => setOpen(false)}
+          onKeyDown={e => e.key === 'Escape' && setOpen(false)}
+          tabIndex={-1}
           style={{
             position: 'fixed',
             inset: 0,
@@ -159,6 +161,7 @@ export default function QuickActionFAB({ setScreen }) {
               {/* Action circle */}
               <button
                 onClick={(e) => { e.stopPropagation(); handleAction(action); }}
+                aria-label={action.label}
                 title={action.label}
                 style={{
                   width: 48,
@@ -188,6 +191,7 @@ export default function QuickActionFAB({ setScreen }) {
         {/* Main FAB button */}
         <button
           onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
           title="Quick actions"
           style={{
             width: 56,

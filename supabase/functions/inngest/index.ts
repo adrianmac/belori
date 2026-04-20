@@ -14,15 +14,11 @@
 import { supabaseAdmin } from '../_shared/supabase.ts'
 import { sendSms, toE164 } from '../_shared/sms.ts'
 import { sendEmail } from '../_shared/email.ts'
+import { renderEmail, escHtml } from '../_shared/emailTemplate.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-automation-key',
-}
-
-/** Escape user-supplied values before embedding in HTML email bodies. */
-function escHtml(s: unknown): string {
-  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -224,9 +220,23 @@ async function runPaymentReminder() {
       if (email) {
         await sendEmail({
           to: email,
-          subject: `Payment reminder — ${m.label} due ${fmtDate(targetDate)}`,
-          html: `<p>Hi ${name},</p><p>Your payment of <strong>${fmtMoney(m.amount)}</strong> for <em>${m.label}</em> is due on <strong>${fmtDate(targetDate)}</strong>.</p><p>Thank you! 💕</p>`,
-          text: `Hi ${name},\n\nYour payment of ${fmtMoney(m.amount)} for "${m.label}" is due on ${fmtDate(targetDate)}.\n\nThank you!\n${boutique.name}`,
+          subject: `A gentle reminder — ${m.label} due ${fmtDate(targetDate)}`,
+          html: renderEmail({
+            preheader: `${fmtMoney(m.amount)} for ${m.label} is due on ${fmtDate(targetDate)}`,
+            kicker: 'Payment reminder',
+            title: `A gentle note about your ${m.label.toLowerCase()}.`,
+            bodyHtml: `
+              <p style="margin:0 0 14px;">Dear ${escHtml(name)},</p>
+              <p style="margin:0 0 14px;">A warm reminder from <em>${escHtml(boutique.name)}</em>: your payment of
+                <strong style="color:#8E6B34;">${fmtMoney(m.amount)}</strong> for
+                <em>${escHtml(m.label)}</em> is due on
+                <strong>${fmtDate(targetDate)}</strong>.</p>
+              <p style="margin:0;">Should anything need attention, we're only a reply away.</p>
+            `,
+            boutiqueName: boutique.name,
+            footerNote: 'You are receiving this because a payment on your ceremony is approaching.',
+          }),
+          text: `Hi ${name},\n\nYour payment of ${fmtMoney(m.amount)} for "${m.label}" is due on ${fmtDate(targetDate)}.\n\nWith care,\n${boutique.name}`,
         })
       }
       if (m.event?.client_id) {
@@ -455,17 +465,64 @@ async function runWeeklyDigest() {
       .select('label, amount, due_date, event:events(client_id, client:clients(name))')
       .eq('boutique_id', boutique.id).lt('due_date', today()).neq('status', 'paid')
 
+    const rowStyle = 'padding:10px 12px;border-bottom:1px solid #EDE7E2;font-family:\'DM Sans\',sans-serif;font-size:13px;color:#1C1118;'
+    const tableHeaderStyle = 'padding:10px 12px;text-align:left;font-family:\'DM Sans\',sans-serif;font-size:9px;color:#5C4A52;text-transform:uppercase;letter-spacing:0.18em;font-weight:600;border-bottom:1px solid #C9BFB8;'
     const eventRows = (events ?? []).map(ev =>
-      `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee">${fmtDate(ev.event_date)}</td><td style="padding:6px 12px;border-bottom:1px solid #eee">${escHtml(ev.client?.name ?? '—')}</td><td style="padding:6px 12px;border-bottom:1px solid #eee">${escHtml(ev.type ?? '')}</td></tr>`
+      `<tr><td style="${rowStyle}font-style:italic;font-family:'Cormorant Garamond',Georgia,serif;font-size:14px;">${fmtDate(ev.event_date)}</td><td style="${rowStyle}">${escHtml(ev.client?.name ?? '—')}</td><td style="${rowStyle}text-transform:capitalize;color:#5C4A52;">${escHtml(ev.type ?? '')}</td></tr>`
     ).join('')
     const overdueRows = (overduePayments ?? []).map(p =>
-      `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee">${escHtml(p.event?.client?.name ?? '—')}</td><td style="padding:6px 12px;border-bottom:1px solid #eee">${escHtml(p.label)}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;color:#DC2626">${fmtMoney(Number(p.amount))}</td><td style="padding:6px 12px;border-bottom:1px solid #eee">${fmtDate(p.due_date)}</td></tr>`
+      `<tr><td style="${rowStyle}">${escHtml(p.event?.client?.name ?? '—')}</td><td style="${rowStyle}">${escHtml(p.label)}</td><td style="${rowStyle}color:#A34454;font-weight:500;">${fmtMoney(Number(p.amount))}</td><td style="${rowStyle}color:#5C4A52;">${fmtDate(p.due_date)}</td></tr>`
     ).join('')
+
+    const eventsBlock = eventRows
+      ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 24px;">
+           <thead><tr>
+             <th style="${tableHeaderStyle}">Date</th>
+             <th style="${tableHeaderStyle}">Client</th>
+             <th style="${tableHeaderStyle}">Type</th>
+           </tr></thead>
+           <tbody>${eventRows}</tbody>
+         </table>`
+      : `<p style="font-style:italic;color:#5C4A52;margin:0 0 24px;">No ceremonies on the calendar for the next fortnight.</p>`
+
+    const overdueBlock = overdueRows
+      ? `<div style="
+           margin:24px 0 0;padding:16px 18px;
+           background:#F7E6E9;border-left:2px solid #A34454;
+         ">
+           <div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#A34454;text-transform:uppercase;letter-spacing:0.18em;font-weight:600;margin:0 0 10px;">
+             Overdue payments
+           </div>
+           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+             <thead><tr>
+               <th style="${tableHeaderStyle}">Client</th>
+               <th style="${tableHeaderStyle}">Milestone</th>
+               <th style="${tableHeaderStyle}">Amount</th>
+               <th style="${tableHeaderStyle}">Due</th>
+             </tr></thead>
+             <tbody>${overdueRows}</tbody>
+           </table>
+         </div>`
+      : ''
 
     await sendEmail({
       to: boutique.email,
-      subject: `${boutique.name} — Weekly digest ${fmtDate(today())}`,
-      html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto"><h2 style="color:#C9697A">Good morning! Here's your weekly digest for ${escHtml(boutique.name)}</h2><h3>📅 Upcoming events (next 2 weeks)</h3>${eventRows ? `<table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr style="background:#FFF5F6"><th style="padding:8px 12px;text-align:left">Date</th><th style="padding:8px 12px;text-align:left">Client</th><th style="padding:8px 12px;text-align:left">Type</th></tr></thead><tbody>${eventRows}</tbody></table>` : '<p style="color:#999">No events in the next 2 weeks.</p>'}${overdueRows ? `<h3 style="color:#DC2626">⚠️ Overdue payments</h3><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th style="padding:8px 12px;text-align:left">Client</th><th>Milestone</th><th>Amount</th><th>Due</th></tr></thead><tbody>${overdueRows}</tbody></table>` : ''}</div>`,
+      subject: `${boutique.name} — the week ahead · ${fmtDate(today())}`,
+      html: renderEmail({
+        preheader: `${(events ?? []).length} ceremonies on the calendar · ${(overduePayments ?? []).length} payments need attention`,
+        kicker: 'The week ahead',
+        title: `Good morning, ${escHtml(boutique.name)}.`,
+        bodyHtml: `
+          <p style="margin:0 0 18px;">A summary of the fortnight to come. Two weeks ahead, in one page.</p>
+
+          <div style="font-family:'DM Sans',sans-serif;font-size:10px;color:#8E6B34;text-transform:uppercase;letter-spacing:0.22em;font-weight:600;margin:0 0 12px;">
+            Upcoming ceremonies
+          </div>
+          ${eventsBlock}
+          ${overdueBlock}
+        `,
+        boutiqueName: boutique.name,
+      }),
       text: `Weekly digest for ${boutique.name}\n\nUpcoming events: ${(events ?? []).length}\nOverdue payments: ${(overduePayments ?? []).length}`,
     })
   }
@@ -634,9 +691,51 @@ async function runOnboardingWelcome(data: { owner_email: string; boutique_name: 
   const appUrl = 'https://belori.app'
   await sendEmail({
     to: owner_email,
-    subject: `Welcome to Belori, ${boutique_name}! 🎉`,
-    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1C1012"><div style="background:#C9697A;padding:28px 32px;border-radius:12px 12px 0 0"><div style="font-size:22px;font-weight:600;color:#fff">Welcome to Belori! 💕</div><div style="font-size:14px;color:rgba(255,255,255,.85);margin-top:4px">You're in — let's make ${escHtml(boutique_name)} shine</div></div><div style="background:#fff;border:1px solid #E5E7EB;border-top:none;padding:28px 32px;border-radius:0 0 12px 12px"><p>Hi there!</p><p>Your <strong>${escHtml(boutique_name)}</strong> account is ready.</p><p><strong>Get started in 3 steps:</strong><br>1️⃣ Add your first client<br>2️⃣ Create an event<br>3️⃣ Set up payment milestones</p><a href="${appUrl}" style="display:inline-block;background:#C9697A;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;">Open your dashboard →</a></div></div>`,
-    text: `Welcome to Belori!\n\nYour ${boutique_name} account is ready. Log in at ${appUrl}\n\n1. Add your first client\n2. Create an event\n3. Set up payment milestones\n\n— The Belori team`,
+    subject: `Welcome to Belori — your atelier is open.`,
+    html: renderEmail({
+      preheader: `Your ${boutique_name} atelier is ready. A quiet software for the most important days.`,
+      kicker: 'Welcome',
+      title: `Your atelier is open, ${escHtml(boutique_name)}.`,
+      bodyHtml: `
+        <p style="margin:0 0 14px;">A quiet welcome to Belori.</p>
+        <p style="margin:0 0 20px;">You now have a studio that will remember every bride, every fitting, every
+        small detail that makes a ceremony feel considered. Here is a short path to begin.</p>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 8px;">
+          <tr>
+            <td width="40" valign="top" style="padding:2px 0;">
+              <span style="font-family:'Italiana','Didot',serif;font-size:22px;color:#8E6B34;">I</span>
+            </td>
+            <td valign="top" style="padding:2px 0 12px;">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;color:#1C1118;font-weight:500;">Add your first client</div>
+              <div style="font-size:13px;color:#5C4A52;">Names, phones, preferences — kept in one calm place.</div>
+            </td>
+          </tr>
+          <tr>
+            <td valign="top" style="padding:2px 0;">
+              <span style="font-family:'Italiana','Didot',serif;font-size:22px;color:#8E6B34;">II</span>
+            </td>
+            <td valign="top" style="padding:2px 0 12px;">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;color:#1C1118;font-weight:500;">Create an event</div>
+              <div style="font-size:13px;color:#5C4A52;">A wedding, a quinceañera, a shower — whatever the ceremony.</div>
+            </td>
+          </tr>
+          <tr>
+            <td valign="top" style="padding:2px 0;">
+              <span style="font-family:'Italiana','Didot',serif;font-size:22px;color:#8E6B34;">III</span>
+            </td>
+            <td valign="top" style="padding:2px 0 12px;">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;color:#1C1118;font-weight:500;">Set payment milestones</div>
+              <div style="font-size:13px;color:#5C4A52;">We'll quietly remind the client as each deposit approaches.</div>
+            </td>
+          </tr>
+        </table>
+      `,
+      cta: { label: 'Open the Atelier', href: appUrl },
+      boutiqueName: boutique_name,
+      footerNote: "We're here when you are — reply to this note with any question.",
+    }),
+    text: `Welcome to Belori.\n\nYour ${boutique_name} atelier is ready. Log in at ${appUrl}\n\nI. Add your first client\nII. Create an event\nIII. Set payment milestones\n\nWith care,\nBelori`,
   })
 }
 
@@ -653,21 +752,24 @@ async function runStaffInvite(data: { email: string; boutique_name: string; role
 
   await sendEmail({
     to: email,
-    subject: `You've been invited to join ${boutique_name} on Belori`,
-    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1C1012">
-      <div style="background:#C9697A;padding:28px 32px;border-radius:12px 12px 0 0">
-        <div style="font-size:22px;font-weight:600;color:#fff">You're invited! 🎉</div>
-        <div style="font-size:14px;color:rgba(255,255,255,.85);margin-top:4px">${escHtml(boutique_name)} wants you on their team</div>
-      </div>
-      <div style="background:#fff;border:1px solid #E5E7EB;border-top:none;padding:28px 32px;border-radius:0 0 12px 12px">
-        <p>Hi there!</p>
-        <p><strong>${escHtml(boutique_name)}</strong> has invited you to join their boutique on Belori as <strong>${escHtml(roleLabel)}</strong>.</p>
-        <p>Click the button below to create your account and get started:</p>
-        <a href="${invite_link}" style="display:inline-block;background:#C9697A;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;margin:8px 0;">Accept invitation →</a>
-        <p style="margin-top:24px;font-size:12px;color:#9CA3AF">Or copy this link: <a href="${invite_link}" style="color:#C9697A">${invite_link}</a></p>
-        <p style="font-size:12px;color:#9CA3AF">This invite expires in 7 days. If you didn't expect this, you can ignore this email.</p>
-      </div>
-    </div>`,
+    subject: `An invitation to ${boutique_name} on Belori.`,
+    html: renderEmail({
+      preheader: `${boutique_name} has invited you to join their atelier as ${roleLabel}.`,
+      kicker: 'A personal invitation',
+      title: `Welcome to ${escHtml(boutique_name)}.`,
+      bodyHtml: `
+        <p style="margin:0 0 14px;"><em style="font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;color:#1C1118;">${escHtml(boutique_name)}</em>
+        has invited you to join their atelier on Belori as
+        <strong style="color:#8E6B34;text-transform:uppercase;letter-spacing:0.12em;font-family:'DM Sans',sans-serif;font-size:11px;">${escHtml(roleLabel)}</strong>.</p>
+
+        <p style="margin:0 0 14px;">Follow the link below to create your account and step inside.
+        The invitation will quietly expire in seven days.</p>
+      `,
+      cta: { label: 'Accept the invitation', href: invite_link },
+      secondary: { label: 'Or copy this link', href: invite_link },
+      boutiqueName: boutique_name,
+      footerNote: 'If this invitation reached you by mistake, you may safely ignore it. It will expire in 7 days.',
+    }),
     text: `You've been invited to join ${boutique_name} on Belori as ${roleLabel}.\n\nAccept your invitation: ${invite_link}\n\nThis link expires in 7 days.`,
   })
 }

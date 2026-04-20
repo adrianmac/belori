@@ -40,6 +40,8 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
   const [qrOpen,setQrOpen]=useState(false);
   const [detailDress,setDetailDress]=useState(null);
   const [historyFilter,setHistoryFilter]=useState('all');
+  const [historyFrom,setHistoryFrom]=useState('');
+  const [historyTo,setHistoryTo]=useState('');
   const [newRentalOpen,setNewRentalOpen]=useState(false);
   const [scannerOpen,setScannerOpen]=useState(false);
   const [newRentalInitDress,setNewRentalInitDress]=useState(null);
@@ -54,6 +56,7 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
   const [showSimilar,setShowSimilar]=useState(false);
   const [similarForDress,setSimilarForDress]=useState(null);
   const [lateFeeConfirm,setLateFeeConfirm]=useState(null); // {itemId, daysLate, feeAmount, item}
+  const [confirmAction,setConfirmAction]=useState(null); // {type:'clean'|'available', dressId, dressName, dress}
 
   // Auto-open new rental modal via FAB custom event
   useEffect(()=>{
@@ -277,9 +280,13 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     toast('Dress #'+d.sku+' marked as picked up');
     setPickupDress(null);
   };
-  const handleMarkCleaned=async(d)=>{
+  const handleMarkCleaned=(d)=>{
+    setConfirmAction({type:'clean',dressId:d.id,dressName:d.name,dress:d});
+  };
+  const doMarkCleaned=async(d)=>{
     await updateDress?.(d.id,{status:'available'});
     toast('Dress #'+d.sku+' is now available');
+    setConfirmAction(null);
   };
 
   const handleReturnReminder=async(item)=>{
@@ -304,9 +311,14 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
     toast('Reminder copied to clipboard ✓');
   };
 
-  const handleMarkAvailable=async(itemId)=>{
+  const handleMarkAvailable=(itemId)=>{
+    const dress=allGowns.find(d=>d.id===itemId);
+    setConfirmAction({type:'available',dressId:itemId,dressName:dress?.name||'Dress',dress});
+  };
+  const doMarkAvailable=async(itemId)=>{
     await updateDress?.(itemId,{status:'available',last_cleaned:new Date().toISOString().slice(0,10)});
     toast('Marked as available ✓');
+    setConfirmAction(null);
   };
 
   // ── Task 1: Charge late fee → insert payment_milestone
@@ -1917,9 +1929,9 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
               </>
             ):(
               <>
-                <div style={{background:C.white,border:`1px solid ${C.border}`,borderRadius:12,overflow:'hidden'}}>
+                {paginatedCatalog.length>0&&<div style={{background:C.white,border:`1px solid ${C.border}`,borderRadius:12,overflow:'hidden'}}>
                   {paginatedCatalog.map(d=><DressListRow key={d.id} d={d}/>)}
-                </div>
+                </div>}
                 {catalogDresses.length>catalogPage*CATALOG_PAGE_SIZE&&(
                   <div style={{padding:'20px 0 4px',display:'flex',justifyContent:'center'}}>
                     <button onClick={()=>setCatalogPage(p=>p+1)} style={{border:`1px solid ${C.border}`,borderRadius:8,padding:'10px 24px',background:C.white,cursor:'pointer',fontSize:13,color:C.gray}}>
@@ -1933,8 +1945,11 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
             {catalogDresses.length===0&&(
               <div style={{textAlign:'center',padding:60,color:C.gray}}>
                 <div style={{fontSize:36,marginBottom:8}}>👗</div>
-                <div style={{fontSize:14,fontWeight:500,color:C.ink}}>No dresses found</div>
-                <div style={{fontSize:12,marginTop:4}}>Try a different search or filter</div>
+                <div style={{fontSize:14,fontWeight:500,color:C.ink}}>No dresses match your filters</div>
+                <div style={{fontSize:12,marginTop:4,marginBottom:16}}>Try a different search or filter</div>
+                {(search||statusFilter!=='all'||catFilter!=='all')&&(
+                  <button onClick={()=>{setSearch('');setStatusFilter('all');setCatFilter('all');}} style={{padding:'8px 20px',borderRadius:8,border:`1px solid ${C.rosa}`,background:'transparent',color:C.rosaText,fontSize:13,fontWeight:500,cursor:'pointer'}}>Clear filters</button>
+                )}
               </div>
             )}
           </div>
@@ -2019,6 +2034,10 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
             setSearch={setSearch}
             historyFilter={historyFilter}
             setHistoryFilter={setHistoryFilter}
+            historyFrom={historyFrom}
+            setHistoryFrom={setHistoryFrom}
+            historyTo={historyTo}
+            setHistoryTo={setHistoryTo}
             toast={toast}
           />
         )}
@@ -2067,6 +2086,22 @@ const DressRentals = ({inventory: liveInventory, updateDress, createDress, creat
             <div style={{display:'flex',gap:8,justifyContent:'center'}}>
               <button onClick={()=>setLateFeeConfirm(null)} style={{flex:1,padding:'9px 0',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,cursor:'pointer',fontSize:13}}>No</button>
               <button onClick={confirmChargeLaterFee} style={{flex:1,padding:'9px 0',borderRadius:8,border:`1px solid ${C.amber}`,background:C.amber,color:C.white,cursor:'pointer',fontSize:13,fontWeight:600}}>Yes, charge {fmt(lateFeeConfirm.feeAmount)}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {confirmAction&&(
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1010,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+          <div role="dialog" aria-modal="true" style={{background:C.white,borderRadius:14,width:360,padding:24,boxShadow:'0 20px 60px rgba(0,0,0,0.18)',textAlign:'center'}}>
+            <div style={{fontSize:28,marginBottom:10}}>{confirmAction.type==='clean'?'✨':'✓'}</div>
+            <div style={{fontSize:15,fontWeight:600,color:C.ink,marginBottom:6}}>
+              {confirmAction.type==='clean'?'Mark as cleaned?':'Mark as available?'}
+            </div>
+            <div style={{fontSize:13,color:C.ink,marginBottom:4}}>{confirmAction.dressName}</div>
+            <div style={{fontSize:12,color:C.gray,marginBottom:20}}>This will update the status immediately.</div>
+            <div style={{display:'flex',gap:8,justifyContent:'center'}}>
+              <button onClick={()=>setConfirmAction(null)} style={{flex:1,padding:'9px 0',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,cursor:'pointer',fontSize:13}}>Cancel</button>
+              <button onClick={()=>{confirmAction.type==='clean'?doMarkCleaned(confirmAction.dress):doMarkAvailable(confirmAction.dressId);}} style={{flex:1,padding:'9px 0',borderRadius:8,border:`1px solid ${C.rosa}`,background:C.rosa,color:C.white,cursor:'pointer',fontSize:13,fontWeight:600}}>Confirm</button>
             </div>
           </div>
         </div>

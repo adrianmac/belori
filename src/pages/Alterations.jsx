@@ -237,7 +237,7 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
     if(!clientId)return setErr('Please select a client');
     if(!garmentDesc.trim())return setErr('Please describe the garment');
     if(!workItems.length)return setErr('Select at least one work item');
-    if(!quotedPrice||Number(quotedPrice)<=0)return setErr('Please enter a quoted price');
+    // price is optional — no validation required
     setSaving(true);
     const meas = Object.fromEntries(Object.entries(measurements).filter(([,v])=>v!==''&&v!=null));
     const result = await onCreate({
@@ -245,7 +245,7 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
       client_id:clientId,
       work_items:workItems,
       seamstress_id:seamstressId||null,
-      price:Number(quotedPrice),
+      price:quotedPrice?Number(quotedPrice):null,
       deadline:deadline||null,
       measurements:Object.keys(meas).length?meas:null,
       notes:[workNotes.trim(),notes.trim()].filter(Boolean).join('\n\n')||null,
@@ -327,7 +327,7 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
               </select>
             </div>
             <div>
-              <label htmlFor="alteration-field-price" style={{...LBL,marginBottom:8,display:'block'}}>Quoted price ($) <span style={{color:'var(--text-danger)'}}>*</span></label>
+              <label htmlFor="alteration-field-price" style={{...LBL,marginBottom:8,display:'block'}}>Price (optional) ($)</label>
               <input id="alteration-field-price" type="number" value={quotedPrice} onChange={e=>setQuotedPrice(e.target.value)}
                 placeholder="280" style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
             </div>
@@ -716,7 +716,7 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
         {/* Footer */}
         <div style={{padding:'14px 30px',background:C.ivory,borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
           <div style={{display:'flex',gap:8}}>
-            {job.status!=='cancelled'&&onCancel&&(
+            {job.status!=='cancelled'&&job.status!=='complete'&&onCancel&&(
               <button onClick={()=>setConfirmAction('cancel')}
                 style={{padding:'7px 12px',borderRadius:8,border:'1px solid var(--color-warning)',background:'var(--bg-warning)',color:'var(--text-warning)',fontSize:12,fontWeight:600,cursor:'pointer'}}>
                 🚫 Cancel job
@@ -1148,6 +1148,12 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
                 </div>
                 <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,col.id)}
                   style={{flex:1,display:'flex',flexDirection:'column',gap:12,overflowY:'auto',padding:4,minHeight:100,borderRadius:12,transition:'background 0.2s'}}>
+                  {jobs.length===0&&(
+                    <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',paddingTop:32,paddingBottom:32,color:C.gray}}>
+                      <span style={{fontSize:18,marginBottom:6,opacity:0.5}}>✂️</span>
+                      <span style={{fontSize:12,color:C.gray}}>No jobs here</span>
+                    </div>
+                  )}
                   {jobs.map(job=>{
                     const _td=new Date();_td.setHours(0,0,0,0);
                     const dlDate=job.deadline?new Date(job.deadline+'T12:00:00'):null;

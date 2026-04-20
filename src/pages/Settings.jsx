@@ -2898,8 +2898,16 @@ const Settings = ({boutique, initialTab, setScreen}) => {
             <>
               <ThemeToggle/>
               <LayoutModeToggle/>
-              <LanguageToggle/>
-              <BilingualLabelToggle/>
+              <div>
+                <div style={{fontSize:14,fontWeight:600,color:'var(--color-ink,#1a1a2e)',marginBottom:2}}>App Language</div>
+                <div style={{fontSize:12,color:'#888',marginBottom:10}}>Controls the language of the app interface (menus, buttons, labels)</div>
+                <LanguageToggle/>
+              </div>
+              <div>
+                <div style={{fontSize:14,fontWeight:600,color:'var(--color-ink,#1a1a2e)',marginBottom:2}}>Bilingual Labels</div>
+                <div style={{fontSize:12,color:'#888',marginBottom:10}}>Show service and event type names in both English and Spanish</div>
+                <BilingualLabelToggle/>
+              </div>
               <CurrencySelector/>
               <KioskModeCard/>
               <Card>

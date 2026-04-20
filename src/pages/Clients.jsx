@@ -569,83 +569,6 @@ function downloadCSV(rows, filename) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
 }
 
-// ─── BULK SMS MODAL ────────────────────────────────────────────────────────
-const BulkSmsModal = ({ clients, boutiqueName, boutiqueId, onClose, toast }) => {
-  const [message, setMessage] = useState('');
-  const [sending, setSending] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
-  const eligible = clients.filter(c => !!c.phone);
-  const requiresConfirmation = eligible.length > 10;
-
-  const doSend = async () => {
-    if (!message.trim() || !eligible.length) return;
-    if (requiresConfirmation && !confirmed) return;
-    setSending(true);
-    const results = [];
-    for (const cl of eligible) {
-      const msg = message.replace(/\{\{name\}\}/g, cl.name||'there').replace(/\{\{boutique\}\}/g, boutiqueName||'us');
-      const { error } = await supabase.functions.invoke('send-sms', { body: { client_id: cl.id, message: msg } });
-      const success = !error;
-      if (success) {
-        await supabase.from('client_interactions').insert({
-          boutique_id: boutiqueId, client_id: cl.id, type: 'sms_blast',
-          title: 'Bulk SMS sent', body: msg, occurred_at: new Date().toISOString(), is_editable: false,
-        });
-      }
-      results.push({ name: cl.name, success });
-      // Rate limiting: small delay between sends
-      await new Promise(r => setTimeout(r, 100));
-    }
-    const sentCount = results.filter(r => r.success).length;
-    const failedClients = results.filter(r => !r.success).map(r => r.name);
-    toast(`SMS sent to ${sentCount} of ${results.length} client${results.length !== 1 ? 's' : ''} ✓`);
-    if (failedClients.length > 0) {
-      toast(`Failed: ${failedClients.join(', ')}`, 'warn');
-    }
-    onClose();
-  };
-
-  return (
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:300,padding:16}}>
-      <div role="dialog" aria-modal="true" aria-labelledby="clients-bulk-sms-title" style={{background:C.white,borderRadius:16,width:480,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
-        <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <span id="clients-bulk-sms-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Send SMS to {eligible.length} client{eligible.length!==1?'s':''}</span>
-          <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
-        </div>
-        <div style={{padding:20,display:'flex',flexDirection:'column',gap:14}}>
-          {clients.length > eligible.length && (
-            <div style={{fontSize:12,color:C.warningText,background:C.amberBg,padding:'8px 12px',borderRadius:8}}>
-              {clients.length - eligible.length} client{clients.length-eligible.length!==1?'s':''} skipped (no phone on file)
-            </div>
-          )}
-          {requiresConfirmation && (
-            <div style={{fontSize:12,color:'#92400E',background:'#FEF3C7',border:'1px solid #F59E0B',padding:'10px 12px',borderRadius:8}}>
-              You are about to send SMS to {eligible.length} clients. This cannot be undone.
-            </div>
-          )}
-          <div style={{fontSize:11,color:C.gray}}>Use {'{{name}}'} and {'{{boutique}}'} for personalization.</div>
-          <textarea
-            value={message}
-            onChange={e=>setMessage(e.target.value)}
-            rows={5}
-            placeholder="Hi {{name}}, this is a message from {{boutique}}…"
-            style={{width:'100%',padding:'10px 12px',borderRadius:9,border:`1px solid ${C.border}`,fontSize:13,resize:'vertical',boxSizing:'border-box',outline:'none',fontFamily:'inherit'}}
-          />
-          {requiresConfirmation && (
-            <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:12,color:C.ink}}>
-              <input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)} style={{width:15,height:15,cursor:'pointer',accentColor:C.rosa,flexShrink:0}}/>
-              I confirm I want to send this message to {eligible.length} clients
-            </label>
-          )}
-        </div>
-        <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',gap:8,justifyContent:'flex-end'}}>
-          <GhostBtn label="Cancel" onClick={onClose}/>
-          <PrimaryBtn label={sending ? 'Sending…' : `Send to ${eligible.length} client${eligible.length!==1?'s':''}`} onClick={doSend} disabled={sending||!message.trim()||(requiresConfirmation&&!confirmed)}/>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ─── BULK ADD TAG MODAL ────────────────────────────────────────────────────
 const BulkAddTagModal = ({ boutiqueId, selectedIds, onClose, toast }) => {
@@ -715,6 +638,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
   const [mergeGroups, setMergeGroups] = useState([]);
   const [merging, setMerging] = useState(false);
   const [selectedMerge, setSelectedMerge] = useState(null); // {keep: clientId, remove: clientId, groupIdx: number}
+  const [confirmMerge, setConfirmMerge] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
   const [sortCol, setSortCol] = useState('name');
@@ -943,6 +867,20 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
               <option key={t.name} value={t.name}>{tierMedal(t.name)} {t.name}</option>
             ))}
           </select>
+          {/* Stacked filter indicator */}
+          {filter !== 'all' && tierFilter !== 'all' && (
+            <span style={{ padding: '4px 10px', borderRadius: 999, background: '#FEF3C7', border: '1px solid #F59E0B', color: '#92400E', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' }}>
+              2 filters active
+            </span>
+          )}
+          {/* Clear all filters button — shown whenever any filter is active */}
+          {(filter !== 'all' || tierFilter !== 'all' || search) && (
+            <button
+              onClick={() => { setFilter('all'); setTierFilter('all'); setSearch(''); }}
+              style={{ padding: '6px 12px', borderRadius: 999, border: '1px solid #FCA5A5', background: '#FEF2F2', color: '#B91C1C', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              Clear all filters
+            </button>
+          )}
         </div>
       </div>
       {/* REFERRAL TREE VIEW */}
@@ -1230,7 +1168,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
             </table>
             </div>
             <div style={{ padding: '8px 14px', background: C.ivory, borderTop: `1px solid ${C.border}`, fontSize: 11, color: C.gray, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>Showing {paginatedSorted.length} of {sortedFiltered.length} client{sortedFiltered.length !== 1 ? 's' : ''}{filter !== 'all' || search ? ' matching filter' : ''}</span>
+              <span>Showing {paginatedSorted.length} of {sortedFiltered.length} client{sortedFiltered.length !== 1 ? 's' : ''}{filter !== 'all' && tierFilter !== 'all' ? ' (filtered by tier + activity)' : (filter !== 'all' || tierFilter !== 'all' || search) ? ' matching filter' : ''}</span>
               <span style={{color:'#D1D5DB'}}>Click any column header to sort</span>
             </div>
             {sortedFiltered.length > page * PAGE_SIZE && (
@@ -1305,7 +1243,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
                 <span id="clients-merge-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Duplicate clients</span>
                 <div style={{fontSize:12,color:C.gray,marginTop:1}}>{mergeGroups.length} potential duplicate{mergeGroups.length!==1?'s':''} found</div>
               </div>
-              <button onClick={()=>{setShowMerge(false);setSelectedMerge(null);}} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
+              <button onClick={()=>{setShowMerge(false);setSelectedMerge(null);setConfirmMerge(false);}} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:'12px 20px',display:'flex',flexDirection:'column',gap:12}}>
               {mergeGroups.length===0&&(
@@ -1321,11 +1259,11 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
                   <div style={{display:'flex',flexDirection:'column',gap:8}}>
                     {group.clients.map(cl=>(
                       <div key={cl.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:8,border:`2px solid ${selectedMerge?.keep===cl.id&&selectedMerge?.groupIdx===gi?C.rosa:C.border}`,cursor:'pointer',transition:'border-color 0.15s'}}
-                        onClick={()=>setSelectedMerge(prev=>{
+                        onClick={()=>{setConfirmMerge(false);setSelectedMerge(prev=>{
                           if(!prev||prev.groupIdx!==gi) return {keep:cl.id,remove:group.clients.find(c=>c.id!==cl.id)?.id,groupIdx:gi};
                           if(prev.keep===cl.id) return null;
                           return {keep:cl.id,remove:group.clients.find(c=>c.id!==cl.id)?.id,groupIdx:gi};
-                        })}>
+                        });}}>
                         <div style={{width:34,height:34,borderRadius:'50%',background:C.rosaPale,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600,color:C.rosaText,flexShrink:0}}>{cl.name?.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:13,fontWeight:500,color:C.ink}}>{cl.name}</div>
@@ -1338,29 +1276,48 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
                     ))}
                   </div>
                   {selectedMerge?.groupIdx===gi&&selectedMerge.keep&&selectedMerge.remove&&(
-                    <button
-                      onClick={async()=>{
-                        if(!selectedMerge.keep||!selectedMerge.remove) return;
-                        setMerging(true);
-                        await supabase.from('events').update({client_id:selectedMerge.keep}).eq('client_id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
-                        await supabase.from('client_interactions').update({client_id:selectedMerge.keep}).eq('client_id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
-                        await supabase.from('client_tasks').update({client_id:selectedMerge.keep}).eq('client_id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
-                        await supabase.from('pipeline_leads').update({client_id:selectedMerge.keep}).eq('client_id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
-                        const removed = group.clients.find(c=>c.id===selectedMerge.remove);
-                        const kept = group.clients.find(c=>c.id===selectedMerge.keep);
-                        if(removed?.loyalty_points>0){
-                          await supabase.from('clients').update({loyalty_points:(kept?.loyalty_points||0)+(removed?.loyalty_points||0)}).eq('id',selectedMerge.keep).eq('boutique_id',clBoutique.id);
-                        }
-                        await supabase.from('clients').delete().eq('id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
-                        setMerging(false);
-                        setSelectedMerge(null);
-                        setMergeGroups(g=>g.filter((_,i)=>i!==gi));
-                        toast('Clients merged ✓');
-                      }}
-                      disabled={merging}
-                      style={{marginTop:10,width:'100%',padding:'8px',background:C.rosa,color:C.white,border:'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:500}}>
-                      {merging?'Merging…':'Merge — keep selected client'}
-                    </button>
+                    <div style={{marginTop:10,display:'flex',flexDirection:'column',gap:8}}>
+                      {confirmMerge ? (
+                        <>
+                          <div style={{fontSize:12,color:'#92400E',background:'#FEF3C7',border:'1px solid #F59E0B',borderRadius:8,padding:'10px 12px'}}>
+                            ⚠️ This is irreversible. The source client will be permanently deleted.
+                          </div>
+                          <div style={{display:'flex',gap:8}}>
+                            <button onClick={()=>setConfirmMerge(false)} style={{flex:1,padding:'8px',background:'#fff',color:C.gray,border:`1px solid ${C.border}`,borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:500}}>Cancel</button>
+                            <button
+                              onClick={async()=>{
+                                if(!selectedMerge.keep||!selectedMerge.remove) return;
+                                setMerging(true);
+                                await supabase.from('events').update({client_id:selectedMerge.keep}).eq('client_id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
+                                await supabase.from('client_interactions').update({client_id:selectedMerge.keep}).eq('client_id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
+                                await supabase.from('client_tasks').update({client_id:selectedMerge.keep}).eq('client_id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
+                                await supabase.from('pipeline_leads').update({client_id:selectedMerge.keep}).eq('client_id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
+                                const removed = group.clients.find(c=>c.id===selectedMerge.remove);
+                                const kept = group.clients.find(c=>c.id===selectedMerge.keep);
+                                if(removed?.loyalty_points>0){
+                                  await supabase.from('clients').update({loyalty_points:(kept?.loyalty_points||0)+(removed?.loyalty_points||0)}).eq('id',selectedMerge.keep).eq('boutique_id',clBoutique.id);
+                                }
+                                await supabase.from('clients').delete().eq('id',selectedMerge.remove).eq('boutique_id',clBoutique.id);
+                                setMerging(false);
+                                setConfirmMerge(false);
+                                setSelectedMerge(null);
+                                setMergeGroups(g=>g.filter((_,i)=>i!==gi));
+                                toast('Clients merged ✓');
+                              }}
+                              disabled={merging}
+                              style={{flex:2,padding:'8px',background:'#DC2626',color:'#fff',border:'none',borderRadius:8,cursor:merging?'default':'pointer',fontSize:13,fontWeight:600}}>
+                              {merging?'Merging…':'Yes, merge permanently'}
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <button
+                          onClick={()=>setConfirmMerge(true)}
+                          style={{width:'100%',padding:'8px',background:C.rosa,color:C.white,border:'none',borderRadius:8,cursor:'pointer',fontSize:13,fontWeight:500}}>
+                          Merge — keep selected client
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
@@ -1370,12 +1327,11 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
       )}
       {/* Bulk SMS modal */}
       {showSmsModal && (
-        <BulkSmsModal
+        <BulkMessageModal
           clients={rawClients.filter(c => bulkSelected.has(c.id))}
           boutiqueName={clBoutique?.name || 'us'}
           boutiqueId={clBoutique?.id}
           onClose={() => { setShowSmsModal(false); clearBulkSelection(); }}
-          toast={toast}
         />
       )}
       {/* Bulk add tag modal */}

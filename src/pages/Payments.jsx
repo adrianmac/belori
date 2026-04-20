@@ -378,6 +378,90 @@ const PaymentPlanModal = ({ events, payments: allPayments, createMilestone, onCl
   );
 };
 
+// ─── CREATE MILESTONE MODAL ───────────────────────────────────────────────
+const CreateMilestoneModal = ({ events, createMilestone, onClose }) => {
+  const toast = useToast();
+  const [eventId, setEventId] = useState('');
+  const [label, setLabel] = useState('');
+  const [amount, setAmount] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const eventOptions = useMemo(() => {
+    if (!events) return [];
+    return events.map(e => {
+      const evtLabel = EVT_TYPES[e.type]?.label || e.type || 'Event';
+      const dateStr = e.event_date ? new Date(e.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+      return { id: e.id, label: `${e.client_name || 'Unknown'} — ${evtLabel} ${dateStr}` };
+    });
+  }, [events]);
+
+  const handleSave = async () => {
+    if (!eventId) { toast('Select an event', 'warn'); return; }
+    if (!label.trim()) { toast('Enter a label', 'warn'); return; }
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) { toast('Enter a valid amount', 'warn'); return; }
+    if (!dueDate) { toast('Select a due date', 'warn'); return; }
+    setSaving(true);
+    const { error } = await createMilestone({
+      event_id: eventId,
+      label: label.trim(),
+      amount: Number(amount),
+      due_date: dueDate,
+      status: 'pending',
+    });
+    setSaving(false);
+    if (error) { toast('Failed to create milestone', 'error'); return; }
+    toast('Milestone created ✓');
+    onClose();
+  };
+
+  return (
+    <div
+      style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{background:C.white,borderRadius:16,width:440,boxShadow:'0 20px 60px rgba(0,0,0,0.15)',overflow:'hidden'}}>
+        <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontWeight:600,fontSize:15,color:C.ink}}>Create Milestone</span>
+          <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
+        </div>
+        <div style={{padding:20,display:'flex',flexDirection:'column',gap:14}}>
+          <div>
+            <label htmlFor="cm-event" style={LBL}>Event</label>
+            <select id="cm-event" value={eventId} onChange={e => setEventId(e.target.value)} style={inputSt}>
+              <option value="">Select an event…</option>
+              {eventOptions.map(opt => (
+                <option key={opt.id} value={opt.id}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="cm-label" style={LBL}>Label</label>
+            <input id="cm-label" type="text" placeholder="e.g. Deposit, Final payment…" value={label} onChange={e => setLabel(e.target.value)} style={inputSt}/>
+          </div>
+          <div>
+            <label htmlFor="cm-amount" style={LBL}>Amount</label>
+            <input id="cm-amount" type="number" min="0" step="0.01" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} style={inputSt}/>
+          </div>
+          <div>
+            <label htmlFor="cm-due" style={LBL}>Due date</label>
+            <input id="cm-due" type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={inputSt}/>
+          </div>
+        </div>
+        <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',gap:8,justifyContent:'space-between'}}>
+          <GhostBtn label="Cancel" onClick={onClose}/>
+          <PrimaryBtn
+            label={saving ? 'Saving…' : 'Save milestone'}
+            colorScheme="success"
+            disabled={saving}
+            onClick={handleSave}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── CSV EXPORT HELPER ─────────────────────────────────────────────────────
 function downloadCSV(rows, filename) {
   if (!rows || rows.length === 0) return;
@@ -390,15 +474,15 @@ function downloadCSV(rows, filename) {
 // ─── QUICK PAY MODAL ─────────────────────────────────────────────────────────
 const PAYMENT_METHODS = ['Cash', 'Check', 'Zelle', 'Venmo', 'Card', 'Other'];
 
-const QuickPayModal = ({ payments: allPayments, boutique, onClose, onSuccess }) => {
+const QuickPayModal = ({ payments: allPayments, boutique, onClose, onSuccess, initialMilestone }) => {
   const toast = useToast();
   const today = new Date().toISOString().slice(0, 10);
 
-  const [clientSearch, setClientSearch] = useState('');
-  const [selectedClient, setSelectedClient] = useState(null); // { name, clientFull, client_id }
+  const [clientSearch, setClientSearch] = useState(initialMilestone ? (initialMilestone.clientFull || initialMilestone.client || '') : '');
+  const [selectedClient, setSelectedClient] = useState(initialMilestone ? { client_id: initialMilestone.client_id, clientFull: initialMilestone.clientFull || initialMilestone.client || '' } : null);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedMilestone, setSelectedMilestone] = useState(null);
-  const [amount, setAmount] = useState('');
+  const [selectedMilestone, setSelectedMilestone] = useState(initialMilestone || null);
+  const [amount, setAmount] = useState(initialMilestone ? String(initialMilestone.amount) : '');
   const [method, setMethod] = useState('Cash');
   const [date, setDate] = useState(today);
   const [note, setNote] = useState('');
@@ -463,12 +547,12 @@ const QuickPayModal = ({ payments: allPayments, boutique, onClose, onSuccess }) 
       if (milestoneError) throw milestoneError;
 
       // Log client interaction
-      const body = `${fmt(Number(amount))} received via ${method}${note ? ` — ${note}` : ''}`;
+      const body = `${fmt(Number(amount))} paid via ${method}${note ? ` — ${note}` : ''}`;
       await supabase.from('client_interactions').insert({
         boutique_id: boutique.id,
         client_id: selectedClient.client_id,
         type: 'payment',
-        title: 'Payment received',
+        title: `Payment received: ${selectedMilestone.label}`,
         body,
         occurred_at: date,
         is_editable: false,
@@ -651,12 +735,14 @@ const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminde
   const { boutique, myRole } = useAuth();
   const allPayments = livePayments;
   const [tab, setTab] = useState('all');
+  const [pmtSearch, setPmtSearch] = useState('');
   const [reminderPayment, setReminderPayment] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [bulkWorking, setBulkWorking] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showQuickPay, setShowQuickPay] = useState(false);
-  const [bulkSelected, setBulkSelected] = useState(new Set());
+  const [showCreateMilestone, setShowCreateMilestone] = useState(false);
+  const [quickPayMilestone, setQuickPayMilestone] = useState(null);
   const [bulkSending, setBulkSending] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
   const [tipEventId, setTipEventId] = useState(null);
@@ -664,7 +750,8 @@ const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminde
   const [tipSaving, setTipSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState({ open: false, milestoneId: null });
 
-  const filtered = tab === 'all' ? allPayments : allPayments.filter(p => p.status === tab);
+  const searchFiltered = pmtSearch === '' ? allPayments : allPayments.filter(p => (p.client || '').toLowerCase().includes(pmtSearch.toLowerCase()) || (p.clientFull || '').toLowerCase().includes(pmtSearch.toLowerCase()));
+  const filtered = tab === 'all' ? searchFiltered : searchFiltered.filter(p => p.status === tab);
   const totalOverdue = allPayments.filter(p => p.status === 'overdue').reduce((s, p) => s + p.amount, 0);
   const totalPending = allPayments.filter(p => p.status === 'pending').reduce((s, p) => s + p.amount, 0);
 
@@ -716,13 +803,13 @@ const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminde
 
   const selectAllOverdue = () => {
     const overdueIds = allPayments.filter(p => p.status === 'overdue').map(p => p.id);
-    setBulkSelected(new Set(overdueIds));
+    setSelected(new Set(overdueIds));
   };
 
   const handleBulkReminder = async () => {
-    if (!bulkSelected.size) return;
+    if (!selected.size) return;
     setBulkSending(true);
-    const selectedMilestones = allPayments.filter(m => bulkSelected.has(m.id));
+    const selectedMilestones = allPayments.filter(m => selected.has(m.id));
     let sent = 0;
     for (const m of selectedMilestones) {
       const eventData = events?.find(e => e.id === m.event_id);
@@ -745,7 +832,7 @@ const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminde
       sent++;
     }
     setBulkSending(false);
-    setBulkSelected(new Set());
+    setSelected(new Set());
     toast(`Reminders logged for ${sent} milestone${sent !== 1 ? 's' : ''}`);
   };
 
@@ -777,7 +864,7 @@ const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminde
           <GhostBtn label="Send all reminders" className="topbar-hide" onClick={sendAllReminders}/>
           <GhostBtn label="⚡ Quick Pay" onClick={() => setShowQuickPay(true)}/>
           <GhostBtn label="📅 Payment Plan" onClick={() => setShowPlanModal(true)}/>
-          <PrimaryBtn label="+ Create milestone" colorScheme="success" onClick={()=>{setScreen('events');toast('Select an event to add a milestone','warn');}}/>
+          <PrimaryBtn label="+ Create milestone" colorScheme="success" onClick={() => setShowCreateMilestone(true)}/>
         </>}
       />
       <div className="stat-grid" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,padding:'16px 20px',background:C.white,borderBottom:`1px solid ${C.border}`}}>
@@ -800,6 +887,23 @@ const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminde
             {t === 'all' ? 'All payments' : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
+        <div style={{position:'relative',marginLeft:8,flexShrink:0}}>
+          <input
+            type="text"
+            value={pmtSearch}
+            onChange={e => setPmtSearch(e.target.value)}
+            placeholder="Search by client…"
+            style={{...inputSt,padding:'5px 30px 5px 10px',fontSize:12,height:30,width:180,borderRadius:999}}
+          />
+          {pmtSearch && (
+            <button
+              onClick={() => setPmtSearch('')}
+              aria-label="Clear search"
+              style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:14,lineHeight:1,padding:0}}>
+              ×
+            </button>
+          )}
+        </div>
         {allPayments.some(p => p.status === 'overdue') && (
           <button
             onClick={selectAllOverdue}
@@ -809,7 +913,7 @@ const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminde
         )}
       </div>
       {/* ── Bulk reminder sticky bar ─────────────────────────────────── */}
-      {bulkSelected.size > 0 && (
+      {selected.size > 0 && allPayments.some(p => selected.has(p.id) && p.status === 'overdue') && (
         <div style={{
           position:'sticky',top:0,zIndex:10,
           background:'#1C1012',color:C.white,
@@ -818,9 +922,9 @@ const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminde
           borderRadius:10,margin:'0 20px 0 20px',marginTop:8,
           boxShadow:'0 4px 12px rgba(0,0,0,0.15)'
         }}>
-          <span style={{fontSize:13}}>{bulkSelected.size} milestone{bulkSelected.size!==1?'s':''} selected</span>
+          <span style={{fontSize:13}}>{allPayments.filter(p => selected.has(p.id) && p.status === 'overdue').length} overdue milestone{allPayments.filter(p => selected.has(p.id) && p.status === 'overdue').length!==1?'s':''} selected</span>
           <div style={{display:'flex',gap:10}}>
-            <button onClick={()=>setBulkSelected(new Set())} style={{background:'rgba(255,255,255,0.15)',border:'none',color:C.white,padding:'5px 12px',borderRadius:6,cursor:'pointer',fontSize:12}}>Clear</button>
+            <button onClick={()=>setSelected(new Set())} style={{background:'rgba(255,255,255,0.15)',border:'none',color:C.white,padding:'5px 12px',borderRadius:6,cursor:'pointer',fontSize:12}}>Clear</button>
             <button onClick={handleBulkReminder} disabled={bulkSending} style={{background:C.rosa,border:'none',color:C.white,padding:'5px 14px',borderRadius:6,cursor:'pointer',fontSize:12,fontWeight:500,opacity:bulkSending?0.7:1}}>
               {bulkSending?'Sending…':'📨 Send reminders'}
             </button>
@@ -1007,12 +1111,7 @@ const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminde
                   {p.status !== 'paid' && (
                     <input type="checkbox"
                       checked={selected.has(p.id)}
-                      onChange={()=>{
-                        toggleSelect(p.id);
-                        if (p.status === 'overdue' || p.status === 'pending') {
-                          setBulkSelected(s => { const n = new Set(s); n.has(p.id) ? n.delete(p.id) : n.add(p.id); return n; });
-                        }
-                      }}
+                      onChange={()=>toggleSelect(p.id)}
                       style={{cursor:'pointer',width:14,height:14,accentColor:C.rosa}}/>
                   )}
                 </td>
@@ -1059,7 +1158,7 @@ const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminde
                     )}
                     {p.status !== 'paid' && (
                       <button className="btn-sm"
-                        onClick={()=>markPaid && p.id && markPaid(p.id)}
+                        onClick={() => setQuickPayMilestone(p)}
                         style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${C.border}`,background:'transparent',color:C.gray,fontSize:11,cursor:'pointer'}}>
                         Mark paid
                       </button>
@@ -1119,12 +1218,20 @@ const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminde
           onClose={() => setShowPlanModal(false)}
         />
       )}
-      {showQuickPay && (
+      {(showQuickPay || quickPayMilestone) && (
         <QuickPayModal
           payments={allPayments}
           boutique={boutique}
-          onClose={() => setShowQuickPay(false)}
+          initialMilestone={quickPayMilestone || undefined}
+          onClose={() => { setShowQuickPay(false); setQuickPayMilestone(null); }}
           onSuccess={() => {/* realtime subscription auto-refreshes via usePayments hook */}}
+        />
+      )}
+      {showCreateMilestone && (
+        <CreateMilestoneModal
+          events={events}
+          createMilestone={createMilestone}
+          onClose={() => setShowCreateMilestone(false)}
         />
       )}
       {showTipModal && (

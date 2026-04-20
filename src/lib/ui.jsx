@@ -4,9 +4,32 @@ import { getCountdownConfig } from "./urgency";
 import { useLayoutMode } from "../hooks/useLayoutMode.jsx";
 
 // ─── SHARED STYLE OBJECTS ──────────────────────────────────────────────────
-export const inputSt = {width:'100%',padding:'8px 10px',borderRadius:7,border:`1px solid ${C.border}`,fontSize:13,color:C.ink,boxSizing:'border-box',outline:'none',background:C.white};
+// Couture-refined: sharp 2px radius, warm-cream bg, hairline border, gold focus ring (via CSS in index.css)
+export const inputSt = {
+  width:'100%',
+  padding:'10px 12px',
+  borderRadius:2,
+  border:`1px solid ${C.border}`,
+  fontSize:13,
+  color:C.ink,
+  boxSizing:'border-box',
+  outline:'none',
+  background:'#FEFBF7',           // warm cream, not sterile white
+  transition:'border-color 0.2s cubic-bezier(.22,.61,.36,1), box-shadow 0.2s cubic-bezier(.22,.61,.36,1)',
+  fontFamily:"'DM Sans','Inter',system-ui,sans-serif",
+};
 // LBL is intentionally kept for backward compat. Prefer <label htmlFor="…" style={LBL}> over <div style={LBL}>
-export const LBL = {fontSize:12,color:C.gray,marginBottom:4,display:'block'};
+// Upgraded to small-caps couture treatment — subtle but propagates everywhere.
+export const LBL = {
+  fontSize:10,
+  color:'#5C4A52',
+  marginBottom:6,
+  display:'block',
+  textTransform:'uppercase',
+  letterSpacing:'0.14em',
+  fontWeight:500,
+  fontFamily:"'DM Sans','Inter',system-ui,sans-serif",
+};
 
 // ─── FOCUS TRAP ────────────────────────────────────────────────────────────
 // Traps keyboard focus within a modal container and restores it on close.
@@ -88,22 +111,64 @@ export const ProgressBar = ({paid,total,height=5}) => {
     </div>
   );
 };
+// Couture-refined: warm cream bg, hairline border, sharper radius driven by --card-radius (3px/4px)
 export const Card = ({children,style={}}) => (
-  <div style={{background:C.white,border:`1px solid ${C.border}`,borderRadius:'var(--card-radius)',overflow:'hidden',boxShadow:'var(--card-shadow, none)',...style}}>
+  <div style={{
+    background:'#FEFBF7',                        // warm cream, not sterile white
+    border:'1px solid #EDE7E2',                  // softer than the old gray border
+    borderRadius:'var(--card-radius)',
+    overflow:'hidden',
+    boxShadow:'var(--card-shadow, 0 1px 3px rgba(28,17,24,0.04))',
+    ...style,
+  }}>
     {children}
   </div>
 );
+// CardHead: italic serif title (couture editorial) + small-caps eyebrow,
+// and the "action" link becomes a gold couture-link instead of rosa pink.
 export const CardHead = ({title,sub,action,onAction}) => {
   const { isTablet } = useLayoutMode();
   return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'var(--card-head-padding)',borderBottom:`1px solid ${C.border}`}}>
-      <div>
-        <div style={{fontWeight:600,fontSize:'var(--text-card-title,13px)',color:'var(--ink,#1C1012)'}}>{title}</div>
-        {sub && <div style={{fontSize:11,color:'#6B7280',marginTop:2,fontWeight:400}}>{sub}</div>}
+    <div style={{
+      display:'flex',alignItems:'center',justifyContent:'space-between',
+      padding:'var(--card-head-padding)',
+      borderBottom:'1px solid #EDE7E2',
+    }}>
+      <div style={{minWidth:0}}>
+        <div style={{
+          fontFamily:"'Cormorant Garamond','Didot',Georgia,serif",
+          fontSize:'calc(var(--text-card-title, 12px) + 3px)',
+          fontWeight:500,
+          fontStyle:'italic',
+          color:'#1C1118',
+          letterSpacing:'0.005em',
+          lineHeight:1.15,
+        }}>{title}</div>
+        {sub && <div style={{
+          fontFamily:"'DM Sans','Inter',system-ui,sans-serif",
+          fontSize:10,
+          color:'#5C4A52',
+          textTransform:'uppercase',
+          letterSpacing:'0.14em',
+          marginTop:4,
+          fontWeight:500,
+        }}>{sub}</div>}
       </div>
       {action&&(isTablet
-        ?<button onClick={onAction} style={{fontSize:12,color:C.rosaText,fontWeight:500,background:'none',border:`1px solid ${C.rosa}`,borderRadius:8,padding:'6px 12px',cursor:'pointer',minHeight:36,minWidth:'unset',lineHeight:1}}>{action}</button>
-        :<button onClick={onAction} style={{fontSize:12,color:C.rosaText,cursor:'pointer',fontWeight:500,background:'none',border:'none',padding:0}}>{action} <span aria-hidden="true">→</span></button>
+        ?<button onClick={onAction} style={{
+            fontFamily:"'DM Sans','Inter',system-ui,sans-serif",
+            fontSize:10,color:'#1C1118',fontWeight:500,
+            textTransform:'uppercase',letterSpacing:'0.14em',
+            background:'transparent',border:'1px solid #1C1118',
+            borderRadius:2,padding:'7px 14px',cursor:'pointer',
+            minHeight:36,minWidth:'unset',lineHeight:1,
+          }}>{action}</button>
+        :<button onClick={onAction} style={{
+            fontFamily:"'DM Sans','Inter',system-ui,sans-serif",
+            fontSize:10,color:'#8E6B34',cursor:'pointer',fontWeight:500,
+            textTransform:'uppercase',letterSpacing:'0.14em',
+            background:'none',border:'none',padding:0,
+          }}>{action} <span aria-hidden="true">→</span></button>
       )}
     </div>
   );
@@ -124,45 +189,106 @@ export const StatusDot = ({status}) => {
   return <div role="img" aria-label={label} title={label} style={{width:8,height:8,borderRadius:'50%',background:colors[status]||C.gray,flexShrink:0,marginTop:4}}/>;
 };
 
-export function EmptyState({ icon = '📭', title, subtitle, action, actionLabel, style = {} }) {
+// ─── EMPTY STATE — couture editorial ──────────────────────────────────────
+// Uses italic serif title + small-caps subtitle + ornamental diamond.
+// Legacy `icon` emoji is retained but de-emphasized (ghosted) so any caller
+// passing '📭', '👗', etc. still renders without regressions.
+export function EmptyState({ icon, title, subtitle, action, actionLabel, style = {} }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      padding: '48px 24px', textAlign: 'center', ...style
+      padding: '56px 24px', textAlign: 'center', ...style
     }}>
-      <div style={{ fontSize: 40, marginBottom: 12, lineHeight: 1 }}>{icon}</div>
-      {title && <div style={{ fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 6 }}>{title}</div>}
-      {subtitle && <div style={{ fontSize: 13, color: C.gray, lineHeight: 1.5, maxWidth: 280 }}>{subtitle}</div>}
+      {/* Ornamental diamond — the editorial mark, replaces the emoji as the focal */}
+      <div aria-hidden="true" style={{
+        display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, opacity: 0.7,
+      }}>
+        <span style={{ height: 1, width: 36, background: 'linear-gradient(90deg, transparent, #B08A4E)' }} />
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 0l5 5-5 5-5-5 5-5z" fill="#B08A4E"/></svg>
+        <span style={{ height: 1, width: 36, background: 'linear-gradient(270deg, transparent, #B08A4E)' }} />
+      </div>
+      {/* Optional legacy emoji — muted, under the title */}
+      {icon && (
+        <div style={{ fontSize: 28, marginBottom: 10, lineHeight: 1, opacity: 0.4, filter: 'grayscale(0.3)' }}>
+          {icon}
+        </div>
+      )}
+      {title && <div style={{
+        fontFamily: "'Cormorant Garamond','Didot',Georgia,serif",
+        fontSize: 22, fontStyle: 'italic', fontWeight: 400,
+        color: '#1C1118', marginBottom: 8, letterSpacing: '0.005em',
+      }}>{title}</div>}
+      {subtitle && <div style={{
+        fontFamily: "'DM Sans','Inter',system-ui,sans-serif",
+        fontSize: 13, color: '#5C4A52', lineHeight: 1.6, maxWidth: 320,
+      }}>{subtitle}</div>}
       {action && actionLabel && (
-        <button onClick={action} style={{
-          marginTop: 16, padding: '8px 20px', borderRadius: 8, border: 'none',
-          background: C.rosaSolid, color: C.white, fontSize: 13, fontWeight: 500, cursor: 'pointer'
+        <button onClick={action} className="btn-solid" data-color="primary" style={{
+          marginTop: 22,
         }}>{actionLabel}</button>
       )}
     </div>
   );
 }
 
-// ─── TOAST SYSTEM ──────────────────────────────────────────────────────────
+// ─── TOAST SYSTEM — couture palette, editorial typography ────────────────
+// Ivory card + gold hairline left accent. Different tints by type.
 export const ToastCtx=createContext(()=>{});
+const TOAST_SKINS = {
+  success: { accent: '#5C8A6E', bg: '#FEFBF7', mark: '✓' },
+  error:   { accent: '#A34454', bg: '#FEFBF7', mark: '×' },
+  warn:    { accent: '#B07A2E', bg: '#FEFBF7', mark: '!' },
+  info:    { accent: '#1C1118', bg: '#FEFBF7', mark: '—' },
+};
 export const ToastProvider=({children})=>{
   const [toasts,setToasts]=useState([]);
   const show=useCallback((msg,type='success')=>{
     const id=Date.now()+Math.random();
     setToasts(t=>[...t,{id,msg,type}]);
-    setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)),3000);
+    setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)),3400);
   },[]);
   return(
     <ToastCtx.Provider value={show}>
       {children}
-      <div aria-live="polite" aria-atomic="false" role="status" style={{position:'fixed',bottom:80,right:20,zIndex:9999,display:'flex',flexDirection:'column',gap:8}}>
-        {toasts.map(t=>(
-          <div key={t.id} role={t.type==='error'?'alert':'status'} style={{padding:'10px 16px',borderRadius:10,background:t.type==='success'?'var(--color-success)':t.type==='warn'?'var(--color-warning)':C.ink,color:C.white,fontSize:13,fontWeight:500,boxShadow:'0 4px 16px rgba(0,0,0,0.15)',animation:'slideIn 0.25s ease-out',maxWidth:340}}>
-            <span aria-hidden="true">{t.type==='success'?'✓ ':t.type==='warn'?'⚠ ':''}</span>{t.msg}
-          </div>
-        ))}
+      <div aria-live="polite" aria-atomic="false" role="status" style={{
+        position:'fixed', bottom:80, right:20, zIndex:9999,
+        display:'flex', flexDirection:'column', gap:10, pointerEvents:'none',
+      }}>
+        {toasts.map(t=>{
+          const skin = TOAST_SKINS[t.type] || TOAST_SKINS.info;
+          return (
+            <div key={t.id} role={t.type==='error'?'alert':'status'} style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '12px 16px 12px 14px',
+              background: skin.bg, color: '#1C1118',
+              borderLeft: `2px solid ${skin.accent}`,
+              borderTop: '1px solid #EDE7E2',
+              borderRight: '1px solid #EDE7E2',
+              borderBottom: '1px solid #EDE7E2',
+              fontFamily: "'DM Sans','Inter',system-ui,sans-serif",
+              fontSize: 13, fontWeight: 500,
+              boxShadow: '0 8px 24px rgba(28,17,24,0.10), 0 1px 3px rgba(28,17,24,0.06)',
+              animation: 'coutureToastIn 0.35s cubic-bezier(.22,.61,.36,1)',
+              maxWidth: 380, minWidth: 240, pointerEvents: 'auto',
+            }}>
+              <span aria-hidden="true" style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 22, height: 22, borderRadius: '50%',
+                background: skin.accent, color: '#FEFBF7',
+                fontSize: 12, fontWeight: 500, flexShrink: 0,
+              }}>{skin.mark}</span>
+              <span>{t.msg}</span>
+            </div>
+          );
+        })}
       </div>
-      <style>{`@keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}`}</style>
+      <style>{`
+        @keyframes coutureToastIn {
+          from { transform: translateX(24px); opacity: 0; }
+          to   { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+      `}</style>
     </ToastCtx.Provider>
   );
 };
@@ -183,11 +309,12 @@ if (typeof document !== 'undefined' && !document.getElementById('belori-skeleton
   document.head.appendChild(s);
 }
 
+// Couture skeleton — warm ivory → champagne light → ivory shimmer.
 const skeletonBase = {
-  background: 'linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%)',
+  background: 'linear-gradient(90deg, #F2ECE5 25%, #FBF5E9 50%, #F2ECE5 75%)',
   backgroundSize: '400px 100%',
-  animation: 'belori-shimmer 1.4s ease infinite',
-  borderRadius: 6,
+  animation: 'belori-shimmer 1.6s ease-in-out infinite',
+  borderRadius: 2,
   display: 'block',
 };
 
@@ -197,7 +324,7 @@ export function SkeletonLine({ width = '100%', height = 12, style = {} }) {
 
 export function SkeletonCard({ rows = 3, style = {} }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10, ...style }}>
+    <div style={{ background: '#FEFBF7', border: '1px solid #EDE7E2', borderRadius: 3, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10, ...style }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
         <span style={{ ...skeletonBase, width: 36, height: 36, borderRadius: '50%', flexShrink: 0 }}/>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -226,12 +353,12 @@ export function SkeletonTable({ rows = 6, cols = 4, style = {} }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 1, ...style }}>
       {/* Header */}
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, padding: '8px 12px', background: '#F9FAFB', borderRadius: '8px 8px 0 0' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, padding: '10px 14px', background: '#F8F4F0', borderRadius: '3px 3px 0 0', borderBottom: '1px solid #EDE7E2' }}>
         {Array.from({ length: cols }).map((_, i) => <SkeletonLine key={i} height={10} width="60%"/>)}
       </div>
       {/* Rows */}
       {Array.from({ length: rows }).map((_, r) => (
-        <div key={r} style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, padding: '10px 12px', background: r % 2 === 0 ? '#fff' : '#FAFAFA', borderBottom: '1px solid #F3F4F6' }}>
+        <div key={r} style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, padding: '12px 14px', background: r % 2 === 0 ? '#FEFBF7' : '#FAF6F1', borderBottom: '1px solid #EDE7E2' }}>
           {Array.from({ length: cols }).map((_, c) => (
             <SkeletonLine key={c} height={11} width={c === 0 ? '75%' : c === cols-1 ? '40%' : '55%'}/>
           ))}
@@ -247,7 +374,7 @@ export function SkeletonDashboard() {
       {/* Stat cards row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
         {[1,2,3,4,5].map(i => (
-          <div key={i} style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div key={i} style={{ background: '#FEFBF7', border: '1px solid #EDE7E2', borderRadius: 3, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <SkeletonLine width="50%" height={10}/>
             <SkeletonLine width="70%" height={22}/>
           </div>
@@ -312,8 +439,9 @@ export const icons = {
   activity:    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><path d="M1 8h2.5l2-5 2.5 9 2-6 1.5 3H15"/></svg>,
 };
 
-// ─── CONFIRM MODAL ─────────────────────────────────────────────────────────
-// A reusable accessible confirmation dialog with focus trap + Escape to close.
+// ─── CONFIRM MODAL — couture editorial confirm ─────────────────────────────
+// Replaces the bank-warning red circle with an ornamental diamond,
+// italic-serif title, small-caps message, and sharp-edged couture buttons.
 // Props: title, message, confirmLabel, onConfirm, onCancel, danger (bool)
 export function ConfirmModal({ title, message, confirmLabel = 'Confirm', onConfirm, onCancel, danger = true }) {
   const trapRef = useFocusTrap(true);
@@ -322,26 +450,60 @@ export function ConfirmModal({ title, message, confirmLabel = 'Confirm', onConfi
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [onCancel]);
-  const confirmBg = danger ? 'var(--color-danger)' : C.rosaSolid;
+  // Danger confirms stay red (muted, not neon). Non-danger uses gold.
+  const accentColor = danger ? '#A34454' : '#B08A4E';
+  const accentBg    = danger ? '#F7E6E9' : '#FBF5E9';
+  const confirmClass = danger ? 'btn-solid' : 'btn-solid';
+  const confirmScheme = danger ? 'danger' : 'primary';
   return (
     <div role="presentation" onClick={e => { if (e.target === e.currentTarget) onCancel(); }}
-      style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1200,padding:16}}>
+      style={{
+        position:'fixed', inset:0,
+        background:'rgba(28,17,24,0.45)',
+        backdropFilter: 'blur(3px)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        zIndex:1200, padding:16,
+      }}>
       <div role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" ref={trapRef}
-        style={{background:'#fff',borderRadius:16,width:380,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
-        <div style={{padding:'20px 20px 12px',textAlign:'center'}}>
-          {danger && <div style={{width:44,height:44,borderRadius:'50%',background:'var(--bg-danger)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px'}}>
-            <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1Zm0 4v4m0 2.5v.5" stroke="var(--color-danger)" strokeWidth="1.4" strokeLinecap="round"/></svg>
-          </div>}
-          <div id="confirm-modal-title" style={{fontSize:15,fontWeight:600,color:'#111',marginBottom:message?8:0}}>{title}</div>
-          {message && <div style={{fontSize:13,color:'#666'}}>{message}</div>}
+        style={{
+          background:'#FEFBF7', borderRadius:3, width:420, overflow:'hidden',
+          boxShadow:'0 28px 80px -12px rgba(28,17,24,0.35), 0 1px 3px rgba(28,17,24,0.08)',
+          border: '1px solid #EDE7E2',
+          animation: 'coutureToastIn 0.28s cubic-bezier(.22,.61,.36,1)',
+        }}>
+        {/* Top accent line matches confirm-button color */}
+        <div aria-hidden="true" style={{
+          height: 2, background: accentColor, opacity: 0.75,
+        }}/>
+        <div style={{padding:'32px 28px 20px',textAlign:'center'}}>
+          {/* Ornamental diamond instead of bank-warning icon */}
+          <div aria-hidden="true" style={{
+            display:'flex', alignItems:'center', justifyContent:'center',
+            gap: 10, marginBottom: 18, opacity: 0.85,
+          }}>
+            <span style={{ height: 1, width: 32, background: `linear-gradient(90deg, transparent, ${accentColor})` }} />
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M5 0l5 5-5 5-5-5 5-5z" fill={accentColor} />
+            </svg>
+            <span style={{ height: 1, width: 32, background: `linear-gradient(270deg, transparent, ${accentColor})` }} />
+          </div>
+          <div id="confirm-modal-title" style={{
+            fontFamily: "'Cormorant Garamond','Didot',Georgia,serif",
+            fontSize:22, fontStyle:'italic', fontWeight:400,
+            color:'#1C1118', marginBottom:message?10:0, letterSpacing: '0.005em',
+          }}>{title}</div>
+          {message && <div style={{
+            fontFamily:"'DM Sans','Inter',system-ui,sans-serif",
+            fontSize:13, color:'#5C4A52', lineHeight: 1.6, maxWidth: 320, margin: '0 auto',
+          }}>{message}</div>}
         </div>
-        <div style={{padding:'12px 20px 20px',display:'flex',gap:8}}>
-          <button onClick={onCancel}
-            style={{flex:1,padding:'9px 16px',borderRadius:8,border:'1px solid #e5e5e5',background:'#fff',color:'#666',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+        <div style={{padding:'12px 24px 24px', display:'flex', gap:10, borderTop: '1px solid #EDE7E2', background: accentBg }}>
+          <button onClick={onCancel} className="btn-ghost" data-color="primary"
+            style={{ flex:1 }}>
             Cancel
           </button>
-          <button onClick={onConfirm}
-            style={{flex:1,padding:'9px 16px',borderRadius:8,border:'none',background:confirmBg,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+          <button onClick={onConfirm} className={confirmClass} data-color={confirmScheme}
+            style={{ flex:1 }}>
             {confirmLabel}
           </button>
         </div>
@@ -367,10 +529,37 @@ export const ModeIndicatorBtn = () => {
 export const Topbar = ({title,subtitle,actions}) => {
   const { isTablet } = useLayoutMode();
   return (
-    <div className="topbar" style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 20px',background:C.white,borderBottom:`1px solid ${C.border}`,flexShrink:0,gap:8,minHeight:'var(--topbar-height)'}}>
-      <div style={{minWidth:0}}>
-        <div style={{fontSize:'var(--topbar-title-size)',fontWeight:500,color:C.ink,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{title}</div>
-        {subtitle&&<div className={isTablet?undefined:'topbar-hide'} style={{fontSize:'var(--topbar-sub-size)',color:C.gray,marginTop:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{subtitle}</div>}
+    <div className="topbar" style={{
+      display:'flex',alignItems:'center',justifyContent:'space-between',
+      padding:'14px 22px',background:C.white,
+      borderBottom:`1px solid ${C.border}`,flexShrink:0,gap:8,
+      minHeight:'var(--topbar-height)', position:'relative',
+    }}>
+      {/* Couture hairline gold accent — bottom rule */}
+      <div aria-hidden="true" style={{
+        position:'absolute', left:22, right:22, bottom:-1, height:1,
+        background:'linear-gradient(90deg, transparent, rgba(176,138,78,0.35) 50%, transparent)',
+      }} />
+      <div style={{minWidth:0, display:'flex', alignItems:'center', gap:12}}>
+        {/* Editorial serif title */}
+        <div style={{
+          fontFamily:"'Cormorant Garamond', 'Didot', Georgia, serif",
+          fontSize:'calc(var(--topbar-title-size, 18px) + 4px)',
+          fontWeight:500,fontStyle:'italic',
+          color:C.ink,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',
+          letterSpacing:'0.005em', lineHeight:1.1,
+        }}>{title}</div>
+        {subtitle&&(
+          <>
+            <span aria-hidden="true" style={{color:'#B08A4E',opacity:0.5,fontSize:10}}>◆</span>
+            <div className={isTablet?undefined:'topbar-hide'} style={{
+              fontFamily:"'DM Sans', system-ui, sans-serif",
+              fontSize:10, color:'#5C4A52',
+              textTransform:'uppercase', letterSpacing:'0.18em',
+              whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',
+            }}>{subtitle}</div>
+          </>
+        )}
       </div>
       <div className="topbar-actions" style={{display:'flex',gap:8,alignItems:'center',flexShrink:0}}>
         {actions}

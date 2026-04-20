@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import en from './en.js'
 import es from './es.js'
 
@@ -8,6 +8,14 @@ const I18nContext = createContext({ t: (k) => k, lang: 'en', setLang: () => {} }
 
 export function I18nProvider({ children, initialLang = 'en' }) {
   const [lang, setLang] = useState(initialLang)
+
+  // Sync <html lang> with the active UI language — important for screen readers,
+  // browser translate prompts, and hyphenation dictionaries.
+  useEffect(() => {
+    if (typeof document !== 'undefined' && lang) {
+      document.documentElement.lang = lang
+    }
+  }, [lang])
 
   function t(key, vars = {}) {
     const dict = translations[lang] || translations.en

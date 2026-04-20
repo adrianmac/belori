@@ -414,6 +414,7 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
               ):(
                 <div style={{position:'relative'}}>
                   <input aria-labelledby="ev-client-lbl" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search existing clients…" style={inputSt}/>
+                  {search.length===1&&<div style={{fontSize:12,color:'#9CA3AF',fontStyle:'italic',marginTop:4}}>Type at least 2 characters to search…</div>}
                   {searchResults.length>0&&(
                     <div style={{position:'absolute',top:'calc(100% + 4px)',left:0,right:0,background:C.white,border:`1px solid ${C.border}`,borderRadius:8,boxShadow:'0 4px 12px rgba(0,0,0,0.08)',zIndex:10}}>
                       {searchResults.map(cl=>(
@@ -571,15 +572,6 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
                   );
                 })
               }
-              {/* Wedding Planner — locked add-on teaser */}
-              <div style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'11px 14px',borderRadius:10,border:`2px dashed ${C.border}`,background:C.grayBg,opacity:0.8}}>
-                <span style={{fontSize:18,flexShrink:0,opacity:0.4}}>📋</span>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:500,color:C.gray}}>Wedding Planner</div>
-                  <div style={{fontSize:11,color:C.gray,marginTop:1}}>Full timeline, vendors & run-of-show — coming soon</div>
-                </div>
-                <span style={{fontSize:10,fontWeight:600,padding:'2px 8px',borderRadius:999,background:'#F3F4F6',color:C.gray,whiteSpace:'nowrap',letterSpacing:'0.03em'}}>Add-on</span>
-              </div>
               </div>{/* /role="group" ev-services-lbl */}
             </div>
 
@@ -770,33 +762,6 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
               </button>
             )}
 
-            {/* Smart task checklist */}
-            <div style={{marginTop:4,borderTop:`1px solid ${C.border}`,paddingTop:16}}>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-                <div>
-                  <div style={{fontSize:13,fontWeight:600,color:C.ink}}>✨ Smart Checklist</div>
-                  <div style={{fontSize:11,color:C.gray,marginTop:1}}>Auto-generated tasks based on your services</div>
-                </div>
-                {!tasksGenerated
-                  ?<button onClick={generateSmartTasks} style={{fontSize:12,padding:'6px 14px',borderRadius:8,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,cursor:'pointer',fontWeight:500,minHeight:'unset'}}>Generate tasks</button>
-                  :<button onClick={()=>{setTasksGenerated(false);setSuggestedTasks([]);}} style={{fontSize:11,color:C.gray,background:'none',border:'none',cursor:'pointer',minHeight:'unset'}}>Reset</button>
-                }
-              </div>
-              {tasksGenerated&&suggestedTasks.length>0&&(
-                <div style={{display:'flex',flexDirection:'column',gap:4,maxHeight:200,overflowY:'auto'}}>
-                  {suggestedTasks.map((task,i)=>(
-                    <label key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,background:selectedTasks.has(i)?C.rosaPale:'transparent',border:`1px solid ${selectedTasks.has(i)?C.petal:C.border}`,cursor:'pointer'}}>
-                      <input type="checkbox" checked={selectedTasks.has(i)} onChange={e=>{
-                        setSelectedTasks(prev=>{const n=new Set(prev);e.target.checked?n.add(i):n.delete(i);return n;});
-                      }} style={{accentColor:C.rosa,flexShrink:0}}/>
-                      <span style={{fontSize:12,color:C.ink,flex:1}}>{task.text}</span>
-                      {task.alert&&<span style={{fontSize:9,padding:'2px 6px',borderRadius:999,background:C.redBg,color:C.red,fontWeight:600}}>ALERT</span>}
-                    </label>
-                  ))}
-                  <div style={{fontSize:11,color:C.gray,paddingTop:4}}>{selectedTasks.size} of {suggestedTasks.length} tasks selected</div>
-                </div>
-              )}
-            </div>
           </div>
         )}
 
@@ -1036,6 +1001,60 @@ const CreateEventModal = ({onClose,onSave,clients,inventory,defaultDate=''}) => 
         {/* ══════ STEP 6 — Review & Confirm ══════ */}
         {step===6&&(
           <div style={{flex:1,overflowY:'auto',padding:'20px 24px',display:'flex',flexDirection:'column',gap:12}}>
+
+            {/* ── Suggested Tasks (unified rule-based + AI) ── */}
+            {(()=>{
+              // Merge smart tasks and AI tasks, deduplicating by label/text
+              const merged = (() => {
+                const base = suggestedTasks.map((t, i) => ({ ...t, _idx: i, _src: 'smart' }));
+                const aiItems = aiSuggestedTasks.map((t, i) => ({ ...t, _aiIdx: i, _src: 'ai' }));
+                const seen = new Set(base.map(t => (t.text||'').toLowerCase().trim()));
+                const deduped = aiItems.filter(t => !seen.has((t.label||t.text||'').toLowerCase().trim()));
+                return [...base, ...deduped];
+              })();
+              return (
+                <div style={{borderRadius:10,border:`1px solid ${C.border}`,padding:14}}>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:600,color:C.ink}}>Suggested Tasks</div>
+                      <div style={{fontSize:11,color:C.gray,marginTop:1}}>Select which tasks to add when the event is created</div>
+                    </div>
+                    {!tasksGenerated
+                      ?<button onClick={generateSmartTasks} style={{fontSize:12,padding:'6px 14px',borderRadius:8,border:`1px solid ${C.rosa}`,background:C.rosaPale,color:C.rosaText,cursor:'pointer',fontWeight:500,minHeight:'unset'}}>Generate</button>
+                      :<button onClick={()=>{setTasksGenerated(false);setSuggestedTasks([]);setAiSuggestedTasks([]);}} style={{fontSize:11,color:C.gray,background:'none',border:'none',cursor:'pointer',minHeight:'unset'}}>Reset</button>
+                    }
+                  </div>
+                  {tasksGenerated&&merged.length>0&&(
+                    <div style={{display:'flex',flexDirection:'column',gap:4,maxHeight:220,overflowY:'auto'}}>
+                      {merged.map((task, idx) => {
+                        const isSmartTask = task._src === 'smart';
+                        const checked = isSmartTask ? selectedTasks.has(task._idx) : (aiTasksChecked[task._aiIdx] !== false);
+                        return (
+                          <label key={idx} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,background:checked?C.rosaPale:'transparent',border:`1px solid ${checked?C.petal:C.border}`,cursor:'pointer'}}>
+                            <input type="checkbox" checked={checked} onChange={e=>{
+                              if(isSmartTask){
+                                setSelectedTasks(prev=>{const n=new Set(prev);e.target.checked?n.add(task._idx):n.delete(task._idx);return n;});
+                              }else{
+                                setAiTasksChecked(prev=>({...prev,[task._aiIdx]:e.target.checked}));
+                              }
+                            }} style={{accentColor:C.rosa,flexShrink:0}}/>
+                            <span style={{fontSize:12,color:C.ink,flex:1}}>{task.text||task.label}</span>
+                            {task.alert&&<span style={{fontSize:9,padding:'2px 6px',borderRadius:999,background:C.redBg,color:C.red,fontWeight:600}}>ALERT</span>}
+                          </label>
+                        );
+                      })}
+                      <div style={{fontSize:11,color:C.gray,paddingTop:4}}>
+                        {merged.filter((task,idx)=>task._src==='smart'?selectedTasks.has(task._idx):(aiTasksChecked[task._aiIdx]!==false)).length} of {merged.length} tasks selected
+                      </div>
+                    </div>
+                  )}
+                  {!tasksGenerated&&(
+                    <div style={{fontSize:12,color:C.gray,padding:'4px 0'}}>Click Generate to create service-based task suggestions.</div>
+                  )}
+                </div>
+              );
+            })()}
+
             {[
               ['CLIENT',<>{newMode?newCl.name:selClient?.name}{(newMode?newCl.phone:selClient?.phone)&&<div style={{fontSize:12,color:C.gray}}>{newMode?newCl.phone:selClient?.phone}</div>}{(newMode?newCl.email:selClient?.email)&&<div style={{fontSize:12,color:C.gray}}>{newMode?newCl.email:selClient?.email}</div>}</>],
               ['EVENT',<><span style={{fontWeight:500}}>{evName}</span><div style={{fontSize:12,color:C.gray}}>{EVT_TYPES[evType]?.label||evType} · {evDate?new Date(evDate+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''}{venue&&' · '+venue}{guests&&' · ~'+guests+' guests'}</div>{coordId&&<div style={{fontSize:12,color:C.gray}}>Coordinator: {coordinators.find(s=>s.id===coordId)?.name}</div>}</>],

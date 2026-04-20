@@ -1,11 +1,11 @@
 {
   "name": "Belori",
   "short_name": "Belori",
-  "description": "Bridal boutique management",
+  "description": "The quiet language of ceremony — a studio for bridal & event boutiques.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F8F4F0",
-  "theme_color": "#C9697A",
+  "theme_color": "#1C1118",
   "orientation": "portrait-primary",
   "icons": [
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }

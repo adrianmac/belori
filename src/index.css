@@ -56,16 +56,27 @@ body { margin: 0; }
   --topbar-title-size: 14px;
   --topbar-sub-size: 11px;
 
-  /* Buttons */
-  --btn-height-primary: 36px;
-  --btn-height-ghost: 32px;
+  /* Buttons — Couture: sharp-edge, champagne gold primary */
+  --btn-height-primary: 38px;
+  --btn-height-ghost: 34px;
   --btn-height-icon: 32px;
   --btn-height-row: 28px;
   --btn-font-primary: 11px;
   --btn-font-ghost: 11px;
-  --btn-border-radius: 7px;
-  --btn-shadow-primary: 0 1px 3px rgba(168,77,94,0.25), 0 1px 2px rgba(168,77,94,0.12);
+  --btn-border-radius: 2px;
+  --btn-shadow-primary: 0 1px 2px rgba(28,17,24,0.08), 0 1px 1px rgba(176,138,78,0.18);
   --btn-shadow-ghost: none;
+
+  /* Couture tokens — available as CSS vars for inline styles */
+  --couture-gold:       #B08A4E;
+  --couture-gold-dark:  #8E6B34;
+  --couture-gold-light: #FBF5E9;
+  --couture-gold-border:#E8D9B8;
+  --couture-ink:        #1C1118;
+  --couture-ink-mid:    #5C4A52;
+  --couture-ivory:      #F8F4F0;
+  --couture-card-warm:  #FEFBF7;
+  --couture-hair:       #C9BFB8;
 
   /* Typography */
   --text-body: 12px;
@@ -82,7 +93,8 @@ body { margin: 0; }
   --row-padding: 7px 12px;
   --row-min-height: 44px;
   --section-gap: 10px;
-  --card-radius: 9px;
+  --card-radius: 3px;
+  --card-shadow: 0 1px 3px rgba(28,17,24,0.04), 0 1px 2px rgba(28,17,24,0.03);
   --avatar-size-row: 22px;
   --avatar-font-row: 7px;
   --stat-num-size: 18px;
@@ -108,9 +120,9 @@ body { margin: 0; }
   --btn-height-row: 38px;
   --btn-font-primary: 12px;
   --btn-font-ghost: 12px;
-  --btn-border-radius: 9px;
-  --btn-shadow-primary: 0 3px 8px rgba(168,77,94,.40), 0 1px 2px rgba(168,77,94,.25);
-  --btn-shadow-ghost: 0 2px 5px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --btn-border-radius: 3px;
+  --btn-shadow-primary: 0 2px 6px rgba(28,17,24,.14), 0 1px 2px rgba(176,138,78,.18);
+  --btn-shadow-ghost: 0 1px 3px rgba(28,17,24,.06), 0 1px 1px rgba(28,17,24,.04);
 
   /* Typography */
   --text-body: 12px;
@@ -127,8 +139,8 @@ body { margin: 0; }
   --row-padding: 11px 14px;
   --row-min-height: 58px;
   --section-gap: 12px;
-  --card-radius: 12px;
-  --card-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  --card-radius: 4px;
+  --card-shadow: 0 1px 4px rgba(28,17,24,0.06), 0 1px 2px rgba(28,17,24,0.04);
   --avatar-size-row: 34px;
   --avatar-font-row: 11px;
   --stat-num-size: 20px;
@@ -160,6 +172,31 @@ button, [role="button"] {
 
 input, select, textarea {
   font-size: var(--text-input) !important;
+  font-family: 'DM Sans','Inter',system-ui,sans-serif;
+}
+
+/* ─── COUTURE INPUTS — global refinement for all form controls ──────────── */
+/* Any <input>/<select>/<textarea> without its own explicit background       */
+/* inherits the warm-cream + sharp-edge + gold-focus treatment automatically */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+select,
+textarea {
+  border-radius: 2px;
+  transition: border-color 0.2s cubic-bezier(.22,.61,.36,1),
+              box-shadow 0.2s cubic-bezier(.22,.61,.36,1);
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):focus,
+select:focus,
+textarea:focus {
+  border-color: var(--couture-ink) !important;
+  box-shadow: 0 0 0 3px var(--couture-gold-light);
+  outline: none;
+}
+/* Stronger placeholder muting — less "aggressive placeholder, mystery form" */
+input::placeholder,
+textarea::placeholder {
+  color: #B8ADB0;
+  font-weight: 300;
 }
 
 /* ─── Touch Optimization (Tablet only) ─────────────────────────────────── */
@@ -167,7 +204,7 @@ input, select, textarea {
 [data-mode="tablet"] a,
 [data-mode="tablet"] [role="button"] {
   touch-action: manipulation;  /* Eliminates 300ms tap delay */
-  -webkit-tap-highlight-color: rgba(201, 105, 122, 0.1);
+  -webkit-tap-highlight-color: rgba(176, 138, 78, 0.12);
 }
 
 /* Press state replaces hover in tablet mode */
@@ -199,58 +236,111 @@ input, select, textarea {
   border-radius: 10px;
 }
 
-/* ─── SEMANTIC BUTTONS ──────────────────────────────────────────────────── */
+/* ─── COUTURE BUTTONS — globally propagate the new aesthetic ────────────── */
+/* All <PrimaryBtn> / <GhostBtn> inherit this. Pages need no changes.       */
+
 .btn-solid {
   border: none;
   border-radius: var(--btn-border-radius);
-  padding: 10px 18px;
+  padding: 10px 20px;
+  font-family: 'DM Sans','Inter',system-ui,sans-serif;
   font-size: var(--btn-font-primary);
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   cursor: pointer;
   min-height: var(--btn-height-primary);
   box-shadow: var(--btn-shadow-primary);
-  color: #fff;
-  transition: all 0.2s ease;
+  color: var(--couture-card-warm);
+  transition: background 0.25s cubic-bezier(.22,.61,.36,1),
+              transform 0.12s cubic-bezier(.22,.61,.36,1),
+              box-shadow 0.25s ease;
+  position: relative;
+  overflow: hidden;
 }
-.btn-solid[data-color="primary"] { background: var(--brand-primary, #A84D5E); }
+.btn-solid[data-color="primary"] {
+  background: var(--couture-gold);
+  color: var(--couture-card-warm);
+}
+.btn-solid[data-color="primary"]:hover {
+  background: var(--couture-gold-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(142,107,52,0.28), 0 1px 3px rgba(28,17,24,0.10);
+  filter: none;
+}
+.btn-solid[data-color="primary"]:active {
+  transform: translateY(0);
+  filter: none;
+}
+/* Semantic variants — keep the utility scheme for status actions */
 .btn-solid[data-color="success"] { background: var(--color-success); }
-.btn-solid[data-color="danger"] { background: var(--color-danger); }
+.btn-solid[data-color="danger"]  { background: var(--color-danger); }
 .btn-solid[data-color="warning"] { background: var(--color-warning); }
-.btn-solid[data-color="info"] { background: var(--color-info); }
-.btn-solid:hover { filter: brightness(0.9); transform: translateY(-1px); }
-.btn-solid:active { transform: translateY(0); filter: brightness(0.85); }
+.btn-solid[data-color="info"]    { background: var(--color-info); }
+.btn-solid[data-color="success"]:hover,
+.btn-solid[data-color="danger"]:hover,
+.btn-solid[data-color="warning"]:hover,
+.btn-solid[data-color="info"]:hover {
+  filter: brightness(0.92);
+  transform: translateY(-1px);
+}
+.btn-solid:active { transform: translateY(0); }
+.btn-solid:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
 
 .btn-ghost {
   border-radius: var(--btn-border-radius);
-  padding: 8px 14px;
+  padding: 8px 18px;
+  font-family: 'DM Sans','Inter',system-ui,sans-serif;
   font-size: var(--btn-font-ghost);
   font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   cursor: pointer;
   min-height: var(--btn-height-ghost);
   box-shadow: var(--btn-shadow-ghost);
-  transition: all 0.2s ease;
-  background: #fff;
+  transition: all 0.25s cubic-bezier(.22,.61,.36,1);
+  background: transparent;
 }
-.btn-ghost[data-color="primary"] { border: 1.5px solid #C9697A; color: #8B3A4A; background: #FDF5F6; }
-.btn-ghost[data-color="primary"]:hover { background: #F5E0E3; border-color: #B85868; color: #8B3A4A; }
-
-.btn-ghost[data-color="danger"] { border: 1px solid var(--color-danger); color: var(--color-danger); }
-.btn-ghost[data-color="danger"]:hover { background: var(--bg-danger); }
-
+.btn-ghost[data-color="primary"] {
+  border: 1px solid var(--couture-ink);
+  color: var(--couture-ink);
+  background: transparent;
+}
+.btn-ghost[data-color="primary"]:hover {
+  background: var(--couture-ink);
+  color: var(--couture-card-warm);
+  border-color: var(--couture-ink);
+}
+.btn-ghost[data-color="danger"]  { border: 1px solid var(--color-danger);  color: var(--color-danger);  }
+.btn-ghost[data-color="danger"]:hover  { background: var(--bg-danger); }
 .btn-ghost[data-color="success"] { border: 1px solid var(--color-success); color: var(--color-success); }
 .btn-ghost[data-color="success"]:hover { background: var(--bg-success); }
 
-/* ─── FOCUS-VISIBLE: keyboard accessibility ─────────────────────────────── */
+/* ─── FOCUS-VISIBLE: keyboard a11y — couture gold ring ──────────────────── */
 .btn-solid:focus-visible,
 .btn-ghost:focus-visible {
-  outline: 2px solid #C9697A;
+  outline: 2px solid var(--couture-gold);
   outline-offset: 2px;
 }
 .card-header-action:focus-visible {
-  outline: 2px solid #C9697A;
+  outline: 2px solid var(--couture-gold);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 2px;
+}
+/* Global keyboard focus — inputs and buttons not covered by explicit rules */
+a:focus-visible,
+button:focus-visible:not(.btn-solid):not(.btn-ghost):not(.btn-icon),
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline: 2px solid var(--couture-gold);
+  outline-offset: 2px;
 }
 
 /* Hide elements based on mode */
@@ -284,38 +374,38 @@ input, select, textarea {
    Use :root to raise specificity above [data-mode="tablet"] rules above. */
 @media (max-width: 768px) {
   :root {
-    --btn-height-primary: 52px;
-    --btn-height-ghost: 48px;
-    --btn-height-icon: 52px;
+    --btn-height-primary: 50px;
+    --btn-height-ghost: 46px;
+    --btn-height-icon: 50px;
     --btn-height-row: 44px;
-    --btn-font-primary: 15px;
-    --btn-font-ghost: 14px;
-    --btn-border-radius: 14px;
-    /* Colored shadows so buttons feel tactile on mobile */
-    --btn-shadow-primary: 0 4px 14px rgba(168,77,94,0.40), 0 1px 4px rgba(168,77,94,0.20);
-    --btn-shadow-ghost:   0 2px 8px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
+    --btn-font-primary: 13px;
+    --btn-font-ghost: 12px;
+    --btn-border-radius: 4px;
+    /* Couture mobile: ink-tinted shadow, gold glow instead of rose */
+    --btn-shadow-primary: 0 3px 10px rgba(28,17,24,0.18), 0 1px 3px rgba(176,138,78,0.22);
+    --btn-shadow-ghost:   0 1px 3px rgba(28,17,24,0.08), 0 1px 1px rgba(28,17,24,0.05);
   }
 
-  /* Primary buttons: stronger brand color + shadow on mobile */
+  /* Primary buttons: couture gold on mobile too */
   .btn-solid[data-color="primary"] {
-    background: var(--brand-primary, #A84D5E);
+    background: var(--couture-gold);
     box-shadow: var(--btn-shadow-primary);
   }
   .btn-solid[data-color="primary"]:active {
-    background: var(--brand-primary, #A84D5E);
-    filter: brightness(0.85);
+    background: var(--couture-gold-dark);
     box-shadow: none;
   }
 
-  /* Ghost buttons: rose outline + pale fill so they clearly stand out */
+  /* Ghost buttons: ink outline on mobile — matches couture ghost everywhere */
   .btn-ghost[data-color="primary"] {
-    background: #FDF5F6 !important;
-    border: 1.5px solid #C9697A !important;
-    color: #8B3A4A !important;
+    background: transparent !important;
+    border: 1px solid var(--couture-ink) !important;
+    color: var(--couture-ink) !important;
     box-shadow: var(--btn-shadow-ghost);
   }
   .btn-ghost[data-color="primary"]:active {
-    background: #F5E0E3 !important;
+    background: var(--couture-ink) !important;
+    color: var(--couture-card-warm) !important;
   }
 
   /* Same specificity as the .sidebar-full default above → later rule wins */
