@@ -430,26 +430,42 @@ export default function NovelApp() {
       '--brand-primary': boutique?.primary_color || '#C9697A',
       '--brand-pale': hexToPale(boutique?.primary_color || '#C9697A'),
     }}>
+      {/* Skip to main content — WCAG 2.4.1. Visually hidden until focused via Tab. */}
       <a
         href="#main-content"
-        onFocus={e => { e.currentTarget.style.top = '0'; e.currentTarget.style.left = '0'; }}
-        onBlur={e => { e.currentTarget.style.top = '-9999px'; e.currentTarget.style.left = '-9999px'; }}
-        style={{
-          position: 'absolute',
-          top: '-9999px',
-          left: '-9999px',
-          zIndex: 10000,
-          background: '#1C1012',
-          color: '#FFFFFF',
-          padding: '10px 20px',
-          borderRadius: '0 0 10px 0',
-          fontSize: 13,
-          fontWeight: 600,
-          textDecoration: 'none',
-        }}
+        className="couture-skip-link"
+        onFocus={e => { e.currentTarget.classList.add('couture-skip-link-visible'); }}
+        onBlur={e => { e.currentTarget.classList.remove('couture-skip-link-visible'); }}
       >
         Skip to main content
       </a>
+      <style>{`
+        .couture-skip-link {
+          position: absolute;
+          top: -9999px;
+          left: -9999px;
+          z-index: 10000;
+          background: #1C1118;
+          color: #FEFBF7;
+          padding: 12px 20px;
+          font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          text-decoration: none;
+          border-bottom: 2px solid #B08A4E;
+          transition: transform 0.2s cubic-bezier(.22,.61,.36,1);
+        }
+        .couture-skip-link-visible {
+          top: 0;
+          left: 0;
+        }
+        .couture-skip-link:focus-visible {
+          outline: 2px solid #B08A4E;
+          outline-offset: 2px;
+        }
+      `}</style>
       <Sidebar screen={screen} setScreen={goScreen} boutique={boutique} boutiques={boutiques} onSwitchBoutique={switchBoutique} onSignOut={signOut} badges={sidebarBadges} onSearch={()=>setShowSearch(true)} alertCount={alertCount} onAlerts={()=>setShowAlerts(s=>!s)} myRole={myRole} focusMode={focusMode} onToggleFocus={toggleFocus} onShortcuts={()=>setShowShortcuts(s=>!s)}/>
       <IconRail screen={screen} setScreen={goScreen} onSignOut={signOut} boutique={boutique} boutiques={boutiques} onSwitchBoutique={switchBoutique} badges={sidebarBadges} onSearch={()=>setShowSearch(true)} myRole={myRole}/>
       <div id="main-content" tabIndex={-1} className="belori-main" style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',minHeight:0}}>
