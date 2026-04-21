@@ -124,13 +124,16 @@ export default function QuickActionFAB({ setScreen }) {
 
       <div style={fabStyle}>
         {/* Action buttons — fan out above FAB */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-          gap: 10,
-          pointerEvents: open ? 'auto' : 'none',
-        }}>
+        <div
+          aria-hidden={!open}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: 10,
+            pointerEvents: open ? 'auto' : 'none',
+          }}
+        >
           {actions.map((action) => (
             <div
               key={action.key}
@@ -163,6 +166,7 @@ export default function QuickActionFAB({ setScreen }) {
                 onClick={(e) => { e.stopPropagation(); handleAction(action); }}
                 aria-label={action.label}
                 title={action.label}
+                tabIndex={open ? 0 : -1}
                 style={{
                   width: 48,
                   height: 48,
@@ -192,6 +196,8 @@ export default function QuickActionFAB({ setScreen }) {
         <button
           onClick={() => setOpen(o => !o)}
           aria-expanded={open}
+          aria-haspopup="menu"
+          aria-label="Quick actions"
           title="Quick actions"
           style={{
             width: 56,
@@ -211,7 +217,7 @@ export default function QuickActionFAB({ setScreen }) {
           onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(201,105,122,0.55)'; }}
           onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 18px rgba(201,105,122,0.45)'; }}
         >
-          <span style={{
+          <span aria-hidden="true" style={{
             display: 'block',
             fontSize: 26,
             fontWeight: 300,
