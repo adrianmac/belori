@@ -173,13 +173,16 @@ export const CardHead = ({title,sub,action,onAction}) => {
     </div>
   );
 };
-export const PrimaryBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled}) => (
-  <button onClick={onClick} className={`btn-solid ${className}`} data-color={colorScheme} style={style} disabled={disabled}>
+// PrimaryBtn/GhostBtn forward all extra props to the underlying <button>, so
+// callers can pass data-testid, aria-*, type, title, form, etc. without
+// touching the atoms.
+export const PrimaryBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,...rest}) => (
+  <button onClick={onClick} className={`btn-solid ${className}`} data-color={colorScheme} style={style} disabled={disabled} {...rest}>
     {label||children}
   </button>
 );
-export const GhostBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled}) => (
-  <button onClick={onClick} className={`btn-ghost ${className}`} data-color={colorScheme} style={style} disabled={disabled}>
+export const GhostBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,...rest}) => (
+  <button onClick={onClick} className={`btn-ghost ${className}`} data-color={colorScheme} style={style} disabled={disabled} {...rest}>
     {label||children}
   </button>
 );

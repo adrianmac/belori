@@ -864,7 +864,7 @@ const Payments = ({payments: livePayments, paymentsLoading, markPaid, logReminde
           <GhostBtn label="Send all reminders" className="topbar-hide" onClick={sendAllReminders}/>
           <GhostBtn label="⚡ Quick Pay" onClick={() => setShowQuickPay(true)}/>
           <GhostBtn label="📅 Payment Plan" onClick={() => setShowPlanModal(true)}/>
-          <PrimaryBtn label="+ Create milestone" colorScheme="success" onClick={() => setShowCreateMilestone(true)}/>
+          <PrimaryBtn label="+ Create milestone" colorScheme="success" onClick={() => setShowCreateMilestone(true)} data-testid="payments-create-milestone"/>
         </>}
       />
       <div className="stat-grid" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,padding:'16px 20px',background:C.white,borderBottom:`1px solid ${C.border}`}}>

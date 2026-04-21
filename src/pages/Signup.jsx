@@ -223,6 +223,7 @@ export default function Signup() {
                 onChange={e => setBoutiqueName(e.target.value)} required autoComplete="organization"
                 placeholder="Bella Bridal & Events"
                 className="couture-input" style={coutureInput}
+                data-testid="signup-boutique"
               />
             </div>
             <div>
@@ -231,6 +232,7 @@ export default function Signup() {
                 id="signup-email" type="email" value={email}
                 onChange={e => setEmail(e.target.value)} required autoComplete="email"
                 className="couture-input" style={coutureInput}
+                data-testid="signup-email"
               />
             </div>
             <div>
@@ -240,6 +242,7 @@ export default function Signup() {
                 onChange={e => setPassword(e.target.value)} required minLength={8} autoComplete="new-password"
                 placeholder="At least 8 characters"
                 className="couture-input" style={coutureInput}
+                data-testid="signup-password"
               />
             </div>
 
@@ -247,6 +250,7 @@ export default function Signup() {
               type="submit" disabled={loading}
               className="couture-primary-btn"
               style={{ ...couturePrimaryBtn, marginTop: 10 }}
+              data-testid="signup-submit"
             >
               {loading ? 'Opening…' : 'Open the Atelier'}
             </button>

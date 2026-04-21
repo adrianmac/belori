@@ -162,7 +162,7 @@ export default function Login() {
             style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
             {error && (
-              <div role="alert" aria-live="assertive" style={{
+              <div role="alert" aria-live="assertive" data-testid="login-error" style={{
                 background: D.dangerBg,
                 color: D.danger,
                 padding: '12px 14px',
@@ -181,6 +181,7 @@ export default function Login() {
                 value={email} onChange={e => setEmail(e.target.value)} required
                 className="couture-input"
                 style={coutureInput}
+                data-testid="login-email"
               />
             </div>
 
@@ -199,6 +200,7 @@ export default function Login() {
                 value={password} onChange={e => setPassword(e.target.value)} required
                 className="couture-input"
                 style={coutureInput}
+                data-testid="login-password"
               />
             </div>
 
@@ -207,6 +209,7 @@ export default function Login() {
               disabled={loading}
               className="couture-primary-btn"
               style={{ ...couturePrimaryBtn, marginTop: 8 }}
+              data-testid="login-submit"
             >
               {loading ? 'Entering…' : 'Enter the Atelier'}
             </button>

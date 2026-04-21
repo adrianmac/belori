@@ -835,7 +835,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
           <button onClick={() => setShowBulk(true)} style={{padding:'7px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'#fff',fontSize:12,color:C.gray,cursor:'pointer',fontWeight:500}}>📣 Bulk message</button>
           <GhostBtn label="Find duplicates" onClick={() => { const groups = findDuplicates(); setMergeGroups(groups); setShowMerge(true); }} />
           <button onClick={() => setShowImport(true)} style={{padding:'7px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'#fff',fontSize:12,color:C.gray,cursor:'pointer',fontWeight:500}}>⬆ Import CSV</button>
-          <PrimaryBtn label="+ New client" colorScheme="success" onClick={() => setShowNew(true)} />
+          <PrimaryBtn label="+ New client" colorScheme="success" onClick={() => setShowNew(true)} data-testid="clients-new-button"/>
         </div>
       </div>
       {/* STAT STRIP */}

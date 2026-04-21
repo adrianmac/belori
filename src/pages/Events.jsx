@@ -2090,7 +2090,7 @@ const EventsList = ({setScreen,setSelectedEvent,events,eventsLoading,createEvent
               ☰ List
             </button>
           </div>
-          <PrimaryBtn label="+ New event" onClick={()=>setShowNew(true)}/>
+          <PrimaryBtn label="+ New event" onClick={()=>setShowNew(true)} data-testid="events-new-button"/>
         </>}
       />
 

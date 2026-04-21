@@ -1011,7 +1011,7 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
     : <span style={{fontFamily:D.serif,fontStyle:'italic',fontWeight:400}}>{greeting}</span>;
 
   return (
-    <div className="dash-root" style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', minHeight:0, background: D.bg }}>
+    <div className="dash-root" data-testid="dashboard-root" style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', minHeight:0, background: D.bg }}>
       <DashFonts />
       <Topbar
         title={topbarTitle}

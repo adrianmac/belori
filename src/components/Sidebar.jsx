@@ -240,6 +240,7 @@ const NavItem = ({ item, active, onClick, indented = false }) => {
     onClick={onClick}
     onKeyDown={e => { if (e.key === ' ') { e.preventDefault(); onClick?.(); } }}
     aria-current={active ? 'page' : undefined}
+    data-testid={`nav-${item.id}`}
     style={{
       display: 'flex', alignItems: 'center', gap: 8,
       width: '100%', textAlign: 'left',
