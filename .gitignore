@@ -24,3 +24,16 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# ─── Test environment — NEVER commit these ─────────────────────────────
+# .env.test holds the test-Supabase service_role key and test credentials.
+# The .example template is committed; the real file is not.
+.env.test
+.env.test.local
+
+# Test artifacts
+playwright-report/
+test-results/
+coverage/
+.nyc_output/
+/tests/.auth/        # Playwright storageState JSON files
