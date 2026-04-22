@@ -331,7 +331,7 @@ function WaitlistModal({ entry, onClose, onSave }) {
           <span style={{ fontWeight: 600, fontSize: 16, color: C.ink }}>
             {isEdit ? 'Edit waitlist entry' : 'Add to waitlist'}
           </span>
-          <button
+          <button aria-label="Close"
             onClick={onClose}
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: C.gray, lineHeight: 1 }}
           >

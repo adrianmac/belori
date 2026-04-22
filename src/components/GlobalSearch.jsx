@@ -460,7 +460,7 @@ export default function GlobalSearch({ setScreen, setSelectedEvent, onClose, isO
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 width: 24, height: 24,
               }}
-              title="Clear"
+              title="Clear" aria-label="Clear search"
             >×</button>
           ) : (
             <kbd style={{

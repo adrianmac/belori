@@ -96,7 +96,7 @@ const LogExpenseModal = ({ onClose, onSave, saving, events, editExpense }) => {
         {/* Header */}
         <div style={{ padding: '18px 22px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>{editExpense ? 'Edit expense' : 'Log expense'}</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
         </div>
 
         {/* Body */}

@@ -82,7 +82,7 @@ export default function EventRunsheet({ ev, appointments = [], tasks = [], miles
             style={{ padding: '8px 14px', borderRadius: 9, border: `1px solid ${C.border}`, background: C.white, fontSize: 12, color: C.gray, cursor: 'pointer', fontWeight: 500 }}>
             🖨 Print
           </button>
-          <button onClick={onClose}
+          <button aria-label="Close" onClick={onClose}
             style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${C.border}`, background: C.white, fontSize: 18, color: C.gray, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
             ×
           </button>
