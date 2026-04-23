@@ -152,7 +152,7 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
               background: C.rosaPale, color: C.rosaText, fontWeight: 500,
             }}>Standalone</span>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }} aria-label="Close"><span aria-hidden="true">×</span></button>
         </div>
 
         {/* Body */}

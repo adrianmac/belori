@@ -36,7 +36,7 @@ function GuestModal({ initial, onSave, onClose }) {
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: C.ink }}>{initial ? 'Edit Guest' : 'Add Guest'}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: C.gray, lineHeight: 1, padding: 0 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: C.gray, lineHeight: 1, padding: 0 }} aria-label="Close"><span aria-hidden="true">×</span></button>
         </div>
 
         {/* Body */}

@@ -677,7 +677,7 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
           <div style={{background:C.white,borderRadius:16,width:500,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
             <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <span style={{fontWeight:600,fontSize:15,color:C.ink}}>{editingDecoId?'Edit decoration item':'Assign decoration item'}</span>
-              <button onClick={resetDecoModal} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+              <button onClick={resetDecoModal} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}} aria-label="Close"><span aria-hidden="true">×</span></button>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:20,display:'flex',flexDirection:'column',gap:14}}>
               {/* Item search */}
