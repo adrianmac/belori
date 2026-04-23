@@ -1,0 +1,3 @@
+## 2026-04-21 - [Visually hidden FAB Actions Accessibility]
+**Learning:** When hiding action buttons visually using opacity and transform (like in fanned-out FAB menus), they remain in the DOM and accessible via keyboard navigation (Tab) and screen readers, leading to confusing phantom focus areas. The `pointerEvents: 'none'` style prevents mouse interaction but not keyboard/screen-reader interaction.
+**Action:** Always explicitly apply `aria-hidden={!isOpen}` to the container and `tabIndex={isOpen ? 0 : -1}` to the actionable elements when relying on CSS opacity/transform for stateful visibility changes.
