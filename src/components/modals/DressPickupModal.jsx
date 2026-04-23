@@ -27,7 +27,7 @@ export const DressPickupModal = ({ dress, onClose, onUpdate }) => {
       <div role="dialog" aria-modal="true" aria-labelledby="dress-pickup-title" style={{ background: C.white, borderRadius: 16, width: 460, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
         <div style={{ padding: '18px 24px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div id="dress-pickup-title" style={{ fontSize: 16, fontWeight: 600, color: C.ink }}>Mark picked up</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, color: C.gray, cursor: 'pointer' }}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: 20, color: C.gray, cursor: 'pointer' }}>×</button>
         </div>
         <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto' }}>
           <div style={{ background: C.ivory, borderRadius: 10, padding: 12 }}>

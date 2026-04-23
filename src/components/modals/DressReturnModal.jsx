@@ -78,7 +78,7 @@ export const DressReturnModal = ({ dress, onClose, onUpdate }) => {
             <div style={{ display: 'flex', gap: 5 }}>
               {[2, 3].map(s => <div key={s} style={{ width: 8, height: 8, borderRadius: '50%', background: step >= s ? C.rosa : C.border }} />)}
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, color: C.gray, cursor: 'pointer' }}>×</button>
+            <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: 20, color: C.gray, cursor: 'pointer' }}>×</button>
           </div>
         </div>
 

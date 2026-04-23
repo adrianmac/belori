@@ -10,7 +10,7 @@ export const QRModal = ({dress, onClose}) => {
       <div style={{background:C.white,borderRadius:16,width:320,display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'18px 22px 14px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div style={{fontWeight:600,fontSize:15,color:C.ink}}>QR label — #{dress.sku}</div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{padding:24,display:'flex',flexDirection:'column',alignItems:'center',gap:14}}>
           <div style={{border:`1px solid ${C.border}`,borderRadius:12,padding:20,textAlign:'center',display:'flex',flexDirection:'column',alignItems:'center',gap:8,background:C.white}}>
