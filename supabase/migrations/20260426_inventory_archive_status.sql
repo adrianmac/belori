@@ -55,32 +55,30 @@ ALTER TABLE public.inventory ADD CONSTRAINT inventory_status_check
     'archived'::text
   ]));
 
--- Verification: insert into a transaction-savepoint that rolls back, just to
--- prove the new constraint accepts 'archived'. We never persist this row.
+-- Verification: query pg_constraint directly to assert 'archived' is in the
+-- allowed set. We can't do an INSERT-then-rollback smoke test in a DO block
+-- (PL/pgSQL doesn't support `ROLLBACK TO SAVEPOINT`), but a constraint
+-- definition check is just as conclusive — the consrc/pg_get_constraintdef
+-- output will literally contain the string 'archived' if the ALTER took.
 DO $$
 DECLARE
-  test_id uuid;
+  def text;
 BEGIN
-  -- Use a savepoint so the test row is always rolled back, even on success.
-  SAVEPOINT verify_archive;
+  SELECT pg_get_constraintdef(c.oid) INTO def
+  FROM pg_constraint c
+  JOIN pg_class      t ON t.oid = c.conrelid
+  JOIN pg_namespace  n ON n.oid = t.relnamespace
+  WHERE n.nspname = 'public'
+    AND t.relname = 'inventory'
+    AND c.conname = 'inventory_status_check';
 
-  INSERT INTO public.inventory (boutique_id, sku, name, category, status, deposit, price)
-  SELECT id, '__verify_archive_constraint__', 'verify', 'centerpiece', 'archived', 0, 0
-  FROM public.boutiques LIMIT 1
-  RETURNING id INTO test_id;
-
-  -- If we got here, the new constraint accepts 'archived'. Roll the row back.
-  ROLLBACK TO SAVEPOINT verify_archive;
-  RAISE NOTICE 'POST-FLIGHT: inventory_status_check now accepts ''archived''. ✓';
-EXCEPTION
-  WHEN check_violation THEN
-    ROLLBACK TO SAVEPOINT verify_archive;
-    RAISE EXCEPTION 'FAILED: inventory_status_check still rejects ''archived'' after ALTER';
-  WHEN OTHERS THEN
-    -- e.g. no boutiques row exists (fresh DB). That's fine — the ALTER above
-    -- already updated the constraint definition; we just couldn't smoke-test.
-    ROLLBACK TO SAVEPOINT verify_archive;
-    RAISE NOTICE 'POST-FLIGHT: skipped insert smoke test (%). Constraint redefinition still applied.', SQLERRM;
+  IF def IS NULL THEN
+    RAISE EXCEPTION 'FAILED: inventory_status_check constraint not found after ALTER';
+  END IF;
+  IF def NOT LIKE '%archived%' THEN
+    RAISE EXCEPTION 'FAILED: inventory_status_check still rejects ''archived''. Current def: %', def;
+  END IF;
+  RAISE NOTICE 'POST-FLIGHT: inventory_status_check now allows ''archived''. ✓';
 END $$;
 
 COMMIT;
