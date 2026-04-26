@@ -932,8 +932,13 @@ const Inventory = ({inventory: liveInventory, updateDress, bulkUpdate, createDre
       (d.track==='quantity'&&d.availQty!=null&&d.availQty<=d.minStock)||
       (d.track==='consumable'&&d.currentStock!=null&&d.currentStock<=d.minStock)
     ));
-    return matchesSearch&&matchesGroup&&matchesStatus&&matchesLowStock;
+    // Hide archived items unless the user explicitly opted to see them via the
+    // status dropdown ("Archived"). Owners can still find them by filtering
+    // on status=archived without polluting the day-to-day working list.
+    const matchesArchive = statusFilter === 'archived' ? true : d.status !== 'archived';
+    return matchesSearch&&matchesGroup&&matchesStatus&&matchesLowStock&&matchesArchive;
   });
+  const archivedCount = allData.filter(d => d.status === 'archived').length;
 
   // Reset pagination when filters change
   useEffect(()=>{setPage(1);},[search,groupFilter,statusFilter,lowStockFilter]);
@@ -1024,6 +1029,14 @@ const Inventory = ({inventory: liveInventory, updateDress, bulkUpdate, createDre
     { client_id:null, return_date:null, pickup_date:null, status:'available' },
     'checked_in',
     'reset to available'
+  );
+  // Archive: hide retired pieces from the working list without nuking
+  // their rental history. Status='archived' is filtered out by default
+  // (see the `filtered` derivation above).
+  const bulkArchive = () => runBulk(
+    { status:'archived', client_id:null, return_date:null, pickup_date:null },
+    'updated',
+    'archived'
   );
 
   const GridCard=({d})=>{
@@ -1273,13 +1286,14 @@ const Inventory = ({inventory: liveInventory, updateDress, bulkUpdate, createDre
           <option value="all">All categories</option>
           {Object.entries(INV_GROUPS).map(([id,l])=><option key={id} value={id}>{l}</option>)}
         </select>
-        <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{...inputSt,margin:0,width:'auto'}}>
+        <select data-testid="inventory-status-filter" value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{...inputSt,margin:0,width:'auto'}}>
           <option value="all">All statuses</option>
           <option value="available">Available</option>
           <option value="reserved">Reserved</option>
           <option value="rented">Rented out</option>
           <option value="overdue">Overdue</option>
           <option value="low_stock">Low stock</option>
+          <option value="archived">{`Archived${archivedCount?` (${archivedCount})`:''}`}</option>
         </select>
         <button onClick={()=>{setLowStockFilter(f=>!f);setLowStockBannerDismissed(true);}} style={{padding:'6px 12px',minHeight:44,borderRadius:6,border:`1.5px solid ${lowStockFilter?'#DC2626':'#FCA5A5'}`,background:lowStockFilter?'#FEE2E2':'#FEF2F2',color:lowStockFilter?'#DC2626':'#B91C1C',fontSize:11,fontWeight:600,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
           {lowStockFilter?'✕ Clear':'⚠ Low stock'}{lowStockCount>0&&!lowStockFilter?` (${lowStockCount})`:''}
@@ -1364,6 +1378,14 @@ const Inventory = ({inventory: liveInventory, updateDress, bulkUpdate, createDre
                 style={{padding:'6px 12px',borderRadius:6,border:'1px solid #D8C9A8',background:'transparent',color:'#5C3A0F',fontSize:12,cursor:bulkWorking?'default':'pointer'}}>
                 Reset assignment
               </button>
+              <button
+                data-testid="inventory-bulk-archive"
+                onClick={bulkArchive}
+                disabled={bulkWorking}
+                title="Hide retired pieces from the working list (history is preserved)"
+                style={{padding:'6px 12px',borderRadius:6,border:'1px solid #D8C9A8',background:'transparent',color:'#7A6670',fontSize:12,cursor:bulkWorking?'default':'pointer'}}>
+                Archive
+              </button>
 
               <span style={{width:1,height:22,background:'#E8DFD2',margin:'0 4px'}} aria-hidden="true"/>
 
@@ -1378,6 +1400,7 @@ const Inventory = ({inventory: liveInventory, updateDress, bulkUpdate, createDre
                 <option value="cleaning">Cleaning</option>
                 <option value="returned">Returned</option>
                 <option value="overdue">Overdue</option>
+                <option value="archived">Archived</option>
               </select>
               <button
                 data-testid="inventory-bulk-status-apply"
