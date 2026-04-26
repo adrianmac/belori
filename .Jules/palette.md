@@ -1,0 +1,3 @@
+## 2024-05-18 - Semantic HTML for Interactive List Items
+**Learning:** Using `<div>` elements with `onClick` handlers for list items (like notifications/alerts) prevents keyboard navigation and makes them invisible to screen readers as interactive elements. Adding inline CSS resets allows us to seamlessly convert these `<div>` wrappers to `<button>` elements while preserving the original styling, including things like bottom borders that depend on list position.
+**Action:** Always prefer semantic HTML (like `<button>`) for interactive list items to ensure accessibility. Apply CSS resets (e.g., `background: 'transparent'`, `border: 'none'`, `width: '100%'`, `textAlign: 'left'`) to maintain custom design system visuals.

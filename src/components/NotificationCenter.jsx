@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { C, fmt } from '../lib/colors';
 
 // ─── NOTIFICATION CENTER ─────────────────────────────────────────────────────
@@ -8,7 +8,6 @@ function buildAlerts({ events = [], payments = [], inventory = [] }) {
   const alerts = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().split('T')[0];
 
   // Overdue payments
   payments.filter(p => p.status === 'overdue').forEach(p => {
@@ -171,8 +170,8 @@ export default function NotificationCenter({ events, payments, inventory, setScr
       ) : alerts.map((alert, i) => {
         const cfg = PRIORITY_CFG[alert.priority];
         return (
-          <div key={alert.id} onClick={() => handleClick(alert)}
-            style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', cursor: 'pointer', borderBottom: i < alerts.length - 1 ? `1px solid ${C.border}` : 'none', transition: 'background 0.1s' }}
+          <button key={alert.id} onClick={() => handleClick(alert)}
+            style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: i < alerts.length - 1 ? `1px solid ${C.border}` : 'none', display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', cursor: 'pointer', transition: 'background 0.1s' }}
             onMouseEnter={e => e.currentTarget.style.background = cfg.bg}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.dot, flexShrink: 0, marginTop: 5 }}/>
@@ -186,7 +185,7 @@ export default function NotificationCenter({ events, payments, inventory, setScr
             <svg width="10" height="10" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 6, color: C.gray }}>
               <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
-          </div>
+          </button>
         );
       })}
     </div>
