@@ -45,8 +45,10 @@ log(C.dim('  ──────────────────────�
 // ─── Load .env.test ──────────────────────────────────────────────────────
 let env = {}
 try {
-  const raw = readFileSync(resolve(ROOT, '.env.test'), 'utf8')
-  raw.split('\n').forEach(line => {
+  let raw = readFileSync(resolve(ROOT, '.env.test'), 'utf8')
+  // Strip UTF-8 BOM (Notepad on Windows likes to add one)
+  if (raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1)
+  raw.split(/\r?\n/).forEach(line => {
     const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/)
     if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim()
   })
@@ -87,25 +89,38 @@ if (!testUrl) {
 }
 
 // ─── CHECK 3: Keys exist and are plausible ──────────────────────────────
+// Supabase has two key formats:
+//   Legacy JWT:  starts with "eyJ", 200+ chars
+//   New format:  starts with "sb_publishable_" / "sb_secret_", ~40-60 chars
+function looksLikeKey(k) {
+  if (!k) return false
+  if (k.startsWith('eyJ') && k.length >= 100) return true
+  if (k.startsWith('sb_publishable_') && k.length >= 30) return true
+  if (k.startsWith('sb_secret_') && k.length >= 30) return true
+  return false
+}
+
 const anonKey = env.VITE_SUPABASE_ANON_KEY || ''
-if (!anonKey || anonKey.length < 100) {
-  fail('VITE_SUPABASE_ANON_KEY missing or too short')
-  note('Supabase JWTs are 200+ chars. Check Settings → API in the test project.')
-} else if (!anonKey.startsWith('eyJ')) {
-  fail('VITE_SUPABASE_ANON_KEY does not look like a JWT')
-  note('All Supabase keys start with "eyJ" (base64-encoded JWT header).')
+if (!anonKey) {
+  fail('VITE_SUPABASE_ANON_KEY is missing')
+} else if (!looksLikeKey(anonKey)) {
+  fail('VITE_SUPABASE_ANON_KEY format unrecognised')
+  note('Expected formats: "eyJ..." (legacy JWT) or "sb_publishable_..." (new).')
 } else {
-  pass('VITE_SUPABASE_ANON_KEY is present and JWT-shaped')
+  pass('VITE_SUPABASE_ANON_KEY is present and well-formed')
 }
 
 const serviceKey = env.TEST_SUPABASE_SERVICE_ROLE_KEY || ''
-if (!serviceKey || serviceKey.length < 100) {
-  fail('TEST_SUPABASE_SERVICE_ROLE_KEY missing or too short')
-  note('The service_role key is required for test seed/teardown. Paste from vault.')
+if (!serviceKey) {
+  fail('TEST_SUPABASE_SERVICE_ROLE_KEY is missing')
+  note('The service_role / sb_secret_ key is required for test seed/teardown.')
 } else if (serviceKey === anonKey) {
   fail('TEST_SUPABASE_SERVICE_ROLE_KEY equals the anon key — wrong key copied')
-} else if (!serviceKey.startsWith('eyJ')) {
-  fail('TEST_SUPABASE_SERVICE_ROLE_KEY does not look like a JWT')
+} else if (!looksLikeKey(serviceKey)) {
+  fail('TEST_SUPABASE_SERVICE_ROLE_KEY format unrecognised')
+  note('Expected formats: "eyJ..." (legacy JWT) or "sb_secret_..." (new).')
+} else if (anonKey.startsWith('sb_publishable_') && !serviceKey.startsWith('sb_secret_')) {
+  fail('Anon key is new-format but service-role is not — paste a sb_secret_ key.')
 } else {
   pass('TEST_SUPABASE_SERVICE_ROLE_KEY is present and distinct from anon')
 }
@@ -171,11 +186,13 @@ if (failures === 0) {
   log(`  ${C.green('●')} ${C.bold(C.green('SAFE'))} — ${checks.length} checks passed`)
   log(`    ${C.gray('Test environment verified. OK to run tests.')}`)
   log('')
-  process.exit(0)
 } else {
   log(`  ${C.red('●')} ${C.bold(C.red('UNSAFE'))} — ${failures} of ${checks.length} checks failed`)
   log(`    ${C.red('Tests MUST NOT run against this configuration.')}`)
   log(`    ${C.gray('Fix the issues above. See docs/TESTING_SUPABASE_SETUP.md.')}`)
   log('')
-  process.exit(1)
 }
+// Set exitCode but let the event loop drain naturally — avoids the libuv
+// cleanup assertion on Windows that fires when process.exit() races with
+// the still-closing fetch handle.
+process.exitCode = failures === 0 ? 0 : 1

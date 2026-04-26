@@ -671,7 +671,7 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
           return (
             <button key={item.id} onClick={() => { setShowMore(false); setScreen(item.id); }}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
-                color: active ? Dtokens.goldDark : '#9CA3AF', fontSize: 10, fontWeight: active ? 600 : 400, cursor: 'pointer', flex: 1,
+                color: active ? Dtokens.goldDark : '#7A6670', fontSize: 10, fontWeight: active ? 600 : 400, cursor: 'pointer', flex: 1,
                 height: 60, padding: '0', transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent', position: 'relative' }}>
               <span style={{ fontSize: 20, lineHeight: 1, opacity: active ? 1 : 0.55, transition: 'opacity 0.15s' }}>{icons[item.icon]}</span>
               <span style={{ maxWidth: 56, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
@@ -691,7 +691,7 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
           aria-expanded={showMore}
           aria-label={showMore ? 'Close more navigation' : 'Open more navigation'}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
-            color: (moreActive || showMore) ? Dtokens.goldDark : '#9CA3AF', fontSize: 10, fontWeight: (moreActive || showMore) ? 600 : 400,
+            color: (moreActive || showMore) ? Dtokens.goldDark : '#7A6670', fontSize: 10, fontWeight: (moreActive || showMore) ? 600 : 400,
             cursor: 'pointer', flex: 1, height: 60, padding: '0', transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent' }}>
           <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1, opacity: (moreActive || showMore) ? 1 : 0.55, transition: 'opacity 0.15s', display:'flex', alignItems:'center', justifyContent:'center', width:22, height:22 }}>
             <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="13" cy="8" r="1.4"/></svg>
@@ -745,12 +745,12 @@ const IconRail = ({ screen, setScreen, onSignOut, boutique, boutiques = [], onSw
                 gap: 4, padding: '10px 4px', borderRadius: 12, cursor: 'pointer', width: '100%',
                 position: 'relative', transition: 'all 0.14s', border: 'none',
                 background: active ? Dtokens.goldLight : 'transparent',
-                color: active ? C.rosaText : '#9CA3AF',
+                color: active ? C.rosaText : '#7A6670',
                 minHeight: 'unset', minWidth: 'unset' }}>
               <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {icons[item.icon]}
               </span>
-              <span style={{ fontSize: 10, color: active ? C.rosaText : '#9CA3AF', textAlign: 'center', lineHeight: 1.2, fontWeight: active ? 500 : 400 }}>
+              <span style={{ fontSize: 10, color: active ? C.rosaText : '#7A6670', textAlign: 'center', lineHeight: 1.2, fontWeight: active ? 500 : 400 }}>
                 {item.label}
               </span>
               {item.tasksBadge && (

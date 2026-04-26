@@ -47,6 +47,10 @@ setup('seed auth storage for each test user', async ({ page }) => {
     await page.evaluate(
       ([k, session]) => {
         localStorage.setItem(k, JSON.stringify(session))
+        // Force desktop layout mode — Playwright's Chromium reports touch
+        // points which would otherwise trigger tablet mode and hide the
+        // full sidebar (where data-testid='nav-*' lives).
+        localStorage.setItem('belori_layout_mode', 'desktop')
       },
       [storageKey, data.session],
     )

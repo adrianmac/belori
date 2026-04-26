@@ -39,7 +39,8 @@ export default defineConfig({
   projects: [
     // Global setup — runs once before all projects. Verifies env safety and
     // creates pre-authenticated session state files for each test user.
-    { name: 'setup', testMatch: /.*\.setup\.ts/ },
+    // Lives in tests/setup/ (sibling of tests/e2e/), so override testDir.
+    { name: 'setup', testDir: './tests/setup', testMatch: /.*\.setup\.ts$/ },
 
     // Authenticated flows — use Owner A by default (most tests run as owner)
     {

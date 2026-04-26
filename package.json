@@ -18,6 +18,7 @@
     "test:e2e:ui": "npm run verify:test-env && playwright test --ui",
     "test:e2e:debug": "npm run verify:test-env && playwright test --debug",
     "test:e2e:report": "playwright show-report",
+    "test:seed:users": "node scripts/seed-test-users.mjs",
     "test:seed": "supabase db execute --file supabase/seed.test.sql",
     "test:all": "npm run test && npm run test:e2e"
   },
