@@ -83,17 +83,13 @@ test.describe('Inventory bulk archive', () => {
       'Migration 20260426_inventory_archive_status.sql not applied to this database yet. Apply it via the Supabase SQL editor and re-run.'
     )
 
-    // Pre-open Operations sidebar so nav-inv_full is in DOM
-    await page.addInitScript(() => {
-      window.localStorage.setItem('belori_nav_sections', JSON.stringify({
-        operations: true, finance: true, marketing: true,
-      }))
-    })
-
+    // Phase 1+2 IA cleanup: Inventory is a top-level hub. Click the nav
+    // item and select the Catalog tab where bulk archive lives.
     await page.goto('/dashboard')
     await page.waitForSelector('[data-testid="dashboard-root"]', { timeout: 10_000 })
-    await page.getByTestId('nav-inv_full').click()
+    await page.getByTestId('nav-inventory_hub').click()
     await page.waitForLoadState('networkidle', { timeout: 15_000 })
+    await page.getByTestId('inventory-hub-tab-catalog').click()
 
     // Filter by tag so only our 2 rows show
     await page.getByTestId('inventory-search-input').fill(TAG)

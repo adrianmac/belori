@@ -65,6 +65,14 @@ const ConsultationScreen  = lazy(() => import('./ConsultationScreen'));
 const ScheduleScreen      = lazy(() => import('./ScheduleScreen'));
 const BugReportsAdmin     = lazy(() => import('./BugReportsAdmin'));
 
+// ─── Phase 1+2 IA cleanup: unified hubs ─────────────────────────────────
+// Each hub is a thin tab wrapper around the existing screens, so the
+// underlying components don't change. Old screen IDs are preserved and
+// route to the hub with the right tab pre-selected (see screen router below).
+const InventoryHub = lazy(() => import('./InventoryHub'));
+const Finance      = lazy(() => import('./Finance'));
+const ReportsHub   = lazy(() => import('./ReportsHub'));
+
 // ─── Brand color helpers ─────────────────────────────────────────────────
 function hexToPale(hex) {
   if (!hex || !/^#[0-9A-Fa-f]{6}$/.test(hex)) return '#FDF5F6'
@@ -375,14 +383,63 @@ export default function NovelApp() {
       case 'event_detail':  return <EventDetail eventId={selectedEvent} setScreen={goScreen} setSelectedEvent={setSelectedEvent} allEvents={events} updateEvent={updateEvent} deleteEvent={deleteEvent} markPaid={markPaid} createMilestone={createMilestone} createMilestones={createMilestones} deleteMilestone={deleteMilestone} createJob={createJob} updateJob={updateJob} updateClient={updateClient} updateDress={updateDress} staff={staff} inventory={inventory} logRefund={logRefund} logTip={logTip} refunds={(refunds||[]).filter(r => r.event_id === selectedEvent)} setConsultationProps={setConsultationProps}/>;
       case 'clients':       return <Clients setScreen={goScreen} setSelectedEvent={setSelectedEvent} clients={clients} clientsLoading={clientsLoading} createClient={createClient} createClientsBulk={createClientsBulk} updateClient={updateClient} adjustLoyaltyPoints={adjustLoyaltyPoints} redeemPoints={redeemPoints} adjustPoints={adjustPoints} mergeClients={mergeClients} inventory={inventory}/>;
       case 'alterations':   return en('alterations')    ? <Alterations alterations={alterations} staff={staff} clients={clients} createClient={createClient} createJob={createJob} updateJob={updateJob} cancelJob={cancelJob} deleteJob={deleteJob} logTimeEntry={logTimeEntry}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
-      case 'inventory':     return en('dress_rental')   ? <DressRentals inventory={inventory} updateDress={updateDress} createDress={createDress} createJob={createJob} events={events} clients={clients} staff={staff} setScreen={goScreen} setSelectedEvent={setSelectedEvent}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
-      case 'inv_full':      return en('decoration')     ? <Inventory inventory={inventory} updateDress={updateDress} bulkUpdate={bulkUpdateInventory} createDress={createDress} events={events} updateEvent={updateEvent} clients={clients} setScreen={goScreen}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
+      // ─── Inventory hub (Phase 1+2 IA cleanup) ─────────────────────────
+      // 'inventory_hub'  → unified hub, default tab from localStorage
+      // 'inventory'      → hub w/ Rentals tab pre-selected (back-compat alias)
+      // 'inv_full'       → hub w/ Catalog tab pre-selected (back-compat alias)
+      case 'inventory_hub':
+      case 'inventory':
+      case 'inv_full': {
+        const initialTab = screen === 'inventory' ? 'rentals' : screen === 'inv_full' ? 'catalog' : undefined;
+        const hubProps = {
+          inventory, updateDress, bulkUpdate: bulkUpdateInventory, createDress,
+          createJob, events, updateEvent, clients, staff,
+          setScreen: goScreen, setSelectedEvent,
+        };
+        return <Suspense fallback={<PageLoading/>}><InventoryHub initialTab={initialTab} {...hubProps}/></Suspense>;
+      }
       case 'qr_labels':     return <QRCodesPage setScreen={goScreen}/>;
       case 'schedule':      return <Suspense fallback={<PageLoading/>}><ScheduleScreen setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} staff={staff} clients={clients}/></Suspense>;
-      case 'payments':      return <Payments payments={payments} paymentsLoading={paymentsLoading} markPaid={markPaid} logReminder={logReminder} deleteMilestone={deleteMilestone} createMilestone={createMilestone} setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events}/>;
+      // ─── Finance hub (Phase 1+2 IA cleanup) ───────────────────────────
+      // 'finance'      → hub, default tab from localStorage
+      // 'payments'     → hub w/ Milestones tab (back-compat)
+      // 'billing'      → hub w/ Invoices tab (back-compat)
+      // 'online_pay'   → hub w/ Payment Links tab (back-compat)
+      // 'commissions'  → hub w/ Commissions tab (back-compat)
+      // 'promo_codes'  → hub w/ Promo Codes tab (back-compat)
+      case 'finance':
+      case 'payments':
+      case 'billing':
+      case 'online_pay':
+      case 'commissions':
+      case 'promo_codes': {
+        const tabMap = {
+          payments: 'milestones', billing: 'invoices', online_pay: 'paylinks',
+          commissions: 'commissions', promo_codes: 'promo',
+        };
+        const initialTab = tabMap[screen];
+        const hubProps = {
+          payments, paymentsLoading, markPaid, logReminder, deleteMilestone, createMilestone,
+          setScreen: goScreen, setSelectedEvent, events,
+        };
+        return <Suspense fallback={<PageLoading/>}><Finance initialTab={initialTab} {...hubProps}/></Suspense>;
+      }
       case 'settings':      return <Settings boutique={boutique} initialTab={settingsTab} setScreen={goScreen}/>;
-      case 'reports':       return en('reports')        ? <Reports payments={payments} events={events} clients={clients} goScreen={goScreen}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
-      case 'report_builder': return en('reports')       ? <ReportBuilder /> : <Placeholder title="Module Disabled" icon="🔒"/>;
+      // ─── Reports hub (Phase 1+2 IA cleanup) ───────────────────────────
+      // 'reports_hub'    → hub, default tab from localStorage
+      // 'reports'        → hub w/ Dashboards tab (back-compat)
+      // 'report_builder' → hub w/ Builder tab (back-compat)
+      // 'accounting'     → hub w/ Accounting tab (back-compat)
+      case 'reports_hub':
+      case 'reports':
+      case 'report_builder':
+      case 'accounting': {
+        if (!en('reports') && screen !== 'accounting') return <Placeholder title="Module Disabled" icon="🔒"/>;
+        const tabMap = { reports: 'dashboards', report_builder: 'builder', accounting: 'accounting' };
+        const initialTab = tabMap[screen];
+        const hubProps = { payments, events, clients, goScreen };
+        return <Suspense fallback={<PageLoading/>}><ReportsHub initialTab={initialTab} {...hubProps}/></Suspense>;
+      }
       case 'data_export':   return en('data_export')    ? <DataExport clients={clients} events={events} payments={payments} inventory={inventory}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'measurements':  return en('measurements')   ? <MeasurementsScreen/>    : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'vendors':       return en('vendors')        ? <Suspense fallback={<PageLoading/>}><VendorsPage /></Suspense> : <Placeholder title="Module Disabled" icon="🔒"/>;
@@ -398,22 +455,24 @@ export default function NovelApp() {
       case 'email_mkt':     return en('email_marketing')? <EmailMarketingScreen/>  : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'ticketing':     return en('ticketing')      ? <TicketingScreen/>       : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'reviews':       return en('reviews')        ? <ReviewsScreen/>         : <Placeholder title="Module Disabled" icon="🔒"/>;
-      case 'online_pay':    return en('online_payments')? <OnlinePaymentsScreen/>  : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'expenses':      return en('expenses')       ? <Suspense fallback={<PageLoading/>}><ExpensesPage events={events} setScreen={goScreen} setSelectedEvent={setSelectedEvent}/></Suspense> : <Placeholder title="Module Disabled" icon="🔒"/>;
-      case 'commissions':   return <Suspense fallback={<PageLoading/>}><CommissionsPage /></Suspense>;
-      case 'promo_codes':   return <Suspense fallback={<PageLoading/>}><PromoCodesPage /></Suspense>;
-      case 'funnel':        return <Suspense fallback={<PageLoading/>}><FunnelPage /></Suspense>;
+      // 'funnel' is now the Pipeline tab inside Clients — keep the route for
+      // backwards-compat but redirect to clients with a hint to open the tab.
+      case 'funnel': {
+        try { sessionStorage.setItem('belori_clients_tab_hint', 'pipeline'); } catch { /* ignore */ }
+        return <Clients setScreen={goScreen} setSelectedEvent={setSelectedEvent} clients={clients} clientsLoading={clientsLoading} createClient={createClient} createClientsBulk={createClientsBulk} updateClient={updateClient} adjustLoyaltyPoints={adjustLoyaltyPoints} redeemPoints={redeemPoints} adjustPoints={adjustPoints} mergeClients={mergeClients} inventory={inventory}/>;
+      }
       case 'bulk_import':   return <Suspense fallback={<PageLoading/>}><ImportPage /></Suspense>;
-      case 'accounting':    return en('accounting')     ? <AccountingScreen payments={payments} events={events}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'purchase_orders': return en('purchase_orders') ? <PurchaseOrders goScreen={goScreen}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'wedding_planner': return <WeddingPlannerComingSoon setScreen={goScreen} selectedEvent={selectedEvent}/>;
       case 'bug_reports':   return <Suspense fallback={<PageLoading/>}><BugReportsAdmin setScreen={goScreen}/></Suspense>;
       case 'roadmap':       return <RoadmapPage />;
       case 'sms_inbox':     return <SmsInboxPage />;
       case 'help':          return <Suspense fallback={<PageLoading/>}><HelpPage /></Suspense>;
+      // 'activity_feed' (global) was removed from the nav. Keep the route
+      // for any deep links that still point at it.
       case 'activity_feed':  return <Suspense fallback={<PageLoading/>}><ActivityFeed setScreen={goScreen}/></Suspense>;
       case 'client_lookup':   return <Suspense fallback={<PageLoading/>}><ClientLookupScreen setScreen={goScreen}/></Suspense>;
-      case 'billing':         return <Suspense fallback={<PageLoading/>}><BillingScreen setScreen={goScreen}/></Suspense>;
       case 'invoice_create':  return <Suspense fallback={<PageLoading/>}><InvoiceCreateScreen setScreen={goScreen}/></Suspense>;
       case 'consultation':    return <Suspense fallback={<PageLoading/>}><ConsultationScreen {...consultationProps} setScreen={goScreen}/></Suspense>;
       default:               return <Dashboard setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} payments={payments} inventory={inventory} boutique={boutique} clients={clients} staff={staff} alterations={alterations}/>;

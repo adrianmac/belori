@@ -1,0 +1,22 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:5173",
+      "localStorage": [
+        {
+          "name": "belori_layout_mode",
+          "value": "desktop"
+        },
+        {
+          "name": "sb-yeahgmxqnqhrvrsnmvaz-auth-token",
+          "value": "{\"access_token\":\"eyJhbGciOiJFUzI1NiIsImtpZCI6ImI4ZTM5YTc0LTAwZTItNDBiZC05NzAwLWM0YWQyYzUxYmE3OCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3llYWhnbXhxbnFocnZyc25tdmF6LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMjIyMjIyMi1hYWFhLTIyMjItYWFhYS0yMjIyMjIyMjIyMjIiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc3MjI5OTc4LCJpYXQiOjE3NzcyMjYzNzgsImVtYWlsIjoiY29vcmRpbmF0b3ItYUBiZWxvcmktdGVzdC5sb2NhbCIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWUsImZ1bGxfbmFtZSI6IkFscGhhIENvb3JkaW5hdG9yIn0sInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiYWFsIjoiYWFsMSIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NzcyMjYzNzh9XSwic2Vzc2lvbl9pZCI6ImRiMjk2YmZiLThlNjYtNGU4NC05MzZlLWQzYmE0YjhmYWM5YyIsImlzX2Fub255bW91cyI6ZmFsc2V9.lriG8D8G_p4vi3vxYwI4jJbtZcSt2kPtzmhDBjp_WUaj4lXd9x2tpKnnwkn_6IWHidNkvv0On9UzqKUHf3Bgvw\",\"token_type\":\"bearer\",\"expires_in\":3600,\"expires_at\":1777229978,\"refresh_token\":\"xqsl3gc2bshj\",\"user\":{\"id\":\"22222222-aaaa-2222-aaaa-222222222222\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"coordinator-a@belori-test.local\",\"email_confirmed_at\":\"2026-04-26T00:21:12.404552Z\",\"phone\":\"\",\"confirmed_at\":\"2026-04-26T00:21:12.404552Z\",\"last_sign_in_at\":\"2026-04-26T17:59:38.48939094Z\",\"app_metadata\":{\"provider\":\"email\",\"providers\":[\"email\"]},\"user_metadata\":{\"email_verified\":true,\"full_name\":\"Alpha Coordinator\"},\"identities\":[{\"identity_id\":\"acaf3b89-260b-42ec-a66a-e4581ce1a46c\",\"id\":\"22222222-aaaa-2222-aaaa-222222222222\",\"user_id\":\"22222222-aaaa-2222-aaaa-222222222222\",\"identity_data\":{\"email\":\"coordinator-a@belori-test.local\",\"email_verified\":false,\"phone_verified\":false,\"sub\":\"22222222-aaaa-2222-aaaa-222222222222\"},\"provider\":\"email\",\"last_sign_in_at\":\"2026-04-26T00:21:12.402598Z\",\"created_at\":\"2026-04-26T00:21:12.402673Z\",\"updated_at\":\"2026-04-26T00:21:12.402673Z\",\"email\":\"coordinator-a@belori-test.local\"}],\"created_at\":\"2026-04-26T00:21:12.401547Z\",\"updated_at\":\"2026-04-26T17:59:38.492329Z\",\"is_anonymous\":false},\"weak_password\":null}"
+        },
+        {
+          "name": "belori_theme",
+          "value": "light"
+        }
+      ]
+    }
+  ]
+}

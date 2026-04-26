@@ -18,7 +18,11 @@ test.describe('Dashboard', () => {
     await page.getByTestId('nav-clients').click()
     await expect(page.getByTestId('clients-new-button')).toBeVisible()
 
-    await page.getByTestId('nav-payments').click()
+    // Phase 1+2 IA cleanup: standalone Payments nav was rolled into the
+    // Finance hub. The Milestones tab is the default view, which is the
+    // same component as the old Payments page.
+    await page.getByTestId('nav-finance').click()
+    await expect(page.getByTestId('finance-tab-milestones')).toBeVisible()
     await expect(page.getByTestId('payments-create-milestone')).toBeVisible()
   })
 

@@ -61,8 +61,9 @@ test.describe('Accessibility (axe · WCAG 2.1 A + AA)', () => {
   test('Payments list violations', async ({ page }) => {
     await page.goto('/dashboard')
     await page.waitForSelector('[data-testid="dashboard-root"]', { timeout: 5000 })
-    await page.getByTestId('nav-payments').click()
+    // Payments is now the Milestones tab inside the Finance hub
+    await page.getByTestId('nav-finance').click()
     await page.waitForTimeout(400)
-    await runAxe(page, 'Payments list')
+    await runAxe(page, 'Finance / Milestones')
   })
 })

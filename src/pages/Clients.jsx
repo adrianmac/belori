@@ -10,6 +10,8 @@ import ClientDetail from './clients/ClientDetail.jsx';
 import NewClientModal from '../components/modals/NewClientModal.jsx';
 import { TIER_CFG } from './clients/clientConfigs.js';
 import { getTier, tierMedal, DEFAULT_LOYALTY_TIERS } from '../lib/loyalty';
+import PipelineKanban from '../components/PipelineKanban.jsx';
+import { usePipeline } from '../hooks/useClients';
 
 // ─── BulkMessageModal ─────────────────────────────────────────────────────────
 const QUICK_TEMPLATES = [
@@ -1015,7 +1017,20 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
   const loyaltyTiers = clBoutique?.loyalty_tiers || DEFAULT_LOYALTY_TIERS;
 
   const [selCl, setSelCl] = useState(null);
-  const [view, setView] = useState('list');
+  // 'list' | 'grid' | 'pipeline' — pipeline is the kanban of leads.
+  // Honor a sessionStorage hint set when the legacy /funnel deep link
+  // routes through this page (NovelApp.jsx old `funnel` case).
+  const [view, setView] = useState(() => {
+    try {
+      const hint = sessionStorage.getItem('belori_clients_tab_hint');
+      if (hint === 'pipeline') {
+        sessionStorage.removeItem('belori_clients_tab_hint');
+        return 'pipeline';
+      }
+    } catch { /* ignore */ }
+    return 'list';
+  });
+  const { pipeline } = usePipeline();
   const [showTree, setShowTree] = useState(false);
   const [filter, setFilter] = useState('all');
   const [tierFilter, setTierFilter] = useState('all');
@@ -1239,8 +1254,23 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ display: 'flex', border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
-            {[['list', '☰'], ['grid', '⊞']].map(([v, icon]) => (
-              <button key={v} onClick={() => { setView(v); setShowTree(false); }} style={{ padding: '7px 12px', border: 'none', background: !showTree && view === v ? C.rosaPale : C.white, color: !showTree && view === v ? C.rosaText : C.gray, cursor: 'pointer', fontSize: 14 }}>{icon}</button>
+            {[['list', '☰', 'List'], ['grid', '⊞', 'Cards'], ['pipeline', '⏃', 'Pipeline']].map(([v, icon, label]) => (
+              <button
+                key={v}
+                data-testid={`clients-view-${v}`}
+                onClick={() => { setView(v); setShowTree(false); }}
+                title={label}
+                aria-label={label}
+                style={{
+                  padding: '7px 12px', border: 'none',
+                  background: !showTree && view === v ? C.rosaPale : C.white,
+                  color: !showTree && view === v ? C.rosaText : C.gray,
+                  cursor: 'pointer', fontSize: 14,
+                  ...(v !== 'list' ? { borderLeft: `1px solid ${C.border}` } : {}),
+                }}
+              >
+                {icon}
+              </button>
             ))}
           </div>
           {rawClients.some(c => c.referred_by) && (
@@ -1302,7 +1332,13 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
         <ReferralTree clients={rawClients} onSelectClient={cl => { setShowTree(false); setSelCl(cl); }} />
       )}
       {/* CLIENT CARDS */}
-      {!showTree && <div ref={pageScrollRef} className="page-scroll" data-testid="clients-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', padding: 20 }}>
+      {!showTree && view === 'pipeline' && (
+        <div data-testid="clients-pipeline-view" style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+          <PipelineKanban initialLeads={pipeline} />
+        </div>
+      )}
+
+      {!showTree && view !== 'pipeline' && <div ref={pageScrollRef} className="page-scroll" data-testid="clients-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', padding: 20 }}>
         {filtered.length === 0 ? (
           rawClients.length === 0 ? (
             /* True empty state — no clients exist at all */

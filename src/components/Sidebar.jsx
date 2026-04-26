@@ -7,8 +7,9 @@ import { useI18n } from '../lib/i18n/index.jsx';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { injectCoutureFonts, D as Dtokens } from '../lib/couture.jsx';
-// Nav items shown in Focus Mode (core workflow only)
-const FOCUS_IDS = new Set(['dashboard', 'events', 'inventory', 'alterations', 'clients', 'payments', 'schedule']);
+// Nav items shown in Focus Mode (core workflow only).
+// Updated for Phase 1+2 IA cleanup — now points at the unified hubs.
+const FOCUS_IDS = new Set(['dashboard', 'events', 'inventory_hub', 'alterations', 'clients', 'finance', 'schedule']);
 
 // ─── NAV STRUCTURE ──────────────────────────────────────────────────────────
 // Returns { topLevel, sections, allFlat }
@@ -18,66 +19,64 @@ const FOCUS_IDS = new Set(['dashboard', 'events', 'inventory', 'alterations', 'c
 function buildNavStructure(badges = {}, modules = {}, t = (k) => k) {
   const en = (k) => modules[k] === true;
 
-  // ── Core top-level items (8 max) ─────────────────────────────────────────
-  // Billing (invoices) and Activity moved to sections to reduce clutter.
+  // ── Core top-level items ─────────────────────────────────────────────────
+  // Phase 1+2 IA cleanup:
+  //   - "Dress Rentals" + "Inventory" → single "Inventory" hub (Catalog/Rentals tabs)
+  //   - "Payments" + Invoices/Pay Links/Commissions/Promo Codes → single "Finance" hub
+  //   - "Reports" + Report Builder + Accounting → single "Reports" hub
+  //   - "Activity Feed" (global) removed — covered by per-event journal
+  //   - "Sales Funnel" → Pipeline tab in Clients
   const topLevel = [
     { id: 'dashboard',     label: t('nav_dashboard'),    icon: 'overview' },
-    // Core booking workflow
     { id: 'events',        label: t('nav_events'),        icon: 'events',   core: true,
       ...(badges.events ? { badge: badges.events } : {}),
       ...(badges.tasks  ? { tasksBadge: badges.tasks } : {}) },
-    en('dress_rental') && { id: 'inventory',   label: 'Dress Rentals',  icon: 'rentals',     core: true },
+    (en('dress_rental') || en('decoration')) && { id: 'inventory_hub', label: 'Inventory', icon: 'rentals', core: true,
+      ...(badges.inv_full ? { badge: badges.inv_full, badgeColor: '#D97706' } : {}) },
     en('alterations')  && { id: 'alterations', label: t('nav_alterations'), icon: 'alterations', core: true,
       ...(badges.alterations ? { badge: badges.alterations, badgeColor: 'var(--color-danger)' } : {}) },
-    // Client & schedule
     { id: 'clients',       label: t('nav_clients'),       icon: 'clients' },
     { id: 'schedule',      label: 'Schedule',             icon: 'calendar' },
-    // Money
-    { id: 'payments',      label: t('nav_payments'),      icon: 'payments',
+    { id: 'finance',       label: 'Finance',              icon: 'payments',
       ...(badges.payments ? { badge: badges.payments, badgeColor: 'var(--color-danger)' } : {}) },
-    // My Tasks with alert badge
+    en('reports')      && { id: 'reports_hub', label: t('nav_reports'),    icon: 'reports' },
     { id: 'my_tasks',      label: 'My Tasks',             icon: 'mytasks',
       ...(badges.myTasks ? { badge: badges.myTasks, badgeColor: 'var(--color-danger)' } : {}) },
-    // Settings always last
     { id: 'settings',      label: t('nav_settings'),      icon: 'settings' },
   ].filter(Boolean);
 
   // ── Collapsible: Operations ──────────────────────────────────────────────
+  // Pruned in the Phase 1+2 IA cleanup:
+  //   - 'inv_full' merged into the unified Inventory hub at top-level
+  //   - 'staff_sched' is already a tab inside the top-level Schedule page
+  //   - 'audit_ui' / 'data_export' moved to Settings → Admin tab
   const opsItems = [
-    en('decoration') && { id: 'inv_full',        label: t('nav_inventory'),    icon: 'inventory',
-      ...(badges.inv_full ? { badge: badges.inv_full, badgeColor: '#D97706' } : {}) },
     en('vendors')            && { id: 'vendors',        label: t('nav_vendors'),      icon: 'vendors' },
     en('floorplan')          && { id: 'floorplan',      label: 'Floorplan',           icon: 'floorplan' },
     en('pos')                && { id: 'pos',             label: 'Point of Sale',       icon: 'pos' },
     en('retail')             && { id: 'retail',          label: 'Retail',              icon: 'retail' },
-    en('staff_sched')        && { id: 'staff_sched',     label: 'Staff Schedule',      icon: 'staffsched' },
     en('purchase_orders')    && { id: 'purchase_orders', label: 'Purchase Orders',     icon: 'purchase_orders' },
     en('fb_beo')             && { id: 'fb_beo',          label: 'F&B / BEO',           icon: 'fbbeo' },
-    en('audit_ui')           && { id: 'audit_ui',        label: 'Audit Log',           icon: 'auditlog' },
-    en('data_export')        && { id: 'data_export',     label: 'Data Export',         icon: 'export' },
     en('dress_catalog')      && { id: 'dress_catalog',   label: 'Dress Catalog',       icon: 'catalog' },
     en('measurements')       && { id: 'measurements',    label: 'Measurements',        icon: 'measures' },
   ].filter(Boolean);
 
   // ── Collapsible: Finance ─────────────────────────────────────────────────
-  // "Billing" moved here from top-level, renamed "Invoices" to distinguish from Payments
+  // Phase 1+2 IA cleanup: Payments / Invoices / Payment Links / Commissions /
+  // Promo Codes are all collapsed into a single top-level "Finance" hub with
+  // tabs (see top-level array below). Reports / Report Builder / Accounting
+  // collapsed into "Reports". Only Expenses remains as a standalone screen
+  // here because it's a daily-entry workflow distinct from receivables.
   const financeItems = [
-    { id: 'billing',          label: 'Invoices',            icon: 'payments',
-      ...(badges.invoices ? { badge: badges.invoices, badgeColor: '#DC2626' } : {}) },
     en('expenses')           && { id: 'expenses',           label: t('nav_expenses'),     icon: 'expenses' },
-    { id: 'commissions',       label: 'Commissions',                                      icon: 'commissions' },
-    en('online_payments')    && { id: 'online_pay',         label: 'Payment Links',       icon: 'paylinks' },
-    { id: 'promo_codes',       label: 'Promo Codes',                                      icon: 'promo' },
-    en('reports')            && { id: 'reports',            label: t('nav_reports'),      icon: 'reports' },
-    en('accounting')         && { id: 'accounting',         label: 'Accounting',          icon: 'accounting' },
   ].filter(Boolean);
 
   // ── Collapsible: Marketing & Tools ───────────────────────────────────────
-  // Activity Feed moved here from top-level
+  // Phase 1+2 IA cleanup:
+  //   - 'activity_feed' (global) removed — per-event activity lives on EventDetail
+  //   - 'funnel' (Sales Funnel) removed — Pipeline now renders as a tab in Clients
   const marketingItems = [
-    { id: 'activity_feed',    label: 'Activity Feed',                                    icon: 'activity' },
     { id: 'sms_inbox',        label: 'SMS Inbox',                                        icon: 'sms' },
-    { id: 'funnel',           label: 'Sales Funnel',                                     icon: 'funnel' },
     en('waitlist')           && { id: 'waitlist',           label: 'Waitlist',            icon: 'waitlist' },
     en('reviews')            && { id: 'reviews',            label: 'Reviews',             icon: 'reviews' },
     en('photo_gallery')      && { id: 'photo_gallery',      label: 'Photo Gallery',       icon: 'gallery' },

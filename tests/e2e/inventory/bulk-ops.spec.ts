@@ -66,18 +66,14 @@ test.describe('Inventory bulk operations', () => {
   })
 
   test('select all + Mark cleaned flips status to available + stamps last_cleaned', async ({ page }) => {
-    // 1. Land on Dashboard → navigate to full inventory
-    // Pre-open the Operations sidebar section so nav-inv_full is in the DOM.
-    // (Sidebar persists section open/closed state in localStorage.)
-    await page.addInitScript(() => {
-      window.localStorage.setItem('belori_nav_sections', JSON.stringify({
-        operations: true, finance: true, marketing: true,
-      }))
-    })
+    // 1. Phase 1+2 IA cleanup: Inventory is now a top-level "Inventory" hub
+    //    with Catalog and Rentals tabs. Click the top-level nav, then
+    //    switch to the Catalog tab where bulk operations live.
     await page.goto('/dashboard')
     await page.waitForSelector('[data-testid="dashboard-root"]', { timeout: 10_000 })
-    await page.getByTestId('nav-inv_full').click()
+    await page.getByTestId('nav-inventory_hub').click()
     await page.waitForLoadState('networkidle', { timeout: 15_000 })
+    await page.getByTestId('inventory-hub-tab-catalog').click()
 
     // 2. Filter the list to JUST our seeded rows so "Select all" doesn't grab
     //    other inventory the suite might create. Search by tag.
@@ -121,17 +117,11 @@ test.describe('Inventory bulk operations', () => {
     const sb = serviceClient()
     await sb.from('inventory').update({ status: 'reserved' }).in('id', seededIds)
 
-    // Pre-open the Operations sidebar section so nav-inv_full is in the DOM.
-    // (Sidebar persists section open/closed state in localStorage.)
-    await page.addInitScript(() => {
-      window.localStorage.setItem('belori_nav_sections', JSON.stringify({
-        operations: true, finance: true, marketing: true,
-      }))
-    })
     await page.goto('/dashboard')
     await page.waitForSelector('[data-testid="dashboard-root"]', { timeout: 10_000 })
-    await page.getByTestId('nav-inv_full').click()
+    await page.getByTestId('nav-inventory_hub').click()
     await page.waitForLoadState('networkidle', { timeout: 15_000 })
+    await page.getByTestId('inventory-hub-tab-catalog').click()
     await page.getByTestId('inventory-search-input').fill(TAG)
     await expect(page.getByTestId(`inventory-card-${seededIds[0]}`)).toBeVisible({ timeout: 8_000 })
 

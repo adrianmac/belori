@@ -2977,8 +2977,10 @@ const Settings = ({boutique, initialTab, setScreen}) => {
 
           {activeTab === 'data' && (
             <Card>
-              <CardHead title="Data & Import"/>
-              <div style={{padding:'0 16px 20px',display:'flex',flexDirection:'column',gap:16}}>
+              <CardHead title="Data, Import & Admin"/>
+              <div style={{padding:'0 16px 20px',display:'flex',flexDirection:'column',gap:24}}>
+
+                {/* Import */}
                 <div>
                   <div style={{fontSize:13,fontWeight:600,color:C.ink,marginBottom:4}}>Import data</div>
                   <div style={{fontSize:12,color:C.gray,lineHeight:1.6,marginBottom:12}}>
@@ -2991,6 +2993,35 @@ const Settings = ({boutique, initialTab, setScreen}) => {
                     <span>📥</span> Import data
                   </button>
                 </div>
+
+                {/* Export — moved from its own nav item to keep admin tools in one place */}
+                <div>
+                  <div style={{fontSize:13,fontWeight:600,color:C.ink,marginBottom:4}}>Export data</div>
+                  <div style={{fontSize:12,color:C.gray,lineHeight:1.6,marginBottom:12}}>
+                    Download CSV exports of your clients, events, payments, and inventory for backup or migration.
+                  </div>
+                  <button
+                    onClick={() => setScreen && setScreen('data_export')}
+                    style={{padding:'9px 18px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.ink,fontSize:13,fontWeight:500,cursor:'pointer',display:'inline-flex',alignItems:'center',gap:6}}
+                  >
+                    <span>📤</span> Export data
+                  </button>
+                </div>
+
+                {/* Audit log — moved from its own nav item; sensitive enough to live behind Settings */}
+                <div>
+                  <div style={{fontSize:13,fontWeight:600,color:C.ink,marginBottom:4}}>Audit log</div>
+                  <div style={{fontSize:12,color:C.gray,lineHeight:1.6,marginBottom:12}}>
+                    Tamper-proof history of every INSERT, UPDATE, and DELETE across your boutique's data — who did what, when, and what changed.
+                  </div>
+                  <button
+                    onClick={() => setScreen && setScreen('audit_ui')}
+                    style={{padding:'9px 18px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',color:C.ink,fontSize:13,fontWeight:500,cursor:'pointer',display:'inline-flex',alignItems:'center',gap:6}}
+                  >
+                    <span>📋</span> Open audit log
+                  </button>
+                </div>
+
               </div>
             </Card>
           )}
