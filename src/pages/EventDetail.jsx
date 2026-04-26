@@ -19,7 +19,7 @@ import { useStaffAvailability } from '../hooks/useStaffAvailability';
 import { formatConflict as formatApptConflict } from '../lib/appointmentConflicts';
 import ContractModal from '../components/modals/ContractModal';
 import NewMilestoneModal from '../components/modals/NewMilestoneModal';
-import DecorationPlanner from '../components/DecorationPlanner';
+// Eager: rendered on the Summary tab (first paint of EventDetail)
 import PaymentMilestonesCard from './event-detail/PaymentMilestonesCard';
 import DressRentalCard from './event-detail/DressRentalCard';
 import AlterationsCard from './event-detail/AlterationsCard';
@@ -27,7 +27,13 @@ import EventTasksCard from './event-detail/EventTasksCard';
 import StaffNotesCard from './event-detail/StaffNotesCard';
 import ContractsCard from './event-detail/ContractsCard';
 import EventRunsheet from './event-detail/EventRunsheet';
-import EventVendorsCard from './event-detail/EventVendorsCard';
+
+// Lazy: secondary tabs (More ▾ dropdown). These chunks fetch only when the
+// user navigates to the corresponding tab — keeping ~80KB out of the
+// initial EventDetail bundle for the common Summary-tab use case.
+const DecorationPlanner = React.lazy(() => import('../components/DecorationPlanner'));
+const EventVendorsCard  = React.lazy(() => import('./event-detail/EventVendorsCard'));
+const PlanningBoardPanelLazy = React.lazy(() => import('./event-detail/PlanningBoardPanel'));
 // EventActivityFeed is lazy-loaded — it's not on the critical first paint
 // path (lives behind the Activity tab in the More ▾ dropdown) and pulls
 // in client_interactions / Cormorant fonts that aren't needed otherwise.
@@ -36,7 +42,9 @@ import { useBridalParty } from '../hooks/useBridalParty';
 import { useEventFiles } from '../hooks/useEventFiles';
 import { useGuests } from '../hooks/useGuests';
 import GuestList from '../components/GuestList';
-import PlanningBoardPanel from './event-detail/PlanningBoardPanel';
+// PlanningBoardPanel is now lazy (see PlanningBoardPanelLazy above).
+// Aliasing here keeps existing JSX `<PlanningBoardPanel ...>` working.
+const PlanningBoardPanel = PlanningBoardPanelLazy;
 import AppointmentScheduler from '../components/appointments/AppointmentScheduler';
 import { APPOINTMENT_TYPES, formatApptDateTime } from '../lib/appointmentRules';
 
@@ -1452,15 +1460,17 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                   <span>🌸</span><span>Decoration Planner</span>
                 </div>
                 <div style={{background:C.white,borderRadius:12,border:`1px solid ${C.border}`,padding:'14px 16px'}}>
-                  <DecorationPlanner
-                    event={liveEvent}
-                    updateEvent={updateEvent}
-                    addDecoItem={addDecoItem}
-                    removeDecoItem={removeDecoItem}
-                    updateDecoItem={updateDecoItem}
-                    inventory={inventory}
-                    refetch={refetchEvent}
-                  />
+                  <Suspense fallback={<div style={{padding:24,textAlign:'center',color:C.gray,fontSize:12}}>Loading planner…</div>}>
+                    <DecorationPlanner
+                      event={liveEvent}
+                      updateEvent={updateEvent}
+                      addDecoItem={addDecoItem}
+                      removeDecoItem={removeDecoItem}
+                      updateDecoItem={updateDecoItem}
+                      inventory={inventory}
+                      refetch={refetchEvent}
+                    />
+                  </Suspense>
                 </div>
               </div>
 
@@ -2397,26 +2407,28 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
 
           {/* WEDDING PLANNER TAB — coming soon add-on */}
           {coordTab === 'planning' && (
-            <PlanningBoardPanel
-              ev={ev}
-              liveEvent={liveEvent}
-              tasks={liveTasks}
-              appointments={appointments}
-              milestones={milestones}
-              notes={notes}
-              staff={staff}
-              boutique={boutique}
-              allEvents={allEvents}
-              setScreen={setScreen}
-              setSelectedEvent={setSelectedEvent}
-              createAppointment={createAppointment}
-              addNote={addNote}
-              updateEvent={updateEvent}
-              refetchEvent={refetchEvent}
-              toggleTask={toggleLiveTask}
-              addTask={addLiveTask}
-              toast={toast}
-            />
+            <Suspense fallback={<div style={{padding:32,textAlign:'center',color:C.gray,fontFamily:"'Cormorant Garamond',serif",fontStyle:'italic',fontSize:16}}>Loading planning board…</div>}>
+              <PlanningBoardPanel
+                ev={ev}
+                liveEvent={liveEvent}
+                tasks={liveTasks}
+                appointments={appointments}
+                milestones={milestones}
+                notes={notes}
+                staff={staff}
+                boutique={boutique}
+                allEvents={allEvents}
+                setScreen={setScreen}
+                setSelectedEvent={setSelectedEvent}
+                createAppointment={createAppointment}
+                addNote={addNote}
+                updateEvent={updateEvent}
+                refetchEvent={refetchEvent}
+                toggleTask={toggleLiveTask}
+                addTask={addLiveTask}
+                toast={toast}
+              />
+            </Suspense>
           )}
 
           {/* APPOINTMENTS TAB */}
@@ -2890,7 +2902,9 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
 
           {/* VENDORS TAB */}
           {coordTab === 'vendors' && (
-            <EventVendorsCard eventId={eventId}/>
+            <Suspense fallback={<div style={{padding:32,textAlign:'center',color:C.gray,fontSize:13}}>Loading vendors…</div>}>
+              <EventVendorsCard eventId={eventId}/>
+            </Suspense>
           )}
 
         </div>{/* end tab panels */}

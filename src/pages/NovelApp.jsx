@@ -54,7 +54,6 @@ const ExpensesPage     = lazy(() => import('./ExpensesPage'));
 const ImportPage       = lazy(() => import('./ImportPage'));
 const CommissionsPage  = lazy(() => import('./CommissionsPage'));
 const PromoCodesPage   = lazy(() => import('./PromoCodesPage'));
-const FunnelPage       = lazy(() => import('./FunnelPage'));
 const MyTasksPage      = lazy(() => import('./MyTasksPage'));
 const HelpPage         = lazy(() => import('./HelpPage'));
 const ActivityFeed        = lazy(() => import('./ActivityFeed'));

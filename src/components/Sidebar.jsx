@@ -7,6 +7,7 @@ import { useI18n } from '../lib/i18n/index.jsx';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { injectCoutureFonts, D as Dtokens } from '../lib/couture.jsx';
+import { prefetchScreen } from '../lib/prefetchScreen';
 // Nav items shown in Focus Mode (core workflow only).
 // Updated for Phase 1+2 IA cleanup — now points at the unified hubs.
 const FOCUS_IDS = new Set(['dashboard', 'events', 'inventory_hub', 'alterations', 'clients', 'finance', 'schedule']);
@@ -234,6 +235,11 @@ const NavItem = ({ item, active, onClick, indented = false }) => {
   <button
     type="button"
     onClick={onClick}
+    // Warm the lazy chunk on hover or focus — by the time the user clicks,
+    // the JS is already parsed in browser cache, so the screen change is
+    // ~instant instead of network-bound. Idempotent + fire-and-forget.
+    onMouseEnter={() => prefetchScreen(item.id)}
+    onFocus={() => prefetchScreen(item.id)}
     onKeyDown={e => { if (e.key === ' ') { e.preventDefault(); onClick?.(); } }}
     aria-current={active ? 'page' : undefined}
     data-testid={`nav-${item.id}`}

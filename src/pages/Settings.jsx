@@ -2263,6 +2263,9 @@ const Settings = ({boutique, initialTab, setScreen}) => {
   // Sync when initialTab prop changes — but only if the role allows it
   useEffect(()=>{ if(initialTab && canAccessSettingsTab(myRole, initialTab)) setActiveTab(initialTab); },[initialTab, myRole]);
   
+  // Grouped left-rail (replaces the 12-tab horizontal strip).
+  // Each section = a labeled group with its own tabs. Sections render
+  // top-to-bottom in the left rail; clicking a tab swaps the body.
   const ALL_TABS = [
     {id:'profile',     label:'Boutique profile'},
     {id:'staff',       label:'Staff members'},
@@ -2275,36 +2278,101 @@ const Settings = ({boutique, initialTab, setScreen}) => {
     {id:'bookings',      label:'Booking Requests'},
     {id:'integrations',  label:'Integrations'},
     {id:'display',       label:'Display mode'},
-    {id:'data',          label:'Data & Import'},
+    {id:'data',          label:'Data, Import & Admin'},
   ];
   const TABS = ALL_TABS.filter(t => canAccessSettingsTab(myRole, t.id));
+
+  // Section grouping for the left-rail. Tabs absent from any section
+  // (because the user's role can't access them) are filtered when each
+  // section renders.
+  const SECTIONS = [
+    { key: 'general', label: 'General',
+      tabIds: ['profile', 'display'] },
+    { key: 'team',    label: 'Team & access',
+      tabIds: ['staff', 'modules', 'integrations'] },
+    { key: 'money',   label: 'Money',
+      tabIds: ['billing', 'packages', 'webhooks'] },
+    { key: 'content', label: 'Content & automation',
+      tabIds: ['automations', 'all_templates'] },
+    { key: 'public',  label: 'Public surfaces',
+      tabIds: ['bookings'] },
+    { key: 'admin',   label: 'Data & admin',
+      tabIds: ['data'] },
+  ];
+  const TAB_BY_ID = Object.fromEntries(TABS.map(t => [t.id, t]));
 
   return (
     <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:C.ivory}}>
       <Topbar title="Settings" subtitle="Manage your boutique preferences and configurations"/>
-      
-      {/* Tab Navigation */}
-      <div style={{
-        display:'flex',gap:24,padding:'0 24px',
-        background:C.white,borderBottom:`1px solid ${C.border}`,
-        flexShrink:0,
-        overflowX:'auto',
-        WebkitOverflowScrolling:'touch',
-        scrollbarWidth:'none',
-        msOverflowStyle:'none',
-        whiteSpace:'nowrap',
-        position:'sticky',top:48,zIndex:10,
-      }}>
-        {TABS.map(tab=>(
-          <button key={tab.id} onClick={()=>setActiveTab(tab.id)}
-            style={{padding:'12px 0 10px',background:'none',border:'none',borderBottom:`2px solid ${activeTab===tab.id?C.rosa:'transparent'}`,color:activeTab===tab.id?C.rosaText:C.gray,fontSize:13,fontWeight:activeTab===tab.id?600:500,cursor:'pointer',transition:'all 0.2s',whiteSpace:'nowrap',marginTop:2,flexShrink:0}}>
-            {tab.label}
-          </button>
-        ))}
-      </div>
 
-      <div style={{flex:1,overflowY:'auto',padding:20}}>
-        <div style={{display:'flex',flexDirection:'column',gap:20,maxWidth:960,margin:'0 auto'}}>
+      {/* Two-column shell: grouped left rail + content panel.
+          On narrow screens, the rail collapses into a horizontal scroller
+          via media-query CSS in index.css (.settings-rail). */}
+      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+
+        {/* Left rail — grouped sections */}
+        <nav data-testid="settings-rail" aria-label="Settings sections" style={{
+          width: 240,
+          flexShrink: 0,
+          background: C.white,
+          borderRight: `1px solid ${C.border}`,
+          overflowY: 'auto',
+          padding: '14px 0 24px',
+        }}>
+          {SECTIONS.map(section => {
+            const sectionTabs = section.tabIds
+              .map(id => TAB_BY_ID[id])
+              .filter(Boolean);
+            if (sectionTabs.length === 0) return null;
+            return (
+              <div key={section.key} style={{ marginBottom: 18 }}>
+                <div style={{
+                  fontFamily: "'DM Sans','Inter',system-ui,sans-serif",
+                  fontSize: 10.5,
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: '#8E6B34',
+                  fontWeight: 600,
+                  padding: '4px 20px 6px',
+                }}>
+                  {section.label}
+                </div>
+                {sectionTabs.map(tab => {
+                  const active = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      data-testid={`settings-tab-${tab.id}`}
+                      onClick={() => setActiveTab(tab.id)}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '8px 20px',
+                        border: 'none',
+                        background: active ? '#FBF2E3' : 'transparent',
+                        borderLeft: `2px solid ${active ? '#B08A4E' : 'transparent'}`,
+                        color: active ? '#5C3A0F' : '#5C4A52',
+                        fontSize: 13,
+                        fontWeight: active ? 600 : 400,
+                        cursor: 'pointer',
+                        transition: 'background 0.12s',
+                      }}
+                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = '#FAF6F1'; }}
+                      onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* Content panel */}
+        <div style={{flex:1,overflowY:'auto',padding:20}}>
+          <div style={{display:'flex',flexDirection:'column',gap:20,maxWidth:960,margin:'0 auto'}}>
           
           {activeTab === 'profile' && (
             <Card>
@@ -3026,8 +3094,9 @@ const Settings = ({boutique, initialTab, setScreen}) => {
             </Card>
           )}
 
+          </div>
         </div>
-      </div>
+      </div>{/* end of two-column shell */}
       {/* ── INVITE STAFF MODAL ── */}
       {showInviteStaff&&<InviteStaffModal onClose={()=>setShowInviteStaff(false)} sendInvite={sendInvite} toast={toast} boutique={boutique}/>}
       {/* ── EDIT STAFF MODAL ── */}
