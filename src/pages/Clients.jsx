@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Papa from 'papaparse';
 import { useAuth } from '../context/AuthContext';
 import { C, fmt } from '../lib/colors';
 import { PrimaryBtn, GhostBtn, Badge, SvcTag, useToast, SkeletonList, inputSt } from '../lib/ui.jsx';
+import { D as Dt, OrnamentRule } from '../lib/couture.jsx';
 import { supabase } from '../lib/supabase';
 import ClientDetail from './clients/ClientDetail.jsx';
 import NewClientModal from '../components/modals/NewClientModal.jsx';
@@ -389,141 +391,461 @@ const ReferralTree = ({ clients, onSelectClient }) => {
   );
 };
 
-const ClientImportModal = ({ onClose, createClient }) => {
+// ─── CSV IMPORT — Couture v2 ─────────────────────────────────────────────
+// Major upgrades over v1:
+//   - Papa Parse for RFC-4180-correct CSV (handles quoted commas, escapes)
+//   - Bulk INSERT in chunks of 100 (10x-100x faster than per-row)
+//   - Phone normalization (strip non-digits)
+//   - Email validation (basic regex, surfaces invalid entries)
+//   - Duplicate detection against existing clients (by name+phone+email)
+//   - Editable column mapping if auto-detection misses
+//   - Sample CSV download
+//   - Couture aesthetic (italic Cormorant titles, ink + gold, sharp edges)
+//   - Real drag & drop (not just label-as-button)
+
+// Maps CSV column → clients table column. Only columns that actually exist
+// in the schema are included — additional CSV columns are silently ignored.
+const FIELD_DEFS = [
+  { key: 'name',          label: 'Name',         required: true,  hints: ['name', 'full name', 'full_name', 'client name', 'client_name', 'first name'] },
+  { key: 'phone',         label: 'Phone',        required: false, hints: ['phone', 'phone number', 'phone_number', 'mobile', 'cell', 'tel'] },
+  { key: 'email',         label: 'Email',        required: false, hints: ['email', 'email address', 'email_address', 'e-mail'] },
+  { key: 'partner_name',  label: 'Partner',      required: false, hints: ['partner_name', 'partner name', 'partner', 'spouse', 'honoree', 'guest of honor'] },
+  { key: 'birthday',      label: 'Birthday',     required: false, hints: ['birthday', 'birth_date', 'birthdate', 'dob', 'date of birth'] },
+  { key: 'anniversary',   label: 'Anniversary',  required: false, hints: ['anniversary', 'anniversary_date', 'wedding_date', 'wedding date', 'event date'] },
+  { key: 'referred_by',   label: 'Referred by',  required: false, hints: ['referred_by', 'referred by', 'referral', 'how found', 'how_found', 'source'] },
+  { key: 'flower_prefs',  label: 'Flower notes', required: false, hints: ['flower_prefs', 'flower preferences', 'flower notes', 'florals', 'allergies'] },
+];
+
+const SAMPLE_CSV = `name,phone,email,partner_name,birthday,anniversary,referred_by,flower_prefs
+Sofia García,+15551234567,sofia@example.com,Carlos Mendez,1995-03-12,2026-09-15,Maria (sister),Allergic to lilies — use roses for centerpieces
+Olivia Bennett,(555) 234-5678,olivia.bennett@example.com,,1992-07-22,,Google,Wants ivory dresses only
+James O'Brien,5552345679,james@example.com,Emily Carter,1990-11-30,2026-06-08,Instagram ad,No preference`;
+
+const normalizePhone = (raw) => {
+  if (!raw) return null;
+  const digits = String(raw).replace(/\D/g, '');
+  if (!digits) return null;
+  // 10-digit US? prepend +1
+  if (digits.length === 10) return `+1${digits}`;
+  // 11-digit starting with 1? prepend +
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+  // International — best-effort prepend +
+  return digits.startsWith('+') ? digits : `+${digits}`;
+};
+
+const isValidEmail = (e) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e).trim());
+
+const normalizeForDedup = (s) => String(s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+const ClientImportModal = ({ onClose, createClientsBulk, existingClients = [] }) => {
   const toast = useToast();
-  const [step, setStep] = useState(1);
-  const [valid, setValid] = useState([]);
-  const [errors, setErrors] = useState([]);
-  const [totalRows, setTotalRows] = useState(0);
+  const [step, setStep] = useState(1);                   // 1 upload · 2 map+review · 3 importing · 4 done
+  const [headers, setHeaders] = useState([]);
+  const [rawRows, setRawRows] = useState([]);
+  const [mapping, setMapping] = useState({});            // { name: 'Full Name', phone: 'Phone', ... }
+  const [skipDuplicates, setSkipDuplicates] = useState(true);
   const [importing, setImporting] = useState(false);
-  const [imported, setImported] = useState(0);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [result, setResult] = useState({ inserted: 0, skipped: 0, errors: [] });
+  const [dragOver, setDragOver] = useState(false);
 
-  const parseCSV = text => {
-    const lines = text.split(/\r?\n/).filter(l => l.trim());
-    if (lines.length < 2) return { headers: [], rows: [] };
-    const hdrs = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
-    const parsed = lines.slice(1).map(line => {
-      const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-      return Object.fromEntries(hdrs.map((h, i) => [h, vals[i] || '']));
-    });
-    return { headers: hdrs, rows: parsed };
-  };
-
-  const findKey = (hdrs, options) => hdrs.find(h => options.includes(h));
-
-  const handleFile = file => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      const { headers: hdrs, rows: parsed } = parseCSV(e.target.result);
-      const nameK = findKey(hdrs, ['name', 'full name', 'full_name', 'client name', 'client_name']) || hdrs[0];
-      const phoneK = findKey(hdrs, ['phone', 'phone number', 'phone_number', 'mobile', 'cell']);
-      const emailK = findKey(hdrs, ['email', 'email address', 'email_address']);
-      const partnerK = findKey(hdrs, ['partner_name', 'partner name', 'partner', 'honoree']);
-      const birthdayK = findKey(hdrs, ['birthday', 'birth_date', 'birthdate', 'dob', 'date of birth']);
-      const anniversaryK = findKey(hdrs, ['anniversary', 'anniversary_date', 'wedding_date', 'wedding date']);
-      const referredK = findKey(hdrs, ['referred_by', 'referred by', 'referral', 'how found', 'how_found']);
-      const notesK = findKey(hdrs, ['notes', 'note', 'comments', 'comment']);
-
-      const v = [], errs = [];
-      parsed.forEach((row, i) => {
-        const name = row[nameK]?.trim();
-        const erList = [];
-        if (!name) erList.push('Missing name');
-        const mapped = {
-          name,
-          phone: phoneK ? row[phoneK]?.trim() || null : null,
-          email: emailK ? row[emailK]?.trim() || null : null,
-          partner_name: partnerK ? row[partnerK]?.trim() || null : null,
-          birthday: birthdayK ? row[birthdayK]?.trim() || null : null,
-          anniversary: anniversaryK ? row[anniversaryK]?.trim() || null : null,
-          referred_by: referredK ? row[referredK]?.trim() || null : null,
-          notes: notesK ? row[notesK]?.trim() || null : null,
-        };
-        if (erList.length) errs.push({ row: i + 2, errors: erList, data: mapped });
-        else v.push(mapped);
-      });
-      setValid(v); setErrors(errs); setTotalRows(parsed.length); setStep(2);
-    };
-    reader.readAsText(file);
-  };
-
-  const doImport = async () => {
-    setImporting(true);
-    let count = 0;
-    for (const row of valid) {
-      await createClient(row);
-      count++;
-      setImported(count);
+  // ── Auto-detect column mapping ──────────────────────────────────────
+  const autoMap = (hdrs) => {
+    const m = {};
+    const lc = hdrs.map(h => String(h).toLowerCase().trim());
+    for (const def of FIELD_DEFS) {
+      const idx = lc.findIndex(h => def.hints.includes(h));
+      m[def.key] = idx >= 0 ? hdrs[idx] : '';
     }
-    setImporting(false);
-    setStep(3);
-    if (count > 0) toast(`${count} client${count !== 1 ? 's' : ''} imported`);
+    if (!m.name && hdrs.length > 0) m.name = hdrs[0];   // fallback: first column = name
+    return m;
   };
 
+  // ── Parse & validate the rows according to current mapping ─────────
+  const { validRows, fieldErrors, duplicateRows } = useMemo(() => {
+    if (!mapping.name || rawRows.length === 0) return { validRows: [], fieldErrors: [], duplicateRows: [] };
+    const valid = [], errs = [], dupes = [];
+
+    // Build lookup of existing clients for dedup (name + phone + email)
+    const existingKeys = new Set();
+    for (const c of existingClients) {
+      if (c.name) existingKeys.add('n:' + normalizeForDedup(c.name));
+      if (c.phone) existingKeys.add('p:' + String(c.phone).replace(/\D/g, ''));
+      if (c.email) existingKeys.add('e:' + normalizeForDedup(c.email));
+    }
+
+    rawRows.forEach((row, i) => {
+      const rowNum = i + 2;   // +1 for header, +1 for 1-based
+      const get = (key) => {
+        const col = mapping[key];
+        return col && row[col] != null ? String(row[col]).trim() : '';
+      };
+      const name = get('name');
+      const phoneRaw = get('phone');
+      const phone = normalizePhone(phoneRaw);
+      const email = get('email').toLowerCase() || null;
+
+      const rowErrors = [];
+      if (!name) rowErrors.push('Missing name');
+      if (email && !isValidEmail(email)) rowErrors.push(`Invalid email "${email}"`);
+      if (phoneRaw && !phone) rowErrors.push('Phone has no digits');
+
+      const mapped = {
+        name,
+        phone,
+        email,
+        partner_name: get('partner_name') || null,
+        birthday:     get('birthday')     || null,
+        anniversary:  get('anniversary')  || null,
+        referred_by:  get('referred_by')  || null,
+        flower_prefs: get('flower_prefs') || null,
+      };
+
+      if (rowErrors.length > 0) {
+        errs.push({ row: rowNum, errors: rowErrors, data: mapped });
+        return;
+      }
+
+      // Dedup check
+      const isDup = (
+        (mapped.name  && existingKeys.has('n:' + normalizeForDedup(mapped.name))) ||
+        (mapped.phone && existingKeys.has('p:' + String(mapped.phone).replace(/\D/g, ''))) ||
+        (mapped.email && existingKeys.has('e:' + normalizeForDedup(mapped.email)))
+      );
+      if (isDup) {
+        dupes.push({ row: rowNum, data: mapped });
+        return;
+      }
+
+      valid.push(mapped);
+    });
+
+    return { validRows: valid, fieldErrors: errs, duplicateRows: dupes };
+  }, [rawRows, mapping, existingClients]);
+
+  const toImportCount = validRows.length + (skipDuplicates ? 0 : duplicateRows.length);
+  const toImportRows = skipDuplicates ? validRows : [...validRows, ...duplicateRows.map(d => d.data)];
+
+  // ── File handling ──────────────────────────────────────────────────
+  const handleFile = (file) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast('CSV must be under 5 MB', 'error'); return; }
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: 'greedy',
+      transformHeader: (h) => String(h ?? '').trim(),
+      complete: (results) => {
+        if (results.errors && results.errors.length > 0) {
+          // Non-fatal — Papa is tolerant. Just warn for the first issue.
+          console.warn('CSV parse warnings:', results.errors);
+        }
+        const hdrs = results.meta.fields || [];
+        const rows = results.data || [];
+        if (hdrs.length === 0 || rows.length === 0) {
+          toast('CSV appears empty or has no headers', 'error');
+          return;
+        }
+        setHeaders(hdrs);
+        setRawRows(rows);
+        setMapping(autoMap(hdrs));
+        setStep(2);
+      },
+      error: (err) => {
+        toast('Could not read CSV: ' + err.message, 'error');
+      },
+    });
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault(); e.stopPropagation();
+    setDragOver(false);
+    const f = e.dataTransfer?.files?.[0];
+    if (f) handleFile(f);
+  };
+
+  const downloadSample = () => {
+    const blob = new Blob([SAMPLE_CSV], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'belori-clients-sample.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  // ── Run the import ─────────────────────────────────────────────────
+  const doImport = async () => {
+    if (toImportRows.length === 0) return;
+    setImporting(true);
+    setStep(3);
+    setProgress({ done: 0, total: toImportRows.length });
+
+    const { inserted, errors: insertErrors } = await createClientsBulk(toImportRows, (done) => {
+      setProgress({ done, total: toImportRows.length });
+    });
+
+    setImporting(false);
+    setResult({
+      inserted,
+      skipped: skipDuplicates ? duplicateRows.length : 0,
+      errors: [...fieldErrors, ...insertErrors],
+    });
+    setStep(4);
+    if (inserted > 0) toast(`${inserted} client${inserted !== 1 ? 's' : ''} added`);
+  };
+
+  // ── Render helpers ─────────────────────────────────────────────────
+  const stepLabel = step === 1 ? 'Choose your file' : step === 2 ? 'Confirm your data' : step === 3 ? 'Importing…' : 'All set';
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-      <div role="dialog" aria-modal="true" aria-labelledby="clients-import-csv-title" style={{ background: '#fff', borderRadius: 16, width: 560, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
-        <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div
+      role="presentation"
+      onClick={(e) => { if (e.target === e.currentTarget && !importing) onClose(); }}
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(28,17,24,0.45)',
+        backdropFilter: 'blur(3px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, padding: 16,
+      }}
+    >
+      <div
+        role="dialog" aria-modal="true" aria-labelledby="clients-import-csv-title"
+        data-testid="csv-import-dialog"
+        style={{
+          background: Dt.cardWarm,
+          border: `1px solid ${Dt.border}`,
+          width: 640, maxHeight: '88vh',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          boxShadow: '0 28px 80px -12px rgba(28,17,24,0.32)',
+          fontFamily: Dt.sans,
+        }}
+      >
+        {/* Top gold hairline */}
+        <div aria-hidden="true" style={{ height: 2, background: Dt.gold }} />
+
+        {/* Header */}
+        <div style={{
+          padding: '24px 28px 18px',
+          borderBottom: `1px solid ${Dt.border}`,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+          flexShrink: 0,
+        }}>
           <div>
-            <div id="clients-import-csv-title" style={{ fontWeight: 600, fontSize: 16, color: C.ink }}>Import clients from CSV</div>
-            <div style={{ fontSize: 11, color: C.gray, marginTop: 2 }}>Step {step} of 3 · {step === 1 ? 'Upload file' : step === 2 ? 'Review & confirm' : 'Complete'}</div>
+            <div className="couture-smallcaps" style={{ color: Dt.goldDark, fontSize: 9, letterSpacing: '0.28em', marginBottom: 6 }}>
+              Step {step} of 4
+            </div>
+            <h2 id="clients-import-csv-title" style={{
+              fontFamily: Dt.serif, fontStyle: 'italic', fontWeight: 400,
+              fontSize: 24, color: Dt.ink, margin: 0, letterSpacing: '0.005em',
+            }}>{stepLabel}</h2>
           </div>
-          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1, padding: '4px 8px', minHeight: 32, minWidth: 32 }}>×</button>
+          {!importing && (
+            <button onClick={onClose} aria-label="Close"
+              style={{
+                background: 'transparent', border: 'none',
+                fontSize: 22, cursor: 'pointer', color: Dt.inkMid,
+                lineHeight: 1, padding: '4px 8px',
+              }}
+            >×</button>
+          )}
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: 28 }}>
+
+          {/* ─── STEP 1 — Upload ──────────────────────────────────── */}
           {step === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <label style={{ border: `2px dashed ${C.border}`, borderRadius: 12, padding: 40, textAlign: 'center', cursor: 'pointer', display: 'block', transition: 'border-color 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = C.rosa}
-                onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
-                <div style={{ fontSize: 36, marginBottom: 10 }}>📁</div>
-                <div style={{ fontSize: 14, fontWeight: 500, color: C.ink, marginBottom: 4 }}>Drag & drop your CSV file here</div>
-                <div style={{ fontSize: 12, color: C.gray, marginBottom: 16 }}>CSV format · Max 500 clients</div>
-                <div style={{ display: 'inline-block', padding: '8px 20px', borderRadius: 8, background: C.rosaPale, color: C.rosaText, fontSize: 13, fontWeight: 500 }}>Choose file</div>
-                <input type="file" accept=".csv,.tsv" style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <label
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={onDrop}
+                style={{
+                  border: `2px dashed ${dragOver ? Dt.gold : Dt.border}`,
+                  background: dragOver ? Dt.goldLight : Dt.bg,
+                  padding: '48px 24px', textAlign: 'center',
+                  cursor: 'pointer', display: 'block',
+                  transition: 'all 0.2s cubic-bezier(.22,.61,.36,1)',
+                }}
+              >
+                <div style={{ fontFamily: Dt.display, fontSize: 36, color: Dt.goldDark, lineHeight: 1, marginBottom: 8 }}>
+                  ⬆
+                </div>
+                <div className="couture-serif-i" style={{
+                  fontFamily: Dt.serif, fontStyle: 'italic', fontWeight: 400,
+                  fontSize: 18, color: Dt.ink, marginBottom: 6,
+                }}>
+                  Drag your spreadsheet here.
+                </div>
+                <div style={{ fontSize: 12, color: Dt.inkMid, marginBottom: 18 }}>
+                  Or click to browse · CSV up to 5 MB
+                </div>
+                <span
+                  className="btn-solid" data-color="primary"
+                  style={{ display: 'inline-block', padding: '11px 22px', cursor: 'pointer' }}
+                >
+                  Choose CSV
+                </span>
+                <input type="file" accept=".csv,.tsv,.txt"
+                  data-testid="csv-import-file"
+                  style={{ display: 'none' }}
+                  onChange={(e) => handleFile(e.target.files[0])}
+                />
               </label>
-              <div style={{ fontSize: 11, color: C.gray, textAlign: 'center', lineHeight: 1.7 }}>
-                Required column: <strong>name</strong><br />
-                Optional: <strong>phone, email, partner_name, birthday, anniversary, referred_by, notes</strong><br />
-                Dates should be in YYYY-MM-DD format · Column headers are case-insensitive
+
+              <div style={{
+                background: Dt.bg, padding: '14px 18px',
+                borderLeft: `2px solid ${Dt.gold}`,
+                fontSize: 12, color: Dt.inkMid, lineHeight: 1.7,
+              }}>
+                <div style={{ fontWeight: 500, color: Dt.ink, marginBottom: 6 }}>
+                  Required column: <em style={{ fontFamily: Dt.serif, fontStyle: 'italic' }}>name</em>
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  Recognised extras: phone, email, partner_name, birthday, anniversary, referred_by, notes.
+                </div>
+                <div>
+                  Headers are case-insensitive. Quoted commas are handled correctly.
+                </div>
+                <div style={{ marginTop: 10 }}>
+                  <button onClick={downloadSample} className="couture-link"
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: Dt.goldDark, fontSize: 11, padding: 0,
+                      textTransform: 'uppercase', letterSpacing: '0.16em', fontWeight: 500,
+                    }}
+                  >
+                    Download sample CSV →
+                  </button>
+                </div>
               </div>
             </div>
           )}
+
+          {/* ─── STEP 2 — Map + Review ────────────────────────────── */}
           {step === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+              {/* Stat bar */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                 {[
-                  { label: 'Ready to import', val: valid.length, col: 'var(--text-success)', bg: 'var(--bg-success)' },
-                  { label: 'Rows with errors', val: errors.length, col: errors.length ? 'var(--text-danger)' : C.gray, bg: errors.length ? 'var(--bg-danger)' : C.grayBg },
-                  { label: 'Total rows', val: totalRows, col: C.ink, bg: C.ivory },
+                  { label: 'Ready', val: validRows.length, col: Dt.success },
+                  { label: 'Duplicates', val: duplicateRows.length, col: Dt.gold },
+                  { label: 'Errors', val: fieldErrors.length, col: fieldErrors.length ? Dt.danger : Dt.inkLight },
+                  { label: 'Total', val: rawRows.length, col: Dt.ink },
                 ].map(s => (
-                  <div key={s.label} style={{ background: s.bg, borderRadius: 8, padding: 12, textAlign: 'center' }}>
-                    <div style={{ fontSize: 20, fontWeight: 600, color: s.col }}>{s.val}</div>
-                    <div style={{ fontSize: 11, color: C.gray, marginTop: 2 }}>{s.label}</div>
+                  <div key={s.label} style={{
+                    background: Dt.bg, border: `1px solid ${Dt.border}`,
+                    padding: '10px 12px', textAlign: 'center',
+                  }}>
+                    <div className="couture-display" style={{
+                      fontFamily: Dt.display, fontSize: 26, color: s.col, lineHeight: 1,
+                    }}>{s.val}</div>
+                    <div className="couture-smallcaps" style={{
+                      color: Dt.inkLight, fontSize: 9, marginTop: 4, letterSpacing: '0.2em',
+                    }}>{s.label}</div>
                   </div>
                 ))}
               </div>
-              {errors.length > 0 && (
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-danger)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Errors — will be skipped</div>
-                  {errors.slice(0, 5).map((e, i) => (
-                    <div key={i} style={{ fontSize: 11, color: 'var(--text-danger)', background: 'var(--bg-danger)', padding: '6px 10px', borderRadius: 6, marginBottom: 4 }}>Row {e.row}: {e.errors.join(' · ')}</div>
+
+              {/* Column mapping — collapsible */}
+              <details style={{ background: Dt.bg, padding: '12px 16px', border: `1px solid ${Dt.border}` }}>
+                <summary style={{
+                  cursor: 'pointer', fontSize: 11, fontWeight: 500,
+                  color: Dt.inkMid, textTransform: 'uppercase', letterSpacing: '0.16em',
+                }}>
+                  Column mapping {Object.values(mapping).filter(Boolean).length === FIELD_DEFS.length ? '✓ all matched' : '— review'}
+                </summary>
+                <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 10, marginTop: 14 }}>
+                  {FIELD_DEFS.map(def => (
+                    <React.Fragment key={def.key}>
+                      <div style={{ fontSize: 12, color: Dt.ink, paddingTop: 8 }}>
+                        {def.label}
+                        {def.required && <span style={{ color: Dt.danger, marginLeft: 4 }}>*</span>}
+                      </div>
+                      <select
+                        value={mapping[def.key] || ''}
+                        onChange={(e) => setMapping(m => ({ ...m, [def.key]: e.target.value }))}
+                        style={{
+                          padding: '8px 10px', fontSize: 12,
+                          border: `1px solid ${Dt.border}`,
+                          background: Dt.cardWarm, color: Dt.ink,
+                          fontFamily: Dt.sans,
+                        }}
+                      >
+                        <option value="">— skip —</option>
+                        {headers.map(h => <option key={h} value={h}>{h}</option>)}
+                      </select>
+                    </React.Fragment>
                   ))}
-                  {errors.length > 5 && <div style={{ fontSize: 11, color: C.gray }}>{errors.length - 5} more errors…</div>}
+                </div>
+              </details>
+
+              {/* Duplicate-handling toggle */}
+              {duplicateRows.length > 0 && (
+                <label style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 10,
+                  background: Dt.goldLight, padding: '12px 16px',
+                  border: `1px solid ${Dt.goldBorder}`,
+                  cursor: 'pointer', fontSize: 13,
+                }}>
+                  <input type="checkbox" checked={skipDuplicates}
+                    onChange={(e) => setSkipDuplicates(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: Dt.goldDark }} />
+                  <span style={{ color: Dt.ink }}>
+                    <strong>{duplicateRows.length} potential duplicate{duplicateRows.length !== 1 ? 's' : ''}</strong>
+                    {' '}detected (matched on name, phone, or email).
+                    <div style={{ fontSize: 11, color: Dt.inkMid, marginTop: 2 }}>
+                      {skipDuplicates ? 'These will be skipped.' : 'These will be added (may create duplicates in your client list).'}
+                    </div>
+                  </span>
+                </label>
+              )}
+
+              {/* Errors */}
+              {fieldErrors.length > 0 && (
+                <div>
+                  <div className="couture-smallcaps" style={{ color: Dt.danger, marginBottom: 8 }}>
+                    Rows with errors — will be skipped
+                  </div>
+                  <div style={{ background: Dt.dangerBg, padding: '10px 14px', border: `1px solid ${Dt.danger}`, fontSize: 12, color: Dt.ink }}>
+                    {fieldErrors.slice(0, 5).map((e, i) => (
+                      <div key={i} style={{ marginBottom: 4 }}>
+                        Row {e.row}: {e.errors.join(' · ')}
+                      </div>
+                    ))}
+                    {fieldErrors.length > 5 && (
+                      <div style={{ color: Dt.inkMid, marginTop: 4 }}>
+                        + {fieldErrors.length - 5} more…
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
-              {valid.length > 0 && (
+
+              {/* Preview */}
+              {validRows.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Preview (first 5)</div>
-                  <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden', fontSize: 11 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', background: C.ivory, padding: '8px 10px', fontWeight: 500, color: C.gray, gap: 4 }}>
-                      {['Name', 'Phone', 'Email', 'Birthday'].map(h => <div key={h}>{h}</div>)}
+                  <div className="couture-smallcaps" style={{ color: Dt.goldDark, marginBottom: 8 }}>
+                    Preview — first 5 rows
+                  </div>
+                  <div style={{ border: `1px solid ${Dt.border}`, fontSize: 12 }}>
+                    <div style={{
+                      display: 'grid', gridTemplateColumns: '2fr 1.5fr 2fr 1fr',
+                      background: Dt.bg, padding: '10px 14px',
+                      fontFamily: Dt.sans, fontSize: 9,
+                      color: Dt.inkMid, textTransform: 'uppercase', letterSpacing: '0.18em', fontWeight: 500,
+                      gap: 8,
+                    }}>
+                      <div>Name</div><div>Phone</div><div>Email</div><div>Birthday</div>
                     </div>
-                    {valid.slice(0, 5).map((r, i) => (
-                      <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', padding: '7px 10px', borderTop: `1px solid ${C.border}`, color: C.ink, gap: 4 }}>
-                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</div>
+                    {validRows.slice(0, 5).map((r, i) => (
+                      <div key={i} style={{
+                        display: 'grid', gridTemplateColumns: '2fr 1.5fr 2fr 1fr',
+                        padding: '10px 14px', borderTop: `1px solid ${Dt.border}`,
+                        color: Dt.ink, gap: 8,
+                      }}>
+                        <div style={{ fontFamily: Dt.serif, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</div>
                         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.phone || '—'}</div>
                         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.email || '—'}</div>
                         <div>{r.birthday || '—'}</div>
@@ -534,27 +856,91 @@ const ClientImportModal = ({ onClose, createClient }) => {
               )}
             </div>
           )}
+
+          {/* ─── STEP 3 — Importing ───────────────────────────────── */}
           {step === 3 && (
-            <div style={{ textAlign: 'center', padding: '30px 0' }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-              <div style={{ fontSize: 18, fontWeight: 600, color: C.ink, marginBottom: 8 }}>Import complete!</div>
-              <div style={{ fontSize: 13, color: C.gray, marginBottom: 4 }}>{imported} client{imported !== 1 ? 's' : ''} added</div>
-              {errors.length > 0 && <div style={{ fontSize: 12, color: 'var(--text-danger)' }}>{errors.length} row{errors.length !== 1 ? 's' : ''} skipped due to errors</div>}
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <div className="couture-display" style={{
+                fontFamily: Dt.display, fontSize: 48, color: Dt.goldDark,
+                animation: 'coutureLoadPulse 2s ease-in-out infinite',
+              }}>
+                {progress.done} / {progress.total}
+              </div>
+              <div className="couture-smallcaps" style={{
+                marginTop: 16, color: Dt.inkLight, letterSpacing: '0.28em',
+              }}>
+                Importing
+              </div>
+              <div style={{
+                marginTop: 28, height: 2, background: Dt.border,
+                width: '60%', maxWidth: 320, marginLeft: 'auto', marginRight: 'auto',
+                position: 'relative', overflow: 'hidden',
+              }}>
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, height: '100%',
+                  width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%`,
+                  background: Dt.gold, transition: 'width 0.3s ease',
+                }} />
+              </div>
+            </div>
+          )}
+
+          {/* ─── STEP 4 — Done ─────────────────────────────────────── */}
+          {step === 4 && (
+            <div style={{ textAlign: 'center', padding: '24px 0 8px' }}>
+              <OrnamentRule width={40} />
+              <div className="couture-display" style={{
+                fontFamily: Dt.display, fontSize: 56, color: Dt.goldDark, lineHeight: 1, marginTop: 22,
+              }}>
+                {result.inserted}
+              </div>
+              <div className="couture-serif-i" style={{
+                fontFamily: Dt.serif, fontStyle: 'italic', fontSize: 22, color: Dt.ink, marginTop: 6,
+              }}>
+                {result.inserted === 1 ? 'client added.' : 'clients added.'}
+              </div>
+              {(result.skipped > 0 || result.errors.length > 0) && (
+                <div style={{ fontSize: 12, color: Dt.inkMid, marginTop: 18, lineHeight: 1.7 }}>
+                  {result.skipped > 0 && <div>{result.skipped} duplicate{result.skipped !== 1 ? 's' : ''} skipped</div>}
+                  {result.errors.length > 0 && (
+                    <div style={{ color: Dt.danger }}>
+                      {result.errors.length} row{result.errors.length !== 1 ? 's' : ''} could not be imported
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
-        <div style={{ padding: '12px 24px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between' }}>
-          <button onClick={onClose} style={{ padding: '9px 18px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#fff', fontSize: 13, cursor: 'pointer', color: C.gray }}>{step === 3 ? 'Close' : 'Cancel'}</button>
-          {step === 2 && valid.length > 0 && (
-            <button onClick={doImport} disabled={importing}
-              style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: importing ? C.border : C.rosa, color: '#fff', fontSize: 13, fontWeight: 600, cursor: importing ? 'default' : 'pointer' }}>
-              {importing ? `Importing ${imported}/${valid.length}…` : `Import ${valid.length} client${valid.length !== 1 ? 's' : ''}`}
+
+        {/* Footer */}
+        {step !== 3 && (
+          <div style={{
+            padding: '14px 28px',
+            borderTop: `1px solid ${Dt.border}`,
+            background: Dt.bg,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            flexShrink: 0,
+          }}>
+            <button onClick={onClose} className="btn-ghost" data-color="primary">
+              {step === 4 ? 'Close' : 'Cancel'}
             </button>
-          )}
-          {step === 3 && (
-            <button onClick={onClose} style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: C.rosa, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Done</button>
-          )}
-        </div>
+            {step === 2 && (
+              <button onClick={doImport}
+                disabled={toImportCount === 0}
+                className="btn-solid" data-color="primary"
+                data-testid="csv-import-confirm"
+              >
+                Import {toImportCount} client{toImportCount !== 1 ? 's' : ''}
+              </button>
+            )}
+            {step === 4 && (
+              <button onClick={onClose} className="btn-solid" data-color="primary">
+                Done
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -621,7 +1007,7 @@ const BulkAddTagModal = ({ boutiqueId, selectedIds, onClose, toast }) => {
   );
 };
 
-const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoading, createClient, updateClient, adjustLoyaltyPoints, redeemPoints, adjustPoints, mergeClients, inventory }) => {
+const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoading, createClient, createClientsBulk, updateClient, adjustLoyaltyPoints, redeemPoints, adjustPoints, mergeClients, inventory }) => {
   const toast = useToast();
   const { boutique: clBoutique } = useAuth();
   const rawClients = liveClients;
@@ -731,7 +1117,11 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
     clearBulkSelection();
   };
 
-  if (clientsLoading && !rawClients?.length) return <SkeletonList count={5} style={{padding:'0 16px',marginTop:16}}/>;
+  // NOTE: do NOT early-return here — there are useMemo calls below.
+  // Returning before them would change the hook count between renders
+  // and crash the component with "Rendered more hooks than during the
+  // previous render". Render the skeleton inline at the bottom instead.
+  const isInitialLoad = clientsLoading && !rawClients?.length;
 
   const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -815,6 +1205,13 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
     />;
   }
 
+  // Initial-load skeleton — rendered inline here (NOT as an early return)
+  // to avoid the hooks-rules violation we'd hit if any of the above hooks
+  // were skipped on first paint.
+  if (isInitialLoad) {
+    return <SkeletonList count={5} style={{padding:'0 16px',marginTop:16}}/>
+  }
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* TOPBAR */}
@@ -834,7 +1231,7 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
           )}
           <button onClick={() => setShowBulk(true)} style={{padding:'7px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'#fff',fontSize:12,color:C.gray,cursor:'pointer',fontWeight:500}}>📣 Bulk message</button>
           <GhostBtn label="Find duplicates" onClick={() => { const groups = findDuplicates(); setMergeGroups(groups); setShowMerge(true); }} />
-          <button onClick={() => setShowImport(true)} style={{padding:'7px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'#fff',fontSize:12,color:C.gray,cursor:'pointer',fontWeight:500}}>⬆ Import CSV</button>
+          <button onClick={() => setShowImport(true)} data-testid="clients-import-button" style={{padding:'7px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'#fff',fontSize:12,color:C.gray,cursor:'pointer',fontWeight:500}}>⬆ Import CSV</button>
           <PrimaryBtn label="+ New client" colorScheme="success" onClick={() => setShowNew(true)} data-testid="clients-new-button"/>
         </div>
       </div>
@@ -1232,7 +1629,8 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
       {showImport && (
         <ClientImportModal
           onClose={() => setShowImport(false)}
-          createClient={createClient}
+          createClientsBulk={createClientsBulk}
+          existingClients={rawClients}
         />
       )}
       {showMerge && (

@@ -94,6 +94,40 @@ export function useClients() {
     return { data, error }
   }
 
+  // Bulk-insert clients (CSV import). Inserts in chunks of 100 to stay under
+  // Supabase request size limits. Returns { inserted, errors } so caller can
+  // show a per-row error report. Refetches once at the end (not per chunk).
+  async function createClientsBulk(rows, onProgress) {
+    if (!boutique?.id) return { inserted: 0, errors: [{ row: 0, message: 'No boutique loaded' }] }
+    if (!Array.isArray(rows) || rows.length === 0) return { inserted: 0, errors: [] }
+
+    const CHUNK = 100
+    const scoped = rows.map(r => ({ ...r, boutique_id: boutique.id }))
+    let inserted = 0
+    const errors = []
+
+    for (let i = 0; i < scoped.length; i += CHUNK) {
+      const chunk = scoped.slice(i, i + CHUNK)
+      const { data, error } = await supabase.from('clients').insert(chunk).select('id')
+      if (error) {
+        // Whole chunk failed — fall back to per-row inserts to isolate which
+        // rows are bad and which are recoverable.
+        for (let j = 0; j < chunk.length; j++) {
+          const single = await supabase.from('clients').insert(chunk[j]).select('id').single()
+          if (single.error) errors.push({ row: i + j + 1, message: single.error.message, data: chunk[j] })
+          else inserted++
+          if (onProgress) onProgress(inserted, errors.length)
+        }
+      } else {
+        inserted += data?.length ?? chunk.length
+        if (onProgress) onProgress(inserted, errors.length)
+      }
+    }
+
+    if (inserted > 0) await fetchClients()
+    return { inserted, errors }
+  }
+
   async function updateClient(id, updates) {
     const { error } = await supabase
       .from('clients')
@@ -172,7 +206,7 @@ export function useClients() {
     return { error }
   }
 
-  return { clients, loading, createClient, updateClient, adjustLoyaltyPoints, redeemPoints, adjustPoints, mergeClients, refetch: fetchClients }
+  return { clients, loading, createClient, createClientsBulk, updateClient, adjustLoyaltyPoints, redeemPoints, adjustPoints, mergeClients, refetch: fetchClients }
 }
 
 // ─── CRM: Client interactions (timeline) ─────────────────────────────────────
