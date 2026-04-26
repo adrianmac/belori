@@ -850,7 +850,7 @@ const AuditLogView = ({ entries, loading, onRefresh }) => {
   );
 };
 
-const Inventory = ({inventory: liveInventory, updateDress, createDress, events, updateEvent, clients, setScreen}) => {
+const Inventory = ({inventory: liveInventory, updateDress, bulkUpdate, createDress, events, updateEvent, clients, setScreen}) => {
   const toast=useToast();
   const { boutique } = useAuth();
   const [view,setView]=useState('grid');
@@ -963,15 +963,68 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
 
   const toggleBulk=(id,e)=>{e.stopPropagation();setSelectedIds(s=>{const n=new Set(s);n.has(id)?n.delete(id):n.add(id);return n;});};
   const selectAll=()=>setSelectedIds(new Set(filtered.map(d=>d.id)));
-  const bulkApply=async()=>{
-    if(!bulkStatus||!selectedIds.size)return;
+  const clearSelection=()=>setSelectedIds(new Set());
+  const exitBulk=()=>{setBulkMode(false);setSelectedIds(new Set());setBulkStatus('');};
+
+  // Esc exits bulk mode (mirrors the convention used by every other modal in the app)
+  useEffect(()=>{
+    if(!bulkMode)return;
+    const onKey=e=>{if(e.key==='Escape')exitBulk();};
+    window.addEventListener('keydown',onKey);
+    return()=>window.removeEventListener('keydown',onKey);
+  },[bulkMode]);
+
+  /**
+   * Apply a bulk action to every selected row.
+   *
+   * Routes through the new useInventory.bulkUpdate() helper which collapses
+   * what used to be N HTTP round-trips + N audit-log inserts + N refetches
+   * into 3 calls total. Falls back to the per-row updateDress() loop if the
+   * parent didn't pass bulkUpdate (back-compat for any caller that hasn't
+   * been threaded through yet).
+   */
+  const runBulk=async(updates,auditAction,toastLabel)=>{
+    const ids=[...selectedIds];
+    if(ids.length===0)return;
     setBulkWorking(true);
-    const updates=bulkStatus==='available'?{status:'available',client_id:null,return_date:null,pickup_date:null}:{status:bulkStatus};
-    for(const id of selectedIds)await updateDress?.(id,updates);
+    // When transitioning to 'available', also clear assignment/return fields —
+    // BUT preserve any other fields the caller passed in (e.g. last_cleaned
+    // for "Mark cleaned & available"). Merge, don't overwrite.
+    const safeUpdates=updates.status==='available'
+      ? {client_id:null,return_date:null,pickup_date:null,...updates}
+      : updates;
+    let res={error:null,updatedCount:ids.length};
+    if(typeof bulkUpdate==='function'){
+      res=await bulkUpdate(ids,safeUpdates,{action:auditAction||'updated'});
+    }else{
+      for(const id of ids)await updateDress?.(id,safeUpdates);
+    }
     setBulkWorking(false);
-    toast(`${selectedIds.size} item${selectedIds.size!==1?'s':''} updated ✓`);
-    setSelectedIds(new Set());setBulkMode(false);setBulkStatus('');
+    if(res.error){toast('Bulk update failed','warn');return;}
+    toast(`${ids.length} item${ids.length!==1?'s':''} ${toastLabel} ✓`);
+    exitBulk();
   };
+
+  const bulkApplyStatus=()=>{
+    if(!bulkStatus)return;
+    const auditAction = bulkStatus==='available' ? 'checked_in'
+      : bulkStatus==='cleaning' ? 'cleaned'
+      : bulkStatus==='returned' ? 'checked_in'
+      : bulkStatus==='reserved' ? 'reserved'
+      : 'status_change';
+    return runBulk({status:bulkStatus},auditAction,`marked ${bulkStatus.replace('_',' ')}`);
+  };
+  const bulkMarkCleaned = () => runBulk(
+    { status:'available', last_cleaned: new Date().toISOString().slice(0,10), client_id:null, return_date:null, pickup_date:null },
+    'cleaned',
+    'marked cleaned & available'
+  );
+  const bulkSendToCleaning = () => runBulk({ status:'cleaning' }, 'cleaned', 'sent to cleaning');
+  const bulkClearAssignment = () => runBulk(
+    { client_id:null, return_date:null, pickup_date:null, status:'available' },
+    'checked_in',
+    'reset to available'
+  );
 
   const GridCard=({d})=>{
     const s=SC[d.status]||{bg:C.grayBg,col:C.gray,label:d.status};
@@ -981,7 +1034,7 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
       const pct=d.totalQty?d.availQty/d.totalQty:0;
       const isQSel=selectedIds.has(d.id);
       return(
-        <div onClick={bulkMode?e=>toggleBulk(d.id,e):()=>setSelectedItem(d)} style={{background:isQSel?C.rosaPale:C.white,border:`2px solid ${isQSel?C.rosa:C.border}`,borderRadius:12,overflow:'hidden',cursor:'pointer',transition:'border-color 0.1s,background 0.1s'}} onMouseEnter={e=>{if(!bulkMode&&!isQSel)e.currentTarget.style.borderColor=C.rosa;}} onMouseLeave={e=>{if(!bulkMode&&!isQSel)e.currentTarget.style.borderColor=C.border;}}>
+        <div data-testid={`inventory-card-${d.id}`} data-selected={isQSel?'true':'false'} onClick={bulkMode?e=>toggleBulk(d.id,e):()=>setSelectedItem(d)} style={{background:isQSel?C.rosaPale:C.white,border:`2px solid ${isQSel?C.rosa:C.border}`,borderRadius:12,overflow:'hidden',cursor:'pointer',transition:'border-color 0.1s,background 0.1s'}} onMouseEnter={e=>{if(!bulkMode&&!isQSel)e.currentTarget.style.borderColor=C.rosa;}} onMouseLeave={e=>{if(!bulkMode&&!isQSel)e.currentTarget.style.borderColor=C.border;}}>
           <div style={{height:80,background:C.ivory,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',overflow:'hidden'}}>
             {(d.image_url||d.photo_url)?<img src={d.image_url||d.photo_url} alt={d.name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<span style={{fontSize:30,opacity:0.8}}>{catIcon(d.cat)}</span>}
             {bulkMode?(
@@ -1013,7 +1066,7 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
       const low=d.currentStock<=d.restockPoint;
       const isCSel=selectedIds.has(d.id);
       return(
-        <div onClick={bulkMode?e=>toggleBulk(d.id,e):()=>setSelectedItem(d)} style={{background:isCSel?C.rosaPale:C.white,border:`2px solid ${isCSel?C.rosa:low?'#FCA5A5':C.border}`,borderRadius:12,overflow:'hidden',cursor:'pointer',transition:'border-color 0.1s,background 0.1s'}}>
+        <div data-testid={`inventory-card-${d.id}`} data-selected={isCSel?'true':'false'} onClick={bulkMode?e=>toggleBulk(d.id,e):()=>setSelectedItem(d)} style={{background:isCSel?C.rosaPale:C.white,border:`2px solid ${isCSel?C.rosa:low?'#FCA5A5':C.border}`,borderRadius:12,overflow:'hidden',cursor:'pointer',transition:'border-color 0.1s,background 0.1s'}}>
           <div style={{height:80,background:C.ivory,display:'flex',alignItems:'center',justifyContent:'center',position:'relative'}}>
             <span style={{fontSize:30,opacity:0.8}}>📦</span>
             {bulkMode?(
@@ -1035,7 +1088,7 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
     }
     const isHighlighted=highlightedId===d.id;
     return(
-      <div onClick={bulkMode?e=>toggleBulk(d.id,e):()=>setSelectedItem(d)} style={{background:selectedIds.has(d.id)?C.rosaPale:C.white,border:`2px solid ${isHighlighted?C.green:selectedIds.has(d.id)?C.rosa:isOverdue?'#FCA5A5':C.border}`,borderRadius:12,overflow:'hidden',cursor:'pointer',transition:'border-color 0.15s,background 0.15s',boxShadow:isHighlighted?`0 0 0 3px ${C.greenBg}`:undefined}} onMouseEnter={e=>{if(!bulkMode&&!selectedIds.has(d.id))e.currentTarget.style.borderColor=C.rosa;}} onMouseLeave={e=>{if(!bulkMode&&!selectedIds.has(d.id))e.currentTarget.style.borderColor=isHighlighted?C.green:isOverdue?'#FCA5A5':C.border;}}>
+      <div data-testid={`inventory-card-${d.id}`} data-selected={selectedIds.has(d.id)?'true':'false'} onClick={bulkMode?e=>toggleBulk(d.id,e):()=>setSelectedItem(d)} style={{background:selectedIds.has(d.id)?C.rosaPale:C.white,border:`2px solid ${isHighlighted?C.green:selectedIds.has(d.id)?C.rosa:isOverdue?'#FCA5A5':C.border}`,borderRadius:12,overflow:'hidden',cursor:'pointer',transition:'border-color 0.15s,background 0.15s',boxShadow:isHighlighted?`0 0 0 3px ${C.greenBg}`:undefined}} onMouseEnter={e=>{if(!bulkMode&&!selectedIds.has(d.id))e.currentTarget.style.borderColor=C.rosa;}} onMouseLeave={e=>{if(!bulkMode&&!selectedIds.has(d.id))e.currentTarget.style.borderColor=isHighlighted?C.green:isOverdue?'#FCA5A5':C.border;}}>
         <div style={{height:100,background:C.ivory,display:'flex',alignItems:'center',justifyContent:'center',position:'relative',overflow:'hidden'}}>
           {(d.image_url||d.photo_url)
             ?<img src={d.image_url||d.photo_url} alt={d.name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
@@ -1214,7 +1267,7 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
       <div style={{padding:'10px 20px',background:C.white,borderBottom:`1px solid ${C.border}`,display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
         <div style={{flex:1,position:'relative',minWidth:180}}>
           <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',color:C.gray,pointerEvents:'none',fontSize:13}}>🔍</span>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name, SKU, color…" style={{...inputSt,paddingLeft:30,margin:0,width:'100%'}}/>
+          <input data-testid="inventory-search-input" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name, SKU, color…" style={{...inputSt,paddingLeft:30,margin:0,width:'100%'}}/>
         </div>
         <select value={groupFilter} onChange={e=>setGroupFilter(e.target.value)} style={{...inputSt,margin:0,width:'auto'}}>
           <option value="all">All categories</option>
@@ -1238,32 +1291,110 @@ const Inventory = ({inventory: liveInventory, updateDress, createDress, events, 
             </button>
           ))}
         </div>
-        <button onClick={()=>{setBulkMode(b=>!b);setSelectedIds(new Set());setBulkStatus('');}}
-          style={{padding:'6px 12px',minHeight:44,borderRadius:6,border:`1px solid ${bulkMode?C.rosa:C.border}`,background:bulkMode?C.rosaPale:'transparent',color:bulkMode?C.rosaText:C.gray,fontSize:11,fontWeight:bulkMode?600:400,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
+        <button
+          data-testid="inventory-bulk-toggle"
+          onClick={()=>{setBulkMode(b=>!b);setSelectedIds(new Set());setBulkStatus('');}}
+          aria-pressed={bulkMode}
+          style={{padding:'6px 12px',minHeight:44,borderRadius:6,border:`1px solid ${bulkMode?'#B08A4E':C.border}`,background:bulkMode?'#FBF2E3':'transparent',color:bulkMode?'#5C3A0F':C.gray,fontSize:11,fontWeight:bulkMode?600:400,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap'}}>
           {bulkMode?'✕ Cancel':'⊡ Select'}
         </button>
       </div>
 
-      {/* Bulk action bar */}
+      {/* Bulk action bar — couture cream + gold, replaces the legacy electric-blue chrome */}
       {bulkMode&&(
-        <div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 20px',background:'#EFF6FF',borderBottom:`1px solid #BFDBFE`,flexShrink:0,flexWrap:'wrap'}}>
-          <span style={{fontSize:12,fontWeight:500,color:'#1D4ED8'}}>{selectedIds.size} selected</span>
-          {selectedIds.size===0&&<span style={{fontSize:12,color:'#6B7280'}}>Click items to select</span>}
-          {selectedIds.size>0&&(<>
-            <select value={bulkStatus} onChange={e=>setBulkStatus(e.target.value)} style={{...inputSt,margin:0,width:'auto',fontSize:12,padding:'4px 8px'}}>
-              <option value="">Set status…</option>
-              <option value="available">✅ Available</option>
-              <option value="reserved">🟡 Reserved</option>
-              <option value="cleaning">🫧 Cleaning</option>
-              <option value="returned">📦 Returned</option>
-            </select>
-            <button onClick={bulkApply} disabled={!bulkStatus||bulkWorking}
-              style={{padding:'5px 14px',borderRadius:7,border:'none',background:!bulkStatus||bulkWorking?C.grayBg:'#1D4ED8',color:!bulkStatus||bulkWorking?C.gray:'#fff',fontSize:12,fontWeight:500,cursor:!bulkStatus||bulkWorking?'default':'pointer'}}>
-              {bulkWorking?'Updating…':'Apply'}
-            </button>
-            <button onClick={selectAll} style={{padding:'5px 10px',borderRadius:7,border:`1px solid #BFDBFE`,background:'transparent',color:'#1D4ED8',fontSize:12,cursor:'pointer'}}>Select all</button>
-          </>)}
-          <button onClick={()=>{setBulkMode(false);setSelectedIds(new Set());setBulkStatus('');}} style={{marginLeft:'auto',background:'none',border:'none',fontSize:13,cursor:'pointer',color:'#6B7280'}}>Done</button>
+        <div data-testid="inventory-bulk-bar" style={{
+          display:'flex',alignItems:'center',gap:10,
+          padding:'10px 20px',
+          background:'#FEFBF7',                      // couture warm cream
+          borderTop:'1px solid #E8DFD2',
+          borderBottom:'1.5px solid #B08A4E',         // brand gold underline
+          flexShrink:0,flexWrap:'wrap',
+        }}>
+          <span style={{
+            fontFamily:"'Cormorant Garamond','Didot',Georgia,serif",
+            fontStyle:'italic',
+            fontSize:16,
+            color:'#5C3A0F',
+            lineHeight:1,
+          }} data-testid="inventory-bulk-count">
+            {selectedIds.size} selected
+          </span>
+
+          {selectedIds.size===0 && (
+            <span style={{fontSize:12,color:'#7A6670'}}>Click items to select, or</span>
+          )}
+
+          {/* Select-all is always available — even at 0, lets the user grab the whole filtered set */}
+          <button
+            data-testid="inventory-bulk-select-all"
+            onClick={selectAll}
+            style={{padding:'5px 12px',borderRadius:6,border:'1px solid #D8C9A8',background:'transparent',color:'#5C3A0F',fontSize:11.5,cursor:'pointer',letterSpacing:'0.04em',textTransform:'uppercase',fontWeight:500}}>
+            Select all {filtered.length}
+          </button>
+
+          {selectedIds.size>0 && (
+            <>
+              <button
+                data-testid="inventory-bulk-clear"
+                onClick={clearSelection}
+                style={{padding:'5px 10px',borderRadius:6,border:'1px solid #E8DFD2',background:'transparent',color:'#7A6670',fontSize:11.5,cursor:'pointer'}}>
+                Clear
+              </button>
+
+              <span style={{width:1,height:22,background:'#E8DFD2',margin:'0 4px'}} aria-hidden="true"/>
+
+              <button
+                data-testid="inventory-bulk-mark-cleaned"
+                onClick={bulkMarkCleaned}
+                disabled={bulkWorking}
+                style={{padding:'6px 14px',borderRadius:6,border:'none',background:bulkWorking?'#E8DFD2':'#B08A4E',color:bulkWorking?'#7A6670':'#FEFBF7',fontSize:12,fontWeight:500,letterSpacing:'0.03em',cursor:bulkWorking?'default':'pointer'}}>
+                {bulkWorking?'Updating…':'Mark cleaned & available'}
+              </button>
+              <button
+                data-testid="inventory-bulk-send-to-cleaning"
+                onClick={bulkSendToCleaning}
+                disabled={bulkWorking}
+                style={{padding:'6px 12px',borderRadius:6,border:'1px solid #D8C9A8',background:'transparent',color:'#5C3A0F',fontSize:12,cursor:bulkWorking?'default':'pointer'}}>
+                Send to cleaning
+              </button>
+              <button
+                data-testid="inventory-bulk-clear-assignment"
+                onClick={bulkClearAssignment}
+                disabled={bulkWorking}
+                style={{padding:'6px 12px',borderRadius:6,border:'1px solid #D8C9A8',background:'transparent',color:'#5C3A0F',fontSize:12,cursor:bulkWorking?'default':'pointer'}}>
+                Reset assignment
+              </button>
+
+              <span style={{width:1,height:22,background:'#E8DFD2',margin:'0 4px'}} aria-hidden="true"/>
+
+              <select
+                data-testid="inventory-bulk-status-select"
+                value={bulkStatus}
+                onChange={e=>setBulkStatus(e.target.value)}
+                style={{...inputSt,margin:0,width:'auto',fontSize:12,padding:'5px 8px',background:C.white,borderColor:'#D8C9A8'}}>
+                <option value="">Other status…</option>
+                <option value="available">Available</option>
+                <option value="reserved">Reserved</option>
+                <option value="cleaning">Cleaning</option>
+                <option value="returned">Returned</option>
+                <option value="overdue">Overdue</option>
+              </select>
+              <button
+                data-testid="inventory-bulk-status-apply"
+                onClick={bulkApplyStatus}
+                disabled={!bulkStatus||bulkWorking}
+                style={{padding:'6px 14px',borderRadius:6,border:'none',background:(!bulkStatus||bulkWorking)?'#E8DFD2':'#5C4A52',color:(!bulkStatus||bulkWorking)?'#7A6670':'#FEFBF7',fontSize:12,fontWeight:500,cursor:(!bulkStatus||bulkWorking)?'default':'pointer'}}>
+                Apply
+              </button>
+            </>
+          )}
+
+          <button
+            data-testid="inventory-bulk-done"
+            onClick={exitBulk}
+            style={{marginLeft:'auto',background:'none',border:'none',fontSize:12,cursor:'pointer',color:'#7A6670',letterSpacing:'0.04em'}}>
+            Done · Esc
+          </button>
         </div>
       )}
 

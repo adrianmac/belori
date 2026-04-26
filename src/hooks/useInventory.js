@@ -96,9 +96,58 @@ export function useInventory({ enabled = true } = {}) {
     return { error }
   }
 
+  /**
+   * Bulk update — single Postgres round-trip + one batched audit-log insert.
+   *
+   * The previous pattern of `for (const id of selectedIds) await updateDress(id, updates)`
+   * fired N HTTP requests, N audit inserts, and N fetchInventory() calls.
+   * For 30 items, that's ~90 sequential round-trips. This collapses to 3.
+   *
+   * @param {string[]} ids - inventory rows to update
+   * @param {object}   updates - same shape as updateDress (e.g. { status: 'available' })
+   * @param {object}   audit - { action, user_name, client_name, notes } applied to each row
+   * @returns {Promise<{ error: any, updatedCount: number }>}
+   */
+  async function bulkUpdate(ids, updates, audit = {}) {
+    if (!ids || ids.length === 0) return { error: null, updatedCount: 0 }
+
+    // Snapshot prev statuses for the audit trail (so we can record the
+    // before/after correctly even though all rows transition together).
+    const prevById = new Map(inventory.map(i => [i.id, i.status || null]))
+
+    // 1. Single UPDATE — RLS still enforces boutique scoping
+    const { error } = await supabase
+      .from('inventory')
+      .update(updates)
+      .in('id', ids)
+      .eq('boutique_id', boutique.id)
+
+    if (error) return { error, updatedCount: 0 }
+
+    // 2. One bulk INSERT into the audit log (best-effort; never blocks success)
+    if (audit.action) {
+      const rows = ids.map(id => ({
+        boutique_id: boutique.id,
+        inventory_id: id,
+        action: audit.action,
+        prev_status: prevById.get(id) ?? null,
+        new_status: updates.status ?? null,
+        user_name: audit.user_name || boutique?.name || 'Staff',
+        client_name: audit.client_name ?? null,
+        notes: audit.notes ?? null,
+      }))
+      // Fire-and-forget — audit log failure should never block the user
+      supabase.from('inventory_audit_log').insert(rows).then(() => {})
+    }
+
+    // 3. Single re-fetch (vs N inside the old loop)
+    await fetchInventory()
+    return { error: null, updatedCount: ids.length }
+  }
+
   const lowStockCount = inventory.filter(i =>
     i.track && i.currentStock != null && i.minStock > 0 && i.currentStock <= i.minStock
   ).length
 
-  return { inventory, loading, lowStockCount, createDress, updateDress, refetch: fetchInventory }
+  return { inventory, loading, lowStockCount, createDress, updateDress, bulkUpdate, refetch: fetchInventory }
 }

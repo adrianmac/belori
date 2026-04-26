@@ -340,7 +340,7 @@ export default function NovelApp() {
   const { isEnabled } = useModules();
   const { events, loading: eventsLoading, createEvent, updateEvent, duplicateEvent, deleteEvent } = useEvents();
   const { clients, loading: clientsLoading, createClient, createClientsBulk, updateClient, adjustLoyaltyPoints, redeemPoints, adjustPoints, mergeClients } = useClients();
-  const { inventory, updateDress, createDress } = useInventory({ enabled: isEnabled('dress_rental') });
+  const { inventory, updateDress, createDress, bulkUpdate: bulkUpdateInventory } = useInventory({ enabled: isEnabled('dress_rental') });
   const { alterations, createJob, updateJob, cancelJob, deleteJob, logTimeEntry } = useAlterations({ enabled: isEnabled('alterations') });
   const { payments, loading: paymentsLoading, refunds, markPaid, createMilestone, createMilestones, logReminder, deleteMilestone, logRefund, logTip } = usePayments();
   const alertCount = useAlertCount({ events, payments, inventory });
@@ -376,7 +376,7 @@ export default function NovelApp() {
       case 'clients':       return <Clients setScreen={goScreen} setSelectedEvent={setSelectedEvent} clients={clients} clientsLoading={clientsLoading} createClient={createClient} createClientsBulk={createClientsBulk} updateClient={updateClient} adjustLoyaltyPoints={adjustLoyaltyPoints} redeemPoints={redeemPoints} adjustPoints={adjustPoints} mergeClients={mergeClients} inventory={inventory}/>;
       case 'alterations':   return en('alterations')    ? <Alterations alterations={alterations} staff={staff} clients={clients} createClient={createClient} createJob={createJob} updateJob={updateJob} cancelJob={cancelJob} deleteJob={deleteJob} logTimeEntry={logTimeEntry}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'inventory':     return en('dress_rental')   ? <DressRentals inventory={inventory} updateDress={updateDress} createDress={createDress} createJob={createJob} events={events} clients={clients} staff={staff} setScreen={goScreen} setSelectedEvent={setSelectedEvent}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
-      case 'inv_full':      return en('decoration')     ? <Inventory inventory={inventory} updateDress={updateDress} createDress={createDress} events={events} updateEvent={updateEvent} clients={clients} setScreen={goScreen}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
+      case 'inv_full':      return en('decoration')     ? <Inventory inventory={inventory} updateDress={updateDress} bulkUpdate={bulkUpdateInventory} createDress={createDress} events={events} updateEvent={updateEvent} clients={clients} setScreen={goScreen}/> : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'qr_labels':     return <QRCodesPage setScreen={goScreen}/>;
       case 'schedule':      return <Suspense fallback={<PageLoading/>}><ScheduleScreen setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events} staff={staff} clients={clients}/></Suspense>;
       case 'payments':      return <Payments payments={payments} paymentsLoading={paymentsLoading} markPaid={markPaid} logReminder={logReminder} deleteMilestone={deleteMilestone} createMilestone={createMilestone} setScreen={goScreen} setSelectedEvent={setSelectedEvent} events={events}/>;
