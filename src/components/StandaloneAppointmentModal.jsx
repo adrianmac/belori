@@ -3,6 +3,7 @@ import { C } from '../lib/colors';
 import { PrimaryBtn, GhostBtn, inputSt, LBL, useToast } from '../lib/ui.jsx';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { findAppointmentConflicts, formatConflict } from '../lib/appointmentConflicts';
 
 const APPT_TYPES = [
   { value: 'consultation', label: 'Consultation' },
@@ -25,6 +26,9 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  // Conflicts: null = not checked, [] = no conflicts, [...] = conflicts found.
+  // When non-empty, the user must explicitly click "Book anyway" → save(true).
+  const [conflicts, setConflicts] = useState(null);
 
   // Client search state
   const [search, setSearch] = useState('');
@@ -92,10 +96,35 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
     return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
   }
 
-  const save = async () => {
+  // Reset conflict gate whenever the inputs that affect it change.
+  useEffect(() => {
+    setConflicts(null);
+  }, [date, time, staffId, selectedClient?.id]);
+
+  const save = async (force = false) => {
     const clientName = search.trim();
     if (!clientName) return setErr('Enter a client name or walk-in name');
     if (!date) return setErr('Date is required');
+
+    // Conflict check — only when we have time + (staff OR client).
+    // First save attempt runs the check; if conflicts are found, we surface
+    // them inline. The user can then click "Book anyway" which calls
+    // save(true) to skip this gate. Changing time/staff/client clears the
+    // gate via the effect above (so the next attempt re-checks).
+    if (!force) {
+      const found = await findAppointmentConflicts({
+        boutiqueId: boutique.id,
+        date,
+        time: time || null,
+        staffId: staffId || null,
+        clientId: selectedClient?.id || null,
+      });
+      if (found.length > 0) {
+        setConflicts(found);
+        return;
+      }
+    }
+
     setSaving(true);
     setErr('');
     const clientPhone = phone.trim() || selectedClient?.phone || null;
@@ -229,6 +258,8 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
                 {filtered.map(c => (
                   <div
                     key={c.id}
+                    data-testid={`appointment-client-option-${c.id}`}
+                    role="option"
                     onMouseDown={() => selectClient(c)}
                     style={{
                       padding: '9px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
@@ -304,13 +335,61 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
           </div>
         </div>
 
+        {/* Conflict warning — appears inline below the form fields */}
+        {conflicts && conflicts.length > 0 && (
+          <div data-testid="appointment-conflict-warning" style={{
+            margin: '0 20px 12px',
+            padding: '12px 16px',
+            background: '#FBF2E3',                  // couture warningBg
+            borderLeft: '2px solid #B07A2E',         // couture warning
+            fontSize: 13,
+            color: '#1C1118',
+            fontFamily: "'DM Sans','Inter',system-ui,sans-serif",
+          }}>
+            <div style={{
+              fontFamily: "'Cormorant Garamond','Didot',Georgia,serif",
+              fontStyle: 'italic',
+              fontSize: 16,
+              color: '#1C1118',
+              marginBottom: 6,
+            }}>
+              Schedule conflict.
+            </div>
+            <div style={{ fontSize: 12, color: '#5C4A52', lineHeight: 1.6 }}>
+              {conflicts.map((c, i) => (
+                <div key={c.id || i} style={{ marginBottom: 4 }}>
+                  · {formatConflict(c, staff)}
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 8, fontSize: 11, color: '#8E6B34', textTransform: 'uppercase', letterSpacing: '0.14em', fontWeight: 500 }}>
+              Pick a different time, or click "Book anyway" to override.
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
         <div style={{
           padding: '12px 20px', borderTop: `1px solid ${C.border}`,
           display: 'flex', justifyContent: 'space-between', flexShrink: 0,
         }}>
           <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose} />
-          <PrimaryBtn label={saving ? 'Saving…' : 'Schedule appointment'} onClick={save} disabled={saving} />
+          {conflicts && conflicts.length > 0 ? (
+            <PrimaryBtn
+              label={saving ? 'Saving…' : 'Book anyway'}
+              colorScheme="warning"
+              onClick={() => save(true)}
+              disabled={saving}
+              data-testid="appointment-book-anyway"
+            />
+          ) : (
+            <PrimaryBtn
+              label={saving ? 'Saving…' : 'Schedule appointment'}
+              onClick={() => save(false)}
+              disabled={saving}
+              data-testid="appointment-schedule-button"
+            />
+          )}
         </div>
       </div>
     </div>

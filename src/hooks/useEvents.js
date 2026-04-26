@@ -492,7 +492,23 @@ export function useEvent(eventId) {
     }
   }
 
-  async function createAppointment({ type, date, time, notes, note, staff_id = null }) {
+  async function createAppointment({ type, date, time, notes, note, staff_id = null, force = false }) {
+    // Conflict check unless caller passed force=true (user clicked "Book anyway")
+    if (!force) {
+      const { findAppointmentConflicts } = await import('../lib/appointmentConflicts')
+      const conflicts = await findAppointmentConflicts({
+        boutiqueId: boutique.id,
+        date,
+        time: time || null,
+        staffId: staff_id || null,
+        clientId: event?.client_id || null,
+      })
+      if (conflicts.length > 0) {
+        // Surface to caller — caller decides to retry with force:true or abort
+        return { error: null, conflicts }
+      }
+    }
+
     const { error } = await supabase.from('appointments').insert({
       event_id: eventId,
       boutique_id: boutique.id,
@@ -519,7 +535,7 @@ export function useEvent(eventId) {
         }).catch(() => {}) // fire and forget — don't block
       }
     }
-    return { error }
+    return { error, conflicts: [] }
   }
 
   async function toggleService(serviceType) {

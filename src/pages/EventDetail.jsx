@@ -16,6 +16,7 @@ import { useSmsMessages } from '../hooks/useSmsMessages';
 import { supabase } from '../lib/supabase';
 import { useRequiresPlan } from '../components/UpgradeGate';
 import { useStaffAvailability } from '../hooks/useStaffAvailability';
+import { formatConflict as formatApptConflict } from '../lib/appointmentConflicts';
 import ContractModal from '../components/modals/ContractModal';
 import NewMilestoneModal from '../components/modals/NewMilestoneModal';
 import DecorationPlanner from '../components/DecorationPlanner';
@@ -539,6 +540,10 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
   // Duplicate appointment detection
   const [apptConflict,setApptConflict]=useState(null);
   const [addDateConflict,setAddDateConflict]=useState(null);
+  // Server-side conflicts returned from createAppointment (more thorough than the
+  // in-memory `addDateConflict` — covers cross-event staff and client double-books).
+  // When set, the modal "Add date" button switches to "Book anyway" (force=true).
+  const [addDateDbConflicts,setAddDateDbConflicts]=useState(null);
   // Staff availability warning for add-date modal
   const [staffAvailWarn,setStaffAvailWarn]=useState(null); // {available,busy,reason} | null
   const { isStaffAvailable } = useStaffAvailability();
@@ -3162,13 +3167,13 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
           <div role="dialog" aria-modal="true" aria-labelledby="eventdetail-add-date-title" style={{background:C.white,borderRadius:16,width:400,overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
             <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <span id="eventdetail-add-date-title" style={{fontWeight:600,fontSize:15,color:C.ink}}>Add important date</span>
-              <button onClick={()=>{setShowAddDate(false);setAddDateConflict(null);setStaffAvailWarn(null);}} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
+              <button onClick={()=>{setShowAddDate(false);setAddDateConflict(null);setAddDateDbConflicts(null);setStaffAvailWarn(null);}} aria-label="Close" style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1,padding:'4px 8px',minHeight:32,minWidth:32}}>×</button>
             </div>
             <div style={{padding:20,display:'flex',flexDirection:'column',gap:12}}>
               <div><label htmlFor="appt-type" style={LBL}>Appointment type</label><select id="appt-type" value={addDateForm.type} onChange={e=>setAddDateForm(f=>({...f,type:e.target.value}))} style={{...inputSt}}>{['Measurements','1st fitting','2nd fitting','Final fitting','Dress pickup','Dress return','Planning consult','Venue walkthrough','Other'].map(t=><option key={t}>{t}</option>)}</select></div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                <div><label htmlFor="appt-date" style={LBL}>Date</label><input id="appt-date" type="date" value={addDateForm.date} onChange={e=>{const d=e.target.value;setAddDateForm(f=>({...f,date:d}));setAddDateConflict(checkConflict(d,addDateForm.time,addDateForm.staff_id||null));checkStaffAvailability(addDateForm.staff_id,d,addDateForm.time);}} style={{...inputSt}}/></div>
-                <div><label htmlFor="appt-time" style={LBL}>Time</label><input id="appt-time" type="time" value={addDateForm.time} onChange={e=>{const t=e.target.value;setAddDateForm(f=>({...f,time:t}));setAddDateConflict(checkConflict(addDateForm.date,t,addDateForm.staff_id||null));checkStaffAvailability(addDateForm.staff_id,addDateForm.date,t);}} style={{...inputSt}}/></div>
+                <div><label htmlFor="appt-date" style={LBL}>Date</label><input id="appt-date" type="date" value={addDateForm.date} onChange={e=>{const d=e.target.value;setAddDateForm(f=>({...f,date:d}));setAddDateConflict(checkConflict(d,addDateForm.time,addDateForm.staff_id||null));setAddDateDbConflicts(null);checkStaffAvailability(addDateForm.staff_id,d,addDateForm.time);}} style={{...inputSt}}/></div>
+                <div><label htmlFor="appt-time" style={LBL}>Time</label><input id="appt-time" type="time" value={addDateForm.time} onChange={e=>{const t=e.target.value;setAddDateForm(f=>({...f,time:t}));setAddDateConflict(checkConflict(addDateForm.date,t,addDateForm.staff_id||null));setAddDateDbConflicts(null);checkStaffAvailability(addDateForm.staff_id,addDateForm.date,t);}} style={{...inputSt}}/></div>
               </div>
               {addDateConflict&&(()=>{
                 const c=addDateConflict[0];
@@ -3180,7 +3185,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                   </div>
                 );
               })()}
-              <div><label htmlFor="appt-staff" style={LBL}>Assigned staff</label><select id="appt-staff" value={addDateForm.staff_id} onChange={e=>{const sid=e.target.value;setAddDateForm(f=>({...f,staff_id:sid}));setAddDateConflict(checkConflict(addDateForm.date,addDateForm.time,sid||null));setStaffAvailWarn(null);checkStaffAvailability(sid,addDateForm.date,addDateForm.time);}} style={{...inputSt}}><option value="">Unassigned</option>{staff.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
+              <div><label htmlFor="appt-staff" style={LBL}>Assigned staff</label><select id="appt-staff" value={addDateForm.staff_id} onChange={e=>{const sid=e.target.value;setAddDateForm(f=>({...f,staff_id:sid}));setAddDateConflict(checkConflict(addDateForm.date,addDateForm.time,sid||null));setAddDateDbConflicts(null);setStaffAvailWarn(null);checkStaffAvailability(sid,addDateForm.date,addDateForm.time);}} style={{...inputSt}}><option value="">Unassigned</option>{staff.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
               {staffAvailWarn && addDateForm.staff_id && (()=>{
                 const staffName = staff.find(s=>s.id===addDateForm.staff_id)?.name || 'Staff';
                 if (!staffAvailWarn.available) {
@@ -3201,9 +3206,53 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
               })()}
               <div><label htmlFor="appt-notes" style={LBL}>Notes</label><input id="appt-notes" value={addDateForm.notes} onChange={e=>setAddDateForm(f=>({...f,notes:e.target.value}))} placeholder="Optional notes…" style={{...inputSt}}/></div>
             </div>
+            {/* Server-side double-book detection (covers cross-event staff and client conflicts).
+                Only renders after the user clicks "Add date" and the DB returned conflicts. */}
+            {addDateDbConflicts && addDateDbConflicts.length > 0 && (
+              <div data-testid="add-date-conflict-warning" style={{margin:'0 20px 12px',padding:'14px 16px',borderRadius:10,background:'#FBF2E3',border:'1.5px solid #B07A2E'}}>
+                <div style={{fontFamily:'"Cormorant Garamond", serif',fontStyle:'italic',fontSize:18,color:'#5C3A0F',marginBottom:6,lineHeight:1.2}}>Schedule conflict.</div>
+                <ul style={{margin:0,padding:'0 0 0 18px',fontSize:12.5,color:'#5C4A52',lineHeight:1.55}}>
+                  {addDateDbConflicts.map(c => (
+                    <li key={c.id}>{formatApptConflict(c, staff)}</li>
+                  ))}
+                </ul>
+                <div style={{marginTop:8,fontSize:11.5,color:'#7A6670',fontStyle:'italic'}}>Click <strong>Book anyway</strong> below to override.</div>
+              </div>
+            )}
             <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
-              <GhostBtn label="Cancel" colorScheme="danger" onClick={()=>{setShowAddDate(false);setAddDateConflict(null);setStaffAvailWarn(null);}}/>
-              <PrimaryBtn label={saving?'Saving…':'Add date'} colorScheme="success" onClick={async()=>{if(!addDateForm.date){toast('Date required','warn');return;}const typeMap={'Measurements':'measurement','1st fitting':'try_on','2nd fitting':'try_on_2','Final fitting':'final_fitting','Dress pickup':'pickup','Dress return':'return','Planning consult':'consultation','Venue walkthrough':'walkthrough','Other':'other'};setSaving(true);const{error}=await createAppointment({type:typeMap[addDateForm.type]||'other',date:addDateForm.date,time:addDateForm.time,notes:addDateForm.notes,staff_id:addDateForm.staff_id||null});setSaving(false);if(error){toast('Failed to save','warn');return;}setShowAddDate(false);setAddDateConflict(null);setStaffAvailWarn(null);setAddDateForm({type:'Measurements',date:'',time:'10:00',staff_id:'',notes:''});toast('Date added ✓');}}/>
+              <GhostBtn label="Cancel" colorScheme="danger" onClick={()=>{setShowAddDate(false);setAddDateConflict(null);setAddDateDbConflicts(null);setStaffAvailWarn(null);}}/>
+              <PrimaryBtn
+                label={saving ? 'Saving…' : (addDateDbConflicts && addDateDbConflicts.length > 0 ? 'Book anyway' : 'Add date')}
+                colorScheme={addDateDbConflicts && addDateDbConflicts.length > 0 ? 'warning' : 'success'}
+                data-testid="add-date-submit"
+                onClick={async()=>{
+                  if(!addDateForm.date){toast('Date required','warn');return;}
+                  const typeMap={'Measurements':'measurement','1st fitting':'try_on','2nd fitting':'try_on_2','Final fitting':'final_fitting','Dress pickup':'pickup','Dress return':'return','Planning consult':'consultation','Venue walkthrough':'walkthrough','Other':'other'};
+                  const force = !!(addDateDbConflicts && addDateDbConflicts.length > 0);
+                  setSaving(true);
+                  const { error, conflicts } = await createAppointment({
+                    type: typeMap[addDateForm.type]||'other',
+                    date: addDateForm.date,
+                    time: addDateForm.time,
+                    notes: addDateForm.notes,
+                    staff_id: addDateForm.staff_id||null,
+                    force,
+                  });
+                  setSaving(false);
+                  // Server returned conflicts → gate behind "Book anyway"
+                  if (conflicts && conflicts.length > 0) {
+                    setAddDateDbConflicts(conflicts);
+                    return;
+                  }
+                  if(error){toast('Failed to save','warn');return;}
+                  setShowAddDate(false);
+                  setAddDateConflict(null);
+                  setAddDateDbConflicts(null);
+                  setStaffAvailWarn(null);
+                  setAddDateForm({type:'Measurements',date:'',time:'10:00',staff_id:'',notes:''});
+                  toast('Date added ✓');
+                }}
+              />
             </div>
           </div>
         </div>
