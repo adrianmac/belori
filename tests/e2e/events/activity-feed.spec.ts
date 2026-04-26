@@ -146,4 +146,49 @@ test.describe('EventDetail → Activity feed', () => {
     await page.getByTestId('activity-filter-all').click()
     await expect(page.getByTestId('activity-item-note').first()).toBeVisible()
   })
+
+  test('quick-add Note inline form posts a note and refreshes the feed', async ({ page }) => {
+    // Navigate to the activity feed (same path as the first test)
+    await page.goto('/dashboard')
+    await page.waitForSelector('[data-testid="dashboard-root"]', { timeout: 10_000 })
+    await page.getByTestId('nav-events').click()
+    await page.waitForLoadState('networkidle', { timeout: 15_000 })
+    await page.getByTestId('events-view-list').click()
+    await page.getByTestId(`event-row-${ALPHA_WEDDING_ID}`).click()
+    await page.getByTestId('event-tab-more').click()
+    await page.getByTestId('event-tab-activity').click()
+    await expect(page.getByTestId('event-activity-feed')).toBeVisible({ timeout: 8_000 })
+
+    // Capture the entry count BEFORE adding so we can assert it grew by 1
+    const totalLocator = page.getByTestId('activity-total-count')
+    const before = parseInt(((await totalLocator.textContent()) || '').match(/^(\d+)/)?.[1] ?? '0', 10)
+
+    // Open the quick-add form, type a note, save
+    await page.getByTestId('activity-quick-add-note').click()
+    const input = page.getByTestId('activity-quick-add-input')
+    await expect(input).toBeVisible()
+    const noteText = `Quick note ${TAG} ${Date.now()}`
+    await input.fill(noteText)
+    await page.getByTestId('activity-quick-add-save').click()
+
+    // Form collapses → quick-add button visible again
+    await expect(page.getByTestId('activity-quick-add-note')).toBeVisible({ timeout: 6_000 })
+
+    // The new note text appears in the feed (most reliable signal — exact
+    // total count can drift if another test run has left seeded rows).
+    await expect(page.getByTestId('event-activity-feed')).toContainText(noteText, { timeout: 6_000 })
+
+    // The total count strictly increased
+    await expect.poll(async () => {
+      const txt = (await totalLocator.textContent()) || ''
+      return parseInt(txt.match(/^(\d+)/)?.[1] ?? '0', 10)
+    }, { timeout: 6_000 }).toBeGreaterThan(before)
+
+    // Cleanup the seed note so the next run is deterministic
+    const sb = serviceClient()
+    await sb.from('notes').delete()
+      .eq('boutique_id', TEST_BOUTIQUES.alpha.id)
+      .eq('event_id',    ALPHA_WEDDING_ID)
+      .eq('text',        noteText)
+  })
 })

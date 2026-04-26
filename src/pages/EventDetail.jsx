@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react';
 import { C, fmt, pct, SVC_LABELS, SVC_COLORS, EVT_TYPES, TYPE_SVCS,
   TYPE_DEFAULT_SVCS, COLOR_PRESETS, STYLE_OPTIONS } from '../lib/colors';
 import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, SvcTag,
@@ -28,7 +28,10 @@ import StaffNotesCard from './event-detail/StaffNotesCard';
 import ContractsCard from './event-detail/ContractsCard';
 import EventRunsheet from './event-detail/EventRunsheet';
 import EventVendorsCard from './event-detail/EventVendorsCard';
-import EventActivityFeed from './event-detail/EventActivityFeed';
+// EventActivityFeed is lazy-loaded — it's not on the critical first paint
+// path (lives behind the Activity tab in the More ▾ dropdown) and pulls
+// in client_interactions / Cormorant fonts that aren't needed otherwise.
+const EventActivityFeed = React.lazy(() => import('./event-detail/EventActivityFeed'));
 import { useBridalParty } from '../hooks/useBridalParty';
 import { useEventFiles } from '../hooks/useEventFiles';
 import { useGuests } from '../hooks/useGuests';
@@ -2855,7 +2858,29 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
 
           {/* ACTIVITY TAB — Improvement 4 */}
           {coordTab === 'activity' && (
-            <EventActivityFeed event={liveEvent} />
+            <Suspense fallback={
+              <div data-testid="event-activity-loading" style={{
+                padding: '32px 18px', textAlign: 'center',
+                fontFamily: "'Cormorant Garamond','Didot',Georgia,serif",
+                fontStyle: 'italic', fontSize: 16, color: '#7A6670',
+              }}>
+                Loading the journal…
+              </div>
+            }>
+              <EventActivityFeed
+                event={liveEvent}
+                onQuickAddNote={async (text) => {
+                  const result = await addNote(text);
+                  if (!result?.error) {
+                    // Refetch the event so the new note appears in the feed
+                    // (event.notes is populated by useEvent.fetchEvent).
+                    await refetchEvent?.();
+                    toast('Note added ✓');
+                  }
+                  return result;
+                }}
+              />
+            </Suspense>
           )}
 
           {/* FILES TAB */}

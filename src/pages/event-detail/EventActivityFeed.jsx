@@ -28,13 +28,23 @@ import { useClientInteractions } from '../../hooks/useClients';
 // `actor` is "Sarah" / "Owner" / "System" — whoever caused the event,
 // when known.
 export function buildActivityStream({
-  notes = [],
-  tasks = [],
-  milestones = [],
-  appointments = [],
-  alterations = [],
-  interactions = [],
-}) {
+  notes,
+  tasks,
+  milestones,
+  appointments,
+  alterations,
+  interactions,
+} = {}) {
+  // Coerce nulls to empty arrays — destructuring defaults only apply to
+  // `undefined`, but real-world callers (and useEvent before the first fetch
+  // resolves) often pass null. Keep this defensive so the feed never crashes
+  // mid-render and the test harness can hammer edge cases freely.
+  notes        = notes        || [];
+  tasks        = tasks        || [];
+  milestones   = milestones   || [];
+  appointments = appointments || [];
+  alterations  = alterations  || [];
+  interactions = interactions || [];
   const out = [];
 
   // ── Notes ──────────────────────────────────────────────────────────────
@@ -247,7 +257,7 @@ const FILTERS = [
 
 // ─── Component ────────────────────────────────────────────────────────────
 
-export default function EventActivityFeed({ event }) {
+export default function EventActivityFeed({ event, onQuickAddNote }) {
   const clientId = event?.client_id || event?.client?.id || null;
   // Pull this client's interactions and filter to ones tagged with this event.
   // Fetch is no-op if clientId missing.
@@ -287,6 +297,23 @@ export default function EventActivityFeed({ event }) {
     return c;
   }, [stream]);
 
+  // ── Quick-add Note state ──────────────────────────────────────────────
+  // Lets the operator drop a note directly into the feed without leaving the
+  // tab. Inline expand-on-click — no modal, no extra cognitive load.
+  const [quickNoteOpen, setQuickNoteOpen]     = useState(false);
+  const [quickNoteText, setQuickNoteText]     = useState('');
+  const [quickNoteSaving, setQuickNoteSaving] = useState(false);
+  const submitQuickNote = async () => {
+    const text = quickNoteText.trim();
+    if (!text || !onQuickAddNote) return;
+    setQuickNoteSaving(true);
+    const result = await onQuickAddNote(text);
+    setQuickNoteSaving(false);
+    if (result?.error) return;
+    setQuickNoteText('');
+    setQuickNoteOpen(false);
+  };
+
   return (
     <div data-testid="event-activity-feed" style={{
       background: '#FEFBF7',          // couture warm cream
@@ -298,7 +325,7 @@ export default function EventActivityFeed({ event }) {
       <div style={{
         padding: '14px 18px',
         borderBottom: '1px solid #E8DFD2',
-        display: 'flex', alignItems: 'baseline', gap: 12,
+        display: 'flex', alignItems: 'center', gap: 12,
       }}>
         <span style={{
           fontFamily: "'Cormorant Garamond','Didot',Georgia,serif",
@@ -318,7 +345,103 @@ export default function EventActivityFeed({ event }) {
         }} data-testid="activity-total-count">
           {stream.length} entr{stream.length === 1 ? 'y' : 'ies'}
         </span>
+        {onQuickAddNote && !quickNoteOpen && (
+          <button
+            data-testid="activity-quick-add-note"
+            onClick={() => setQuickNoteOpen(true)}
+            style={{
+              marginLeft: 'auto',
+              padding: '5px 12px',
+              borderRadius: 999,
+              border: '1px solid #D8C9A8',
+              background: 'transparent',
+              color: '#5C3A0F',
+              fontSize: 11.5,
+              cursor: 'pointer',
+              letterSpacing: '0.04em',
+              fontWeight: 500,
+            }}
+          >
+            + Note
+          </button>
+        )}
       </div>
+
+      {/* Inline quick-add Note form (collapsed by default) */}
+      {onQuickAddNote && quickNoteOpen && (
+        <div style={{
+          padding: '12px 18px',
+          background: '#FFFDFA',
+          borderBottom: '1px solid #E8DFD2',
+        }}>
+          <textarea
+            data-testid="activity-quick-add-input"
+            autoFocus
+            value={quickNoteText}
+            onChange={e => setQuickNoteText(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Escape') {
+                setQuickNoteOpen(false);
+                setQuickNoteText('');
+              }
+              // Cmd/Ctrl+Enter submits — keeps the inline form keyboard-native
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                submitQuickNote();
+              }
+            }}
+            placeholder="Add a quick note about this event…"
+            rows={2}
+            style={{
+              width: '100%',
+              boxSizing: 'border-box',
+              border: '1px solid #D8C9A8',
+              borderRadius: 8,
+              padding: '8px 10px',
+              fontSize: 12.5,
+              fontFamily: "'DM Sans','Inter',system-ui,sans-serif",
+              color: '#1C1118',
+              background: '#FEFBF7',
+              resize: 'vertical',
+              outline: 'none',
+            }}
+          />
+          <div style={{
+            display: 'flex', gap: 8, marginTop: 8, alignItems: 'center',
+          }}>
+            <button
+              data-testid="activity-quick-add-save"
+              onClick={submitQuickNote}
+              disabled={!quickNoteText.trim() || quickNoteSaving}
+              style={{
+                padding: '6px 14px', borderRadius: 6, border: 'none',
+                background: (!quickNoteText.trim() || quickNoteSaving) ? '#E8DFD2' : '#B08A4E',
+                color: (!quickNoteText.trim() || quickNoteSaving) ? '#7A6670' : '#FEFBF7',
+                fontSize: 12, fontWeight: 500, letterSpacing: '0.03em',
+                cursor: (!quickNoteText.trim() || quickNoteSaving) ? 'default' : 'pointer',
+              }}
+            >
+              {quickNoteSaving ? 'Saving…' : 'Save'}
+            </button>
+            <button
+              data-testid="activity-quick-add-cancel"
+              onClick={() => { setQuickNoteOpen(false); setQuickNoteText(''); }}
+              style={{
+                background: 'none', border: 'none', color: '#7A6670',
+                fontSize: 12, cursor: 'pointer',
+              }}
+            >
+              Cancel · Esc
+            </button>
+            <span style={{
+              marginLeft: 'auto', fontSize: 10.5, color: '#8E8278',
+              letterSpacing: '0.04em',
+            }}>
+              ⌘↵ to save
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Filter chips */}
       <div style={{
