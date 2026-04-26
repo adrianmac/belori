@@ -2427,7 +2427,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                     {upcomingAppts.length>0&&<span style={{fontSize:11,padding:'2px 8px',borderRadius:999,background:'var(--bg-warning)',color:'var(--text-warning)',fontWeight:600}}>{upcomingAppts.length} upcoming</span>}
                   </div>
                   <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                    <button onClick={()=>setShowAddDate(true)} style={{fontSize:12,color:C.gray,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Add date</button>
+                    <button data-testid="event-add-date-btn" onClick={()=>setShowAddDate(true)} style={{fontSize:12,color:C.gray,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Add date</button>
                     <button onClick={()=>setShowScheduleAppt(true)} style={{fontSize:12,color:C.rosaText,background:'none',border:'none',cursor:'pointer',fontWeight:500}}>+ Schedule</button>
                     {typeof setConsultationProps === 'function' && (
                       <button
