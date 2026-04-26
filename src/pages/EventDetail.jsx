@@ -28,6 +28,7 @@ import StaffNotesCard from './event-detail/StaffNotesCard';
 import ContractsCard from './event-detail/ContractsCard';
 import EventRunsheet from './event-detail/EventRunsheet';
 import EventVendorsCard from './event-detail/EventVendorsCard';
+import EventActivityFeed from './event-detail/EventActivityFeed';
 import { useBridalParty } from '../hooks/useBridalParty';
 import { useEventFiles } from '../hooks/useEventFiles';
 import { useGuests } from '../hooks/useGuests';
@@ -1399,7 +1400,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                 ))}
                 {/* More ▾ dropdown */}
                 <div ref={moreTabsRef} style={{position:'relative',flexShrink:0}}>
-                  <button onClick={e=>{const r=e.currentTarget.getBoundingClientRect();setMoreTabsPos({top:r.bottom+4,right:window.innerWidth-r.right});setShowMoreTabs(s=>!s);}}
+                  <button data-testid="event-tab-more" onClick={e=>{const r=e.currentTarget.getBoundingClientRect();setMoreTabsPos({top:r.bottom+4,right:window.innerWidth-r.right});setShowMoreTabs(s=>!s);}}
                     style={{flexShrink:0,padding:'12px 14px',border:'none',background:'none',
                       color:isSecondaryActive?C.rosaText:C.gray,fontSize:12,
                       fontWeight:isSecondaryActive?600:400,cursor:'pointer',whiteSpace:'nowrap',
@@ -1416,7 +1417,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                   {showMoreTabs&&(
                     <div style={{position:'fixed',top:moreTabsPos.top,right:moreTabsPos.right,background:C.white,border:`1px solid ${C.border}`,borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,0.12)',zIndex:500,minWidth:160,overflow:'hidden'}}>
                       {secondaryTabs.map(tab=>(
-                        <button key={tab.key} onClick={()=>{setCoordTab(tab.key);setShowMoreTabs(false);}}
+                        <button key={tab.key} data-testid={`event-tab-${tab.key}`} onClick={()=>{setCoordTab(tab.key);setShowMoreTabs(false);}}
                           style={{display:'flex',alignItems:'center',justifyContent:'space-between',width:'100%',padding:'9px 16px',background:coordTab===tab.key?C.rosaPale:'transparent',border:'none',
                             cursor:'pointer',fontSize:13,textAlign:'left',color:coordTab===tab.key?C.rosaText:C.ink,fontWeight:coordTab===tab.key?600:400}}
                           onMouseEnter={e=>{if(coordTab!==tab.key)e.currentTarget.style.background=C.grayBg;}}
@@ -2853,34 +2854,9 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
           )}
 
           {/* ACTIVITY TAB — Improvement 4 */}
-          {coordTab === 'activity' && (()=>{
-            const feed = [
-              ...notes.map(n => ({ type:'note', date: n.created_at, text: n.text, author: n.author_name, icon:'📝' })),
-              ...milestones.filter(m=>m.status==='paid'&&m.paid_date).map(m => ({ type:'payment', date: m.paid_date+'T12:00:00', text:`${m.label} paid — ${fmt(Number(m.amount))}`, icon:'💳' })),
-              ...tasks.filter(t=>t.done).map(t => ({ type:'task', date: t.done_at||null, text: t.text, icon:'✅' })),
-              ...appointments.filter(a=>a.status==='done'&&a.date).map(a => ({ type:'appt', date: a.date+'T12:00:00', text:`${(a.type||'Appointment').replace(/_/g,' ')} completed`, icon:'📅' })),
-            ].filter(e=>e.date).sort((a,b)=>new Date(b.date)-new Date(a.date));
-
-            return (
-              <div style={{background:C.white,borderRadius:12,border:`1px solid ${C.border}`,overflow:'hidden'}}>
-                <div style={{padding:'12px 16px',borderBottom:`1px solid ${C.border}`,fontSize:13,fontWeight:600,color:C.ink}}>⚡ Event activity</div>
-                {feed.length===0 ? (
-                  <div style={{padding:'24px 16px',textAlign:'center',fontSize:12,color:C.gray}}>No activity yet</div>
-                ) : feed.map((item,i) => (
-                  <div key={i} style={{display:'flex',gap:12,padding:'10px 16px',borderBottom:i<feed.length-1?`1px solid ${C.border}`:'none',alignItems:'flex-start'}}>
-                    <span style={{fontSize:16,flexShrink:0,marginTop:1}}>{item.icon}</span>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:12,color:C.ink,lineHeight:1.4}}>{item.text}</div>
-                      {item.author && <div style={{fontSize:10,color:C.gray,marginTop:2}}>{item.author}</div>}
-                    </div>
-                    <div style={{fontSize:10,color:C.gray,flexShrink:0}}>
-                      {new Date(item.date).toLocaleDateString('en-US',{month:'short', day:'numeric'})}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
+          {coordTab === 'activity' && (
+            <EventActivityFeed event={liveEvent} />
+          )}
 
           {/* FILES TAB */}
           {coordTab === 'files' && (

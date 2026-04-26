@@ -1918,6 +1918,7 @@ function EventRow({ev,swipedId,setSwipedId,setSelectedEvent,setScreen,duplicateE
       <div
         {...swipe}
         onClick={openDetail}
+        data-testid={`event-row-${ev.id}`}
         style={{background:C.white,border:`1px solid ${isSelected?C.rosa:isOverdue?'#FCA5A5':C.border}`,borderLeft:`4px solid ${accentColor}`,borderRadius:12,paddingTop:14,paddingBottom:14,paddingLeft:14,paddingRight:18,cursor:'pointer',transition:'border-color 0.15s',position:'relative',flex:1}}
         onMouseEnter={e=>{e.currentTarget.parentElement.querySelector('.evt-chk-col').style.opacity='1';e.currentTarget.style.borderColor=isSelected?C.rosa:isOverdue?'#F87171':C.rosa;e.currentTarget.style.borderLeftColor=accentColor;}}
         onMouseLeave={e=>{if(!anySelected&&!isSelected)e.currentTarget.parentElement.querySelector('.evt-chk-col').style.opacity='0';e.currentTarget.style.borderColor=isSelected?C.rosa:isOverdue?'#FCA5A5':C.border;e.currentTarget.style.borderLeftColor=accentColor;}}
@@ -2083,10 +2084,10 @@ const EventsList = ({setScreen,setSelectedEvent,events,eventsLoading,createEvent
         actions={<>
           {/* View toggle */}
           <div style={{display:'flex',border:`1px solid ${C.border}`,borderRadius:8,overflow:'hidden',flexShrink:0}}>
-            <button onClick={()=>setView('calendar')} style={{padding:'6px 12px',border:'none',background:view==='calendar'?C.rosaPale:'transparent',color:view==='calendar'?C.rosaText:C.gray,cursor:'pointer',fontSize:12,fontWeight:view==='calendar'?600:400,display:'flex',alignItems:'center',gap:4,transition:'all 0.15s'}}>
+            <button data-testid="events-view-calendar" onClick={()=>setView('calendar')} style={{padding:'6px 12px',border:'none',background:view==='calendar'?C.rosaPale:'transparent',color:view==='calendar'?C.rosaText:C.gray,cursor:'pointer',fontSize:12,fontWeight:view==='calendar'?600:400,display:'flex',alignItems:'center',gap:4,transition:'all 0.15s'}}>
               📅 Calendar
             </button>
-            <button onClick={()=>setView('list')} style={{padding:'6px 12px',border:'none',borderLeft:`1px solid ${C.border}`,background:view==='list'?C.rosaPale:'transparent',color:view==='list'?C.rosaText:C.gray,cursor:'pointer',fontSize:12,fontWeight:view==='list'?600:400,display:'flex',alignItems:'center',gap:4,transition:'all 0.15s'}}>
+            <button data-testid="events-view-list" onClick={()=>setView('list')} style={{padding:'6px 12px',border:'none',borderLeft:`1px solid ${C.border}`,background:view==='list'?C.rosaPale:'transparent',color:view==='list'?C.rosaText:C.gray,cursor:'pointer',fontSize:12,fontWeight:view==='list'?600:400,display:'flex',alignItems:'center',gap:4,transition:'all 0.15s'}}>
               ☰ List
             </button>
           </div>
