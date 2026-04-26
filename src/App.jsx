@@ -1,29 +1,38 @@
+import { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import { ModuleProvider } from './hooks/useModules.jsx'
+import ErrorBoundary from './components/ErrorBoundary'
+
+// Authenticated entry path — eager so first paint is fast for signed-in users
+import NovelApp from './pages/NovelApp'
+
+// Auth entry points — eager because they're the most-hit unauthenticated routes
 import Login from './pages/Login'
 import Signup from './pages/Signup'
-import ErrorBoundary from './components/ErrorBoundary'
-import NovelApp from './pages/NovelApp'
-import Onboarding from './pages/Onboarding'
-import JoinInvite from './pages/JoinInvite'
-import BookingPage from './pages/BookingPage'
-import ScanPage from './pages/ScanPage'
-import SignContractPage from './pages/SignContractPage'
-import ClientPortalPage from './pages/ClientPortalPage'
 import HomePage from './pages/HomePage'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import LeadForm from './pages/LeadForm'
-import Questionnaire from './pages/Questionnaire'
-import BoutiqueProfilePage from './pages/BoutiqueProfilePage'
-import DataDeletionPage from './pages/DataDeletionPage'
-import TermsOfService from './pages/legal/TermsOfService'
-import PrivacyPolicy from './pages/legal/PrivacyPolicy'
-import SmsTerms from './pages/legal/SmsTerms'
-import DataProcessingAgreement from './pages/legal/DataProcessingAgreement'
-import KioskPage from './pages/KioskPage'
-import CatalogKioskPage from './pages/CatalogKioskPage'
+
+// Everything below is reachable from a public URL but most authenticated
+// users never visit them. Lazy-load to keep them out of the first-paint
+// bundle. Each gets its own chunk that's fetched only on navigation.
+const Onboarding              = lazy(() => import('./pages/Onboarding'))
+const JoinInvite              = lazy(() => import('./pages/JoinInvite'))
+const BookingPage             = lazy(() => import('./pages/BookingPage'))
+const ScanPage                = lazy(() => import('./pages/ScanPage'))
+const SignContractPage        = lazy(() => import('./pages/SignContractPage'))
+const ClientPortalPage        = lazy(() => import('./pages/ClientPortalPage'))
+const ForgotPassword          = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword           = lazy(() => import('./pages/ResetPassword'))
+const LeadForm                = lazy(() => import('./pages/LeadForm'))
+const Questionnaire           = lazy(() => import('./pages/Questionnaire'))
+const BoutiqueProfilePage     = lazy(() => import('./pages/BoutiqueProfilePage'))
+const DataDeletionPage        = lazy(() => import('./pages/DataDeletionPage'))
+const TermsOfService          = lazy(() => import('./pages/legal/TermsOfService'))
+const PrivacyPolicy           = lazy(() => import('./pages/legal/PrivacyPolicy'))
+const SmsTerms                = lazy(() => import('./pages/legal/SmsTerms'))
+const DataProcessingAgreement = lazy(() => import('./pages/legal/DataProcessingAgreement'))
+const KioskPage               = lazy(() => import('./pages/KioskPage'))
+const CatalogKioskPage        = lazy(() => import('./pages/CatalogKioskPage'))
 
 // ─── Couture 404 — editorial fail ───────────────────────────────────────────
 const NotFound = () => (
@@ -123,37 +132,39 @@ function SessionRoute({ children }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/join/:token" element={<JoinInvite />} />
-      <Route path="/book/:slug" element={<BookingPage />} />
-      <Route path="/scan/:id" element={<ScanPage />} />
-      <Route path="/sign/:token" element={<SignContractPage />} />
-      <Route path="/portal/:token" element={<ClientPortalPage />} />
-      <Route path="/lead/:boutiqueId" element={<LeadForm />} />
-      <Route path="/questionnaire/:eventToken" element={<Questionnaire />} />
-      <Route path="/boutique/:slug" element={<BoutiqueProfilePage />} />
-      <Route path="/data-deletion" element={<DataDeletionPage />} />
-      <Route path="/terms" element={<TermsOfService />} />
-      <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/sms-terms" element={<SmsTerms />} />
-      <Route path="/dpa" element={<DataProcessingAgreement />} />
-      <Route path="/kiosk" element={<KioskPage />} />
-      <Route path="/catalog-kiosk" element={<CatalogKioskPage />} />
-      <Route path="/onboarding" element={<SessionRoute><Onboarding /></SessionRoute>} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/*" element={
-        <ErrorBoundary>
-          <PrivateRoute>
-            <ModuleProvider>
-              <NovelApp />
-            </ModuleProvider>
-          </PrivateRoute>
-        </ErrorBoundary>
-      } />
-    </Routes>
+    <Suspense fallback={<Loading />}>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/join/:token" element={<JoinInvite />} />
+        <Route path="/book/:slug" element={<BookingPage />} />
+        <Route path="/scan/:id" element={<ScanPage />} />
+        <Route path="/sign/:token" element={<SignContractPage />} />
+        <Route path="/portal/:token" element={<ClientPortalPage />} />
+        <Route path="/lead/:boutiqueId" element={<LeadForm />} />
+        <Route path="/questionnaire/:eventToken" element={<Questionnaire />} />
+        <Route path="/boutique/:slug" element={<BoutiqueProfilePage />} />
+        <Route path="/data-deletion" element={<DataDeletionPage />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/sms-terms" element={<SmsTerms />} />
+        <Route path="/dpa" element={<DataProcessingAgreement />} />
+        <Route path="/kiosk" element={<KioskPage />} />
+        <Route path="/catalog-kiosk" element={<CatalogKioskPage />} />
+        <Route path="/onboarding" element={<SessionRoute><Onboarding /></SessionRoute>} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/*" element={
+          <ErrorBoundary>
+            <PrivateRoute>
+              <ModuleProvider>
+                <NovelApp />
+              </ModuleProvider>
+            </PrivateRoute>
+          </ErrorBoundary>
+        } />
+      </Routes>
+    </Suspense>
   )
 }

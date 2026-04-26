@@ -72,6 +72,7 @@ const BugReportsAdmin     = lazy(() => import('./BugReportsAdmin'));
 const InventoryHub = lazy(() => import('./InventoryHub'));
 const Finance      = lazy(() => import('./Finance'));
 const ReportsHub   = lazy(() => import('./ReportsHub'));
+const MarketingHub = lazy(() => import('./MarketingHub'));
 
 // ─── Brand color helpers ─────────────────────────────────────────────────
 function hexToPale(hex) {
@@ -450,11 +451,23 @@ export default function NovelApp() {
       case 'retail':        return en('retail')         ? <RetailScreen/>          : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'staff_sched':   return en('staff_sched')    ? <StaffScheduleScreen/>   : <Placeholder title="Module Disabled" icon="🔒"/>;
       case 'audit_ui':      return en('audit_ui')       ? <AuditLogScreen/>        : <Placeholder title="Module Disabled" icon="🔒"/>;
-      case 'waitlist':      return en('waitlist')       ? <WaitlistScreen/>        : <Placeholder title="Module Disabled" icon="🔒"/>;
-      case 'photo_gallery': return en('photo_gallery')  ? <PhotoGalleryScreen/>    : <Placeholder title="Module Disabled" icon="🔒"/>;
-      case 'email_mkt':     return en('email_marketing')? <EmailMarketingScreen/>  : <Placeholder title="Module Disabled" icon="🔒"/>;
-      case 'ticketing':     return en('ticketing')      ? <TicketingScreen/>       : <Placeholder title="Module Disabled" icon="🔒"/>;
-      case 'reviews':       return en('reviews')        ? <ReviewsScreen/>         : <Placeholder title="Module Disabled" icon="🔒"/>;
+      // ─── Marketing hub (Phase 3 IA cleanup) ─────────────────────────────
+      // 'marketing_hub'  → hub, default tab from localStorage
+      // Old marketing screen IDs route here with the right tab pre-selected.
+      case 'marketing_hub':
+      case 'sms_inbox':
+      case 'waitlist':
+      case 'reviews':
+      case 'photo_gallery':
+      case 'email_mkt':
+      case 'ticketing': {
+        const tabMap = {
+          sms_inbox: 'sms', waitlist: 'waitlist', reviews: 'reviews',
+          photo_gallery: 'gallery', email_mkt: 'email', ticketing: 'tickets',
+        };
+        const initialTab = tabMap[screen];
+        return <Suspense fallback={<PageLoading/>}><MarketingHub initialTab={initialTab}/></Suspense>;
+      }
       case 'expenses':      return en('expenses')       ? <Suspense fallback={<PageLoading/>}><ExpensesPage events={events} setScreen={goScreen} setSelectedEvent={setSelectedEvent}/></Suspense> : <Placeholder title="Module Disabled" icon="🔒"/>;
       // 'funnel' is now the Pipeline tab inside Clients — keep the route for
       // backwards-compat but redirect to clients with a hint to open the tab.
@@ -467,7 +480,7 @@ export default function NovelApp() {
       case 'wedding_planner': return <WeddingPlannerComingSoon setScreen={goScreen} selectedEvent={selectedEvent}/>;
       case 'bug_reports':   return <Suspense fallback={<PageLoading/>}><BugReportsAdmin setScreen={goScreen}/></Suspense>;
       case 'roadmap':       return <RoadmapPage />;
-      case 'sms_inbox':     return <SmsInboxPage />;
+      // 'sms_inbox' is handled by the marketing_hub case above
       case 'help':          return <Suspense fallback={<PageLoading/>}><HelpPage /></Suspense>;
       // 'activity_feed' (global) was removed from the nav. Keep the route
       // for any deep links that still point at it.

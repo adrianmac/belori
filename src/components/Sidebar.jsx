@@ -40,6 +40,7 @@ function buildNavStructure(badges = {}, modules = {}, t = (k) => k) {
     { id: 'finance',       label: 'Finance',              icon: 'payments',
       ...(badges.payments ? { badge: badges.payments, badgeColor: 'var(--color-danger)' } : {}) },
     en('reports')      && { id: 'reports_hub', label: t('nav_reports'),    icon: 'reports' },
+    { id: 'marketing_hub', label: 'Marketing',            icon: 'sms' },
     { id: 'my_tasks',      label: 'My Tasks',             icon: 'mytasks',
       ...(badges.myTasks ? { badge: badges.myTasks, badgeColor: 'var(--color-danger)' } : {}) },
     { id: 'settings',      label: t('nav_settings'),      icon: 'settings' },
@@ -72,16 +73,12 @@ function buildNavStructure(badges = {}, modules = {}, t = (k) => k) {
   ].filter(Boolean);
 
   // ── Collapsible: Marketing & Tools ───────────────────────────────────────
-  // Phase 1+2 IA cleanup:
-  //   - 'activity_feed' (global) removed — per-event activity lives on EventDetail
-  //   - 'funnel' (Sales Funnel) removed — Pipeline now renders as a tab in Clients
+  // Phase 3 IA cleanup: SMS Inbox / Waitlist / Reviews / Photo Gallery /
+  // Email Marketing / Ticketing all collapsed into one "Marketing" hub
+  // page with tabs (added at top-level above). This section is now empty
+  // by default — it'll only re-emerge if future modules ship that don't
+  // fit the marketing hub.
   const marketingItems = [
-    { id: 'sms_inbox',        label: 'SMS Inbox',                                        icon: 'sms' },
-    en('waitlist')           && { id: 'waitlist',           label: 'Waitlist',            icon: 'waitlist' },
-    en('reviews')            && { id: 'reviews',            label: 'Reviews',             icon: 'reviews' },
-    en('photo_gallery')      && { id: 'photo_gallery',      label: 'Photo Gallery',       icon: 'gallery' },
-    en('email_marketing')    && { id: 'email_mkt',          label: 'Email Marketing',     icon: 'emailmkt' },
-    en('ticketing')          && { id: 'ticketing',          label: 'Ticketing',           icon: 'ticketing' },
   ].filter(Boolean);
 
   const sections = [];
