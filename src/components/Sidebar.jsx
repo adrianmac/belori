@@ -653,6 +653,7 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
               return (
                 <button
                   key={item.id}
+                  data-testid={`bottom-nav-more-${item.id}`}
                   role="menuitem"
                   aria-current={act ? 'page' : undefined}
                   onClick={() => { setScreen(item.id); setShowMore(false); }}
@@ -674,7 +675,7 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
         {BOTTOM_NAV_ITEMS.map(item => {
           const active = screen === item.id;
           return (
-            <button key={item.id} onClick={() => { setShowMore(false); setScreen(item.id); }}
+            <button key={item.id} data-testid={`bottom-nav-${item.id}`} onClick={() => { setShowMore(false); setScreen(item.id); }}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
                 color: active ? Dtokens.goldDark : '#7A6670', fontSize: 10, fontWeight: active ? 600 : 400, cursor: 'pointer', flex: 1,
                 height: 60, padding: '0', transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent', position: 'relative' }}>

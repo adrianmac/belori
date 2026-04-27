@@ -1895,6 +1895,7 @@ function EventRow({ev,swipedId,setSwipedId,setSelectedEvent,setScreen,duplicateE
       >
         <input
           type="checkbox"
+          data-testid={`event-row-select-${ev.id}`}
           checked={!!isSelected}
           onChange={e=>{e.stopPropagation();onToggleSelect(ev.id);}}
           onClick={e=>e.stopPropagation()}
@@ -2148,14 +2149,14 @@ const EventsList = ({setScreen,setSelectedEvent,events,eventsLoading,createEvent
 
       {/* Bulk action bar (list only) */}
       {anySelected&&view==='list'&&(
-        <div style={{position:'fixed',bottom:16,left:'50%',transform:'translateX(-50%)',zIndex:200,background:C.white,borderRadius:999,boxShadow:'0 4px 24px rgba(0,0,0,0.18)',padding:'10px 18px',display:'flex',alignItems:'center',gap:10,maxWidth:600,border:`1px solid ${C.border}`}}>
-          <span style={{fontSize:13,fontWeight:600,color:C.rosaText,whiteSpace:'nowrap'}}>✓ {selectedIds.size} selected</span>
+        <div data-testid="events-bulk-bar" style={{position:'fixed',bottom:16,left:'50%',transform:'translateX(-50%)',zIndex:200,background:C.white,borderRadius:999,boxShadow:'0 4px 24px rgba(0,0,0,0.18)',padding:'10px 18px',display:'flex',alignItems:'center',gap:10,maxWidth:600,border:`1px solid ${C.border}`}}>
+          <span data-testid="events-bulk-count" style={{fontSize:13,fontWeight:600,color:C.rosaText,whiteSpace:'nowrap'}}>✓ {selectedIds.size} selected</span>
           <div style={{position:'relative'}}>
-            <button onClick={()=>{setShowStatusMenu(s=>!s);setShowCoordMenu(false);}} disabled={bulkWorking} style={{padding:'6px 14px',borderRadius:999,border:`1px solid ${C.border}`,background:C.grayBg,color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>Change status ▾</button>
+            <button data-testid="events-bulk-status-toggle" onClick={()=>{setShowStatusMenu(s=>!s);setShowCoordMenu(false);}} disabled={bulkWorking} style={{padding:'6px 14px',borderRadius:999,border:`1px solid ${C.border}`,background:C.grayBg,color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>Change status ▾</button>
             {showStatusMenu&&(
               <div style={{position:'absolute',bottom:'calc(100% + 6px)',left:0,background:C.white,border:`1px solid ${C.border}`,borderRadius:10,boxShadow:'0 4px 16px rgba(0,0,0,0.12)',zIndex:10,minWidth:150,overflow:'hidden'}}>
                 {[['active','Active'],['confirmed','Confirmed'],['completed','Completed'],['cancelled','Cancelled']].map(([val,lbl])=>(
-                  <button key={val} onClick={()=>bulkChangeStatus(val)} style={{display:'block',width:'100%',padding:'9px 16px',border:'none',background:'none',textAlign:'left',fontSize:13,cursor:'pointer',color:C.ink}} onMouseEnter={e=>e.currentTarget.style.background=C.rosaPale} onMouseLeave={e=>e.currentTarget.style.background='none'}>{lbl}</button>
+                  <button key={val} data-testid={`events-bulk-status-${val}`} onClick={()=>bulkChangeStatus(val)} style={{display:'block',width:'100%',padding:'9px 16px',border:'none',background:'none',textAlign:'left',fontSize:13,cursor:'pointer',color:C.ink}} onMouseEnter={e=>e.currentTarget.style.background=C.rosaPale} onMouseLeave={e=>e.currentTarget.style.background='none'}>{lbl}</button>
                 ))}
               </div>
             )}

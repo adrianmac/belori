@@ -283,6 +283,46 @@ describe('buildActivityStream — client interactions', () => {
   })
 })
 
+describe('buildActivityStream — inventory audit log', () => {
+  test('emits one row per audit entry with pretty action title', () => {
+    const out = buildActivityStream({
+      inventoryAudit: [
+        { id: 'a1', action: 'checked_out', user_name: 'Sarah',
+          client_name: 'Alice', created_at: ISO_LATEST },
+        { id: 'a2', action: 'cleaned',     user_name: 'Maria',
+          created_at: ISO_MID },
+        { id: 'a3', action: 'status_change', prev_status: 'reserved',
+          new_status: 'available', created_at: ISO_EARLIEST },
+      ],
+    });
+    expect(out).toHaveLength(3);
+    expect(out[0]).toMatchObject({
+      kind: 'inventory',
+      headline: 'Dress checked out',
+      actor: 'Sarah',
+      body: expect.stringContaining('Alice'),
+    });
+    expect(out[1]).toMatchObject({ headline: 'Dress cleaned', actor: 'Maria' });
+    expect(out[2]).toMatchObject({
+      headline: expect.stringMatching(/reserved.*available/),
+    });
+  });
+
+  test('rows without created_at are dropped', () => {
+    const out = buildActivityStream({
+      inventoryAudit: [{ id: 'a1', action: 'cleaned' }],
+    });
+    expect(out).toEqual([]);
+  });
+
+  test('unknown action falls through to a generic title', () => {
+    const out = buildActivityStream({
+      inventoryAudit: [{ id: 'a1', action: 'something_new', created_at: ISO_MID }],
+    });
+    expect(out[0].headline).toMatch(/Inventory.*something_new/);
+  });
+});
+
 describe('buildActivityStream — robustness', () => {
   test('does not crash on null/undefined source arrays', () => {
     expect(() => buildActivityStream({

@@ -13,9 +13,11 @@
 // The buildActivityStream() helper is exported separately so it can be
 // unit-tested in isolation.
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { C, fmt } from '../../lib/colors';
 import { useClientInteractions } from '../../hooks/useClients';
+import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
 import { analytics } from '../../lib/analytics';
 
 // ─── Pure helper — merge every event-scoped record into one timeline ──────
@@ -35,17 +37,19 @@ export function buildActivityStream({
   appointments,
   alterations,
   interactions,
+  inventoryAudit,
 } = {}) {
   // Coerce nulls to empty arrays — destructuring defaults only apply to
   // `undefined`, but real-world callers (and useEvent before the first fetch
   // resolves) often pass null. Keep this defensive so the feed never crashes
   // mid-render and the test harness can hammer edge cases freely.
-  notes        = notes        || [];
-  tasks        = tasks        || [];
-  milestones   = milestones   || [];
-  appointments = appointments || [];
-  alterations  = alterations  || [];
-  interactions = interactions || [];
+  notes          = notes          || [];
+  tasks          = tasks          || [];
+  milestones     = milestones     || [];
+  appointments   = appointments   || [];
+  alterations    = alterations    || [];
+  interactions   = interactions   || [];
+  inventoryAudit = inventoryAudit || [];
   const out = [];
 
   // ── Notes ──────────────────────────────────────────────────────────────
@@ -179,10 +183,50 @@ export function buildActivityStream({
     });
   }
 
+  // ── Inventory audit-log entries scoped to this event ──
+  // Surfaces dress checked-out / returned / cleaned alongside payments,
+  // appointments, and notes — gives a complete event history.
+  for (const a of inventoryAudit) {
+    if (!a.created_at) continue;
+    out.push({
+      id: `invaudit-${a.id}`,
+      kind: 'inventory',
+      at: a.created_at,
+      headline: prettyInventoryAuditTitle(a),
+      body: inventoryAuditBody(a),
+      actor: a.user_name || null,
+    });
+  }
+
   // Drop anything without a timestamp, sort newest-first
   return out
     .filter(x => !!x.at)
     .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+}
+
+// Pretty headline for an inventory_audit_log row. The action column is
+// a small enum the inventory bulk-update writer uses; we map each to a
+// scannable english phrase.
+function prettyInventoryAuditTitle(a) {
+  const action = (a.action || '').toLowerCase();
+  switch (action) {
+    case 'checked_out': return 'Dress checked out';
+    case 'checked_in':  return 'Dress checked in';
+    case 'cleaned':     return 'Dress cleaned';
+    case 'reserved':    return 'Dress reserved';
+    case 'created':     return 'Inventory item added';
+    case 'status_change':
+      return `Status: ${a.prev_status || '?'} → ${a.new_status || '?'}`;
+    case 'updated':     return 'Inventory updated';
+    default:            return `Inventory · ${action || 'change'}`;
+  }
+}
+
+function inventoryAuditBody(a) {
+  const parts = [];
+  if (a.client_name) parts.push(`for ${a.client_name}`);
+  if (a.notes) parts.push(a.notes);
+  return parts.length ? parts.join(' — ') : null;
 }
 
 function formatApptWhen(a) {
@@ -244,6 +288,7 @@ const KIND_META = {
   task:        { color: '#7A6670', label: 'task',        icon: '✓' },
   alteration:  { color: '#6B7A8E', label: 'alteration',  icon: '✁' },
   interaction: { color: '#9C7A52', label: 'interaction', icon: '✉' },
+  inventory:   { color: '#3F7E72', label: 'inventory',   icon: '◇' },
 };
 
 const FILTERS = [
@@ -254,6 +299,7 @@ const FILTERS = [
   { key: 'task',         label: 'Tasks' },
   { key: 'alteration',   label: 'Alterations' },
   { key: 'interaction',  label: 'Comms' },
+  { key: 'inventory',    label: 'Inventory' },
 ];
 
 // Shared style for the small + Note / + Task pills in the header
@@ -272,6 +318,7 @@ const QUICK_PILL_STYLE = {
 // ─── Component ────────────────────────────────────────────────────────────
 
 export default function EventActivityFeed({ event, onQuickAddNote, onQuickAddTask }) {
+  const { boutique } = useAuth();
   const clientId = event?.client_id || event?.client?.id || null;
   // Pull this client's interactions and filter to ones tagged with this event.
   // Fetch is no-op if clientId missing.
@@ -281,14 +328,32 @@ export default function EventActivityFeed({ event, onQuickAddNote, onQuickAddTas
     [interactions, event?.id]
   );
 
+  // Inventory audit-log entries scoped to this event — surfaces dress
+  // pickups, returns, cleanings inside the journal alongside payments
+  // and appointments. Refetch when the event id changes.
+  const [inventoryAudit, setInventoryAudit] = useState([]);
+  useEffect(() => {
+    if (!boutique?.id || !event?.id) return;
+    let alive = true;
+    supabase.from('inventory_audit_log')
+      .select('id, action, prev_status, new_status, user_name, client_name, notes, created_at')
+      .eq('boutique_id', boutique.id)
+      .eq('event_id',    event.id)
+      .order('created_at', { ascending: false })
+      .limit(200)
+      .then(({ data }) => { if (alive && data) setInventoryAudit(data); });
+    return () => { alive = false; };
+  }, [boutique?.id, event?.id]);
+
   const stream = useMemo(() => buildActivityStream({
-    notes:        event?.notes        || [],
-    tasks:        event?.tasks        || [],
-    milestones:   event?.milestones   || [],
-    appointments: event?.appointments || [],
-    alterations:  event?.alteration_jobs || [],
-    interactions: eventScopedInteractions,
-  }), [event, eventScopedInteractions]);
+    notes:          event?.notes        || [],
+    tasks:          event?.tasks        || [],
+    milestones:     event?.milestones   || [],
+    appointments:   event?.appointments || [],
+    alterations:    event?.alteration_jobs || [],
+    interactions:   eventScopedInteractions,
+    inventoryAudit: inventoryAudit,
+  }), [event, eventScopedInteractions, inventoryAudit]);
 
   const [filter, setFilter] = useState('all');
   const visible = filter === 'all' ? stream : stream.filter(s => s.kind === filter);
