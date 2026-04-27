@@ -255,9 +255,22 @@ const FILTERS = [
   { key: 'interaction',  label: 'Comms' },
 ];
 
+// Shared style for the small + Note / + Task pills in the header
+const QUICK_PILL_STYLE = {
+  padding: '5px 12px',
+  borderRadius: 999,
+  border: '1px solid #D8C9A8',
+  background: 'transparent',
+  color: '#5C3A0F',
+  fontSize: 11.5,
+  cursor: 'pointer',
+  letterSpacing: '0.04em',
+  fontWeight: 500,
+};
+
 // ─── Component ────────────────────────────────────────────────────────────
 
-export default function EventActivityFeed({ event, onQuickAddNote }) {
+export default function EventActivityFeed({ event, onQuickAddNote, onQuickAddTask }) {
   const clientId = event?.client_id || event?.client?.id || null;
   // Pull this client's interactions and filter to ones tagged with this event.
   // Fetch is no-op if clientId missing.
@@ -297,21 +310,35 @@ export default function EventActivityFeed({ event, onQuickAddNote }) {
     return c;
   }, [stream]);
 
-  // ── Quick-add Note state ──────────────────────────────────────────────
-  // Lets the operator drop a note directly into the feed without leaving the
-  // tab. Inline expand-on-click — no modal, no extra cognitive load.
-  const [quickNoteOpen, setQuickNoteOpen]     = useState(false);
-  const [quickNoteText, setQuickNoteText]     = useState('');
-  const [quickNoteSaving, setQuickNoteSaving] = useState(false);
-  const submitQuickNote = async () => {
-    const text = quickNoteText.trim();
-    if (!text || !onQuickAddNote) return;
-    setQuickNoteSaving(true);
-    const result = await onQuickAddNote(text);
-    setQuickNoteSaving(false);
+  // ── Quick-add state ─────────────────────────────────────────────────────
+  // Two inline quick-adds (Note + Task) share the same expand/collapse
+  // shape. `quickKind` is null when nothing is open; otherwise 'note' or
+  // 'task'. The expanded form renders below the chip header.
+  const [quickKind, setQuickKind]   = useState(null);   // null | 'note' | 'task'
+  const [quickText, setQuickText]   = useState('');
+  const [quickSaving, setQuickSaving] = useState(false);
+
+  const handlerForKind = (k) => k === 'note' ? onQuickAddNote : k === 'task' ? onQuickAddTask : null;
+
+  const submitQuick = async () => {
+    const text = quickText.trim();
+    const handler = handlerForKind(quickKind);
+    if (!text || !handler) return;
+    setQuickSaving(true);
+    const result = await handler(text);
+    setQuickSaving(false);
     if (result?.error) return;
-    setQuickNoteText('');
-    setQuickNoteOpen(false);
+    setQuickText('');
+    setQuickKind(null);
+  };
+
+  const openQuick = (k) => {
+    setQuickKind(k);
+    setQuickText('');
+  };
+  const cancelQuick = () => {
+    setQuickKind(null);
+    setQuickText('');
   };
 
   return (
@@ -345,52 +372,52 @@ export default function EventActivityFeed({ event, onQuickAddNote }) {
         }} data-testid="activity-total-count">
           {stream.length} entr{stream.length === 1 ? 'y' : 'ies'}
         </span>
-        {onQuickAddNote && !quickNoteOpen && (
-          <button
-            data-testid="activity-quick-add-note"
-            onClick={() => setQuickNoteOpen(true)}
-            style={{
-              marginLeft: 'auto',
-              padding: '5px 12px',
-              borderRadius: 999,
-              border: '1px solid #D8C9A8',
-              background: 'transparent',
-              color: '#5C3A0F',
-              fontSize: 11.5,
-              cursor: 'pointer',
-              letterSpacing: '0.04em',
-              fontWeight: 500,
-            }}
-          >
-            + Note
-          </button>
+        {!quickKind && (onQuickAddNote || onQuickAddTask) && (
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+            {onQuickAddNote && (
+              <button
+                data-testid="activity-quick-add-note"
+                onClick={() => openQuick('note')}
+                style={QUICK_PILL_STYLE}
+              >
+                + Note
+              </button>
+            )}
+            {onQuickAddTask && (
+              <button
+                data-testid="activity-quick-add-task"
+                onClick={() => openQuick('task')}
+                style={QUICK_PILL_STYLE}
+              >
+                + Task
+              </button>
+            )}
+          </div>
         )}
       </div>
 
-      {/* Inline quick-add Note form (collapsed by default) */}
-      {onQuickAddNote && quickNoteOpen && (
+      {/* Inline quick-add form (Note OR Task) */}
+      {quickKind && (
         <div style={{
           padding: '12px 18px',
           background: '#FFFDFA',
           borderBottom: '1px solid #E8DFD2',
-        }}>
+        }} data-testid={`activity-quick-add-form-${quickKind}`}>
           <textarea
             data-testid="activity-quick-add-input"
             autoFocus
-            value={quickNoteText}
-            onChange={e => setQuickNoteText(e.target.value)}
+            value={quickText}
+            onChange={e => setQuickText(e.target.value)}
             onKeyDown={e => {
-              if (e.key === 'Escape') {
-                setQuickNoteOpen(false);
-                setQuickNoteText('');
-              }
-              // Cmd/Ctrl+Enter submits — keeps the inline form keyboard-native
+              if (e.key === 'Escape') cancelQuick();
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
-                submitQuickNote();
+                submitQuick();
               }
             }}
-            placeholder="Add a quick note about this event…"
+            placeholder={quickKind === 'task'
+              ? 'New task — what needs to happen?'
+              : 'Add a quick note about this event…'}
             rows={2}
             style={{
               width: '100%',
@@ -411,21 +438,21 @@ export default function EventActivityFeed({ event, onQuickAddNote }) {
           }}>
             <button
               data-testid="activity-quick-add-save"
-              onClick={submitQuickNote}
-              disabled={!quickNoteText.trim() || quickNoteSaving}
+              onClick={submitQuick}
+              disabled={!quickText.trim() || quickSaving}
               style={{
                 padding: '6px 14px', borderRadius: 6, border: 'none',
-                background: (!quickNoteText.trim() || quickNoteSaving) ? '#E8DFD2' : '#B08A4E',
-                color: (!quickNoteText.trim() || quickNoteSaving) ? '#7A6670' : '#FEFBF7',
+                background: (!quickText.trim() || quickSaving) ? '#E8DFD2' : '#B08A4E',
+                color: (!quickText.trim() || quickSaving) ? '#7A6670' : '#FEFBF7',
                 fontSize: 12, fontWeight: 500, letterSpacing: '0.03em',
-                cursor: (!quickNoteText.trim() || quickNoteSaving) ? 'default' : 'pointer',
+                cursor: (!quickText.trim() || quickSaving) ? 'default' : 'pointer',
               }}
             >
-              {quickNoteSaving ? 'Saving…' : 'Save'}
+              {quickSaving ? 'Saving…' : (quickKind === 'task' ? 'Add task' : 'Save')}
             </button>
             <button
               data-testid="activity-quick-add-cancel"
-              onClick={() => { setQuickNoteOpen(false); setQuickNoteText(''); }}
+              onClick={cancelQuick}
               style={{
                 background: 'none', border: 'none', color: '#7A6670',
                 fontSize: 12, cursor: 'pointer',

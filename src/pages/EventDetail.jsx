@@ -2891,6 +2891,17 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                   }
                   return result;
                 }}
+                onQuickAddTask={async (text) => {
+                  // Minimal task — General category, no due date / assignee.
+                  // The activity feed is for friction-free capture; users
+                  // can edit the task later in the Tasks tab if needed.
+                  const result = await addLiveTask({ text, category: 'General', alert: false });
+                  if (!result?.error) {
+                    await refetchEvent?.();
+                    toast('Task added ✓');
+                  }
+                  return result;
+                }}
               />
             </Suspense>
           )}

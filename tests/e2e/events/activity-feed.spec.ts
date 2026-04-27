@@ -191,4 +191,38 @@ test.describe('EventDetail → Activity feed', () => {
       .eq('event_id',    ALPHA_WEDDING_ID)
       .eq('text',        noteText)
   })
+
+  test('quick-add Task inline form posts a task and refreshes the feed', async ({ page }) => {
+    await page.goto('/dashboard')
+    await page.waitForSelector('[data-testid="dashboard-root"]', { timeout: 10_000 })
+    await page.getByTestId('nav-events').click()
+    await page.waitForLoadState('networkidle', { timeout: 15_000 })
+    await page.getByTestId('events-view-list').click()
+    await page.getByTestId(`event-row-${ALPHA_WEDDING_ID}`).click()
+    await page.getByTestId('event-tab-more').click()
+    await page.getByTestId('event-tab-activity').click()
+    await expect(page.getByTestId('event-activity-feed')).toBeVisible({ timeout: 8_000 })
+
+    // Open the + Task form (separate pill from + Note)
+    await page.getByTestId('activity-quick-add-task').click()
+    const form = page.getByTestId('activity-quick-add-form-task')
+    await expect(form).toBeVisible()
+
+    const taskText = `Quick task ${TAG} ${Date.now()}`
+    await page.getByTestId('activity-quick-add-input').fill(taskText)
+    await page.getByTestId('activity-quick-add-save').click()
+
+    // Form collapses → quick-add buttons visible again
+    await expect(page.getByTestId('activity-quick-add-task')).toBeVisible({ timeout: 6_000 })
+
+    // The new task text appears in the feed (renders as a Task body line)
+    await expect(page.getByTestId('event-activity-feed')).toContainText(taskText, { timeout: 6_000 })
+
+    // Cleanup
+    const sb = serviceClient()
+    await sb.from('tasks').delete()
+      .eq('boutique_id', TEST_BOUTIQUES.alpha.id)
+      .eq('event_id',    ALPHA_WEDDING_ID)
+      .eq('text',        taskText)
+  })
 })
