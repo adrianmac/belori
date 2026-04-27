@@ -143,6 +143,13 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
     });
     setSaving(false);
     if (error) { setErr(error.message); return; }
+    // Adoption tracking — fires only when the user actually overrode a
+    // conflict (force=true). Lets us see how often the safety rail is bypassed.
+    if (force && conflicts && conflicts.length > 0) {
+      import('../lib/analytics').then(({ analytics }) =>
+        analytics.appointmentBookAnyway({ surface: 'standalone', conflictCount: conflicts.length })
+      ).catch(() => {});
+    }
     // Fire-and-forget confirmation SMS if phone is known
     if (clientPhone) {
       const firstName = clientName.split(' ')[0] || 'there';

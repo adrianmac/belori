@@ -11,6 +11,7 @@
 
 import React, { useState, lazy, Suspense } from 'react';
 import { C } from '../lib/colors';
+import { analytics } from '../lib/analytics';
 import Reports from './Reports';
 // AccountingScreen is a stub from ModuleStubs.jsx, not a standalone file.
 import { AccountingScreen } from './ModuleStubs.jsx';
@@ -37,6 +38,7 @@ export default function ReportsHub({ initialTab, ...rest }) {
   const switchTab = (k) => {
     setTab(k);
     try { localStorage.setItem(TAB_LS_KEY, k); } catch { /* ignore */ }
+    analytics.hubTabSwitch({ hub: 'reports', tab: k });
   };
 
   return (

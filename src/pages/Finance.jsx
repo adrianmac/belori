@@ -16,6 +16,7 @@
 
 import React, { useState, lazy, Suspense } from 'react';
 import { C } from '../lib/colors';
+import { analytics } from '../lib/analytics';
 import Payments from './Payments';
 // OnlinePaymentsScreen is a stub from ModuleStubs.jsx (not its own file).
 // Keep it eager-imported since it's tiny.
@@ -47,6 +48,7 @@ export default function Finance({ initialTab, ...rest }) {
   const switchTab = (k) => {
     setTab(k);
     try { localStorage.setItem(TAB_LS_KEY, k); } catch { /* ignore */ }
+    analytics.hubTabSwitch({ hub: 'finance', tab: k });
   };
 
   return (

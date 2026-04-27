@@ -609,20 +609,23 @@ const BottomNav = ({ screen, setScreen, badges = {} }) => {
     };
   }, [showMore]);
 
+  // Updated for the Phase 1+2+3 IA cleanup: bottom bar surfaces the new
+  // unified hubs instead of the legacy single-feature screens.
   const BOTTOM_NAV_ITEMS = [
-    { id: 'dashboard',   label: t('nav_dashboard'),   icon: 'overview' },
-    { id: 'events',      label: t('nav_events'),      icon: 'events',      badge: badges.events      || 0 },
-    { id: 'clients',     label: t('nav_clients'),     icon: 'clients' },
-    { id: 'payments',    label: t('nav_payments'),    icon: 'payments',    badge: badges.payments    || 0, badgeColor: '#DC2626' },
+    { id: 'dashboard',     label: t('nav_dashboard'),   icon: 'overview' },
+    { id: 'events',        label: t('nav_events'),      icon: 'events',   badge: badges.events   || 0 },
+    { id: 'clients',       label: t('nav_clients'),     icon: 'clients' },
+    { id: 'finance',       label: 'Finance',            icon: 'payments', badge: badges.payments || 0, badgeColor: '#DC2626' },
   ];
 
   const MORE_ITEMS = [
-    { id: 'alterations', label: t('nav_alterations'), icon: 'alterations', badge: badges.alterations || 0, badgeColor: '#DC2626' },
-    { id: 'inventory',   label: 'Dress Rentals',      icon: 'rentals'  },
-    { id: 'schedule',    label: 'Schedule',            icon: 'calendar' },
-    { id: 'billing',     label: 'Invoices',            icon: 'payments' },
-    { id: 'my_tasks',    label: 'My Tasks',            icon: 'mytasks',  badge: badges.myTasks || 0, badgeColor: '#DC2626' },
-    { id: 'settings',    label: t('nav_settings'),     icon: 'settings' },
+    { id: 'alterations',   label: t('nav_alterations'), icon: 'alterations', badge: badges.alterations || 0, badgeColor: '#DC2626' },
+    { id: 'inventory_hub', label: 'Inventory',          icon: 'rentals'  },
+    { id: 'schedule',      label: 'Schedule',           icon: 'calendar' },
+    { id: 'reports_hub',   label: t('nav_reports'),     icon: 'reports' },
+    { id: 'marketing_hub', label: 'Marketing',          icon: 'sms' },
+    { id: 'my_tasks',      label: 'My Tasks',           icon: 'mytasks',  badge: badges.myTasks || 0, badgeColor: '#DC2626' },
+    { id: 'settings',      label: t('nav_settings'),    icon: 'settings' },
   ];
 
   const moreActive = MORE_ITEMS.some(i => i.id === screen);

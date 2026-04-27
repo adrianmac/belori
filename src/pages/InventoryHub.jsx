@@ -22,6 +22,7 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { C } from '../lib/colors';
 import { Topbar } from '../lib/ui.jsx';
+import { analytics } from '../lib/analytics';
 import Inventory from './Inventory';
 const DressRentals = lazy(() => import('./DressRentals'));
 
@@ -48,6 +49,7 @@ export default function InventoryHub({ initialTab, ...rest }) {
   const switchTab = (k) => {
     setTab(k);
     try { localStorage.setItem(TAB_LS_KEY, k); } catch { /* ignore */ }
+    analytics.hubTabSwitch({ hub: 'inventory', tab: k });
   };
 
   return (

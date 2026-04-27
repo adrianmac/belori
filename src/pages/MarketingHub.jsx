@@ -20,6 +20,7 @@
 import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { C } from '../lib/colors';
 import { useModules } from '../hooks/useModules.jsx';
+import { analytics } from '../lib/analytics';
 const SmsInboxPage          = lazy(() => import('./SmsInboxPage'));
 import {
   WaitlistScreen, ReviewsScreen, PhotoGalleryScreen,
@@ -64,6 +65,7 @@ export default function MarketingHub({ initialTab, ...rest }) {
   const switchTab = (k) => {
     setTab(k);
     try { localStorage.setItem(TAB_LS_KEY, k); } catch { /* ignore */ }
+    analytics.hubTabSwitch({ hub: 'marketing', tab: k });
   };
 
   // Empty-fall-through if EVERY module is disabled — shouldn't happen since

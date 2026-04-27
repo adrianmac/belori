@@ -16,6 +16,7 @@
 import React, { useMemo, useState } from 'react';
 import { C, fmt } from '../../lib/colors';
 import { useClientInteractions } from '../../hooks/useClients';
+import { analytics } from '../../lib/analytics';
 
 // ─── Pure helper — merge every event-scoped record into one timeline ──────
 //
@@ -328,6 +329,7 @@ export default function EventActivityFeed({ event, onQuickAddNote, onQuickAddTas
     const result = await handler(text);
     setQuickSaving(false);
     if (result?.error) return;
+    analytics.activityQuickAdd({ kind: quickKind });
     setQuickText('');
     setQuickKind(null);
   };

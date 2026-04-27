@@ -1007,6 +1007,8 @@ const Inventory = ({inventory: liveInventory, updateDress, bulkUpdate, createDre
     setBulkWorking(false);
     if(res.error){toast('Bulk update failed','warn');return;}
     toast(`${ids.length} item${ids.length!==1?'s':''} ${toastLabel} ✓`);
+    // Adoption tracking — dynamic import keeps analytics off the critical path
+    import('../lib/analytics').then(({analytics})=>analytics.inventoryBulkAction({action:auditAction,count:ids.length})).catch(()=>{});
     exitBulk();
   };
 
