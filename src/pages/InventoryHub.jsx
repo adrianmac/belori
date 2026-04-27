@@ -23,6 +23,7 @@ import React, { useState, lazy, Suspense } from 'react';
 import { C } from '../lib/colors';
 import { Topbar } from '../lib/ui.jsx';
 import { analytics } from '../lib/analytics';
+import { usePageTitle } from '../hooks/usePageTitle';
 import Inventory from './Inventory';
 const DressRentals = lazy(() => import('./DressRentals'));
 
@@ -34,6 +35,7 @@ const TABS = [
 ];
 
 export default function InventoryHub({ initialTab, ...rest }) {
+  usePageTitle('Inventory');
   // initialTab can come from a screen-ID alias (the parent maps inv_full →
   // 'catalog' and inventory → 'rentals'). Falls back to localStorage, then
   // 'catalog' as the safe default — most users start by browsing catalog.

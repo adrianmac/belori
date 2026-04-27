@@ -17,6 +17,7 @@ import { supabase } from '../lib/supabase';
 import { useRequiresPlan } from '../components/UpgradeGate';
 import { useStaffAvailability } from '../hooks/useStaffAvailability';
 import { formatConflict as formatApptConflict } from '../lib/appointmentConflicts';
+import { usePageTitle } from '../hooks/usePageTitle';
 import ContractModal from '../components/modals/ContractModal';
 import NewMilestoneModal from '../components/modals/NewMilestoneModal';
 // Eager: rendered on the Summary tab (first paint of EventDetail)
@@ -336,6 +337,14 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
   const { myRole, boutique, session } = useAuth();
   const hasPro = useRequiresPlan('pro');
   const { event: liveEvent, loading: eventLoading, createAppointment, toggleService, addDecoItem, removeDecoItem, updateDecoItem, refetch: refetchEvent } = useEvent(eventId);
+  // Browser tab + bookmark title — derives from the loaded event so a user
+  // with multiple tabs open can scan which boutique / client each is on.
+  // Renders 'Event' until the data loads (avoids `null · Belori`).
+  usePageTitle(
+    liveEvent?.client?.name
+      ? `${liveEvent.client.name} · ${(liveEvent.type || 'event').replace(/_/g, ' ')}`
+      : 'Event'
+  );
   const rescheduleEvent = boutique ? makeRescheduleEvent(boutique.id) : null;
   const { sendSms } = useSmsMessages(liveEvent?.client_id);
   const { notes, addNote } = useNotes(liveEvent?.id);

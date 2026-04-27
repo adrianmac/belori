@@ -17,6 +17,7 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { C } from '../lib/colors';
 import { analytics } from '../lib/analytics';
+import { usePageTitle } from '../hooks/usePageTitle';
 import Payments from './Payments';
 // OnlinePaymentsScreen is a stub from ModuleStubs.jsx (not its own file).
 // Keep it eager-imported since it's tiny.
@@ -36,6 +37,7 @@ const TABS = [
 ];
 
 export default function Finance({ initialTab, ...rest }) {
+  usePageTitle('Finance');
   const [tab, setTab] = useState(() => {
     if (initialTab && TABS.some(t => t.key === initialTab)) return initialTab;
     try {

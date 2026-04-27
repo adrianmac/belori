@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { C } from '../lib/colors'
 import { Topbar } from '../lib/ui.jsx'
+import { usePageTitle } from '../hooks/usePageTitle'
 import AppointmentsScreen from './AppointmentsScreen'
 import Calendar from './Calendar'
 import StaffCalendar from './StaffCalendar'
@@ -12,6 +13,7 @@ const TABS = [
 ]
 
 export default function ScheduleScreen({ setScreen, setSelectedEvent, events = [], staff = [], clients = [] }) {
+  usePageTitle('Schedule')
   const [activeTab, setActiveTab] = useState('day')
 
   return (

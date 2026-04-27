@@ -21,6 +21,7 @@ import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { C } from '../lib/colors';
 import { useModules } from '../hooks/useModules.jsx';
 import { analytics } from '../lib/analytics';
+import { usePageTitle } from '../hooks/usePageTitle';
 const SmsInboxPage          = lazy(() => import('./SmsInboxPage'));
 import {
   WaitlistScreen, ReviewsScreen, PhotoGalleryScreen,
@@ -41,6 +42,7 @@ const TABS_DEF = [
 ];
 
 export default function MarketingHub({ initialTab, ...rest }) {
+  usePageTitle('Marketing');
   const { isEnabled } = useModules();
 
   // Filter tabs by module gate. SMS always shows.

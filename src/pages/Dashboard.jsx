@@ -6,6 +6,7 @@ import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, SvcTag,
 import { getPriorityAlert, getCountdownConfig } from '../lib/urgency';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
 import { useNotes, useTasks, useAppointmentsToday } from '../hooks/useNotes';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { autoProgressEvents } from '../hooks/useEvents';
@@ -1396,6 +1397,7 @@ const DashboardFull = ({setScreen,setSelectedEvent,events,payments,inventory,bou
 
 // ─── DASHBOARD WRAPPER ────────────────────────────────────────────────────────
 const Dashboard = ({ focusMode, onToggleFocus, ...props }) => {
+  usePageTitle('Dashboard');
   if (focusMode) return <FocusDashboard {...props} onToggleFocus={onToggleFocus} />;
   return <DashboardFull {...props} />;
 };

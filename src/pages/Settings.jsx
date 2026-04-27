@@ -5,6 +5,7 @@ import { Avatar, Badge, Card, CardHead, Topbar, PrimaryBtn, GhostBtn, useToast,
   inputSt, LBL, SvcTag } from '../lib/ui.jsx';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useBoutique } from '../hooks/useBoutique';
 import { canAccessSettingsTab } from '../lib/permissions';
 import { useModules, saveModuleSettings, saveModuleConfig } from '../hooks/useModules.jsx';
@@ -2053,6 +2054,7 @@ function LocationsSection({ boutique }) {
 }
 
 const Settings = ({boutique, initialTab, setScreen}) => {
+  usePageTitle('Settings');
   const toast=useToast();
   const {updateBoutique,getStaff,updateStaffMember,sendInvite,getPendingInvites,cancelInvite}=useBoutique();
   const { reloadBoutique, session, myRole } = useAuth();

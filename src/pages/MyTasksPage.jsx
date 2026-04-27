@@ -3,6 +3,7 @@ import { C, EVT_TYPES } from '../lib/colors';
 import { Topbar, Avatar, Badge, useToast } from '../lib/ui.jsx';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 // ─── CATEGORY COLORS ────────────────────────────────────────────────────────
 const TASK_CAT_COLORS = {
@@ -178,6 +179,7 @@ function TaskCard({ task, onToggleDone }) {
 
 // ─── MAIN PAGE ───────────────────────────────────────────────────────────────
 export default function MyTasksPage({ setScreen, setSelectedEvent }) {
+  usePageTitle('My Tasks');
   const toast = useToast();
   const { boutique, session } = useAuth();
   const [eventTasks, setEventTasks] = useState([]);

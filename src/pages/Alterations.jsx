@@ -6,6 +6,7 @@ import { ALTERATION_TRANSITIONS } from '../lib/urgency';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const ALL_WORK_ITEMS=['Hem','Bustle','Waist take-in','Let out waist','Sleeves','Straps','Custom beading','Lining','Neckline','Train','Zipper','Buttons','Other'];
@@ -918,6 +919,7 @@ const MyJobsSidebar = ({ jobs, staff, onOpenJob }) => {
 
 // ─── ALTERATIONS ───────────────────────────────────────────────────────────
 const Alterations = ({alterations: liveAlterations, staff, clients, createClient, createJob, updateJob, cancelJob, deleteJob, logTimeEntry}) => {
+  usePageTitle('Alterations');
   const data = liveAlterations;
   const [view,setView]=useState('kanban');
   const [newJobOpen,setNewJobOpen]=useState(false);

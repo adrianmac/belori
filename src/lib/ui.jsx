@@ -196,7 +196,11 @@ export const StatusDot = ({status}) => {
 // Uses italic serif title + small-caps subtitle + ornamental diamond.
 // Legacy `icon` emoji is retained but de-emphasized (ghosted) so any caller
 // passing '📭', '👗', etc. still renders without regressions.
-export function EmptyState({ icon, title, subtitle, action, actionLabel, style = {} }) {
+//
+// Optional `secondaryAction` + `secondaryActionLabel` render a quieter
+// ghost button beside the primary CTA — used for "Try with sample data"
+// flows on first-run empty states.
+export function EmptyState({ icon, title, subtitle, action, actionLabel, secondaryAction, secondaryActionLabel, style = {} }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -225,11 +229,20 @@ export function EmptyState({ icon, title, subtitle, action, actionLabel, style =
         fontFamily: "'DM Sans','Inter',system-ui,sans-serif",
         fontSize: 13, color: '#5C4A52', lineHeight: 1.6, maxWidth: 320,
       }}>{subtitle}</div>}
-      {action && actionLabel && (
-        <button onClick={action} className="btn-solid" data-color="primary" style={{
-          marginTop: 22,
-        }}>{actionLabel}</button>
-      )}
+      {(action && actionLabel) || (secondaryAction && secondaryActionLabel) ? (
+        <div style={{ marginTop: 22, display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+          {action && actionLabel && (
+            <button onClick={action} className="btn-solid" data-color="primary">
+              {actionLabel}
+            </button>
+          )}
+          {secondaryAction && secondaryActionLabel && (
+            <button onClick={secondaryAction} className="btn-ghost" data-color="primary">
+              {secondaryActionLabel}
+            </button>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

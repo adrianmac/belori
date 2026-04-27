@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Papa from 'papaparse';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { C, fmt } from '../lib/colors';
 import { PrimaryBtn, GhostBtn, Badge, SvcTag, useToast, SkeletonList, inputSt } from '../lib/ui.jsx';
 import { D as Dt, OrnamentRule } from '../lib/couture.jsx';
@@ -1011,6 +1012,7 @@ const BulkAddTagModal = ({ boutiqueId, selectedIds, onClose, toast }) => {
 };
 
 const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoading, createClient, createClientsBulk, updateClient, adjustLoyaltyPoints, redeemPoints, adjustPoints, mergeClients, inventory }) => {
+  usePageTitle('Clients');
   const toast = useToast();
   const { boutique: clBoutique } = useAuth();
   const rawClients = liveClients;
@@ -1346,7 +1348,21 @@ const Clients = ({ setScreen, setSelectedEvent, clients: liveClients, clientsLoa
               <div style={{ fontSize: 52, marginBottom: 16 }}>👥</div>
               <div style={{ fontSize: 17, fontWeight: 600, color: C.ink, marginBottom: 8 }}>No clients yet</div>
               <div style={{ fontSize: 13, color: C.gray, maxWidth: 300, margin: '0 auto 28px' }}>Add your first client to start managing your CRM.</div>
-              <PrimaryBtn label="+ Add client" colorScheme="success" onClick={() => setShowNew(true)} />
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <PrimaryBtn label="+ Add client" colorScheme="success" onClick={() => setShowNew(true)} />
+                <GhostBtn
+                  label="Try with a sample client"
+                  onClick={async () => {
+                    const { seedSampleClient } = await import('../lib/sampleData');
+                    const { error } = await seedSampleClient(clBoutique.id);
+                    if (error) {
+                      toast(`Couldn't seed sample: ${error.message}`, 'error');
+                    } else {
+                      toast('Sample client created — explore freely, then delete when ready ✓');
+                    }
+                  }}
+                />
+              </div>
             </div>
           ) : (
             /* No results from active search / filters */

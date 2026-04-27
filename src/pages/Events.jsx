@@ -10,6 +10,7 @@ import { getPriorityAlert, getCountdownConfig, DRESS_TRANSITIONS,
   ALTERATION_TRANSITIONS } from '../lib/urgency';
 import { useLayoutMode } from '../hooks/useLayoutMode.jsx';
 import { useAuth } from '../context/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useBoutique } from '../hooks/useBoutique';
 import { useEvents, useEvent } from '../hooks/useEvents';
 import { usePackages } from '../hooks/usePackages';
@@ -2008,6 +2009,7 @@ function EventRow({ev,swipedId,setSwipedId,setSelectedEvent,setScreen,duplicateE
 
 // ─── EVENTS LIST ───────────────────────────────────────────────────────────
 const EventsList = ({setScreen,setSelectedEvent,events,eventsLoading,createEvent,duplicateEvent,clients=[],inventory=[],alterations=[]}) => {
+  usePageTitle('Events');
   const toast = useToast();
   const { boutique } = useAuth();
   const [view,setView]=useState('calendar'); // calendar is default
@@ -2131,7 +2133,24 @@ const EventsList = ({setScreen,setSelectedEvent,events,eventsLoading,createEvent
         <div className="page-scroll" style={{flex:1,overflowY:'auto',padding:20,display:'flex',flexDirection:'column',gap:10}}>
           {filtered.length===0&&(
             listFilter==='all'&&events.length===0 ? (
-              <EmptyState icon="💍" title="No events yet" subtitle="Create your first event to get started tracking clients, milestones, and appointments." action={()=>setShowNew(true)} actionLabel="+ Create your first event" style={{maxWidth:440,margin:'40px auto',background:C.white,borderRadius:16,border:`1px dashed ${C.border}`}}/>
+              <EmptyState
+                icon="💍"
+                title="No events yet"
+                subtitle="Create your first event to get started tracking clients, milestones, and appointments."
+                action={()=>setShowNew(true)}
+                actionLabel="+ Create your first event"
+                secondaryAction={async () => {
+                  const { seedSampleEvent } = await import('../lib/sampleData');
+                  const { error } = await seedSampleEvent(boutique.id);
+                  if (error) {
+                    toast(`Couldn't seed sample: ${error.message}`, 'error');
+                  } else {
+                    toast('Sample event created — explore freely, then delete when ready ✓');
+                  }
+                }}
+                secondaryActionLabel="Try with a sample event"
+                style={{maxWidth:480,margin:'40px auto',background:C.white,borderRadius:16,border:`1px dashed ${C.border}`}}
+              />
             ) : (
               <EmptyState icon="🔍" title="No events match your filters" subtitle="Try a different filter or clear your selection." action={()=>setListFilter('all')} actionLabel="Clear filters" style={{maxWidth:400,margin:'40px auto'}}/>
             )

@@ -12,6 +12,7 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { C } from '../lib/colors';
 import { analytics } from '../lib/analytics';
+import { usePageTitle } from '../hooks/usePageTitle';
 import Reports from './Reports';
 // AccountingScreen is a stub from ModuleStubs.jsx, not a standalone file.
 import { AccountingScreen } from './ModuleStubs.jsx';
@@ -26,6 +27,7 @@ const TABS = [
 ];
 
 export default function ReportsHub({ initialTab, ...rest }) {
+  usePageTitle('Reports');
   const [tab, setTab] = useState(() => {
     if (initialTab && TABS.some(t => t.key === initialTab)) return initialTab;
     try {
