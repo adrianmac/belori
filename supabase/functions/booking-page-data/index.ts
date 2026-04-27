@@ -26,7 +26,7 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'GET') {
     const { data: boutique, error } = await supabase
       .from('boutiques')
-      .select('id, name, email, phone, address, instagram, booking_url, plan_tier')
+      .select('id, name, email, phone, address, instagram, booking_url, slug, primary_color, plan_tier')
       .eq('slug', slug)
       .single();
 
@@ -34,15 +34,42 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Boutique not found' }, 404);
     }
 
+    // Pull the modules the boutique has actually enabled — only services
+    // backed by an enabled module make sense to offer in the wizard.
+    const { data: enabledModules } = await supabase
+      .from('boutique_modules')
+      .select('module_id')
+      .eq('boutique_id', boutique.id)
+      .eq('enabled', true);
+    const moduleIds = new Set((enabledModules || []).map(m => m.module_id));
+
+    // Map module ids → public service ids that the wizard knows about.
+    // Anything not gated by a module (planning, photography, hair_makeup
+    // etc.) stays available to all boutiques. Decoration is the only one
+    // we currently gate behind a module — the others are core capabilities.
+    const SERVICE_MODULE_GATES: Record<string, string> = {
+      dress_rental:   'dress_rental',
+      alterations:    'alterations',
+      decoration:     'decoration',
+    };
+    const offeredServices = ['dress_rental','alterations','decoration','event_planning','photography','hair_makeup']
+      .filter(svc => {
+        const gate = SERVICE_MODULE_GATES[svc];
+        return !gate || moduleIds.has(gate);
+      });
+
     // Only return safe public fields — no stripe IDs, no staff, no financials
     return json({
-      id:           boutique.id,
-      name:         boutique.name,
-      email:        boutique.email,
-      phone:        boutique.phone,
-      address:      boutique.address,
-      instagram:    boutique.instagram,
-      booking_url:  boutique.booking_url,
+      id:            boutique.id,
+      name:          boutique.name,
+      email:         boutique.email,
+      phone:         boutique.phone,
+      address:       boutique.address,
+      instagram:     boutique.instagram,
+      booking_url:   boutique.booking_url,
+      slug:          boutique.slug,
+      primary_color: boutique.primary_color || null,
+      offered_services: offeredServices,
     });
   }
 

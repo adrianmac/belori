@@ -3991,6 +3991,109 @@ const BookingPageCard = ({ boutique }) => {
   );
 };
 
+// ─── Share-your-booking-page card ────────────────────────────────────────────
+// Lives at the top of the Booking Requests tab. Gives the boutique owner
+// 4 ways to put their public booking URL into a prospect's hands:
+//   - Copy the URL itself (works in any DM, business card, email signature)
+//   - Copy an <iframe> snippet they can paste into their existing website
+//   - Open a QR code (perfect for printed flyers / window decals)
+//   - Open the live page in a new tab so they can see what prospects see
+//
+// Quietly degrades when the boutique has no slug yet (sends them to set one
+// in the Profile tab instead of showing a broken URL).
+const ShareBookingPageCard = ({ boutique }) => {
+  const toast = useToast();
+  const [copied, setCopied] = useState(null); // 'url' | 'embed' | null
+  const [qrUrl, setQrUrl] = useState(null);
+
+  const slug = boutique?.slug;
+  const url  = slug ? `${window.location.origin}/book/${slug}` : null;
+  const embed = slug
+    ? `<iframe src="${url}" style="width:100%;min-height:720px;border:0;border-radius:12px;" loading="lazy" title="Book a consultation"></iframe>`
+    : null;
+
+  const copy = async (text, kind) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(kind);
+      toast(kind === 'url' ? 'Booking URL copied ✓' : 'Embed snippet copied ✓');
+      setTimeout(() => setCopied(c => c === kind ? null : c), 2000);
+    } catch {
+      toast('Could not copy — please copy manually', 'warn');
+    }
+  };
+
+  const showQR = async () => {
+    if (!url) return;
+    const { generateQRDataUrl } = await import('../lib/qrUtils');
+    const dataUrl = await generateQRDataUrl(url, 360);
+    setQrUrl(dataUrl);
+  };
+
+  if (!slug) {
+    return (
+      <Card>
+        <CardHead title="Your booking page"/>
+        <div style={{padding:'14px 16px 18px',fontSize:13,color:C.gray,lineHeight:1.6}}>
+          Set a public URL slug in <strong>Settings → Boutique profile</strong> first. Once you have one, prospects will be able to book consultations at <code style={{background:C.ivory,padding:'1px 6px',borderRadius:4}}>belori.app/book/your-slug</code>.
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHead title="Share your booking page"/>
+      <div style={{padding:'14px 16px 18px',display:'flex',flexDirection:'column',gap:14}}>
+
+        {/* The URL itself */}
+        <div>
+          <div style={{fontSize:11,color:C.gray,marginBottom:6,textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:500}}>Booking URL</div>
+          <div style={{display:'flex',gap:8,alignItems:'stretch',flexWrap:'wrap'}}>
+            <code style={{flex:1,minWidth:200,background:C.ivory,padding:'9px 12px',borderRadius:7,fontSize:12,color:C.ink,fontFamily:'ui-monospace,SFMono-Regular,Menlo,monospace',border:`1px solid ${C.border}`,wordBreak:'break-all'}}>{url}</code>
+            <button onClick={()=>copy(url, 'url')} data-testid="settings-share-copy-url" style={{padding:'9px 14px',borderRadius:7,border:'none',background:copied==='url'?'#5C8A6E':C.rosa,color:'#fff',fontSize:12,fontWeight:500,cursor:'pointer',flexShrink:0}}>
+              {copied === 'url' ? '✓ Copied' : 'Copy URL'}
+            </button>
+            <a href={url} target="_blank" rel="noopener noreferrer" data-testid="settings-share-preview" style={{padding:'9px 14px',borderRadius:7,border:`1px solid ${C.border}`,background:'#fff',color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer',flexShrink:0,textDecoration:'none',display:'inline-flex',alignItems:'center',gap:5}}>
+              Preview ↗
+            </a>
+          </div>
+        </div>
+
+        {/* Embed snippet */}
+        <div>
+          <div style={{fontSize:11,color:C.gray,marginBottom:6,textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:500}}>Embed on your website</div>
+          <div style={{display:'flex',gap:8,alignItems:'flex-start',flexWrap:'wrap'}}>
+            <code style={{flex:1,minWidth:200,background:C.ivory,padding:'9px 12px',borderRadius:7,fontSize:11,color:C.ink,fontFamily:'ui-monospace,SFMono-Regular,Menlo,monospace',border:`1px solid ${C.border}`,wordBreak:'break-all',lineHeight:1.5,whiteSpace:'pre-wrap'}}>{embed}</code>
+            <button onClick={()=>copy(embed, 'embed')} data-testid="settings-share-copy-embed" style={{padding:'9px 14px',borderRadius:7,border:`1px solid ${C.border}`,background:'#fff',color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer',flexShrink:0}}>
+              {copied === 'embed' ? '✓ Copied' : 'Copy embed'}
+            </button>
+          </div>
+          <div style={{fontSize:11,color:C.gray,marginTop:6}}>Paste this where you want the booking form to appear (Squarespace, Wix, Webflow, plain HTML, etc.)</div>
+        </div>
+
+        {/* QR code */}
+        <div>
+          <div style={{fontSize:11,color:C.gray,marginBottom:6,textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:500}}>QR code</div>
+          {qrUrl ? (
+            <div style={{display:'flex',gap:14,alignItems:'flex-start'}}>
+              <img src={qrUrl} alt="Booking page QR code" data-testid="settings-share-qr-image" style={{width:160,height:160,borderRadius:8,border:`1px solid ${C.border}`,background:'#fff',padding:8}}/>
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                <a href={qrUrl} download={`${slug}-booking-qr.png`} style={{padding:'7px 12px',borderRadius:7,border:`1px solid ${C.border}`,background:'#fff',color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer',textDecoration:'none',display:'inline-block'}}>Download PNG</a>
+                <div style={{fontSize:11,color:C.gray,maxWidth:220,lineHeight:1.5}}>Print on flyers, window decals, business cards. Scans straight to your booking page.</div>
+              </div>
+            </div>
+          ) : (
+            <button onClick={showQR} data-testid="settings-share-qr-generate" style={{padding:'9px 14px',borderRadius:7,border:`1px solid ${C.border}`,background:'#fff',color:C.ink,fontSize:12,fontWeight:500,cursor:'pointer'}}>
+              Generate QR code
+            </button>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+};
+
 const BookingRequestsTab = () => {
   const { boutique } = useAuth();
   const { createEvent } = useEvents();
@@ -4077,8 +4180,8 @@ const BookingRequestsTab = () => {
 
   return (
     <div style={{display:'flex',flexDirection:'column',gap:16}}>
-      {/* Booking URL card */}
-      {/* <BookingPageCard boutique={boutique} /> Disabled for now */}
+      {/* Share-your-booking-page card — copy URL, QR code, embed snippet */}
+      <ShareBookingPageCard boutique={boutique}/>
 
       {/* Requests list */}
       <Card>

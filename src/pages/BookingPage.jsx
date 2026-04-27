@@ -32,6 +32,21 @@ const EVENT_TYPES = [
   { id: 'other',       label: 'Other Event',  icon: '🎉', desc: 'Tell us more below' },
 ]
 
+// ─── <meta> tag helper (for social sharing previews) ─────────────────────────
+// Inserts or updates a single <meta> tag in <head>. Most public pages need
+// to look good when shared on iMessage / Facebook / WhatsApp; without
+// og:title + og:description, the link preview just shows the bare URL.
+function setOrUpdateMeta(key, value, attr = 'name') {
+  if (typeof document === 'undefined') return
+  let tag = document.querySelector(`meta[${attr}="${key}"]`)
+  if (!tag) {
+    tag = document.createElement('meta')
+    tag.setAttribute(attr, key)
+    document.head.appendChild(tag)
+  }
+  tag.setAttribute('content', value)
+}
+
 // ─── ICS calendar helper ──────────────────────────────────────────────────────
 function downloadICS(boutiqueName) {
   const now = new Date()
@@ -198,14 +213,36 @@ export default function BookingPage() {
   useEffect(() => {
     if (!slug) { setNotFound(true); setLoading(false); return }
     fetch(`${FN_BASE}/booking-page-data?slug=${encodeURIComponent(slug)}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.error) setNotFound(true)
+      .then(async r => {
+        // 404 / 5xx / non-2xx all → not-found UX. Previously we only
+        // checked for `d.error` in the body, which missed the case where
+        // Supabase returns its own envelope ({code:'NOT_FOUND', message:…})
+        // and we'd silently fall through to the wizard with garbage data.
+        if (!r.ok) { setNotFound(true); return }
+        const d = await r.json()
+        if (d.error || !d.id) setNotFound(true)
         else setBoutique(d)
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
   }, [slug])
+
+  // Update browser tab title + social-share meta tags as soon as the
+  // boutique's name is known. og:title / og:description make iMessage,
+  // WhatsApp, and Facebook share previews look professional instead of
+  // showing the raw URL.
+  useEffect(() => {
+    if (!boutique?.name) return
+    const title = `Book a consultation · ${boutique.name}`
+    const desc  = `Tell us about your event and we'll be in touch within 24 hours. Powered by Belori.`
+    document.title = title
+    setOrUpdateMeta('og:title',       title, 'property')
+    setOrUpdateMeta('og:description', desc,  'property')
+    setOrUpdateMeta('og:type',        'website', 'property')
+    setOrUpdateMeta('twitter:card',   'summary')
+    setOrUpdateMeta('description',    desc)
+    return () => { document.title = 'Belori' }
+  }, [boutique?.name])
 
   const primaryColor = boutique?.primary_color || ROSA
   const accent  = primaryColor
@@ -578,16 +615,22 @@ export default function BookingPage() {
               <div style={{fontSize:13,color:'#9ca3af',marginBottom:20}}>Select all that apply — no commitment required</div>
 
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:24}}>
-                {SERVICES.map(s => {
-                  const active = services.includes(s.id)
-                  return (
-                    <button key={s.id} onClick={() => toggleService(s.id)}
-                      style={{display:'flex',alignItems:'center',gap:10,padding:'14px 14px',borderRadius:13,border:`2px solid ${active?accent:'#e5e7eb'}`,background:active?accentL:'#fff',cursor:'pointer',textAlign:'left',transition:'all 0.15s',minHeight:52,width:'100%'}}>
-                      <span style={{fontSize:20,flexShrink:0}}>{s.icon}</span>
-                      <span style={{fontSize:13,fontWeight:active?700:400,color:active?accent:'#374151',lineHeight:1.2}}>{s.label}</span>
-                    </button>
-                  )
-                })}
+                {/* Filter the static SERVICES catalog by what the boutique
+                    actually offers (returned by the Edge Function based on
+                    their enabled modules). Falls back to the full list for
+                    boutiques whose Edge Function predates this field. */}
+                {SERVICES
+                  .filter(s => !boutique?.offered_services || boutique.offered_services.includes(s.id))
+                  .map(s => {
+                    const active = services.includes(s.id)
+                    return (
+                      <button key={s.id} onClick={() => toggleService(s.id)}
+                        style={{display:'flex',alignItems:'center',gap:10,padding:'14px 14px',borderRadius:13,border:`2px solid ${active?accent:'#e5e7eb'}`,background:active?accentL:'#fff',cursor:'pointer',textAlign:'left',transition:'all 0.15s',minHeight:52,width:'100%'}}>
+                        <span style={{fontSize:20,flexShrink:0}}>{s.icon}</span>
+                        <span style={{fontSize:13,fontWeight:active?700:400,color:active?accent:'#374151',lineHeight:1.2}}>{s.label}</span>
+                      </button>
+                    )
+                  })}
               </div>
 
               <NavRow onBack={() => setStep(2)} onNext={() => setStep(4)} nextLabel="Continue →"/>
