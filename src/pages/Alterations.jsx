@@ -1152,8 +1152,10 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
         );
       })()}
 
-      {/* MAIN CONTENT AREA: kanban/list + My Jobs sidebar */}
-      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+      {/* MAIN CONTENT AREA: kanban/list + My Jobs sidebar.
+          minHeight:0 lets this shrink properly inside the page-level flex
+          column when the stat strip + filter bar are fixed-height siblings. */}
+      <div style={{flex:1,display:'flex',overflow:'hidden',minHeight:0}}>
 
       {view==='kanban'?(
         data.length===0?(
@@ -1177,7 +1179,13 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
             />
           </div>
         ):(
-        <div className="alt-kanban page-scroll" style={{flex:1,display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,padding:20,overflowX:'auto',overflowY:'hidden',background:C.ivory}}>
+        // gridTemplateRows:'1fr' + minHeight:0 are critical — without them
+        // the grid row sizes to content (the tallest column's full job count)
+        // and a 100-job column would push the page beyond the viewport with
+        // no scrollbar (because the page wrapper is overflow:hidden). With
+        // them the row tracks the kanban container's height and each
+        // column's flex:1+overflowY:auto body actually scrolls.
+        <div className="alt-kanban page-scroll" style={{flex:1,display:'grid',gridTemplateColumns:'repeat(4,1fr)',gridTemplateRows:'1fr',gap:16,padding:20,overflowX:'auto',overflowY:'hidden',background:C.ivory,minHeight:0}}>
           {cols.map(col=>{
             const _today=new Date();_today.setHours(0,0,0,0);
             const jobs=filtered.filter(a=>a.status===col.id).sort((a,b)=>{
@@ -1193,7 +1201,7 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
             const nextStatus=colIdx>=0&&colIdx<STATUS_ORDER.length-1?STATUS_ORDER[colIdx+1]:null;
             const nextLabel=nextStatus?cols.find(c=>c.id===nextStatus)?.label:null;
             return (
-              <div key={col.id} style={{display:'flex',flexDirection:'column',height:'100%'}}>
+              <div key={col.id} style={{display:'flex',flexDirection:'column',height:'100%',minHeight:0}}>
                 <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12,flexShrink:0}}>
                   <div style={{height:10,width:10,borderRadius:5,background:col.color}}/>
                   <span style={{fontSize:13,fontWeight:600,color:C.ink}}>{col.label}</span>
