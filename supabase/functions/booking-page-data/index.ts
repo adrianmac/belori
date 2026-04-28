@@ -58,6 +58,39 @@ Deno.serve(async (req: Request) => {
         return !gate || moduleIds.has(gate);
       });
 
+    // Optional: fetch top NPS reviews + active packages when caller asks
+    // for the richer "profile" payload. The plain booking-wizard page
+    // doesn't need these, so we keep them off by default.
+    const wantsProfile = url.searchParams.get('include') === 'profile';
+    let reviews: any[] = [];
+    let packages: any[] = [];
+    if (wantsProfile) {
+      const { data: nps } = await supabase
+        .from('nps_responses')
+        .select('score, comment, submitted_at, client_name')
+        .eq('boutique_id', boutique.id)
+        .gte('score', 8)
+        .not('comment', 'is', null)
+        .order('submitted_at', { ascending: false })
+        .limit(6);
+      reviews = (nps || []).map(r => ({
+        score: r.score,
+        comment: r.comment,
+        submitted_at: r.submitted_at,
+        // First-name only for privacy ("Sofia G." → "Sofia")
+        client_first_name: (r.client_name || '').split(' ')[0] || 'A client',
+      }));
+
+      const { data: pkgs } = await supabase
+        .from('service_packages')
+        .select('id, name, description, base_price, event_type, services')
+        .eq('boutique_id', boutique.id)
+        .eq('active', true)
+        .order('sort_order', { ascending: true })
+        .limit(6);
+      packages = pkgs || [];
+    }
+
     // Only return safe public fields — no stripe IDs, no staff, no financials
     return json({
       id:            boutique.id,
@@ -70,6 +103,8 @@ Deno.serve(async (req: Request) => {
       slug:          boutique.slug,
       primary_color: boutique.primary_color || null,
       offered_services: offeredServices,
+      reviews,
+      packages,
     });
   }
 
