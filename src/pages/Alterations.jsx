@@ -11,6 +11,39 @@ import { usePageTitle } from '../hooks/usePageTitle';
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const ALL_WORK_ITEMS=['Hem','Bustle','Waist take-in','Let out waist','Sleeves','Straps','Custom beading','Lining','Neckline','Train','Zipper','Buttons','Other'];
 const WORK_HINTS={Hem:'$60–100',Bustle:'$80–150','Waist take-in':'$60–100','Let out waist':'$60–120',Sleeves:'$40–80',Straps:'$30–60','Custom beading':'$150–400+',Lining:'$80–150',Neckline:'$60–120',Train:'$60–100',Zipper:'$40–80',Buttons:'$30–60'};
+
+// Parse the price-range hint (e.g. "$60–100", "$150–400+") to a tuple of
+// [low, mid, high] so the form can auto-suggest a quote price as the
+// user picks work items. We use the MIDPOINT as the suggestion — a
+// conservative-ish estimate the boutique can adjust either way.
+//
+// Items missing from this map (e.g. 'Other') contribute 0 and won't
+// affect the auto-quote.
+const WORK_PRICE_RANGES = (() => {
+  const map = {};
+  for (const [item, hint] of Object.entries(WORK_HINTS)) {
+    // Match $LOW–HIGH or $LOW–HIGH+ (em-dash). Numbers can be 1–4 digits.
+    const m = hint.match(/\$(\d+)\D+(\d+)/);
+    if (!m) continue;
+    const low  = Number(m[1]);
+    const high = Number(m[2]);
+    map[item] = { low, high, mid: Math.round((low + high) / 2) };
+  }
+  return map;
+})();
+
+// Suggest a price for a list of selected work items. Returns 0 if
+// nothing is recognized — the form treats 0 as "don't auto-fill" so
+// the user can clear it back to empty by deselecting everything.
+function suggestPriceFromWorkItems(items) {
+  if (!Array.isArray(items)) return 0;
+  let total = 0;
+  for (const item of items) {
+    const r = WORK_PRICE_RANGES[item];
+    if (r) total += r.mid;
+  }
+  return total;
+}
 const MEASUREMENT_FIELDS=[
   {key:'bust',label:'Bust',unit:'in'},
   {key:'waist',label:'Waist',unit:'in'},
@@ -221,10 +254,21 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
   const seamstresses=(staff||[]).filter(s=>['Seamstress','seamstress','owner','Owner'].includes(s.role));
   const [seamstressId,setSeamstressId]=useState('');
   const [quotedPrice,setQuotedPrice]=useState('');
+  // Did the user manually type a price? Then stop overwriting from work-item
+  // selections. They've taken control. Reset only when they clear the field.
+  const [priceTouched,setPriceTouched]=useState(false);
   const [deadline,setDeadline]=useState('');
   const [notes,setNotes]=useState('');
   const [saving,setSaving]=useState(false);
   const [err,setErr]=useState('');
+
+  // Auto-suggest a price from selected work items (sum of midpoints).
+  // Only applies until the user manually edits the price field.
+  React.useEffect(() => {
+    if (priceTouched) return;
+    const suggested = suggestPriceFromWorkItems(workItems);
+    setQuotedPrice(suggested > 0 ? String(suggested) : '');
+  }, [workItems, priceTouched]);
 
   const handleNewClientDone=(newClient)=>{
     setShowNewClient(false);
@@ -328,9 +372,24 @@ const NewAlterationModal = ({staff, clients: initialClients, createClient, onClo
               </select>
             </div>
             <div>
-              <label htmlFor="alteration-field-price" style={{...LBL,marginBottom:8,display:'block'}}>Price (optional) ($)</label>
-              <input id="alteration-field-price" type="number" value={quotedPrice} onChange={e=>setQuotedPrice(e.target.value)}
-                placeholder="280" style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
+              <label htmlFor="alteration-field-price" style={{...LBL,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
+                <span>Price ($)</span>
+                {priceTouched && workItems.length > 0 && (
+                  <button type="button"
+                    onClick={()=>{ setPriceTouched(false); setQuotedPrice(String(suggestPriceFromWorkItems(workItems))); }}
+                    style={{background:'none',border:'none',color:C.rosaText,fontSize:10,fontWeight:500,cursor:'pointer',padding:0,letterSpacing:'0.04em',textTransform:'uppercase'}}>
+                    Re-estimate
+                  </button>
+                )}
+              </label>
+              <input id="alteration-field-price" type="number" value={quotedPrice}
+                onChange={e=>{ setQuotedPrice(e.target.value); setPriceTouched(true); }}
+                placeholder="0" style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
+              {!priceTouched && workItems.length > 0 && (
+                <div style={{fontSize:11,color:C.gray,marginTop:6,fontStyle:'italic'}}>
+                  Estimated from work items — adjust as needed
+                </div>
+              )}
             </div>
             <div>
               <label htmlFor="alteration-field-deadline" style={{...LBL,marginBottom:8,display:'block'}}>Deadline</label>
@@ -409,6 +468,16 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
   const seamstresses=(staff||[]).filter(s=>['Seamstress','seamstress','owner','Owner'].includes(s.role));
   const [seamstressId,setSeamstressId]=useState(job.seamstress_id||'');
   const [quotedPrice,setQuotedPrice]=useState(job.price?String(job.price):'');
+  // Pre-existing job price = treat as user-set; never auto-overwrite on
+  // re-renders. The "Re-estimate" button below the field is the explicit
+  // way to recompute when work items change.
+  const [priceTouched,setPriceTouched]=useState(!!job.price);
+  // For brand-new jobs (job.price empty), auto-suggest once when items change
+  React.useEffect(() => {
+    if (priceTouched) return;
+    const suggested = suggestPriceFromWorkItems(workItems);
+    setQuotedPrice(suggested > 0 ? String(suggested) : '');
+  }, [workItems, priceTouched]);
   const [deadline,setDeadline]=useState(job.deadline||'');
   const [notes,setNotes]=useState(job.notes||'');
   const [status,setStatus]=useState(job.status||'measurement_needed');
@@ -541,9 +610,24 @@ const EditAlterationModal = ({job, staff, clients, onClose, onUpdate, onCancel, 
                 </select>
               </div>
               <div>
-                <label htmlFor="edit-alteration-price" style={{...LBL,marginBottom:8,display:'block'}}>Price ($)</label>
-                <input id="edit-alteration-price" type="number" value={quotedPrice} onChange={e=>setQuotedPrice(e.target.value)}
-                  placeholder="280" style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
+                <label htmlFor="edit-alteration-price" style={{...LBL,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
+                  <span>Price ($)</span>
+                  {workItems.length > 0 && (
+                    <button type="button"
+                      onClick={()=>{ setPriceTouched(false); setQuotedPrice(String(suggestPriceFromWorkItems(workItems))); }}
+                      style={{background:'none',border:'none',color:C.rosaText,fontSize:10,fontWeight:500,cursor:'pointer',padding:0,letterSpacing:'0.04em',textTransform:'uppercase'}}>
+                      Re-estimate
+                    </button>
+                  )}
+                </label>
+                <input id="edit-alteration-price" type="number" value={quotedPrice}
+                  onChange={e=>{ setQuotedPrice(e.target.value); setPriceTouched(true); }}
+                  placeholder="0" style={{...inputSt,padding:'12px 14px',borderRadius:10}}/>
+                {!priceTouched && workItems.length > 0 && (
+                  <div style={{fontSize:11,color:C.gray,marginTop:6,fontStyle:'italic'}}>
+                    Estimated from work items — adjust as needed
+                  </div>
+                )}
               </div>
               <div>
                 <label htmlFor="edit-alteration-deadline" style={{...LBL,marginBottom:8,display:'block'}}>Deadline</label>
