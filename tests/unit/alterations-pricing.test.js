@@ -1,53 +1,11 @@
 // Unit tests for the work-item → price-suggestion helper.
 //
-// The helper is the engine behind the auto-quote on the alterations modal.
-// It's a pure function so it tests cleanly without React or DOM. Importing
-// from Alterations.jsx is awkward (the file isn't designed as a library),
-// so we redefine the helper here in a way that mirrors the source. If the
-// source ever changes shape, this test will diverge — that's fine, an
-// E2E covers the full flow.
+// The helper drives the auto-quote in BOTH alteration-creation surfaces:
+// the standalone Alterations page modal and the EventDetail inline modal.
+// Pure functions only — no React or DOM, tests cleanly in isolation.
 
 import { describe, test, expect } from 'vitest'
-
-// ─── Mirror the WORK_HINTS map + parser from Alterations.jsx ────────────────
-// Keep these exactly in sync with the source — copy/paste verbatim if you
-// change either side.
-const WORK_HINTS = {
-  Hem: '$60–100',
-  Bustle: '$80–150',
-  'Waist take-in': '$60–100',
-  'Let out waist': '$60–120',
-  Sleeves: '$40–80',
-  Straps: '$30–60',
-  'Custom beading': '$150–400+',
-  Lining: '$80–150',
-  Neckline: '$60–120',
-  Train: '$60–100',
-  Zipper: '$40–80',
-  Buttons: '$30–60',
-}
-
-const WORK_PRICE_RANGES = (() => {
-  const map = {}
-  for (const [item, hint] of Object.entries(WORK_HINTS)) {
-    const m = hint.match(/\$(\d+)\D+(\d+)/)
-    if (!m) continue
-    const low  = Number(m[1])
-    const high = Number(m[2])
-    map[item] = { low, high, mid: Math.round((low + high) / 2) }
-  }
-  return map
-})()
-
-function suggestPriceFromWorkItems(items) {
-  if (!Array.isArray(items)) return 0
-  let total = 0
-  for (const item of items) {
-    const r = WORK_PRICE_RANGES[item]
-    if (r) total += r.mid
-  }
-  return total
-}
+import { WORK_HINTS, WORK_PRICE_RANGES, suggestPriceFromWorkItems } from '../../src/lib/alterationPricing.js'
 
 describe('WORK_PRICE_RANGES — hint parser', () => {
   test('Hem $60–100 → mid 80', () => {

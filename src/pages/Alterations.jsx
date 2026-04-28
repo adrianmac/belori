@@ -9,41 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
+import { WORK_HINTS, suggestPriceFromWorkItems } from '../lib/alterationPricing';
 const ALL_WORK_ITEMS=['Hem','Bustle','Waist take-in','Let out waist','Sleeves','Straps','Custom beading','Lining','Neckline','Train','Zipper','Buttons','Other'];
-const WORK_HINTS={Hem:'$60–100',Bustle:'$80–150','Waist take-in':'$60–100','Let out waist':'$60–120',Sleeves:'$40–80',Straps:'$30–60','Custom beading':'$150–400+',Lining:'$80–150',Neckline:'$60–120',Train:'$60–100',Zipper:'$40–80',Buttons:'$30–60'};
-
-// Parse the price-range hint (e.g. "$60–100", "$150–400+") to a tuple of
-// [low, mid, high] so the form can auto-suggest a quote price as the
-// user picks work items. We use the MIDPOINT as the suggestion — a
-// conservative-ish estimate the boutique can adjust either way.
-//
-// Items missing from this map (e.g. 'Other') contribute 0 and won't
-// affect the auto-quote.
-const WORK_PRICE_RANGES = (() => {
-  const map = {};
-  for (const [item, hint] of Object.entries(WORK_HINTS)) {
-    // Match $LOW–HIGH or $LOW–HIGH+ (em-dash). Numbers can be 1–4 digits.
-    const m = hint.match(/\$(\d+)\D+(\d+)/);
-    if (!m) continue;
-    const low  = Number(m[1]);
-    const high = Number(m[2]);
-    map[item] = { low, high, mid: Math.round((low + high) / 2) };
-  }
-  return map;
-})();
-
-// Suggest a price for a list of selected work items. Returns 0 if
-// nothing is recognized — the form treats 0 as "don't auto-fill" so
-// the user can clear it back to empty by deselecting everything.
-function suggestPriceFromWorkItems(items) {
-  if (!Array.isArray(items)) return 0;
-  let total = 0;
-  for (const item of items) {
-    const r = WORK_PRICE_RANGES[item];
-    if (r) total += r.mid;
-  }
-  return total;
-}
 const MEASUREMENT_FIELDS=[
   {key:'bust',label:'Bust',unit:'in'},
   {key:'waist',label:'Waist',unit:'in'},

@@ -18,6 +18,7 @@ import { useRequiresPlan } from '../components/UpgradeGate';
 import { useStaffAvailability } from '../hooks/useStaffAvailability';
 import { formatConflict as formatApptConflict } from '../lib/appointmentConflicts';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { suggestPriceFromWorkItems } from '../lib/alterationPricing';
 import ContractModal from '../components/modals/ContractModal';
 import NewMilestoneModal from '../components/modals/NewMilestoneModal';
 // Eager: rendered on the Summary tab (first paint of EventDetail)
@@ -420,6 +421,18 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
   const [rentalForm,setRentalForm]=useState({pickup_date:'',return_date:'',fee:'',deposit_paid:true});
   const [showAddAlt,setShowAddAlt]=useState(false);
   const [newAlt,setNewAlt]=useState({garment:'',work:[],seamstress_id:'',deadline:'',price:'',notes:''});
+  // Has the user typed in the price field directly? If so, stop
+  // overwriting their custom value when they toggle work items.
+  const [newAltPriceTouched,setNewAltPriceTouched]=useState(false);
+  // Auto-suggest the price from the selected work items (sum of midpoints)
+  // until the user takes manual control. Resets when the modal closes.
+  useEffect(() => {
+    if (!showAddAlt) { setNewAltPriceTouched(false); return; }
+    if (newAltPriceTouched) return;
+    const suggested = suggestPriceFromWorkItems(newAlt.work);
+    setNewAlt(a => ({ ...a, price: suggested > 0 ? String(suggested) : '' }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newAlt.work, newAltPriceTouched, showAddAlt]);
   const [showEditAlt,setShowEditAlt]=useState(false);
 
   const [showEditClient,setShowEditClient]=useState(false);
@@ -3128,7 +3141,26 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
                 <div><label htmlFor="alt-seamstress" style={LBL}>Seamstress</label><select id="alt-seamstress" value={newAlt.seamstress_id} onChange={e=>setNewAlt(a=>({...a,seamstress_id:e.target.value}))} style={{...inputSt}}><option value="">Unassigned</option>{staff.filter(s=>s.role==='Seamstress'||s.role==='seamstress'||s.role==='Owner'||s.role==='owner').map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
                 <div><label htmlFor="alt-deadline" style={LBL}>Deadline</label><input id="alt-deadline" type="date" value={newAlt.deadline} onChange={e=>setNewAlt(a=>({...a,deadline:e.target.value}))} style={{...inputSt}}/></div>
               </div>
-              <div><label htmlFor="alt-price" style={LBL}>Quoted price ($)</label><input id="alt-price" type="number" value={newAlt.price} onChange={e=>setNewAlt(a=>({...a,price:e.target.value}))} placeholder="0.00" style={{...inputSt}}/></div>
+              <div>
+                <label htmlFor="alt-price" style={{...LBL,display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
+                  <span>Quoted price ($)</span>
+                  {newAltPriceTouched && newAlt.work.length > 0 && (
+                    <button type="button"
+                      onClick={()=>{ setNewAltPriceTouched(false); setNewAlt(a=>({...a, price: String(suggestPriceFromWorkItems(a.work))})); }}
+                      style={{background:'none',border:'none',color:C.rosaText,fontSize:10,fontWeight:500,cursor:'pointer',padding:0,letterSpacing:'0.04em',textTransform:'uppercase'}}>
+                      Re-estimate
+                    </button>
+                  )}
+                </label>
+                <input id="alt-price" type="number" value={newAlt.price}
+                  onChange={e=>{ setNewAlt(a=>({...a,price:e.target.value})); setNewAltPriceTouched(true); }}
+                  placeholder="0.00" style={{...inputSt}}/>
+                {!newAltPriceTouched && newAlt.work.length > 0 && (
+                  <div style={{fontSize:11,color:C.gray,marginTop:6,fontStyle:'italic'}}>
+                    Estimated from work items — adjust as needed
+                  </div>
+                )}
+              </div>
               <div><label htmlFor="alt-notes" style={LBL}>Notes</label><textarea id="alt-notes" rows={2} value={newAlt.notes} onChange={e=>setNewAlt(a=>({...a,notes:e.target.value}))} placeholder="Special instructions…" style={{...inputSt,resize:'vertical'}}/></div>
             </div>
             <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
