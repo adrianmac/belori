@@ -998,12 +998,18 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
   const [staffFilter,setStaffFilter]=useState('');
   const [draggedJob, setDraggedJob] = useState(null);
 
+  // Kanban columns — active workflow states only.
+  // 'cancelled' is intentionally absent: dead jobs shouldn't take up
+  // visual real-estate on the board. They're still in the DB, still
+  // editable via the list view, still filterable, but the kanban is
+  // for live work. (Status enum unchanged — STATUS_OPTS in the
+  // edit-job select still includes 'cancelled' so users can move
+  // jobs there from any other state.)
   const cols=[
     {id:'measurement_needed',label:'Measurement needed',color:'var(--text-info)',bg:'var(--bg-info)'},
     {id:'in_progress',label:'In progress',color:'var(--text-warning)',bg:'var(--bg-warning)'},
     {id:'fitting_scheduled',label:'Fitting scheduled',color:C.purple,bg:C.purplePale},
     {id:'complete',label:'Complete',color:'var(--text-success)',bg:'var(--bg-success)'},
-    {id:'cancelled',label:'Cancelled',color:C.gray,bg:C.grayBg},
   ];
   const ALT_STATUS_COLS={measurement_needed:{bg:'var(--bg-info)',col:'var(--text-info)'},in_progress:{bg:'var(--bg-warning)',col:'var(--text-warning)'},fitting_scheduled:{bg:C.purplePale,col:C.purple},complete:{bg:'var(--bg-success)',col:'var(--text-success)'},cancelled:{bg:C.grayBg,col:C.gray}};
 
@@ -1012,17 +1018,24 @@ const Alterations = ({alterations: liveAlterations, staff, clients, createClient
   const { filtered, totalActive, dueThisWeek, unassigned, completed } = useMemo(() => {
     const filtered = data.filter(job => {
       if(search){const q=search.toLowerCase();if(!job.client?.toLowerCase().includes(q)&&!job.garment?.toLowerCase().includes(q)&&!(job.work||[]).some(w=>w.toLowerCase().includes(q)))return false;}
-      if(filter==='urgent')return job.daysUntil<=7&&job.status!=='complete';
-      if(filter==='unassigned')return !job.seamstress&&job.status!=='complete';
+      // Urgent / unassigned filters target ACTIVE work — exclude cancelled,
+      // not just complete. Cancelled jobs aren't urgent and don't need
+      // assigning.
+      if(filter==='urgent')return job.daysUntil<=7&&job.status!=='complete'&&job.status!=='cancelled';
+      if(filter==='unassigned')return !job.seamstress&&job.status!=='complete'&&job.status!=='cancelled';
       if(staffFilter&&job.seamstress!==staffFilter)return false;
       return true;
     });
+    // "Active" excludes both terminal states. Previously this was
+    // status!=='complete' only, which let cancelled jobs inflate the
+    // active-jobs / due-this-week / unassigned counts in the stat strip.
+    const isActive = (j) => j.status !== 'complete' && j.status !== 'cancelled';
     return {
       filtered,
-      totalActive: data.filter(a=>a.status!=='complete').length,
-      dueThisWeek: data.filter(a=>a.daysUntil<=7&&a.status!=='complete').length,
-      unassigned:  data.filter(a=>!a.seamstress&&a.status!=='complete').length,
-      completed:   data.filter(a=>a.status==='complete').length,
+      totalActive: data.filter(isActive).length,
+      dueThisWeek: data.filter(a => a.daysUntil <= 7 && isActive(a)).length,
+      unassigned:  data.filter(a => !a.seamstress && isActive(a)).length,
+      completed:   data.filter(a => a.status === 'complete').length,
     };
   }, [data, search, filter, staffFilter]);
 
