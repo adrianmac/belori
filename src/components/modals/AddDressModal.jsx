@@ -60,7 +60,7 @@ const AddDressModal = ({onClose, onCreate}) => {
       <div role="dialog" aria-modal="true" aria-labelledby="add-dress-title" style={{background:C.white,borderRadius:16,width:500,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'20px 24px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div id="add-dress-title" style={{fontWeight:600,fontSize:16,color:C.ink}}>Add dress to inventory</div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}} aria-label="Close">×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:24,display:'flex',flexDirection:'column',gap:16}}>
           {/* Category */}
