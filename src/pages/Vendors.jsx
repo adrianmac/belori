@@ -129,7 +129,7 @@ function VendorModal({ vendor, onSave, onClose, saving }) {
           <button
             onClick={onClose}
             style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }}
-          >×</button>
+           aria-label="Close">×</button>
         </div>
 
         {/* Modal body */}
@@ -293,7 +293,7 @@ function VendorPaymentsModal({ vendor, payments, events, logVendorPayment, onClo
             <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, marginBottom: 2 }}>💳 Payments — {vendor.name}</div>
             <div style={{ fontSize: 13, color: C.gray }}>Track money paid to this vendor</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }} aria-label="Close">×</button>
         </div>
 
         {/* Total paid summary */}

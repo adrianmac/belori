@@ -193,7 +193,7 @@ export default function DamageAssessmentModal({ dress, clientName, eventId, clie
               {dress?.name || 'Dress'}{clientName ? ` · ${clientName}` : ''}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, color: C.gray, cursor: 'pointer', lineHeight: 1, padding: 0, marginTop: 2 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, color: C.gray, cursor: 'pointer', lineHeight: 1, padding: 0, marginTop: 2 }} aria-label="Close">×</button>
         </div>
 
         {/* Scrollable body */}
