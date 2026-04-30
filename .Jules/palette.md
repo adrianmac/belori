@@ -1,0 +1,3 @@
+## 2024-05-15 - [Interactive Component Accessibility in Lists]
+**Learning:** `onClick` handlers attached to `div`s (e.g., in `NotificationCenter`) are inaccessible via keyboard and screen readers, leading to poor keyboard navigation since the elements cannot receive focus.
+**Action:** Always convert interactive custom list items (like notifications) from `div` to semantic `button`s (`<button type="button">`) with explicit styling resets (`background: 'none'`, `border: 'none'`, `textAlign: 'left'`, `width: '100%'`). Add `onFocus` and `onBlur` handlers to match existing hover transitions so keyboard navigation has visible indicators.
