@@ -171,10 +171,17 @@ export default function NotificationCenter({ events, payments, inventory, setScr
       ) : alerts.map((alert, i) => {
         const cfg = PRIORITY_CFG[alert.priority];
         return (
-          <div key={alert.id} onClick={() => handleClick(alert)}
-            style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', cursor: 'pointer', borderBottom: i < alerts.length - 1 ? `1px solid ${C.border}` : 'none', transition: 'background 0.1s' }}
+          <button key={alert.id} onClick={() => handleClick(alert)}
+            aria-label={`${alert.title}. ${alert.body}`}
+            style={{
+              background: 'none', border: 'none', width: '100%', textAlign: 'left',
+              display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 14px', cursor: 'pointer', borderBottom: i < alerts.length - 1 ? `1px solid ${C.border}` : 'none', transition: 'background 0.1s'
+            }}
             onMouseEnter={e => e.currentTarget.style.background = cfg.bg}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            onFocus={e => e.currentTarget.style.background = cfg.bg}
+            onBlur={e => e.currentTarget.style.background = 'transparent'}
+          >
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.dot, flexShrink: 0, marginTop: 5 }}/>
             <div style={{ width: 30, height: 30, borderRadius: 8, background: cfg.bg, border: `1px solid ${cfg.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>
               {alert.icon}
@@ -186,7 +193,7 @@ export default function NotificationCenter({ events, payments, inventory, setScr
             <svg width="10" height="10" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 6, color: C.gray }}>
               <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
-          </div>
+          </button>
         );
       })}
     </div>
