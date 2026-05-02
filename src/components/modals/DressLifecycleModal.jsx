@@ -50,7 +50,7 @@ export const DressLifecycleModal = ({dress, onClose, onUpdate}) => {
       <div style={{background:C.white,borderRadius:16,width:440,display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'20px 24px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div style={{fontWeight:600,fontSize:16,color:C.ink}}>{TITLES[dress.status]||'Update status'}</div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{padding:24,display:'flex',flexDirection:'column',gap:14}}>
           <div style={{background:C.ivory,borderRadius:8,padding:'12px 14px'}}>

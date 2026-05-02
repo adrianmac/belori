@@ -60,7 +60,7 @@ const AddDressModal = ({onClose, onCreate}) => {
       <div role="dialog" aria-modal="true" aria-labelledby="add-dress-title" style={{background:C.white,borderRadius:16,width:500,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'20px 24px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div id="add-dress-title" style={{fontWeight:600,fontSize:16,color:C.ink}}>Add dress to inventory</div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:24,display:'flex',flexDirection:'column',gap:16}}>
           {/* Category */}
@@ -80,7 +80,7 @@ const AddDressModal = ({onClose, onCreate}) => {
             {imagePreview?(
               <div style={{position:'relative',display:'inline-block'}}>
                 <img src={imagePreview} alt="preview" style={{width:'100%',maxHeight:180,objectFit:'cover',borderRadius:10,border:`1px solid ${C.border}`,display:'block'}}/>
-                <button onClick={()=>{setImageFile(null);setImagePreview(null);}} style={{position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.55)',border:'none',borderRadius:'50%',width:24,height:24,color:'#fff',cursor:'pointer',fontSize:14,lineHeight:'24px',textAlign:'center'}}>×</button>
+                <button aria-label="Remove image" onClick={()=>{setImageFile(null);setImagePreview(null);}} style={{position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.55)',border:'none',borderRadius:'50%',width:24,height:24,color:'#fff',cursor:'pointer',fontSize:14,lineHeight:'24px',textAlign:'center'}}>×</button>
               </div>
             ):(
               <button onClick={()=>fileRef.current.click()} style={{width:'100%',padding:'24px',borderRadius:10,border:`2px dashed ${C.border}`,background:C.ivory,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
