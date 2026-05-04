@@ -124,13 +124,17 @@ export default function QuickActionFAB({ setScreen }) {
 
       <div style={fabStyle}>
         {/* Action buttons — fan out above FAB */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-          gap: 10,
-          pointerEvents: open ? 'auto' : 'none',
-        }}>
+        <div
+          id="fab-menu"
+          aria-hidden={!open}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: 10,
+            pointerEvents: open ? 'auto' : 'none',
+          }}
+        >
           {actions.map((action) => (
             <div
               key={action.key}
@@ -163,6 +167,7 @@ export default function QuickActionFAB({ setScreen }) {
                 onClick={(e) => { e.stopPropagation(); handleAction(action); }}
                 aria-label={action.label}
                 title={action.label}
+                tabIndex={open ? 0 : -1}
                 style={{
                   width: 48,
                   height: 48,
@@ -192,7 +197,9 @@ export default function QuickActionFAB({ setScreen }) {
         <button
           onClick={() => setOpen(o => !o)}
           aria-expanded={open}
-          title="Quick actions"
+          aria-haspopup="menu"
+          aria-controls="fab-menu"
+          aria-label={open ? 'Close quick actions' : 'Open quick actions'}
           style={{
             width: 56,
             height: 56,

@@ -1,0 +1,3 @@
+## 2024-05-04 - QuickActionFAB Keyboard and Screen Reader Accessibility
+**Learning:** CSS-based visually hidden items with `pointerEvents: 'none'` inside a FAB menu are still accessible via keyboard tabbing and screen readers. They require explicit `aria-hidden={!isOpen}` on the container and `tabIndex={isOpen ? 0 : -1}` on actionable items to prevent ghost focusing when the menu is collapsed.
+**Action:** When creating expanding floating action buttons or menus that keep elements in the DOM with `pointerEvents: 'none'` or `opacity: 0`, always make sure to apply `aria-hidden` and explicitly manage `tabIndex` so closed menu items are truly un-focusable.
