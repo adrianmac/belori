@@ -454,7 +454,7 @@ export default function POSPage({ inventory = [], clients = [], events = [] }) {
               {selectedClient ? (
                 <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',background:C.rosaPale,borderRadius:8,border:`1px solid ${C.rosa}`}}>
                   <span style={{flex:1,fontSize:12,fontWeight:500,color:C.rosaText}}>{selectedClient.name}</span>
-                  <button onClick={clearClient}
+                  <button aria-label="Close" onClick={clearClient}
                     style={{background:'none',border:'none',color:C.rosaText,cursor:'pointer',fontSize:16,lineHeight:1}}>×</button>
                 </div>
               ) : (

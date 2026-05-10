@@ -172,7 +172,7 @@ function VendorModal({ vendor, onClose, onSave }) {
           <span style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>
             {vendor ? 'Edit Vendor' : 'Add Vendor'}
           </span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gray, fontSize: 20, lineHeight: 1, padding: '0 4px' }}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gray, fontSize: 20, lineHeight: 1, padding: '0 4px' }}>×</button>
         </div>
 
         {/* Modal body */}

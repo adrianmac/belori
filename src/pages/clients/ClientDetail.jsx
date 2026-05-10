@@ -46,7 +46,7 @@ function DirectSMSModal({ client, boutique, onClose, toast }) {
             <div style={{fontWeight:600,fontSize:15,color:C.ink}}>Send SMS</div>
             <div style={{fontSize:12,color:C.gray,marginTop:1}}>To: {client?.name} · {phone}</div>
           </div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray}}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray}}>×</button>
         </div>
         <div style={{padding:20,display:'flex',flexDirection:'column',gap:12}}>
           <textarea

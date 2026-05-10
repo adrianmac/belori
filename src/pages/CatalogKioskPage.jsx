@@ -179,7 +179,7 @@ function RequestSheet({ item, boutiqueId, onClose }) {
                   <div style={{ fontSize:20,fontWeight:700,color:'#fff' }}>Book a Try-On</div>
                   <div style={{ fontSize:13,color:'rgba(255,255,255,0.5)',marginTop:2 }}>{item.name}</div>
                 </div>
-                <button className="ck-btn" onClick={onClose} style={{ width:36,height:36,borderRadius:'50%',background:'rgba(255,255,255,0.1)',border:'none',color:'rgba(255,255,255,0.7)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center' }}>×</button>
+                <button aria-label="Close" className="ck-btn" onClick={onClose} style={{ width:36,height:36,borderRadius:'50%',background:'rgba(255,255,255,0.1)',border:'none',color:'rgba(255,255,255,0.7)',fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center' }}>×</button>
               </div>
 
               <div style={{ display:'flex',flexDirection:'column',gap:12 }}>
