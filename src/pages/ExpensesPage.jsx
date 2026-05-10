@@ -140,7 +140,7 @@ function ExpenseModal({ editExpense, events, onSave, onClose, saving }) {
           <span style={{ fontWeight: 700, fontSize: 15, color: C.ink }}>
             {editExpense ? 'Edit Expense' : 'Add Expense'}
           </span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
         </div>
 
         {/* Body */}

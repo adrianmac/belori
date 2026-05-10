@@ -46,7 +46,7 @@ export default function UpgradeModal({ onClose, feature, minPlan = 'pro' }) {
               <div style={{fontSize:22,fontWeight:800,marginBottom:4}}>✨ Unlock {feature}</div>
               <div style={{fontSize:13,opacity:0.85}}>Upgrade your plan to access this and many more features</div>
             </div>
-            <button onClick={onClose} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'#fff',width:32,height:32,borderRadius:8,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>×</button>
+            <button aria-label="Close" onClick={onClose} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'#fff',width:32,height:32,borderRadius:8,cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>×</button>
           </div>
         </div>
 

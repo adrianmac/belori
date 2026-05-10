@@ -111,7 +111,7 @@ function CreatePOModal({ vendors, inventory, onSave, onClose }) {
             <div style={{ fontSize: 16, fontWeight: 700, color: C.ink }}>New Purchase Order</div>
             <div style={{ fontSize: 12, color: C.gray, marginTop: 2 }}>PO# {poNumber}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
         </div>
 
         {/* Body */}
@@ -338,7 +338,7 @@ function PODetailPanel({ po, onClose, onUpdatePO, onReceivePO, onDeletePO }) {
               {po.vendor_name || 'Unknown vendor'} &middot; {po.order_date ? new Date(po.order_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1, flexShrink: 0 }}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1, flexShrink: 0 }}>×</button>
         </div>
 
         {/* Dates + badge row */}
