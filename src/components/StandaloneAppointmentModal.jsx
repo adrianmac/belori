@@ -383,17 +383,17 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
           <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose} />
           {conflicts && conflicts.length > 0 ? (
             <PrimaryBtn
-              label={saving ? 'Saving…' : 'Book anyway'}
+              label="Book anyway"
+              loading={saving}
               colorScheme="warning"
               onClick={() => save(true)}
-              disabled={saving}
               data-testid="appointment-book-anyway"
             />
           ) : (
             <PrimaryBtn
-              label={saving ? 'Saving…' : 'Schedule appointment'}
+              label="Schedule appointment"
+              loading={saving}
               onClick={() => save(false)}
-              disabled={saving}
               data-testid="appointment-schedule-button"
             />
           )}

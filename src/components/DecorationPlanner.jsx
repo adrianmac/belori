@@ -739,7 +739,7 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
             <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <GhostBtn label="Cancel" colorScheme="danger" onClick={resetDecoModal}/>
               <PrimaryBtn
-                label={saving?'Saving…':editingDecoId?'Save changes':'Assign item'}
+                label={editingDecoId?'Save changes':'Assign item'} loading={saving}
                 colorScheme="success"
                 onClick={async()=>{
                   if(!editingDecoId&&!decoForm.inventoryId){toast('Select an item first','warn');return;}

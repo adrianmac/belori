@@ -126,7 +126,7 @@ const AddDressModal = ({onClose, onCreate}) => {
         </div>
         <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
           <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose}/>
-          <PrimaryBtn label={saving?'Adding…':'Add to inventory'} colorScheme="success" onClick={confirm}/>
+          <PrimaryBtn label='Add to inventory' loading={saving} colorScheme="success" onClick={confirm}/>
         </div>
       </div>
     </div>

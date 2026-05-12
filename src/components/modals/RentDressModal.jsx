@@ -227,7 +227,7 @@ export const RentDressModal = ({dress, events, clients, onClose, onRent}) => {
             </div>
             <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',gap:8,justifyContent:'space-between'}}>
               <GhostBtn label="← Back" onClick={()=>setStep(1)}/>
-              <PrimaryBtn label={saving?'Saving…':'Confirm rental'} colorScheme="success" onClick={confirm}/>
+              <PrimaryBtn label='Confirm rental' loading={saving} colorScheme="success" onClick={confirm}/>
             </div>
           </>
         )}
