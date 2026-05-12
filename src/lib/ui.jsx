@@ -176,13 +176,23 @@ export const CardHead = ({title,sub,action,onAction}) => {
 // PrimaryBtn/GhostBtn forward all extra props to the underlying <button>, so
 // callers can pass data-testid, aria-*, type, title, form, etc. without
 // touching the atoms.
-export const PrimaryBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,...rest}) => (
-  <button onClick={onClick} className={`btn-solid ${className}`} data-color={colorScheme} style={style} disabled={disabled} {...rest}>
+export const PrimaryBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,loading,...rest}) => (
+  <button onClick={onClick} className={`btn-solid ${className}`} data-color={colorScheme} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: loading ? 8 : 0, ...style }} disabled={disabled || loading} aria-busy={loading} {...rest}>
+    {loading && (
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, animation: 'gs-spin 0.8s linear infinite' }}>
+        <circle cx="12" cy="12" r="10" strokeDasharray="28 12"/>
+      </svg>
+    )}
     {label||children}
   </button>
 );
-export const GhostBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,...rest}) => (
-  <button onClick={onClick} className={`btn-ghost ${className}`} data-color={colorScheme} style={style} disabled={disabled} {...rest}>
+export const GhostBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,loading,...rest}) => (
+  <button onClick={onClick} className={`btn-ghost ${className}`} data-color={colorScheme} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: loading ? 8 : 0, ...style }} disabled={disabled || loading} aria-busy={loading} {...rest}>
+    {loading && (
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, animation: 'gs-spin 0.8s linear infinite' }}>
+        <circle cx="12" cy="12" r="10" strokeDasharray="28 12"/>
+      </svg>
+    )}
     {label||children}
   </button>
 );

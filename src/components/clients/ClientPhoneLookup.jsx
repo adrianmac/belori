@@ -429,7 +429,7 @@ export default function ClientPhoneLookup({ onClientSelected, boutiqueId }) {
                 disabled={saving}
               />
               <PrimaryBtn
-                label={saving ? 'Saving…' : 'Save client / Guardar cliente'}
+                label='Save client / Guardar cliente' loading={saving}
                 onClick={handleCreateClient}
                 disabled={saving}
               />

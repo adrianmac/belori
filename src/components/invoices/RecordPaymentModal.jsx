@@ -709,7 +709,7 @@ export default function RecordPaymentModal({ invoice, onPaymentRecorded, onClose
             {/* Step 3 → Confirm */}
             {step === 3 && method === 'card' && (
               <PrimaryBtn
-                label={saving ? 'Recording…' : 'Payment received — Record / Pago recibido — Registrar'}
+                label='Payment received — Record / Pago recibido — Registrar' loading={saving}
                 onClick={handleConfirm}
                 disabled={saving || amountCents <= 0}
               />
@@ -717,7 +717,7 @@ export default function RecordPaymentModal({ invoice, onPaymentRecorded, onClose
 
             {step === 3 && method === 'zelle' && (
               <PrimaryBtn
-                label={saving ? 'Recording…' : 'Record Zelle payment / Registrar pago Zelle'}
+                label='Record Zelle payment / Registrar pago Zelle' loading={saving}
                 onClick={handleConfirm}
                 disabled={saving || amountCents <= 0}
               />
@@ -725,7 +725,7 @@ export default function RecordPaymentModal({ invoice, onPaymentRecorded, onClose
 
             {step === 3 && method === 'cash' && (
               <PrimaryBtn
-                label={saving ? 'Recording…' : 'Record cash payment / Registrar pago en efectivo'}
+                label='Record cash payment / Registrar pago en efectivo' loading={saving}
                 onClick={handleConfirm}
                 disabled={saving || amountCents <= 0}
               />

@@ -668,7 +668,7 @@ export default function AppointmentScheduler({ eventId, clientId, eventDate, onS
             )}
             {step === 3 && (
               <PrimaryBtn
-                label={saving ? 'Saving…' : 'Schedule appointment'}
+                label='Schedule appointment' loading={saving}
                 onClick={save}
                 disabled={saving}
               />

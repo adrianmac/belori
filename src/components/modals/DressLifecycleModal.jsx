@@ -69,7 +69,7 @@ export const DressLifecycleModal = ({dress, onClose, onUpdate}) => {
           <div><label htmlFor="dlm-notes" style={LBL}>Notes (optional)</label><textarea id="dlm-notes" value={notes} onChange={e=>setNotes(e.target.value)} rows={2} placeholder="Any notes..." style={{...inputSt,resize:'vertical'}}/></div>
         </div>
         <div style={{padding:'12px 24px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
-          <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose}/><PrimaryBtn label={saving?'Updating…':(DRESS_TRANSITIONS[dress.status]?.label||'Confirm')} onClick={confirm}/>
+          <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose}/><PrimaryBtn label={DRESS_TRANSITIONS[dress.status]?.label||'Confirm'} loading={saving} onClick={confirm}/>
         </div>
       </div>
     </div>
