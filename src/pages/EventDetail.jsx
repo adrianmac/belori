@@ -3289,7 +3289,7 @@ const EventDetail = ({eventId,setScreen,setSelectedEvent,allEvents,updateEvent,d
             <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between'}}>
               <GhostBtn label="Cancel" colorScheme="danger" onClick={()=>{setShowAddDate(false);setAddDateConflict(null);setAddDateDbConflicts(null);setStaffAvailWarn(null);}}/>
               <PrimaryBtn
-                label={saving ? 'Saving…' : (addDateDbConflicts && addDateDbConflicts.length > 0 ? 'Book anyway' : 'Add date')}
+                label={addDateDbConflicts && addDateDbConflicts.length > 0 ? 'Book anyway' : 'Add date'} loading={saving}
                 colorScheme={addDateDbConflicts && addDateDbConflicts.length > 0 ? 'warning' : 'success'}
                 data-testid="add-date-submit"
                 onClick={async()=>{
