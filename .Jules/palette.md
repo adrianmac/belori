@@ -1,0 +1,3 @@
+## 2024-05-19 - Standardized Loading States for Async Buttons
+**Learning:** Found widespread manual string toggling for loading states (e.g., \`saving ? 'Saving...' : 'Save'\`) which fails to programmatically communicate "busy" states to screen readers and often lacks proper visual disabled indicators.
+**Action:** Implemented a \`loading\` prop natively on \`PrimaryBtn\` and \`GhostBtn\` components that automatically displays an SVG spinner, disabled interaction (\`disabled={disabled || loading}\`), and importantly, conveys the processing state to assistive tech via \`aria-busy={loading}\`. Future async actions should leverage this built-in prop instead of manually changing the button text.
