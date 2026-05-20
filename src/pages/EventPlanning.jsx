@@ -254,7 +254,7 @@ function TasksSection({ event, boutique, onRefetch }) {
             </label>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <PrimaryBtn label={saving ? 'Saving…' : 'Add task'} onClick={addTask} disabled={saving} style={{ flex: 1 }} />
+            <PrimaryBtn label="Add task" loading={saving} onClick={addTask} style={{ flex: 1 }} />
             <GhostBtn label="Cancel" onClick={() => { setShowAdd(false); setNewText('') }} style={{ flex: 1 }} />
           </div>
         </div>
@@ -389,7 +389,7 @@ function AppointmentsSection({ event, boutique, staff, createAppointment, onRefe
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <PrimaryBtn label={saving ? 'Saving…' : 'Schedule'} onClick={submit} disabled={saving} style={{ flex: 1 }} />
+            <PrimaryBtn label="Schedule" loading={saving} onClick={submit} style={{ flex: 1 }} />
             <GhostBtn label="Cancel" onClick={() => setShowForm(false)} style={{ flex: 1 }} />
           </div>
         </div>
@@ -561,9 +561,10 @@ function NotesSection({ eventId }) {
           style={{ ...inputSt, resize: 'vertical', fontFamily: 'inherit' }}
         />
         <PrimaryBtn
-          label={saving ? 'Saving…' : 'Add note'}
+          label="Add note"
+          loading={saving}
           onClick={submit}
-          disabled={saving || !text.trim()}
+          disabled={!text.trim()}
           style={{ alignSelf: 'flex-end' }}
         />
       </div>
