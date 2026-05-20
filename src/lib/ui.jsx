@@ -173,16 +173,26 @@ export const CardHead = ({title,sub,action,onAction}) => {
     </div>
   );
 };
+// Spinner icon for loading states
+export const SpinnerIcon = () => (
+  <svg className="btn-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'btn-spin 1s linear infinite' }}>
+    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+    <style>{`@keyframes btn-spin{to{transform:rotate(360deg)}}`}</style>
+  </svg>
+);
+
 // PrimaryBtn/GhostBtn forward all extra props to the underlying <button>, so
 // callers can pass data-testid, aria-*, type, title, form, etc. without
 // touching the atoms.
-export const PrimaryBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,...rest}) => (
-  <button onClick={onClick} className={`btn-solid ${className}`} data-color={colorScheme} style={style} disabled={disabled} {...rest}>
+export const PrimaryBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,loading,...rest}) => (
+  <button onClick={onClick} className={`btn-solid ${className}`} data-color={colorScheme} style={{...style, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8}} disabled={disabled || loading} aria-busy={loading} {...rest}>
+    {loading && <SpinnerIcon />}
     {label||children}
   </button>
 );
-export const GhostBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,...rest}) => (
-  <button onClick={onClick} className={`btn-ghost ${className}`} data-color={colorScheme} style={style} disabled={disabled} {...rest}>
+export const GhostBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,loading,...rest}) => (
+  <button onClick={onClick} className={`btn-ghost ${className}`} data-color={colorScheme} style={{...style, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8}} disabled={disabled || loading} aria-busy={loading} {...rest}>
+    {loading && <SpinnerIcon />}
     {label||children}
   </button>
 );
