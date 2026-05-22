@@ -134,7 +134,7 @@ const GenerateModal = ({ template, boutique, onClose }) => {
             <div style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>Generate contract</div>
             <div style={{ fontSize: 12, color: C.gray, marginTop: 2 }}>Template: {template.name}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, color: C.gray, cursor: 'pointer', lineHeight: 1 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, color: C.gray, cursor: 'pointer', lineHeight: 1 }} aria-label="Close">×</button>
         </div>
 
         {/* Body */}
