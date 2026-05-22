@@ -95,7 +95,7 @@ const LogReviewModal = ({ onClose, onSave, saving, clients, events }) => {
         {/* Header */}
         <div style={{ padding: '18px 22px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: C.white, zIndex: 1 }}>
           <span style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>Log Review</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }} aria-label="Close">×</button>
         </div>
 
         <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>

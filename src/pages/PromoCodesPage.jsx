@@ -114,7 +114,7 @@ function CodeModal({ existing, onSave, onClose }) {
         {/* Header */}
         <div style={{ padding: '18px 22px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontWeight: 700, fontSize: 16, color: C.ink }}>{existing ? 'Edit Promo Code' : 'Create Promo Code'}</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1, padding: '0 4px' }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1, padding: '0 4px' }} aria-label="Close">×</button>
         </div>
 
         {/* Body */}
@@ -283,7 +283,7 @@ function ApplyModal({ code, onApply, onClose }) {
             <span style={{ fontWeight: 700, fontSize: 16, color: C.ink }}>Apply Code</span>
             <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 14, background: C.grayBg, borderRadius: 6, padding: '2px 8px', color: C.rosaText }}>{code.code}</span>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.gray, lineHeight: 1 }} aria-label="Close">×</button>
         </div>
 
         <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 16 }}>
