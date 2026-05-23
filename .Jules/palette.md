@@ -1,0 +1,3 @@
+## 2025-02-12 - Semantic HTML for Close Buttons
+**Learning:** We had non-semantic `<span>` elements used as close buttons in modals/cards (e.g. `PaymentMilestonesCard.jsx`). Using standard HTML elements like `<button>` with an `aria-label` provides out of the box keyboard focus capabilities for users traversing via Tab.
+**Action:** Always favor `<button aria-label="Close" title="Close" onClick={...}>×</button>` over `<span onClick={...}>×</span>` and apply inline styles (`background: 'none'`, `border: 'none'`, `padding: 0`, `cursor: 'pointer'`) when you don't want the default browser button appearance.
