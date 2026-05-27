@@ -51,7 +51,7 @@ export const DressPickupModal = ({ dress, onClose, onUpdate }) => {
         </div>
         <div style={{ padding: '12px 24px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between' }}>
           <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose} />
-          <PrimaryBtn label={saving ? 'Saving…' : 'Confirm pickup'} colorScheme="success" onClick={handlePickup} />
+          <PrimaryBtn label="Confirm pickup" loading={saving} colorScheme="success" onClick={handlePickup} />
         </div>
       </div>
     </div>
