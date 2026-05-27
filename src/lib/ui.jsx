@@ -176,13 +176,22 @@ export const CardHead = ({title,sub,action,onAction}) => {
 // PrimaryBtn/GhostBtn forward all extra props to the underlying <button>, so
 // callers can pass data-testid, aria-*, type, title, form, etc. without
 // touching the atoms.
-export const PrimaryBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,...rest}) => (
-  <button onClick={onClick} className={`btn-solid ${className}`} data-color={colorScheme} style={style} disabled={disabled} {...rest}>
+export const SpinnerIcon = ({ size = 16, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ animation: 'beloriSpin 1s linear infinite' }}>
+    <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="3" strokeLinecap="round" strokeDasharray="31.4 31.4" opacity="0.4" />
+    <path d="M12 2a10 10 0 0 1 10 10" stroke={color} strokeWidth="3" strokeLinecap="round" />
+  </svg>
+);
+
+export const PrimaryBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,loading,...rest}) => (
+  <button onClick={onClick} className={`btn-solid ${className}`} data-color={colorScheme} style={{...style, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8}} disabled={disabled || loading} aria-busy={loading} {...rest}>
+    {loading && <SpinnerIcon />}
     {label||children}
   </button>
 );
-export const GhostBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,...rest}) => (
-  <button onClick={onClick} className={`btn-ghost ${className}`} data-color={colorScheme} style={style} disabled={disabled} {...rest}>
+export const GhostBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,loading,...rest}) => (
+  <button onClick={onClick} className={`btn-ghost ${className}`} data-color={colorScheme} style={{...style, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8}} disabled={disabled || loading} aria-busy={loading} {...rest}>
+    {loading && <SpinnerIcon />}
     {label||children}
   </button>
 );
