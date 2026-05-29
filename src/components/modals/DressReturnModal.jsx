@@ -202,7 +202,7 @@ export const DressReturnModal = ({ dress, onClose, onUpdate }) => {
           ) : (
             <>
               <GhostBtn label="← Back" onClick={() => setStep(2)} />
-              <PrimaryBtn label={saving ? 'Saving…' : 'Confirm return'} colorScheme="success" onClick={async () => {
+              <PrimaryBtn label="Confirm return" loading={saving} colorScheme="success" onClick={async () => {
                 setSaving(true);
                 // Build damage note to append to dress notes
                 let notesValue = returnNotes.trim() || null;

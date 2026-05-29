@@ -66,7 +66,7 @@ const NewClientModal = ({ onClose, createClient, onSuccess }) => {
           </div>
         </div>
         <div style={{padding:'16px 24px',borderTop:`1px solid ${C.border}`,background:C.grayBg,display:'flex',justifyContent:'flex-end',gap:12}}>
-          <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose}/><PrimaryBtn label={saving?'Saving…':'Add client'} colorScheme="success" onClick={handleNew}/>
+          <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose}/><PrimaryBtn label="Add client" loading={saving} colorScheme="success" onClick={handleNew}/>
         </div>
       </div>
     </div>
