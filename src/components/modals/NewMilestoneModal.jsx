@@ -79,7 +79,7 @@ const NewMilestoneModal = ({ liveEvent, createMilestone, onClose }) => {
         
         <div style={{ padding: '12px 20px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between' }}>
           <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose} />
-          <PrimaryBtn label={saving ? 'Saving…' : 'Add milestone'} onClick={handleSave} />
+          <PrimaryBtn label="Add milestone" loading={saving} onClick={handleSave} />
         </div>
       </div>
     </div>
