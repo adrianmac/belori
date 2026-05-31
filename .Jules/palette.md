@@ -1,0 +1,3 @@
+## 2024-11-25 - [Button Loading State Accessibility]
+**Learning:** For async operations, simply changing button text (e.g. "Saving...") provides poor UX and a11y. Standardizing a `loading={bool}` prop on base button components to automatically render a spinner, set `aria-busy={true}`, and implicitly set `disabled` ensures a consistent, accessible pattern across the application and avoids repetitive boilerplate.
+**Action:** Implemented `loading` prop in `<PrimaryBtn>` and `<GhostBtn>` (in `ui.jsx`) with a standardized `<SpinnerIcon>` to automatically handle visual feedback and accessibility states.

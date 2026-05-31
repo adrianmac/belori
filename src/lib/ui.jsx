@@ -176,13 +176,22 @@ export const CardHead = ({title,sub,action,onAction}) => {
 // PrimaryBtn/GhostBtn forward all extra props to the underlying <button>, so
 // callers can pass data-testid, aria-*, type, title, form, etc. without
 // touching the atoms.
-export const PrimaryBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,...rest}) => (
-  <button onClick={onClick} className={`btn-solid ${className}`} data-color={colorScheme} style={style} disabled={disabled} {...rest}>
+export const SpinnerIcon = ({ size = 16, color = 'currentColor', style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style} aria-hidden="true">
+    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite" />
+  </svg>
+);
+
+export const PrimaryBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,loading,...rest}) => (
+  <button onClick={onClick} className={`btn-solid ${className}`} data-color={colorScheme} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', ...style }} disabled={disabled || loading} aria-busy={loading} {...rest}>
+    {loading && <SpinnerIcon />}
     {label||children}
   </button>
 );
-export const GhostBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,...rest}) => (
-  <button onClick={onClick} className={`btn-ghost ${className}`} data-color={colorScheme} style={style} disabled={disabled} {...rest}>
+export const GhostBtn = ({label,onClick,style={},className='',colorScheme='primary',children,disabled,loading,...rest}) => (
+  <button onClick={onClick} className={`btn-ghost ${className}`} data-color={colorScheme} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', ...style }} disabled={disabled || loading} aria-busy={loading} {...rest}>
+    {loading && <SpinnerIcon />}
     {label||children}
   </button>
 );

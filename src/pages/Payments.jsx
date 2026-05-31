@@ -451,9 +451,9 @@ const CreateMilestoneModal = ({ events, createMilestone, onClose }) => {
         <div style={{padding:'12px 20px',borderTop:`1px solid ${C.border}`,display:'flex',gap:8,justifyContent:'space-between'}}>
           <GhostBtn label="Cancel" onClick={onClose}/>
           <PrimaryBtn
-            label={saving ? 'Saving…' : 'Save milestone'}
+            label="Save milestone"
             colorScheme="success"
-            disabled={saving}
+            loading={saving}
             onClick={handleSave}
           />
         </div>
