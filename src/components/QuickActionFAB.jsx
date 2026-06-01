@@ -124,13 +124,17 @@ export default function QuickActionFAB({ setScreen }) {
 
       <div style={fabStyle}>
         {/* Action buttons — fan out above FAB */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-          gap: 10,
-          pointerEvents: open ? 'auto' : 'none',
-        }}>
+        <div
+          id="fab-actions-menu"
+          aria-hidden={!open}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: 10,
+            pointerEvents: open ? 'auto' : 'none',
+          }}
+        >
           {actions.map((action) => (
             <div
               key={action.key}
@@ -163,6 +167,7 @@ export default function QuickActionFAB({ setScreen }) {
                 onClick={(e) => { e.stopPropagation(); handleAction(action); }}
                 aria-label={action.label}
                 title={action.label}
+                tabIndex={open ? 0 : -1}
                 style={{
                   width: 48,
                   height: 48,
@@ -180,9 +185,15 @@ export default function QuickActionFAB({ setScreen }) {
                   color: C.white,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.24)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.18)'; }}
+                onMouseLeave={e => {
+                  if (document.activeElement !== e.currentTarget) {
+                    e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.18)';
+                  }
+                }}
+                onFocus={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.24)'; }}
+                onBlur={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.18)'; }}
               >
-                {action.icon}
+                <span aria-hidden="true">{action.icon}</span>
               </button>
             </div>
           ))}
@@ -192,6 +203,8 @@ export default function QuickActionFAB({ setScreen }) {
         <button
           onClick={() => setOpen(o => !o)}
           aria-expanded={open}
+          aria-controls="fab-actions-menu"
+          aria-haspopup="true"
           title="Quick actions"
           style={{
             width: 56,
@@ -209,18 +222,27 @@ export default function QuickActionFAB({ setScreen }) {
             flexShrink: 0,
           }}
           onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(201,105,122,0.55)'; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 18px rgba(201,105,122,0.45)'; }}
+          onMouseLeave={e => {
+            if (document.activeElement !== e.currentTarget) {
+              e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 18px rgba(201,105,122,0.45)';
+            }
+          }}
+          onFocus={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(201,105,122,0.55)'; }}
+          onBlur={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 18px rgba(201,105,122,0.45)'; }}
         >
-          <span style={{
-            display: 'block',
-            fontSize: 26,
-            fontWeight: 300,
-            color: C.white,
-            lineHeight: 1,
-            transform: open ? 'rotate(45deg)' : 'rotate(0deg)',
-            transition: 'transform 0.22s ease',
-            userSelect: 'none',
-          }}>+</span>
+          <span
+            aria-hidden="true"
+            style={{
+              display: 'block',
+              fontSize: 26,
+              fontWeight: 300,
+              color: C.white,
+              lineHeight: 1,
+              transform: open ? 'rotate(45deg)' : 'rotate(0deg)',
+              transition: 'transform 0.22s ease',
+              userSelect: 'none',
+            }}
+          >+</span>
         </button>
       </div>
 
