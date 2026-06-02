@@ -39,7 +39,7 @@ const NewMilestoneModal = ({ liveEvent, createMilestone, onClose }) => {
       <div style={{ background: C.white, borderRadius: 16, width: 420, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
         <div style={{ padding: '18px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>Add payment milestone</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
         </div>
         
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>

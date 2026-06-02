@@ -71,7 +71,7 @@ export const RentDressModal = ({dress, events, clients, onClose, onRent}) => {
             <div style={{display:'flex',gap:5}}>
               {[1,2].map(s=><div key={s} style={{width:8,height:8,borderRadius:'50%',background:step>=s?C.rosa:C.border,transition:'background 0.2s'}}/>)}
             </div>
-            <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',lineHeight:1}}>×</button>
+            <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',lineHeight:1}}>×</button>
           </div>
         </div>
 

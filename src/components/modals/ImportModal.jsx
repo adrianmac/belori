@@ -64,7 +64,7 @@ export const ImportModal = ({onClose, onImport}) => {
             <div id="import-title" style={{fontWeight:600,fontSize:16,color:C.ink}}>Import dress inventory</div>
             <div style={{fontSize:11,color:C.gray,marginTop:2}}>Step {step} of 3 · {step===1?'Upload file':step===2?'Review & confirm':'Complete'}</div>
           </div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:24}}>
           {step===1&&(
