@@ -1,0 +1,3 @@
+## 2025-02-23 - Interactive list items accessibility
+**Learning:** Converting interactive `div` list items into semantic `<button>` elements requires careful management of hover and focus states. If the `onMouseLeave` handler is not aware of keyboard focus (`document.activeElement`), keyboard users may lose visual focus indicators when moving the mouse over and off the focused element.
+**Action:** When converting custom interactive list elements to `<button>`, ensure CSS resets (`background: 'none'`, `border: 'none'`, `width: '100%'`, `textAlign: 'left'`) are applied to maintain layout. Add `onFocus` and `onBlur` handlers, and ensure `onMouseLeave` checks `if (document.activeElement !== e.currentTarget)` before reverting visual styles.
