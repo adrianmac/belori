@@ -188,7 +188,7 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
               background: C.rosaPale, color: C.rosaText, fontWeight: 500,
             }}>Standalone</span>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
+          <button onClick={onClose} aria-label="Close" title="Close" style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
         </div>
 
         {/* Body */}
@@ -224,7 +224,7 @@ export default function StandaloneAppointmentModal({ clients = [], staff = [], o
             <div style={{ ...LBL, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Client *</span>
               {(selectedClient || isWalkIn) && (
-                <button onClick={clearClient} style={{ fontSize: 11, color: C.rosaText, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}>
+                <button onClick={clearClient} aria-label="Clear selected client" style={{ fontSize: 11, color: C.rosaText, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}>
                   Clear
                 </button>
               )}
