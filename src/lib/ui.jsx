@@ -532,7 +532,7 @@ export function ConfirmModal({ title, message, confirmLabel = 'Confirm', onConfi
 export const ModeIndicatorBtn = () => {
   const { mode, toggle } = useLayoutMode();
   return (
-    <button onClick={toggle} title={mode === 'tablet' ? 'Switch to desktop mode' : 'Switch to tablet mode'}
+    <button onClick={toggle} title={mode === 'tablet' ? 'Switch to desktop mode' : 'Switch to tablet mode'} aria-label={mode === 'tablet' ? 'Switch to desktop mode' : 'Switch to tablet mode'}
       className="btn-icon" style={{border:`1px solid ${C.border}`,background:'transparent',borderRadius:8,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:C.gray,minHeight:32,minWidth:32,padding:0,boxShadow:'var(--btn-shadow-ghost)'}}>
       {mode === 'tablet' ? (
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="12" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.3"/><path d="M6 13h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
@@ -642,7 +642,14 @@ export const AlertBanner = ({msg,action,onAction}) => {
       {action&&(isTablet?
         <button onClick={onAction} style={{height:44,padding:'0 16px',background:'var(--color-warning)',color:'#fff',border:'none',borderRadius:8,fontSize:13,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap',flexShrink:0,minHeight:'unset',minWidth:'unset'}}>{action}</button>
         :
-        <span onClick={onAction} style={{fontSize:12,color:'var(--text-warning)',fontWeight:500,cursor:'pointer',whiteSpace:'nowrap'}}>{action} →</span>
+                <button
+          onClick={onAction}
+          onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+          onMouseLeave={e => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.textDecoration = 'none'; }}
+          onFocus={e => e.currentTarget.style.textDecoration = 'underline'}
+          onBlur={e => e.currentTarget.style.textDecoration = 'none'}
+          style={{background:'none',border:'none',padding:0,fontSize:12,color:'var(--text-warning)',fontWeight:500,cursor:'pointer',whiteSpace:'nowrap',textAlign:'left',textDecoration:'none'}}
+        >{action} →</button>
       )}
     </div>
   );
