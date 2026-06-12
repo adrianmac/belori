@@ -37,13 +37,13 @@ const NewClientModal = ({ onClose, createClient, onSuccess }) => {
 
   return (
     <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div style={{background:C.white,borderRadius:16,width:520,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 24px 48px rgba(0,0,0,0.15)'}}>
+      <div style={{background:C.white,borderRadius:16,width:520,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 24px 48px rgba(0,0,0,0.15)'}} role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div style={{padding:'24px 24px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'flex-start',background:C.grayBg}}>
           <div>
-            <div style={{fontWeight:600,fontSize:18,color:C.ink,marginBottom:4}}>New client</div>
+            <div style={{fontWeight:600,fontSize:18,color:C.ink,marginBottom:4}} id="modal-title">New client</div>
             <div style={{fontSize:13,color:C.gray}}>Enter contact details and preferences.</div>
           </div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:24,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button onClick={onClose} style={{background:'none',border:'none',fontSize:24,cursor:'pointer',color:C.gray,lineHeight:1}} aria-label="Close" title="Close">×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:24,display:'flex',flexDirection:'column',gap:16}}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
