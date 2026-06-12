@@ -36,16 +36,16 @@ const NewMilestoneModal = ({ liveEvent, createMilestone, onClose }) => {
 
   return (
     <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-      <div style={{ background: C.white, borderRadius: 16, width: 420, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+      <div style={{ background: C.white, borderRadius: 16, width: 420, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div style={{ padding: '18px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>Add payment milestone</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
+          <span id="modal-title" style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>Add payment milestone</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }} aria-label="Close" title="Close">×</button>
         </div>
         
         <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
             <div style={{ ...LBL }}>Label</div>
-            <input value={newMs.label} onChange={e => setNewMs(m => ({ ...m, label: e.target.value }))} placeholder="e.g. Final balance" style={{ ...inputSt }} />
+            <input aria-label="Milestone label" value={newMs.label} onChange={e => setNewMs(m => ({ ...m, label: e.target.value }))} placeholder="e.g. Final balance" style={{ ...inputSt }} />
           </div>
           {(() => {
             const remaining = Number(liveEvent?.total || 0) - Number(liveEvent?.paid || 0);
@@ -68,11 +68,11 @@ const NewMilestoneModal = ({ liveEvent, createMilestone, onClose }) => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <div style={{ ...LBL }}>Amount ($)</div>
-              <input type="number" value={newMs.amount} onChange={e => setNewMs(m => ({ ...m, amount: e.target.value }))} placeholder="0.00" style={{ ...inputSt }} />
+              <input aria-label="Milestone amount" type="number" value={newMs.amount} onChange={e => setNewMs(m => ({ ...m, amount: e.target.value }))} placeholder="0.00" style={{ ...inputSt }} />
             </div>
             <div>
               <div style={{ ...LBL }}>Due date</div>
-              <input type="date" value={newMs.due} onChange={e => setNewMs(m => ({ ...m, due: e.target.value }))} style={{ ...inputSt }} />
+              <input aria-label="Milestone due date" type="date" value={newMs.due} onChange={e => setNewMs(m => ({ ...m, due: e.target.value }))} style={{ ...inputSt }} />
             </div>
           </div>
         </div>

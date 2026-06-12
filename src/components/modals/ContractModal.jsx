@@ -100,10 +100,10 @@ By signing below, the client agrees to the terms of this agreement.`;
 
   return (
     <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-      <div style={{ background: C.white, borderRadius: 16, width: 560, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+      <div style={{ background: C.white, borderRadius: 16, width: 560, maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div style={{ padding: '18px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>New contract</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }}>×</button>
+          <span id="modal-title" style={{ fontWeight: 600, fontSize: 15, color: C.ink }}>New contract</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.gray, lineHeight: 1 }} aria-label="Close" title="Close">×</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ padding: '10px 14px', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 8, fontSize: 11, color: '#15803D', lineHeight: 1.6 }}>
@@ -111,7 +111,7 @@ By signing below, the client agrees to the terms of this agreement.`;
           </div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Contract title</div>
-            <input value={contractTitle} onChange={e => setContractTitle(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: 9, border: `1.5px solid ${C.border}`, fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', color: C.ink }} />
+            <input aria-label="Contract title" value={contractTitle} onChange={e => setContractTitle(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: 9, border: `1.5px solid ${C.border}`, fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', color: C.ink }} />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: C.gray, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Contract body</div>

@@ -71,7 +71,7 @@ export const RentDressModal = ({dress, events, clients, onClose, onRent}) => {
             <div style={{display:'flex',gap:5}}>
               {[1,2].map(s=><div key={s} style={{width:8,height:8,borderRadius:'50%',background:step>=s?C.rosa:C.border,transition:'background 0.2s'}}/>)}
             </div>
-            <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',lineHeight:1}}>×</button>
+            <button onClick={onClose} style={{background:'none',border:'none',fontSize:20,color:C.gray,cursor:'pointer',lineHeight:1}} aria-label="Close" title="Close">×</button>
           </div>
         </div>
 
@@ -79,7 +79,7 @@ export const RentDressModal = ({dress, events, clients, onClose, onRent}) => {
         {step===1&&(
           <>
             <div style={{flex:1,overflowY:'auto',padding:'16px 24px'}}>
-              <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search client name, event, or phone…" autoFocus style={{...inputSt,marginBottom:14}}/>
+              <input aria-label="Search query" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search client name, event, or phone…" autoFocus style={{...inputSt,marginBottom:14}}/>
 
               {/* Events section */}
               {filteredEvs.length>0&&(
@@ -186,9 +186,9 @@ export const RentDressModal = ({dress, events, clients, onClose, onRent}) => {
                   ):(
                     // New client fields
                     <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                      <input value={newClient.name} onChange={e=>setNewClient(p=>({...p,name:e.target.value}))} placeholder="Full name *" style={{...inputSt,fontSize:12,padding:'5px 8px'}}/>
-                      <input value={newClient.phone} onChange={e=>setNewClient(p=>({...p,phone:e.target.value}))} placeholder="Phone" style={{...inputSt,fontSize:12,padding:'5px 8px'}}/>
-                      <input value={newClient.email} onChange={e=>setNewClient(p=>({...p,email:e.target.value}))} placeholder="Email" style={{...inputSt,fontSize:12,padding:'5px 8px'}}/>
+                      <input aria-label="New client full name" value={newClient.name} onChange={e=>setNewClient(p=>({...p,name:e.target.value}))} placeholder="Full name *" style={{...inputSt,fontSize:12,padding:'5px 8px'}}/>
+                      <input aria-label="New client phone" value={newClient.phone} onChange={e=>setNewClient(p=>({...p,phone:e.target.value}))} placeholder="Phone" style={{...inputSt,fontSize:12,padding:'5px 8px'}}/>
+                      <input aria-label="New client email" value={newClient.email} onChange={e=>setNewClient(p=>({...p,email:e.target.value}))} placeholder="Email" style={{...inputSt,fontSize:12,padding:'5px 8px'}}/>
                     </div>
                   )}
                 </div>

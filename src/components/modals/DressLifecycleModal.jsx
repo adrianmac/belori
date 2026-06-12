@@ -47,10 +47,10 @@ export const DressLifecycleModal = ({dress, onClose, onUpdate}) => {
 
   return (
     <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
-      <div style={{background:C.white,borderRadius:16,width:440,display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
+      <div style={{background:C.white,borderRadius:16,width:440,display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}} role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div style={{padding:'20px 24px 16px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <div style={{fontWeight:600,fontSize:16,color:C.ink}}>{TITLES[dress.status]||'Update status'}</div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <div style={{fontWeight:600,fontSize:16,color:C.ink}} id="modal-title">{TITLES[dress.status]||'Update status'}</div>
+          <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:C.gray,lineHeight:1}} aria-label="Close" title="Close">×</button>
         </div>
         <div style={{padding:24,display:'flex',flexDirection:'column',gap:14}}>
           <div style={{background:C.ivory,borderRadius:8,padding:'12px 14px'}}>
