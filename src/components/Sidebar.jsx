@@ -276,8 +276,20 @@ const NavItem = ({ item, active, onClick, indented = false }) => {
         e.currentTarget.style.color = Dtokens.ink;
       }
     }}
-    onMouseLeave={e => {
+    onFocus={e => {
       if (!active) {
+        e.currentTarget.style.background = isCoreInactive ? 'rgba(176,138,78,0.09)' : '#F8F4F0';
+        e.currentTarget.style.color = Dtokens.ink;
+      }
+    }}
+    onBlur={e => {
+      if (!active) {
+        e.currentTarget.style.background = isCoreInactive ? 'rgba(176,138,78,0.05)' : 'transparent';
+        e.currentTarget.style.color = Dtokens.inkMid;
+      }
+    }}
+    onMouseLeave={e => {
+      if (!active && document.activeElement !== e.currentTarget) {
         e.currentTarget.style.background = isCoreInactive ? 'rgba(176,138,78,0.05)' : 'transparent';
         e.currentTarget.style.color = Dtokens.inkMid;
       }
@@ -446,9 +458,12 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
       {/* Search bar */}
       <div style={{ padding: '8px 10px', borderBottom: `1px solid ${C.border}` }}>
         <button onClick={onSearch}
+          aria-label="Global search (⌘K)"
           style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', padding: '7px 10px', borderRadius: 8, border: `1px solid ${C.border}`, background: C.ivory, cursor: 'pointer', color: C.gray, fontSize: 12, minHeight: 'unset', minWidth: 'unset', transition: 'all 0.15s' }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = C.rosa; e.currentTarget.style.color = C.rosa; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.gray; }}>
+          onFocus={e => { e.currentTarget.style.borderColor = C.rosa; e.currentTarget.style.color = C.rosa; }}
+          onBlur={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.gray; }}
+          onMouseLeave={e => { if (document.activeElement !== e.currentTarget) { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.gray; } }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
           <span style={{ flex: 1, textAlign: 'left' }}>Search…</span>
           <span style={{ fontSize: 9, background: C.white, border: `1px solid ${C.border}`, borderRadius: 4, padding: '1px 5px', opacity: 0.7 }}>⌘K</span>
@@ -538,7 +553,9 @@ const Sidebar = ({ screen, setScreen, boutique, boutiques = [], onSwitchBoutique
           style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:13,padding:'4px 6px',borderRadius:6,display:'flex',alignItems:'center',gap:6,width:'100%',minHeight:'unset',minWidth:'unset'}}
           title="Keyboard shortcuts (?)"
           onMouseEnter={e=>{e.currentTarget.style.background=C.grayBg;e.currentTarget.style.color=C.ink;}}
-          onMouseLeave={e=>{e.currentTarget.style.background='none';e.currentTarget.style.color=C.gray;}}
+          onFocus={e=>{e.currentTarget.style.background=C.grayBg;e.currentTarget.style.color=C.ink;}}
+          onBlur={e=>{e.currentTarget.style.background='none';e.currentTarget.style.color=C.gray;}}
+          onMouseLeave={e=>{if(document.activeElement!==e.currentTarget){e.currentTarget.style.background='none';e.currentTarget.style.color=C.gray;}}}
         >
           <span style={{width:18,height:18,borderRadius:'50%',border:`1.5px solid currentColor`,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0}}>?</span>
           <span style={{fontSize:11}}>Keyboard shortcuts</span>

@@ -513,7 +513,9 @@ export default function GlobalSearch({ setScreen, setSelectedEvent, onClose, isO
                       transition: 'all 0.15s cubic-bezier(.22,.61,.36,1)',
                     }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = D.gold; e.currentTarget.style.color = D.goldDark; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = D.border; e.currentTarget.style.color = D.inkMid; }}
+                    onFocus={e => { e.currentTarget.style.borderColor = D.gold; e.currentTarget.style.color = D.goldDark; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = D.border; e.currentTarget.style.color = D.inkMid; }}
+                    onMouseLeave={e => { if (document.activeElement !== e.currentTarget) { e.currentTarget.style.borderColor = D.border; e.currentTarget.style.color = D.inkMid; } }}
                   >
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                       <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
