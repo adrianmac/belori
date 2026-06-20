@@ -1,0 +1,3 @@
+## 2024-06-20 - Missing ARIA Labels on `×` Icon-only Modal Close Buttons
+**Learning:** Found over 120 instances of `×` character-based icon-only `<button>`s without proper accessibility tags in the codebase. Using `×` instead of an SVG or text like "Close" is not read correctly by screen readers unless accompanied by `aria-label="Close"` and `title="Close"`. I applied this fix manually as a proof-of-concept to 2 modal components.
+**Action:** When creating or updating modals, always ensure the close `<button>` receives `aria-label="Close"` and `title="Close"` to support screen readers, especially if the button's content is just an `×` character.
