@@ -1,0 +1,3 @@
+## 2025-06-21 - Added aria context for UI
+**Learning:** Found an accessibility issue pattern across this app: close buttons in floating Modals lacked label/title context, and dropdowns visually hidden via CSS transition tricks left their inner items selectable by Tab key and readable by screen-readers.
+**Action:** Adding `<button aria-label="Close" title="Close">` is a standard approach. However, for visually hidden drop-down transition lists, I learned to add `aria-hidden={!isOpen}` to the dropdown wrapper, and explicitly set `tabIndex={isOpen ? 0 : -1}` on the `<button>` actions inside so users don't invisibly tab into hidden components when closed.
