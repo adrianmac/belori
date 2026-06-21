@@ -196,6 +196,7 @@ const BoutiqueSwitcher = ({ boutique, boutiques = [], onSwitch }) => {
         <div
           id={menuId}
           role="menu"
+          aria-hidden={!open}
           aria-label="Switch boutique"
           style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, background: C.white, border: `1px solid ${C.border}`, borderRadius: 2,
             boxShadow: '0 8px 24px rgba(28,17,24,0.12)', minWidth: 200, zIndex: 500, overflow: 'hidden' }}>
@@ -206,6 +207,7 @@ const BoutiqueSwitcher = ({ boutique, boutiques = [], onSwitch }) => {
             <button
               key={b.id}
               role="menuitemradio"
+              tabIndex={open ? 0 : -1}
               aria-checked={b.id === boutique?.id}
               onClick={() => { onSwitch(b.id); setOpen(false); }}
               style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 12px',
