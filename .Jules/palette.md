@@ -1,0 +1,3 @@
+## 2024-06-22 - [Interactive List Items]
+**Learning:** Using `div`s for interactive list items (like notifications) breaks keyboard accessibility and screen reader support. Converting them to semantic `<button>` elements requires careful inline CSS resets (`border: "none"`, `background: "none"`, `width: "100%"`, `textAlign: "left"`) to maintain visual styling, and explicit `onFocus`/`onBlur` handlers must be added to replicate hover effects for keyboard users.
+**Action:** Always prefer `<button>` over `div` with `onClick` for list actions. When adding hover states (`onMouseEnter`/`onMouseLeave`), also add `onFocus`/`onBlur` and check `document.activeElement` on mouse leave so focused elements do not lose their active styling.
