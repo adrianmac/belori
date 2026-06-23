@@ -143,7 +143,7 @@ const PaymentPlanModal = ({ ev, milestones, createMilestones, boutique, onClose 
       <div style={panelStyle}>
         <div style={headerStyle}>
           <span style={{ fontWeight: 600, fontSize: 14, color: C.ink }}>Payment Plan Auto-Generator</span>
-          <span onClick={onClose} style={{ cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1 }}>×</span>
+          <span onClick={onClose} style={{ cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1 }} role="button" tabIndex={0} aria-label="Close">×</span>
         </div>
         <div style={bodyStyle}>
           {/* Total */}
@@ -337,7 +337,7 @@ const RefundModal = ({ milestone, eventId, logRefund, onClose }) => {
       <div style={panelStyle}>
         <div style={headerStyle}>
           <span style={{ fontWeight: 600, fontSize: 14, color: C.ink }}>{milestone ? 'Void / Refund' : 'Log Refund'}</span>
-          <span onClick={onClose} style={{ cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1 }}>×</span>
+          <span onClick={onClose} style={{ cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1 }} role="button" tabIndex={0} aria-label="Close">×</span>
         </div>
         <div style={bodyStyle}>
           {milestone && (
@@ -452,7 +452,7 @@ const TipModal = ({ eventId, onLogTip, onClose }) => {
       <div style={panelStyle}>
         <div style={headerStyle}>
           <span style={{ fontWeight: 600, fontSize: 14, color: C.ink }}>Log gratuity / tip</span>
-          <span onClick={onClose} style={{ cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1 }}>×</span>
+          <span onClick={onClose} style={{ cursor: 'pointer', color: C.gray, fontSize: 18, lineHeight: 1 }} role="button" tabIndex={0} aria-label="Close">×</span>
         </div>
         <div style={bodyStyle}>
           <div style={fieldStyle}>

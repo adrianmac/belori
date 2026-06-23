@@ -1,0 +1,3 @@
+## 2024-04-29 - Modal Dialog Close Button Accessibility
+**Learning:** Found a widespread pattern where modal dialogs use simple `<button>×</button>` or `<span role="button">×</span>` elements as close buttons without any associated `aria-label`. This makes it impossible for screen reader users to identify what the button does.
+**Action:** Always ensure that icon-only interactive elements, especially those representing critical actions like closing a modal (e.g. `×`), include an explicit `aria-label="Close"`. For `span` elements acting as buttons, also ensure `role="button"` and `tabIndex={0}` are present.
