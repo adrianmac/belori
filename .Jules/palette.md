@@ -1,0 +1,3 @@
+## 2024-03-01 - Floating Action Buttons (FAB) Accessibility
+**Learning:** Collapsible or pop-out action menus (like FABs) that use visual hiding (opacity/transform) but remain in the DOM are still accessible to screen readers and keyboard navigation unless explicitly hidden. Without `aria-hidden` and `tabIndex={-1}`, a closed FAB's actions can still receive keyboard focus and be read by screen readers, creating a confusing experience.
+**Action:** Always add `aria-expanded` and `aria-haspopup="true"` to the main toggle button. For the hidden action buttons, apply `aria-hidden={!isOpen}` to the container and `tabIndex={isOpen ? 0 : -1}` to the individual actionable elements when the menu is closed.
