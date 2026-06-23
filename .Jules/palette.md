@@ -1,0 +1,3 @@
+## 2024-03-24 - [FAB Accessibility Management]
+**Learning:** When building floating action buttons (FABs) with fan-out menus, hiding elements with opacity/transform alone isn't enough. Screen readers and keyboard navigation can still interact with invisible elements if they aren't explicitly hidden from assistive technologies.
+**Action:** Always wrap expandable menu actions in a container with `aria-hidden={!isOpen}` and `role="menu"`. Ensure child actions have `tabIndex={isOpen ? 0 : -1}` to prevent tabbing into visually hidden elements. Add `aria-controls`, `aria-haspopup="menu"`, and a dynamic `aria-label` to the trigger button.
