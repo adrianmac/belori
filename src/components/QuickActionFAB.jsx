@@ -163,6 +163,7 @@ export default function QuickActionFAB({ setScreen }) {
                 onClick={(e) => { e.stopPropagation(); handleAction(action); }}
                 aria-label={action.label}
                 title={action.label}
+                aria-label={action.label}
                 style={{
                   width: 48,
                   height: 48,
@@ -193,6 +194,9 @@ export default function QuickActionFAB({ setScreen }) {
           onClick={() => setOpen(o => !o)}
           aria-expanded={open}
           title="Quick actions"
+          aria-label="Quick actions"
+          aria-expanded={open}
+          aria-haspopup="menu"
           style={{
             width: 56,
             height: 56,
