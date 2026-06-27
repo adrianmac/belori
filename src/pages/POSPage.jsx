@@ -409,14 +409,14 @@ export default function POSPage({ inventory = [], clients = [], events = [] }) {
                     </div>
                     {/* Qty controls */}
                     <div style={{display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
-                      <button onClick={() => setQty(item.id, item.qty - 1)}
+                      <button onClick={() => setQty(item.id, item.qty - 1)} aria-label="Decrease quantity"
                         style={{width:24,height:24,borderRadius:6,border:`1px solid ${C.border}`,background:C.ivory,cursor:'pointer',fontSize:14,color:C.ink,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:500}}>−</button>
                       <span style={{fontSize:13,fontWeight:500,color:C.ink,minWidth:18,textAlign:'center'}}>{item.qty}</span>
-                      <button onClick={() => setQty(item.id, item.qty + 1)}
+                      <button onClick={() => setQty(item.id, item.qty + 1)} aria-label="Increase quantity"
                         style={{width:24,height:24,borderRadius:6,border:`1px solid ${C.border}`,background:C.ivory,cursor:'pointer',fontSize:14,color:C.ink,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:500}}>+</button>
                     </div>
                     <div style={{fontSize:13,fontWeight:600,color:C.ink,minWidth:50,textAlign:'right'}}>{fmt(item.price * item.qty)}</div>
-                    <button onClick={() => removeFromCart(item.id)}
+                    <button onClick={() => removeFromCart(item.id)} aria-label="Remove item"
                       style={{background:'none',border:'none',color:C.gray,cursor:'pointer',fontSize:16,lineHeight:1,padding:'0 2px',flexShrink:0}}>×</button>
                   </div>
                 ))}
@@ -454,7 +454,7 @@ export default function POSPage({ inventory = [], clients = [], events = [] }) {
               {selectedClient ? (
                 <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',background:C.rosaPale,borderRadius:8,border:`1px solid ${C.rosa}`}}>
                   <span style={{flex:1,fontSize:12,fontWeight:500,color:C.rosaText}}>{selectedClient.name}</span>
-                  <button onClick={clearClient}
+                  <button onClick={clearClient} aria-label="Remove client"
                     style={{background:'none',border:'none',color:C.rosaText,cursor:'pointer',fontSize:16,lineHeight:1}}>×</button>
                 </div>
               ) : (
