@@ -1,0 +1,3 @@
+## 2026-06-30 - [Interactive List Accessibility]
+**Learning:** When converting generic block elements (`<div>`) inside interactive lists (like notifications) into semantic `<button>`s, native focus styling needs to be managed carefully. A hover effect bound to `onMouseLeave` that simply resets backgrounds will clash with keyboard navigation, causing elements to visually lose their focus state if the mouse pointer happens to move off them while they remain the active element.
+**Action:** When implementing semantic buttons with custom interactive states (and where external CSS is disallowed), always sync `onFocus` and `onBlur` with the corresponding hover effects, and explicitly condition `onMouseLeave` with `if (document.activeElement !== e.currentTarget)`.
