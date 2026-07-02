@@ -1,0 +1,3 @@
+## 2024-05-18 - FAB Menu Accessibility Pattern
+**Learning:** For components like Floating Action Button (FAB) menus that are visually hidden using opacity/transform (rather than conditionally unmounted or display: none), they are still present in the DOM. This causes screen readers to read them and keyboard users to tab to them even when collapsed.
+**Action:** Always apply `aria-hidden={!isOpen}` to the hidden container and dynamically adjust tab order with `tabIndex={isOpen ? 0 : -1}` on actionable elements. Also add `onFocus`/`onBlur` equivalents to existing hover states and ensure `onMouseLeave` does not clear visual focus styles using `document.activeElement !== e.currentTarget`.
