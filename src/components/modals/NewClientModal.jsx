@@ -37,13 +37,13 @@ const NewClientModal = ({ onClose, createClient, onSuccess }) => {
 
   return (
     <div className="modal-overlay" style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div style={{background:C.white,borderRadius:16,width:520,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 24px 48px rgba(0,0,0,0.15)'}}>
+      <div role="dialog" aria-modal="true" aria-labelledby="modal-title" style={{background:C.white,borderRadius:16,width:520,maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 24px 48px rgba(0,0,0,0.15)'}}>
         <div style={{padding:'24px 24px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'flex-start',background:C.grayBg}}>
           <div>
-            <div style={{fontWeight:600,fontSize:18,color:C.ink,marginBottom:4}}>New client</div>
+            <div id="modal-title" style={{fontWeight:600,fontSize:18,color:C.ink,marginBottom:4}}>New client</div>
             <div style={{fontSize:13,color:C.gray}}>Enter contact details and preferences.</div>
           </div>
-          <button onClick={onClose} style={{background:'none',border:'none',fontSize:24,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+          <button aria-label="Close" title="Close" onClick={onClose} style={{background:'none',border:'none',padding:0,fontSize:24,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:24,display:'flex',flexDirection:'column',gap:16}}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
@@ -66,7 +66,7 @@ const NewClientModal = ({ onClose, createClient, onSuccess }) => {
           </div>
         </div>
         <div style={{padding:'16px 24px',borderTop:`1px solid ${C.border}`,background:C.grayBg,display:'flex',justifyContent:'flex-end',gap:12}}>
-          <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose}/><PrimaryBtn label={saving?'Saving…':'Add client'} colorScheme="success" onClick={handleNew}/>
+          <GhostBtn label="Cancel" colorScheme="danger" onClick={onClose} autoFocus /><PrimaryBtn label={saving?'Saving…':'Add client'} colorScheme="success" onClick={handleNew}/>
         </div>
       </div>
     </div>

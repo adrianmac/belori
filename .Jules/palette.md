@@ -1,0 +1,3 @@
+## 2024-07-24 - Modals Missing ARIA and Focus Trap
+**Learning:** React modals in this codebase consistently lack semantic HTML roles (`role="dialog"`, `aria-modal="true"`) and miss linking their headers with `aria-labelledby`. Additionally, the negative cancel routes are not being auto-focused to smoothly trap focus and avoid accidental submissions. Icon-only close buttons often miss `aria-label="Close"` and `title="Close"`.
+**Action:** When adding or updating modal components, always include `role="dialog"`, `aria-modal="true"`, `aria-labelledby` linked to the title, an accessible close button, and auto-focus the Cancel button.
