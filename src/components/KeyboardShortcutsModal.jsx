@@ -119,7 +119,7 @@ export default function KeyboardShortcutsModal({ onClose }) {
             }}
             onMouseEnter={e => e.currentTarget.style.color = D.ink}
             onMouseLeave={e => e.currentTarget.style.color = D.inkMid}
-          >×</button>
+           aria-label="Close" title="Close">×</button>
         </div>
 
         {/* Body */}
