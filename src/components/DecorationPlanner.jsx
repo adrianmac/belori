@@ -677,7 +677,7 @@ export default function DecorationPlanner({event, updateEvent, addDecoItem, remo
           <div style={{background:C.white,borderRadius:16,width:500,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)'}}>
             <div style={{padding:'18px 20px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <span style={{fontWeight:600,fontSize:15,color:C.ink}}>{editingDecoId?'Edit decoration item':'Assign decoration item'}</span>
-              <button onClick={resetDecoModal} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}}>×</button>
+              <button onClick={resetDecoModal} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:C.gray,lineHeight:1}} aria-label="Close" title="Close">×</button>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:20,display:'flex',flexDirection:'column',gap:14}}>
               {/* Item search */}
@@ -869,7 +869,7 @@ function InventoryTab({decoItems, inventory, event, onAssign, onEdit, onRemove})
                         <span style={{fontSize:12,color:C.gray}}>×{d.qty}</span>
                         <Badge text={short<=0?'Available':`${d.available??d.qty} of ${d.qty}`} bg={short<=0?C.greenBg:C.amberBg} color={short<=0?C.green:C.warningText}/>
                         <button onClick={()=>onEdit(d)} style={{background:'none',border:`1px solid ${C.border}`,borderRadius:6,cursor:'pointer',color:C.gray,fontSize:11,padding:'2px 8px',minHeight:'unset'}} title="Edit">✏️</button>
-                        <button onClick={()=>onRemove(d.id)} style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:16,lineHeight:1,padding:'0 2px',minHeight:'unset'}} title="Remove">×</button>
+                        <button onClick={()=>onRemove(d.id)} style={{background:'none',border:'none',cursor:'pointer',color:C.gray,fontSize:16,lineHeight:1,padding:'0 2px',minHeight:'unset'}} title="Remove" aria-label="Remove">×</button>
                       </div>
                     </div>
                     {(d.placement||d.setup_time||d.color_notes||d.notes)&&(
