@@ -1,0 +1,3 @@
+## 2025-02-26 - Add accessibility to QuickActionFAB
+**Learning:** Collapsible menus animated via opacity/transform require strict accessibility attributes because visually hidden elements stay in the DOM. Screen readers will incorrectly announce the hidden items if they aren't masked out properly, and keyboard users can still tab into hidden actionable elements.
+**Action:** When implementing floating collapsible menus, ensure the menu container has `aria-hidden={!isOpen}`, and all actionable elements inside the menu have `tabIndex={isOpen ? 0 : -1}` to conditionally remove them from the tab order. Ensure the trigger explicitly uses `aria-haspopup`, `aria-controls`, and `aria-label` to announce the state correctly.
